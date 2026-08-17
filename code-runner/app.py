@@ -344,3 +344,9 @@ def judge_question(request: JudgeQuestionRequest):
         cases,
         time_limit_ms,
     )
+@app.get("/")
+def root():
+    return {
+        "status": "online",
+        "message": "ECE Java Code Runner API is running"
+    }
