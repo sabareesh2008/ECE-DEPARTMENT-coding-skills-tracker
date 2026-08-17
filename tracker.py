@@ -26,7 +26,13 @@ HISTORY_CSV = BASE_DIR / "History.csv"
 DAILY_ACTIVITY_CSV = BASE_DIR / "DailyActivity.csv"
 STUDENTS_XLSX = BASE_DIR / "Students.xlsx"
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
+SUPABASE_URL = (
+    os.getenv("SUPABASE_URL", "")
+    .strip()
+    .replace("%0A", "")
+    .replace("%0a", "")
+    .rstrip("/")
+)
 SUPABASE_SERVICE_ROLE_KEY = os.getenv(
     "SUPABASE_SERVICE_ROLE_KEY",
     "",
