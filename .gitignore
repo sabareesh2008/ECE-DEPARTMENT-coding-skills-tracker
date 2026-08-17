@@ -1,0 +1,24 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Secrets
+.env
+.env.runner
+code-runner/.env
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+
+# Generated report attachments
+reports/latest_daily_report.html
+reports/latest_weekly_report.html
+reports/*.pdf
+reports/*.xlsx
+
+# Temporary local files
+*.log
