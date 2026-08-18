@@ -3636,6 +3636,21 @@ async function loadFacultyData() {
     const count = document.getElementById("countFaculty");
     if (count) count.textContent = facultyMembers.length;
 
+    const active = facultyMembers.filter(
+      (faculty) => Number(faculty.solved_today || 0) > 0
+    ).length;
+
+    const solved7 = facultyMembers.reduce(
+      (sum, faculty) => sum + Number(faculty.last_7_days || 0),
+      0
+    );
+
+    const activeEl = document.getElementById("facultyActiveToday");
+    const solved7El = document.getElementById("facultySolved7Days");
+
+    if (activeEl) activeEl.textContent = active;
+    if (solved7El) solved7El.textContent = solved7;
+
     renderFacultyDirectory();
   } catch (error) {
     console.error("Faculty data load failed:", error);
@@ -3643,7 +3658,7 @@ async function loadFacultyData() {
     if (body) {
       body.innerHTML = `
         <tr>
-          <td colspan="6" class="loading-row">Unable to load faculty data.</td>
+          <td colspan="11" class="loading-row">Unable to load faculty data.</td>
         </tr>
       `;
     }
@@ -3662,6 +3677,13 @@ function closeFacultyDirectory() {
   if (modal) modal.hidden = true;
 }
 
+function facultyStatusClass(status) {
+  const value = String(status || "");
+  if (value === "Success") return "status-success";
+  if (value === "Pending") return "status-pending";
+  return "status-error";
+}
+
 function renderFacultyDirectory(query = "") {
   const body = document.getElementById("facultyTableBody");
   if (!body) return;
@@ -3676,7 +3698,8 @@ function renderFacultyDirectory(query = "") {
       faculty.faculty_name,
       faculty.designation,
       faculty.department,
-      faculty.email
+      faculty.email,
+      faculty.leetcode_username
     ].some((value) =>
       String(value || "").toLowerCase().includes(q)
     );
@@ -3684,34 +3707,58 @@ function renderFacultyDirectory(query = "") {
 
   if (!rows.length) {
     body.innerHTML = `
-      <tr>
-        <td colspan="6" class="loading-row">No faculty found.</td>
-      </tr>
+      <tr><td colspan="11" class="loading-row">No faculty found.</td></tr>
     `;
     return;
   }
 
-  body.innerHTML = rows.map((faculty) => `
-    <tr>
-      <td><strong>${escapeHTML(faculty.faculty_id || "–")}</strong></td>
-      <td>${escapeHTML(faculty.faculty_name || "–")}</td>
-      <td>${escapeHTML(faculty.designation || "–")}</td>
-      <td>${escapeHTML(faculty.department || "ECE")}</td>
-      <td>
-        <a href="mailto:${escapeHTML(faculty.email || "")}">
-          ${escapeHTML(faculty.email || "–")}
-        </a>
-      </td>
-      <td class="admin-only" ${isAdmin ? "" : "hidden"}>
-        <div class="faculty-row-actions">
-          <button type="button" class="mini-action-button"
-            data-edit-faculty="${escapeHTML(faculty.id)}">Edit</button>
-          <button type="button" class="mini-action-button danger"
-            data-delete-faculty="${escapeHTML(faculty.id)}">Delete</button>
-        </div>
-      </td>
-    </tr>
-  `).join("");
+  body.innerHTML = rows.map((faculty) => {
+    const username = faculty.leetcode_username || "";
+    const status = faculty.status || "Pending";
+
+    return `
+      <tr>
+        <td><strong>${escapeHTML(faculty.faculty_id || "–")}</strong></td>
+        <td>${escapeHTML(faculty.faculty_name || "–")}</td>
+        <td>${escapeHTML(faculty.designation || "–")}</td>
+
+        <td>
+          <a class="leetcode-link"
+             href="https://leetcode.com/u/${escapeHTML(username)}/"
+             target="_blank"
+             rel="noopener noreferrer">
+            ${escapeHTML(username || "–")}
+          </a>
+        </td>
+
+        <td>${toNumber(faculty.solved_today)}</td>
+        <td>${toNumber(faculty.last_7_days)}</td>
+        <td>${toNumber(faculty.last_30_days)}</td>
+        <td><strong>${toNumber(faculty.total_solved)}</strong></td>
+
+        <td>
+          ${toNumber(faculty.easy)} /
+          ${toNumber(faculty.medium)} /
+          ${toNumber(faculty.hard)}
+        </td>
+
+        <td>
+          <span class="student-status ${facultyStatusClass(status)}">
+            ${escapeHTML(status)}
+          </span>
+        </td>
+
+        <td class="admin-only" ${isAdmin ? "" : "hidden"}>
+          <div class="faculty-row-actions">
+            <button type="button" class="mini-action-button"
+              data-edit-faculty="${escapeHTML(faculty.id)}">Edit</button>
+            <button type="button" class="mini-action-button danger"
+              data-delete-faculty="${escapeHTML(faculty.id)}">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
 }
 
 function openFacultyForm(faculty = null) {
@@ -3729,8 +3776,10 @@ function openFacultyForm(faculty = null) {
   document.getElementById("facultyDesignationInput").value = faculty?.designation || "";
   document.getElementById("facultyDepartmentInput").value = faculty?.department || "ECE";
   document.getElementById("facultyEmailInput").value = faculty?.email || "";
-  document.getElementById("facultyFormMessage").textContent = "";
+  document.getElementById("facultyLeetCodeUsernameInput").value =
+    faculty?.leetcode_username || "";
 
+  document.getElementById("facultyFormMessage").textContent = "";
   modal.hidden = false;
 }
 
@@ -3752,6 +3801,8 @@ async function saveFaculty(event) {
     designation: document.getElementById("facultyDesignationInput").value.trim(),
     department: document.getElementById("facultyDepartmentInput").value.trim(),
     email: document.getElementById("facultyEmailInput").value.trim(),
+    leetcode_username:
+      document.getElementById("facultyLeetCodeUsernameInput").value.trim(),
     updated_at: new Date().toISOString()
   };
 
@@ -3785,23 +3836,19 @@ async function deleteFaculty(id) {
 
   if (!window.confirm(
     `Delete ${faculty?.faculty_name || "this faculty member"}?`
-  )) {
+  )) return;
+
+  const { error } = await supabaseClient
+    .from("faculties")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert(error.message || "Unable to delete faculty.");
     return;
   }
 
-  try {
-    const { error } = await supabaseClient
-      .from("faculties")
-      .delete()
-      .eq("id", id);
-
-    if (error) throw error;
-
-    await loadFacultyData();
-  } catch (error) {
-    console.error("Faculty delete failed:", error);
-    alert(error.message || "Unable to delete faculty.");
-  }
+  await loadFacultyData();
 }
 
 function handleFacultyTableClick(event) {
@@ -3810,9 +3857,7 @@ function handleFacultyTableClick(event) {
 
   if (editButton) {
     const faculty = facultyMembers.find(
-      (item) =>
-        String(item.id)
-        === String(editButton.dataset.editFaculty)
+      (item) => String(item.id) === String(editButton.dataset.editFaculty)
     );
 
     if (faculty) openFacultyForm(faculty);

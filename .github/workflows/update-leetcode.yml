@@ -12,6 +12,7 @@ on:
       - main
     paths:
       - "tracker.py"
+      - "faculty_tracker.py"
       - "requirements.txt"
 
 permissions:
@@ -59,7 +60,9 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: python tracker.py
+        run: |
+          python tracker.py
+          python faculty_tracker.py
 
       # ------------------------------------------------------
       # 5. Commit generated files

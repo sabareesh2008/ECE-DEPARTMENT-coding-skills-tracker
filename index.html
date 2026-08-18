@@ -165,7 +165,8 @@
           <strong id="countFaculty">0</strong>
           <span>Faculty Members</span>
           <div class="section-challenge-mini">
-            <span>📋 Directory & Contacts</span>
+            <span>✅ Active Today <strong id="facultyActiveToday">0</strong></span>
+            <span>🔥 7 Days <strong id="facultySolved7Days">0</strong></span>
           </div>
         </button>
 
@@ -1754,28 +1755,22 @@ public class Main {
   </div>
 
 
-  <!-- ======================================================
-       FACULTY DIRECTORY
-       ====================================================== -->
   <div id="facultyDirectoryModal" class="profile-modal" hidden>
     <div class="profile-modal-backdrop" data-close-faculty-directory></div>
 
     <section class="faculty-directory-card">
       <div class="faculty-directory-header">
         <div>
-          <span class="profile-kicker">FACULTY</span>
-          <h2>👨‍🏫 Faculty Directory</h2>
-          <p>Faculty members, designation and contact information.</p>
+          <span class="profile-kicker">FACULTY LEETCODE</span>
+          <h2>👨‍🏫 Faculty LeetCode Tracker</h2>
+          <p>Faculty LeetCode activity, solved counts and profile links.</p>
         </div>
-
-        <button id="closeFacultyDirectoryButton" class="icon-button" type="button" aria-label="Close faculty directory">✕</button>
+        <button id="closeFacultyDirectoryButton" class="icon-button" type="button">✕</button>
       </div>
 
       <div class="faculty-directory-toolbar">
         <input id="facultySearchInput" type="search"
-          placeholder="Search faculty by name, ID, designation or email..."
-          autocomplete="off" />
-
+          placeholder="Search faculty by name, ID, designation or LeetCode username..." />
         <button id="addFacultyButton" class="action-button primary admin-only" type="button" hidden>
           + Add Faculty
         </button>
@@ -1788,13 +1783,18 @@ public class Main {
               <th>Faculty ID</th>
               <th>Name</th>
               <th>Designation</th>
-              <th>Department</th>
-              <th>Email</th>
+              <th>LeetCode</th>
+              <th>Today</th>
+              <th>7 Days</th>
+              <th>30 Days</th>
+              <th>Total</th>
+              <th>E / M / H</th>
+              <th>Status</th>
               <th class="admin-only" hidden>Actions</th>
             </tr>
           </thead>
           <tbody id="facultyTableBody">
-            <tr><td colspan="6" class="loading-row">Loading faculty...</td></tr>
+            <tr><td colspan="11" class="loading-row">Loading faculty...</td></tr>
           </tbody>
         </table>
       </div>
@@ -1810,8 +1810,7 @@ public class Main {
           <span class="profile-kicker">ADMIN</span>
           <h2 id="facultyFormTitle">Add Faculty</h2>
         </div>
-
-        <button id="closeFacultyFormButton" class="icon-button" type="button" aria-label="Close faculty form">✕</button>
+        <button id="closeFacultyFormButton" class="icon-button" type="button">✕</button>
       </div>
 
       <form id="facultyForm" class="faculty-form">
@@ -1835,6 +1834,10 @@ public class Main {
 
         <label>Email
           <input id="facultyEmailInput" type="email" required />
+        </label>
+
+        <label>LeetCode Username
+          <input id="facultyLeetCodeUsernameInput" type="text" required />
         </label>
 
         <div class="faculty-form-actions">
