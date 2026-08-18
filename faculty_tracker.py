@@ -8,11 +8,11 @@ from typing import Any
 
 import requests
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv(
     "SUPABASE_SERVICE_ROLE_KEY",
     "",
-)
+).strip()
 
 LEETCODE_URL = "https://leetcode.com/graphql"
 MAX_WORKERS = 20
