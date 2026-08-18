@@ -281,6 +281,15 @@
           </button>
 
           <button
+            id="downloadFacultyExcelButton"
+            class="action-button secondary faculty-view-only"
+            type="button"
+            hidden
+          >
+            Excel
+          </button>
+
+          <button
             id="addProfileButton"
             class="action-button primary admin-only"
             type="button"
@@ -350,8 +359,8 @@
               <tr id="tableHeaderRow">
                 <th>Rank</th>
                 <th class="overall-only" hidden>Section</th>
-                <th>Register Number</th>
-                <th>Student</th>
+                <th id="identifierHeader">Register Number</th>
+                <th id="personHeader">Student</th>
                 <th>LeetCode</th>
                 <th>30 Days</th>
                 <th>7 Days</th>
@@ -1853,6 +1862,7 @@ public class Main {
   <!-- Scripts MUST stay at the end so Coding Test buttons/forms exist before JS binds events -->
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="script.js"></script>
 
 </body>

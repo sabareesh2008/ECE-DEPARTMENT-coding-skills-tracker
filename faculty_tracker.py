@@ -201,6 +201,40 @@ def load_faculties() -> list[dict[str, Any]]:
     return response.json()
 
 
+
+def save_history_snapshot(
+    faculty_id: int,
+    profile: dict[str, Any],
+) -> None:
+    today = datetime.now(IST).date().isoformat()
+
+    payload = {
+        "faculty_id": faculty_id,
+        "activity_date": today,
+        "total_solved": int(profile.get("total_solved", 0) or 0),
+        "solved_today": int(profile.get("solved_today", 0) or 0),
+        "easy": int(profile.get("easy", 0) or 0),
+        "medium": int(profile.get("medium", 0) or 0),
+        "hard": int(profile.get("hard", 0) or 0),
+        "updated_at": datetime.now(IST).isoformat(),
+    }
+
+    response = requests.post(
+        f"{SUPABASE_URL}/rest/v1/faculty_activity_history",
+        headers={
+            **headers(),
+            "Prefer": "resolution=merge-duplicates,return=minimal",
+        },
+        params={
+            "on_conflict": "faculty_id,activity_date",
+        },
+        json=payload,
+        timeout=30,
+    )
+
+    response.raise_for_status()
+
+
 def update_faculty(
     faculty: dict[str, Any],
 ) -> tuple[str, str]:
@@ -227,6 +261,11 @@ def update_faculty(
     )
 
     response.raise_for_status()
+
+    save_history_snapshot(
+        faculty_id,
+        profile,
+    )
 
     return (
         str(faculty.get("faculty_name") or faculty.get("faculty_id")),

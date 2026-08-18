@@ -3587,3 +3587,23 @@ body.modal-open {
     color: #fca5a5;
     border-color: rgba(248,113,113,.3);
 }
+
+
+/* ==========================================================
+   FACULTY = SAME LEADERBOARD / SAME PROFILE UI
+   ========================================================== */
+
+.faculty-view-only[hidden] {
+    display: none !important;
+}
+
+body:has(#currentViewLabel:not(:empty)) #studentTable {
+    transition: none;
+}
+
+/* Faculty uses the exact student profile panel/chart/card components. */
+.student-profile-panel .profile-section-line .section-pill {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

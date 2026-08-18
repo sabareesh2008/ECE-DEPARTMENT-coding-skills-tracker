@@ -16,6 +16,9 @@ let codingAnalyticsLoaded = false;
 
 let facultyMembers = [];
 let facultyLoaded = false;
+let facultyViewRows = [];
+let facultyHistoryRows = [];
+let currentProfileMode = "student";
 
 let selectedSection = null;
 let pendingDeleteId = null;
@@ -512,6 +515,10 @@ function updateLastUpdated() {
 
 
 function getCurrentViewStudents() {
+  if (selectedSection === "FACULTY") {
+    return [...facultyViewRows];
+  }
+
   if (selectedSection === "OVERALL") {
     return [...allStudents];
   }
@@ -523,6 +530,10 @@ function getCurrentViewStudents() {
 
 
 function getDisplayRank(student) {
+  if (selectedSection === "FACULTY") {
+    return student["Overall Rank"];
+  }
+
   if (selectedSection === "OVERALL") {
     return student["Overall Rank"];
   }
@@ -547,6 +558,7 @@ function renderStudents(students) {
   visibleStudents = students;
 
   const overall = selectedSection === "OVERALL";
+  const facultyView = selectedSection === "FACULTY";
   const columnCount = overall ? 13 : 12;
 
   document.querySelectorAll(".overall-only").forEach((element) => {
@@ -598,10 +610,19 @@ function renderStudents(students) {
           <button
             class="student-name student-profile-link"
             type="button"
-            data-profile-register="${escapeHTML(student["Register Number"])}"
-            title="Open student progress profile"
+            ${facultyView
+              ? `data-profile-faculty="${escapeHTML(student["__facultyDbId"])}"`
+              : `data-profile-register="${escapeHTML(student["Register Number"])}"`
+            }
+            title="${facultyView
+              ? "Open faculty progress profile"
+              : "Open student progress profile"
+            }"
           >
-            ${escapeHTML(student["Student Name"] || "Student")} ↗
+            ${escapeHTML(
+              student["Student Name"]
+              || (facultyView ? "Faculty" : "Student")
+            )} ↗
           </button>
         </td>
 
@@ -658,7 +679,9 @@ function applySearch() {
   renderStudents(students);
 
   messageElement.textContent =
-    `${students.length} student(s) shown`;
+    selectedSection === "FACULTY"
+      ? `${students.length} faculty member(s) shown`
+      : `${students.length} student(s) shown`;
 }
 
 
@@ -669,16 +692,64 @@ function openSection(section) {
   sectionHome.hidden = true;
   leaderboardView.hidden = false;
 
-  if (section === "OVERALL") {
-    currentViewLabel.textContent = "DEPARTMENT";
-    currentViewTitle.textContent = "Overall ECE Leaderboard";
-    printTitle.textContent = "Overall ECE LeetCode Leaderboard";
-    rankLegendText.textContent = "Overall Rank";
+  const identifierHeader =
+    document.getElementById("identifierHeader");
+
+  const personHeader =
+    document.getElementById("personHeader");
+
+  const facultyExcel =
+    document.getElementById("downloadFacultyExcelButton");
+
+  const addProfile =
+    document.getElementById("addProfileButton");
+
+  const manageButton =
+    document.getElementById("manageStudentsButton");
+
+  if (section === "FACULTY") {
+    currentViewLabel.textContent = "FACULTY";
+    currentViewTitle.textContent = "Faculty LeetCode Leaderboard";
+    printTitle.textContent = "ECE Faculty LeetCode Leaderboard";
+    rankLegendText.textContent = "Faculty Rank";
+
+    if (identifierHeader) identifierHeader.textContent = "Faculty ID";
+    if (personHeader) personHeader.textContent = "Faculty";
+
+    if (facultyExcel) facultyExcel.hidden = false;
+
+    if (addProfile) {
+      addProfile.textContent = "+ Add Faculty";
+    }
+
+    if (manageButton) {
+      manageButton.textContent = "Manage Faculty";
+    }
   } else {
-    currentViewLabel.textContent = "SECTION";
-    currentViewTitle.textContent = `${section} Leaderboard`;
-    printTitle.textContent = `${section} LeetCode Leaderboard`;
-    rankLegendText.textContent = "Section Rank";
+    if (identifierHeader) identifierHeader.textContent = "Register Number";
+    if (personHeader) personHeader.textContent = "Student";
+
+    if (facultyExcel) facultyExcel.hidden = true;
+
+    if (addProfile) {
+      addProfile.textContent = "+ Add Profile";
+    }
+
+    if (manageButton) {
+      manageButton.textContent = "Manage Students";
+    }
+
+    if (section === "OVERALL") {
+      currentViewLabel.textContent = "DEPARTMENT";
+      currentViewTitle.textContent = "Overall ECE Leaderboard";
+      printTitle.textContent = "Overall ECE LeetCode Leaderboard";
+      rankLegendText.textContent = "Overall Rank";
+    } else {
+      currentViewLabel.textContent = "SECTION";
+      currentViewTitle.textContent = `${section} Leaderboard`;
+      printTitle.textContent = `${section} LeetCode Leaderboard`;
+      rankLegendText.textContent = "Section Rank";
+    }
   }
 
   applySearch();
@@ -1160,17 +1231,40 @@ function csvEscape(value) {
 
 
 function downloadCSV() {
+  const columns =
+    selectedSection === "FACULTY"
+      ? [
+          "Overall Rank",
+          "Register Number",
+          "Student Name",
+          "LeetCode Username",
+          "Last 30 Days",
+          "Last 7 Days",
+          "Solved Today",
+          "Problems Solved",
+          "Easy",
+          "Medium",
+          "Hard",
+          "Total Submissions",
+          "Last Problem",
+          "Last Solved",
+          "Status"
+        ]
+      : exportColumns;
+
   const rows = [
-    exportColumns,
+    columns,
     ...visibleStudents.map((student) =>
-      exportColumns.map((column) => student[column] ?? "")
+      columns.map((column) => student[column] ?? "")
     )
   ];
 
   const blob = new Blob(
     [
       "\uFEFF"
-      + rows.map((row) => row.map(csvEscape).join(",")).join("\r\n")
+      + rows.map((row) =>
+          row.map(csvEscape).join(",")
+        ).join("\r\n")
     ],
     { type: "text/csv;charset=utf-8" }
   );
@@ -1179,9 +1273,11 @@ function downloadCSV() {
   const link = document.createElement("a");
 
   const fileName =
-    selectedSection === "OVERALL"
-      ? "ECE_Overall_Leaderboard.csv"
-      : `${selectedSection.replace(" ", "_")}_Leaderboard.csv`;
+    selectedSection === "FACULTY"
+      ? "ECE_Faculty_LeetCode_Leaderboard.csv"
+      : selectedSection === "OVERALL"
+        ? "ECE_Overall_Leaderboard.csv"
+        : `${selectedSection.replace(" ", "_")}_Leaderboard.csv`;
 
   link.href = url;
   link.download = fileName;
@@ -1190,9 +1286,52 @@ function downloadCSV() {
   URL.revokeObjectURL(url);
 }
 
-
 function downloadPDF() {
   window.print();
+}
+
+function downloadFacultyExcel() {
+  if (selectedSection !== "FACULTY") return;
+
+  if (typeof XLSX === "undefined") {
+    alert("Excel library is not available. Please refresh the page.");
+    return;
+  }
+
+  const rows = visibleStudents.map((faculty) => ({
+    "Faculty Rank": faculty["Overall Rank"],
+    "Faculty ID": faculty["Register Number"],
+    "Faculty Name": faculty["Student Name"],
+    "Designation": faculty.Designation || "",
+    "Department": faculty.Section || "",
+    "Email": faculty.Email || "",
+    "LeetCode Username": faculty["LeetCode Username"],
+    "Solved Today": faculty["Solved Today"],
+    "Last 7 Days": faculty["Last 7 Days"],
+    "Last 30 Days": faculty["Last 30 Days"],
+    "Total Solved": faculty["Problems Solved"],
+    "Easy": faculty.Easy,
+    "Medium": faculty.Medium,
+    "Hard": faculty.Hard,
+    "Total Submissions": faculty["Total Submissions"],
+    "Last Problem": faculty["Last Problem"],
+    "Last Solved": faculty["Last Solved"],
+    "Status": faculty.Status
+  }));
+
+  const sheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    sheet,
+    "Faculty Leaderboard"
+  );
+
+  XLSX.writeFile(
+    workbook,
+    "ECE_Faculty_LeetCode_Leaderboard.xlsx"
+  );
 }
 
 
@@ -3132,7 +3271,387 @@ function renderDailyActivity(registerNumber) {
   }).join("");
 }
 
+
+async function loadFacultyHistory(facultyDbId) {
+  if (!supabaseClient) {
+    facultyHistoryRows = [];
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("faculty_activity_history")
+    .select("*")
+    .eq("faculty_id", facultyDbId)
+    .order("activity_date", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  facultyHistoryRows = data || [];
+}
+
+function renderFacultyProgressChart(faculty) {
+  const rows = facultyHistoryRows
+    .map((row) => ({
+      date: row.activity_date,
+      total: profileNumber(row.total_solved)
+    }))
+    .filter((row) => row.date)
+    .sort((a, b) =>
+      String(a.date).localeCompare(String(b.date))
+    );
+
+  const currentDate =
+    String(faculty["Updated At"] || "").slice(0, 10);
+
+  if (currentDate) {
+    const existing = rows.find(
+      (row) => row.date === currentDate
+    );
+
+    if (existing) {
+      existing.total =
+        profileNumber(faculty["Problems Solved"]);
+    } else {
+      rows.push({
+        date: currentDate,
+        total: profileNumber(
+          faculty["Problems Solved"]
+        )
+      });
+    }
+  }
+
+  const points = rows
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-30);
+
+  const container =
+    document.getElementById("profileProgressChart");
+
+  const range =
+    document.getElementById("profileHistoryRange");
+
+  if (!points.length) {
+    range.textContent = "";
+    container.innerHTML = `
+      <div class="profile-empty-chart">
+        Progress history will appear after faculty tracker snapshots are collected.
+      </div>
+    `;
+    return;
+  }
+
+  range.textContent =
+    points.length === 1
+      ? formatProfileDate(points[0].date)
+      : `${formatProfileDate(points[0].date)} – ${formatProfileDate(points[points.length - 1].date)}`;
+
+  if (points.length === 1) {
+    container.innerHTML = `
+      <div class="single-progress-point">
+        <span>${formatProfileDate(points[0].date)}</span>
+        <strong>${points[0].total}</strong>
+        <small>Total problems solved</small>
+      </div>
+    `;
+    return;
+  }
+
+  const width = 760;
+  const height = 260;
+  const paddingLeft = 48;
+  const paddingRight = 22;
+  const paddingTop = 24;
+  const paddingBottom = 46;
+
+  const totals = points.map((point) => point.total);
+  let minValue = Math.min(...totals);
+  let maxValue = Math.max(...totals);
+
+  if (minValue === maxValue) {
+    minValue = Math.max(0, minValue - 1);
+    maxValue += 1;
+  }
+
+  const plotWidth =
+    width - paddingLeft - paddingRight;
+
+  const plotHeight =
+    height - paddingTop - paddingBottom;
+
+  const xFor = (index) =>
+    paddingLeft
+    + (index / (points.length - 1))
+      * plotWidth;
+
+  const yFor = (value) =>
+    paddingTop
+    + ((maxValue - value)
+      / (maxValue - minValue))
+      * plotHeight;
+
+  const polyline = points
+    .map(
+      (point, index) =>
+        `${xFor(index)},${yFor(point.total)}`
+    )
+    .join(" ");
+
+  const gridValues = [
+    maxValue,
+    Math.round((maxValue + minValue) / 2),
+    minValue
+  ];
+
+  const grid = gridValues.map((value) => {
+    const y = yFor(value);
+
+    return `
+      <line
+        x1="${paddingLeft}"
+        y1="${y}"
+        x2="${width - paddingRight}"
+        y2="${y}"
+        class="profile-grid-line"
+      />
+      <text
+        x="${paddingLeft - 10}"
+        y="${y + 4}"
+        text-anchor="end"
+        class="profile-axis-text"
+      >${value}</text>
+    `;
+  }).join("");
+
+  const circles = points.map(
+    (point, index) => `
+      <circle
+        cx="${xFor(index)}"
+        cy="${yFor(point.total)}"
+        r="5"
+        class="profile-line-point"
+      >
+        <title>${formatProfileDate(point.date)}: ${point.total} solved</title>
+      </circle>
+    `
+  ).join("");
+
+  const labelIndexes = [...new Set([
+    0,
+    Math.floor((points.length - 1) / 2),
+    points.length - 1
+  ])];
+
+  const labels = labelIndexes.map(
+    (index) => `
+      <text
+        x="${xFor(index)}"
+        y="${height - 14}"
+        text-anchor="middle"
+        class="profile-axis-text"
+      >${formatProfileDate(points[index].date)}</text>
+    `
+  ).join("");
+
+  container.innerHTML = `
+    <svg
+      class="profile-progress-svg"
+      viewBox="0 0 ${width} ${height}"
+      role="img"
+      aria-label="Faculty problems solved over time"
+    >
+      ${grid}
+      <polyline
+        points="${polyline}"
+        class="profile-line-path"
+      ></polyline>
+      ${circles}
+      ${labels}
+    </svg>
+  `;
+}
+
+function renderFacultyDailyActivity() {
+  const rows = facultyHistoryRows
+    .map((row) => ({
+      date: row.activity_date,
+      solved: profileNumber(row.solved_today)
+    }))
+    .filter((row) => row.date)
+    .sort((a, b) =>
+      String(a.date).localeCompare(String(b.date))
+    )
+    .slice(-14);
+
+  const container =
+    document.getElementById("profileDailyActivity");
+
+  if (!rows.length) {
+    container.innerHTML = `
+      <div class="profile-empty-chart">
+        Daily activity will appear after faculty tracker snapshots are collected.
+      </div>
+    `;
+    return;
+  }
+
+  const maximum =
+    Math.max(1, ...rows.map((row) => row.solved));
+
+  container.innerHTML = rows.map((row) => {
+    const width =
+      row.solved === 0
+        ? 0
+        : Math.max(
+            7,
+            (row.solved / maximum) * 100
+          );
+
+    return `
+      <div class="activity-row">
+        <span class="activity-date">
+          ${formatProfileDate(row.date)}
+        </span>
+
+        <div class="activity-track">
+          <span
+            class="activity-fill"
+            style="width:${width}%"
+          ></span>
+        </div>
+
+        <strong>${row.solved}</strong>
+      </div>
+    `;
+  }).join("");
+}
+
+async function openFacultyProgressProfile(facultyDbId) {
+  const faculty = facultyViewRows.find(
+    (item) =>
+      String(item["__facultyDbId"])
+      === String(facultyDbId)
+  );
+
+  if (!faculty) return;
+
+  currentProfileMode = "faculty";
+
+  studentProfileModal.hidden = false;
+  document.body.classList.add("modal-open");
+
+  const initials = String(
+    faculty["Student Name"] || "F"
+  )
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+
+  document.getElementById("studentAvatar").textContent =
+    initials || "F";
+
+  document.getElementById("studentProfileName").textContent =
+    faculty["Student Name"] || "Faculty";
+
+  document.getElementById("profileRegisterNumber").textContent =
+    `Faculty ID: ${faculty["Register Number"] || "–"}`;
+
+  document.getElementById("profileUsername").textContent =
+    `@${faculty["LeetCode Username"] || "username"}`;
+
+  document.getElementById("profileSection").textContent =
+    faculty.Designation || "FACULTY";
+
+  document.getElementById("profileStatus").textContent =
+    faculty.Status || "Unknown";
+
+  document.getElementById("profileSectionRank").textContent =
+    `#${faculty["Overall Rank"] || "–"}`;
+
+  document.getElementById("profileOverallRank").textContent =
+    `#${faculty["Overall Rank"] || "–"}`;
+
+  document.getElementById("profileTotalSolved").textContent =
+    faculty["Problems Solved"] || "0";
+
+  document.getElementById("profile30Days").textContent =
+    faculty["Last 30 Days"] || "0";
+
+  document.getElementById("profile7Days").textContent =
+    faculty["Last 7 Days"] || "0";
+
+  document.getElementById("profileToday").textContent =
+    faculty["Solved Today"] || "0";
+
+  document.getElementById("profileLastProblem").textContent =
+    faculty["Last Problem"] || "–";
+
+  document.getElementById("profileLastSolved").textContent =
+    faculty["Last Solved"] || "–";
+
+  const leetCodeLink =
+    document.getElementById("profileLeetCodeLink");
+
+  leetCodeLink.href =
+    faculty["LeetCode Link"]
+    || `https://leetcode.com/u/${encodeURIComponent(
+      faculty["LeetCode Username"] || ""
+    )}/`;
+
+  renderDifficultyChart(faculty);
+
+  // Keep EXACTLY the same student profile UI, while student-only
+  // Daily Challenge / Coding Test modules are hidden for faculty.
+  const challengeCard =
+    document.querySelector(".profile-challenge-card");
+
+  const codingCard =
+    document.querySelector(".profile-coding-test-card");
+
+  if (challengeCard) challengeCard.hidden = true;
+  if (codingCard) codingCard.hidden = true;
+
+  document.getElementById("profileProgressChart").innerHTML =
+    `<div class="profile-empty-chart">Loading progress...</div>`;
+
+  document.getElementById("profileDailyActivity").innerHTML =
+    `<div class="profile-empty-chart">Loading activity...</div>`;
+
+  try {
+    await loadFacultyHistory(
+      faculty["__facultyDbId"]
+    );
+
+    renderFacultyProgressChart(faculty);
+    renderFacultyDailyActivity();
+  } catch (error) {
+    console.error(error);
+
+    document.getElementById("profileProgressChart").innerHTML =
+      `<div class="profile-empty-chart">Unable to load faculty history.</div>`;
+
+    document.getElementById("profileDailyActivity").innerHTML =
+      `<div class="profile-empty-chart">Unable to load faculty activity.</div>`;
+  }
+}
+
 async function openStudentProfile(registerNumber) {
+  currentProfileMode = "student";
+
+  const challengeCard =
+    document.querySelector(".profile-challenge-card");
+
+  const codingCard =
+    document.querySelector(".profile-coding-test-card");
+
+  if (challengeCard) challengeCard.hidden = false;
+  if (codingCard) codingCard.hidden = false;
+
   const student = allStudents.find(
     (item) =>
       String(item["Register Number"]) === String(registerNumber)
@@ -3265,6 +3784,7 @@ async function openStudentProfile(registerNumber) {
 }
 
 function closeStudentProfile() {
+  currentProfileMode = "student";
   studentProfileModal.hidden = true;
 
   // Keep scrolling locked only if another modal is still open.
@@ -3281,11 +3801,24 @@ function closeStudentProfile() {
 }
 
 tableBody.addEventListener("click", (event) => {
-  const profileButton = event.target.closest("[data-profile-register]");
+  const facultyButton =
+    event.target.closest("[data-profile-faculty]");
+
+  if (facultyButton) {
+    openFacultyProgressProfile(
+      facultyButton.dataset.profileFaculty
+    );
+    return;
+  }
+
+  const profileButton =
+    event.target.closest("[data-profile-register]");
 
   if (!profileButton) return;
 
-  openStudentProfile(profileButton.dataset.profileRegister);
+  openStudentProfile(
+    profileButton.dataset.profileRegister
+  );
 });
 
 closeStudentProfileButton.addEventListener("click", closeStudentProfile);
@@ -3633,6 +4166,53 @@ async function loadFacultyData() {
     facultyMembers = data || [];
     facultyLoaded = true;
 
+    const ranked = [...facultyMembers].sort((a, b) => {
+      const totalDiff =
+        Number(b.total_solved || 0) - Number(a.total_solved || 0);
+
+      if (totalDiff !== 0) return totalDiff;
+
+      return String(a.faculty_id || "").localeCompare(
+        String(b.faculty_id || ""),
+        undefined,
+        { numeric: true }
+      );
+    });
+
+    const rankById = new Map(
+      ranked.map((faculty, index) => [
+        String(faculty.id),
+        index + 1
+      ])
+    );
+
+    facultyViewRows = facultyMembers.map((faculty) => ({
+      "__faculty": true,
+      "__facultyDbId": faculty.id,
+      "Overall Rank": rankById.get(String(faculty.id)) || "–",
+      "Section Rank": rankById.get(String(faculty.id)) || "–",
+      "Register Number": faculty.faculty_id || "",
+      "Student Name": faculty.faculty_name || "",
+      "Section": faculty.department || "ECE",
+      "Designation": faculty.designation || "",
+      "Email": faculty.email || "",
+      "LeetCode Username": faculty.leetcode_username || "",
+      "LeetCode Link":
+        `https://leetcode.com/u/${faculty.leetcode_username || ""}/`,
+      "Problems Solved": Number(faculty.total_solved || 0),
+      "Solved Today": Number(faculty.solved_today || 0),
+      "Last 7 Days": Number(faculty.last_7_days || 0),
+      "Last 30 Days": Number(faculty.last_30_days || 0),
+      "Easy": Number(faculty.easy || 0),
+      "Medium": Number(faculty.medium || 0),
+      "Hard": Number(faculty.hard || 0),
+      "Total Submissions": Number(faculty.total_submissions || 0),
+      "Last Problem": faculty.last_problem || "",
+      "Last Solved": faculty.last_solved || "",
+      "Status": faculty.status || "Pending",
+      "Updated At": faculty.updated_at || faculty.tracked_at || ""
+    }));
+
     const count = document.getElementById("countFaculty");
     if (count) count.textContent = facultyMembers.length;
 
@@ -3652,13 +4232,20 @@ async function loadFacultyData() {
     if (solved7El) solved7El.textContent = solved7;
 
     renderFacultyDirectory();
+
+    if (selectedSection === "FACULTY") {
+      applySearch();
+    }
   } catch (error) {
     console.error("Faculty data load failed:", error);
+
     const body = document.getElementById("facultyTableBody");
     if (body) {
       body.innerHTML = `
         <tr>
-          <td colspan="11" class="loading-row">Unable to load faculty data.</td>
+          <td colspan="11" class="loading-row">
+            Unable to load faculty data.
+          </td>
         </tr>
       `;
     }
@@ -3923,7 +4510,14 @@ homeAddProfileButton.addEventListener("click", openAddModal);
 syncNowButton.addEventListener("click", triggerLeetCodeSync);
 homeSyncNowButton.addEventListener("click", triggerLeetCodeSync);
 
-manageStudentsButton.addEventListener("click", openManageStudents);
+manageStudentsButton.addEventListener("click", () => {
+  if (selectedSection === "FACULTY") {
+    openFacultyDirectory();
+    return;
+  }
+
+  openManageStudents();
+});
 homeManageStudentsButton.addEventListener("click", openManageStudents);
 
 closeManageStudents.addEventListener("click", closeManageStudentsModal);
@@ -6340,7 +6934,7 @@ codingEl(
 
 
 document.getElementById("facultySectionCard")
-  ?.addEventListener("click", openFacultyDirectory);
+  ?.addEventListener("click", () => openSection("FACULTY"));
 
 document.getElementById("closeFacultyDirectoryButton")
   ?.addEventListener("click", closeFacultyDirectory);
@@ -6370,5 +6964,9 @@ document.getElementById("facultyForm")
 
 document.getElementById("facultyTableBody")
   ?.addEventListener("click", handleFacultyTableClick);
+
+
+document.getElementById("downloadFacultyExcelButton")
+  ?.addEventListener("click", downloadFacultyExcel);
 
 refreshCodingAdminLocks();
