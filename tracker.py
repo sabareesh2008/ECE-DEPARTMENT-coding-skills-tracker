@@ -36,7 +36,7 @@ SUPABASE_URL = (
 SUPABASE_SERVICE_ROLE_KEY = os.getenv(
     "SUPABASE_SERVICE_ROLE_KEY",
     "",
-)
+).strip()
 
 LEETCODE_URL = "https://leetcode.com/graphql"
 
@@ -1719,6 +1719,132 @@ def build_daily_activity(
     ]
 
 
+
+# ============================================================
+# AI PERFORMANCE ANALYST — SUPABASE DATA MART SYNC
+# ============================================================
+def _postgrest_upsert(
+    table: str,
+    rows: list[dict[str, Any]],
+    on_conflict: str,
+) -> None:
+    if not rows:
+        return
+
+    url = (
+        f"{SUPABASE_URL}/rest/v1/{table}"
+        f"?on_conflict={on_conflict}"
+    )
+
+    headers = {
+        "apikey": SUPABASE_SERVICE_ROLE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=minimal",
+    }
+
+    # Chunk payloads to stay comfortably below request-size limits.
+    chunk_size = 150
+
+    for start in range(0, len(rows), chunk_size):
+        response = requests.post(
+            url,
+            headers=headers,
+            json=rows[start:start + chunk_size],
+            timeout=45,
+        )
+
+        response.raise_for_status()
+
+
+def sync_ai_performance_tables(live_data: pd.DataFrame) -> None:
+    """Publish deterministic tracker metrics to Supabase for the AI analyst."""
+
+    if (
+        not SUPABASE_URL
+        or not SUPABASE_SERVICE_ROLE_KEY
+        or live_data.empty
+    ):
+        return
+
+    now = datetime.now(IST)
+    snapshot_date = now.date().isoformat()
+    updated_at = now.isoformat()
+
+    current_rows: list[dict[str, Any]] = []
+    history_rows: list[dict[str, Any]] = []
+
+    def number(row: pd.Series, column: str) -> int:
+        try:
+            value = row.get(column, 0)
+            if pd.isna(value):
+                return 0
+            return int(float(value))
+        except (TypeError, ValueError):
+            return 0
+
+    for _, row in live_data.iterrows():
+        register_number = clean(row.get("Register Number", ""))
+
+        if not register_number:
+            continue
+
+        current_rows.append({
+            "register_number": register_number,
+            "student_name": clean(row.get("Student Name", "")),
+            "section": clean(row.get("Section", "")),
+            "leetcode_username": clean(row.get("LeetCode Username", "")),
+            "total_solved": number(row, "Problems Solved"),
+            "solved_today": number(row, "Solved Today"),
+            "last_7_days": number(row, "Last 7 Days"),
+            "last_30_days": number(row, "Last 30 Days"),
+            "total_submissions": number(row, "Total Submissions"),
+            "easy": number(row, "Easy"),
+            "medium": number(row, "Medium"),
+            "hard": number(row, "Hard"),
+            "last_problem": clean(row.get("Last Problem", "")),
+            "last_solved": clean(row.get("Last Solved", "")),
+            "status": clean(row.get("Status", "Pending")) or "Pending",
+            "overall_rank": number(row, "Overall Rank") or None,
+            "section_rank": number(row, "Section Rank") or None,
+            "updated_at": updated_at,
+        })
+
+        history_rows.append({
+            "register_number": register_number,
+            "snapshot_date": snapshot_date,
+            "total_solved": number(row, "Problems Solved"),
+            "solved_today": number(row, "Solved Today"),
+            "last_7_days": number(row, "Last 7 Days"),
+            "last_30_days": number(row, "Last 30 Days"),
+            "easy": number(row, "Easy"),
+            "medium": number(row, "Medium"),
+            "hard": number(row, "Hard"),
+            "updated_at": updated_at,
+        })
+
+    try:
+        _postgrest_upsert(
+            "student_performance_current",
+            current_rows,
+            "register_number",
+        )
+
+        _postgrest_upsert(
+            "student_performance_history",
+            history_rows,
+            "register_number,snapshot_date",
+        )
+
+        print(
+            f"AI analytics sync: {len(current_rows)} current profiles "
+            f"+ {len(history_rows)} daily snapshots."
+        )
+
+    except Exception as error:
+        # The normal CSV tracker must continue even when the optional AI mart is unavailable.
+        print(f"[AI ANALYTICS SYNC WARNING] {error}")
+
 # ============================================================
 # MAIN UPDATE
 # ============================================================
@@ -1959,6 +2085,10 @@ def run_one_update() -> None:
     atomic_csv_write(
         daily_activity,
         DAILY_ACTIVITY_CSV,
+    )
+
+    sync_ai_performance_tables(
+        live_data,
     )
 
     print("=" * 64)

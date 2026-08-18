@@ -16,9 +16,9 @@ let codingAnalyticsLoaded = false;
 
 let facultyMembers = [];
 let facultyLoaded = false;
-let facultyViewRows = [];
-let facultyHistoryRows = [];
-let currentProfileMode = "student";
+
+let aiChatHistory = [];
+let aiChatBusy = false;
 
 let selectedSection = null;
 let pendingDeleteId = null;
@@ -63,6 +63,15 @@ const homeSyncNowButton = document.getElementById("homeSyncNowButton");
 const homeManageStudentsButton = document.getElementById("homeManageStudentsButton");
 const homeFacultyAnalyticsButton = document.getElementById("homeFacultyAnalyticsButton");
 const facultyAnalyticsButton = document.getElementById("facultyAnalyticsButton");
+const homeAiAnalystButton = document.getElementById("homeAiAnalystButton");
+const aiAnalystButton = document.getElementById("aiAnalystButton");
+const aiAnalystModal = document.getElementById("aiAnalystModal");
+const aiChatForm = document.getElementById("aiChatForm");
+const aiChatInput = document.getElementById("aiChatInput");
+const aiChatMessages = document.getElementById("aiChatMessages");
+const aiChatStatus = document.getElementById("aiChatStatus");
+const aiDownloadArea = document.getElementById("aiDownloadArea");
+const sendAiChatButton = document.getElementById("sendAiChatButton");
 
 const profileModal = document.getElementById("profileModal");
 const profileForm = document.getElementById("profileForm");
@@ -515,10 +524,6 @@ function updateLastUpdated() {
 
 
 function getCurrentViewStudents() {
-  if (selectedSection === "FACULTY") {
-    return [...facultyViewRows];
-  }
-
   if (selectedSection === "OVERALL") {
     return [...allStudents];
   }
@@ -530,10 +535,6 @@ function getCurrentViewStudents() {
 
 
 function getDisplayRank(student) {
-  if (selectedSection === "FACULTY") {
-    return student["Overall Rank"];
-  }
-
   if (selectedSection === "OVERALL") {
     return student["Overall Rank"];
   }
@@ -558,7 +559,6 @@ function renderStudents(students) {
   visibleStudents = students;
 
   const overall = selectedSection === "OVERALL";
-  const facultyView = selectedSection === "FACULTY";
   const columnCount = overall ? 13 : 12;
 
   document.querySelectorAll(".overall-only").forEach((element) => {
@@ -610,19 +610,10 @@ function renderStudents(students) {
           <button
             class="student-name student-profile-link"
             type="button"
-            ${facultyView
-              ? `data-profile-faculty="${escapeHTML(student["__facultyDbId"])}"`
-              : `data-profile-register="${escapeHTML(student["Register Number"])}"`
-            }
-            title="${facultyView
-              ? "Open faculty progress profile"
-              : "Open student progress profile"
-            }"
+            data-profile-register="${escapeHTML(student["Register Number"])}"
+            title="Open student progress profile"
           >
-            ${escapeHTML(
-              student["Student Name"]
-              || (facultyView ? "Faculty" : "Student")
-            )} ↗
+            ${escapeHTML(student["Student Name"] || "Student")} ↗
           </button>
         </td>
 
@@ -679,9 +670,7 @@ function applySearch() {
   renderStudents(students);
 
   messageElement.textContent =
-    selectedSection === "FACULTY"
-      ? `${students.length} faculty member(s) shown`
-      : `${students.length} student(s) shown`;
+    `${students.length} student(s) shown`;
 }
 
 
@@ -692,64 +681,16 @@ function openSection(section) {
   sectionHome.hidden = true;
   leaderboardView.hidden = false;
 
-  const identifierHeader =
-    document.getElementById("identifierHeader");
-
-  const personHeader =
-    document.getElementById("personHeader");
-
-  const facultyExcel =
-    document.getElementById("downloadFacultyExcelButton");
-
-  const addProfile =
-    document.getElementById("addProfileButton");
-
-  const manageButton =
-    document.getElementById("manageStudentsButton");
-
-  if (section === "FACULTY") {
-    currentViewLabel.textContent = "FACULTY";
-    currentViewTitle.textContent = "Faculty LeetCode Leaderboard";
-    printTitle.textContent = "ECE Faculty LeetCode Leaderboard";
-    rankLegendText.textContent = "Faculty Rank";
-
-    if (identifierHeader) identifierHeader.textContent = "Faculty ID";
-    if (personHeader) personHeader.textContent = "Faculty";
-
-    if (facultyExcel) facultyExcel.hidden = false;
-
-    if (addProfile) {
-      addProfile.textContent = "+ Add Faculty";
-    }
-
-    if (manageButton) {
-      manageButton.textContent = "Manage Faculty";
-    }
+  if (section === "OVERALL") {
+    currentViewLabel.textContent = "DEPARTMENT";
+    currentViewTitle.textContent = "Overall ECE Leaderboard";
+    printTitle.textContent = "Overall ECE LeetCode Leaderboard";
+    rankLegendText.textContent = "Overall Rank";
   } else {
-    if (identifierHeader) identifierHeader.textContent = "Register Number";
-    if (personHeader) personHeader.textContent = "Student";
-
-    if (facultyExcel) facultyExcel.hidden = true;
-
-    if (addProfile) {
-      addProfile.textContent = "+ Add Profile";
-    }
-
-    if (manageButton) {
-      manageButton.textContent = "Manage Students";
-    }
-
-    if (section === "OVERALL") {
-      currentViewLabel.textContent = "DEPARTMENT";
-      currentViewTitle.textContent = "Overall ECE Leaderboard";
-      printTitle.textContent = "Overall ECE LeetCode Leaderboard";
-      rankLegendText.textContent = "Overall Rank";
-    } else {
-      currentViewLabel.textContent = "SECTION";
-      currentViewTitle.textContent = `${section} Leaderboard`;
-      printTitle.textContent = `${section} LeetCode Leaderboard`;
-      rankLegendText.textContent = "Section Rank";
-    }
+    currentViewLabel.textContent = "SECTION";
+    currentViewTitle.textContent = `${section} Leaderboard`;
+    printTitle.textContent = `${section} LeetCode Leaderboard`;
+    rankLegendText.textContent = "Section Rank";
   }
 
   applySearch();
@@ -1231,40 +1172,17 @@ function csvEscape(value) {
 
 
 function downloadCSV() {
-  const columns =
-    selectedSection === "FACULTY"
-      ? [
-          "Overall Rank",
-          "Register Number",
-          "Student Name",
-          "LeetCode Username",
-          "Last 30 Days",
-          "Last 7 Days",
-          "Solved Today",
-          "Problems Solved",
-          "Easy",
-          "Medium",
-          "Hard",
-          "Total Submissions",
-          "Last Problem",
-          "Last Solved",
-          "Status"
-        ]
-      : exportColumns;
-
   const rows = [
-    columns,
+    exportColumns,
     ...visibleStudents.map((student) =>
-      columns.map((column) => student[column] ?? "")
+      exportColumns.map((column) => student[column] ?? "")
     )
   ];
 
   const blob = new Blob(
     [
       "\uFEFF"
-      + rows.map((row) =>
-          row.map(csvEscape).join(",")
-        ).join("\r\n")
+      + rows.map((row) => row.map(csvEscape).join(",")).join("\r\n")
     ],
     { type: "text/csv;charset=utf-8" }
   );
@@ -1273,11 +1191,9 @@ function downloadCSV() {
   const link = document.createElement("a");
 
   const fileName =
-    selectedSection === "FACULTY"
-      ? "ECE_Faculty_LeetCode_Leaderboard.csv"
-      : selectedSection === "OVERALL"
-        ? "ECE_Overall_Leaderboard.csv"
-        : `${selectedSection.replace(" ", "_")}_Leaderboard.csv`;
+    selectedSection === "OVERALL"
+      ? "ECE_Overall_Leaderboard.csv"
+      : `${selectedSection.replace(" ", "_")}_Leaderboard.csv`;
 
   link.href = url;
   link.download = fileName;
@@ -1286,52 +1202,9 @@ function downloadCSV() {
   URL.revokeObjectURL(url);
 }
 
+
 function downloadPDF() {
   window.print();
-}
-
-function downloadFacultyExcel() {
-  if (selectedSection !== "FACULTY") return;
-
-  if (typeof XLSX === "undefined") {
-    alert("Excel library is not available. Please refresh the page.");
-    return;
-  }
-
-  const rows = visibleStudents.map((faculty) => ({
-    "Faculty Rank": faculty["Overall Rank"],
-    "Faculty ID": faculty["Register Number"],
-    "Faculty Name": faculty["Student Name"],
-    "Designation": faculty.Designation || "",
-    "Department": faculty.Section || "",
-    "Email": faculty.Email || "",
-    "LeetCode Username": faculty["LeetCode Username"],
-    "Solved Today": faculty["Solved Today"],
-    "Last 7 Days": faculty["Last 7 Days"],
-    "Last 30 Days": faculty["Last 30 Days"],
-    "Total Solved": faculty["Problems Solved"],
-    "Easy": faculty.Easy,
-    "Medium": faculty.Medium,
-    "Hard": faculty.Hard,
-    "Total Submissions": faculty["Total Submissions"],
-    "Last Problem": faculty["Last Problem"],
-    "Last Solved": faculty["Last Solved"],
-    "Status": faculty.Status
-  }));
-
-  const sheet = XLSX.utils.json_to_sheet(rows);
-  const workbook = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(
-    workbook,
-    sheet,
-    "Faculty Leaderboard"
-  );
-
-  XLSX.writeFile(
-    workbook,
-    "ECE_Faculty_LeetCode_Leaderboard.xlsx"
-  );
 }
 
 
@@ -3271,387 +3144,7 @@ function renderDailyActivity(registerNumber) {
   }).join("");
 }
 
-
-async function loadFacultyHistory(facultyDbId) {
-  if (!supabaseClient) {
-    facultyHistoryRows = [];
-    return;
-  }
-
-  const { data, error } = await supabaseClient
-    .from("faculty_activity_history")
-    .select("*")
-    .eq("faculty_id", facultyDbId)
-    .order("activity_date", { ascending: true });
-
-  if (error) {
-    throw error;
-  }
-
-  facultyHistoryRows = data || [];
-}
-
-function renderFacultyProgressChart(faculty) {
-  const rows = facultyHistoryRows
-    .map((row) => ({
-      date: row.activity_date,
-      total: profileNumber(row.total_solved)
-    }))
-    .filter((row) => row.date)
-    .sort((a, b) =>
-      String(a.date).localeCompare(String(b.date))
-    );
-
-  const currentDate =
-    String(faculty["Updated At"] || "").slice(0, 10);
-
-  if (currentDate) {
-    const existing = rows.find(
-      (row) => row.date === currentDate
-    );
-
-    if (existing) {
-      existing.total =
-        profileNumber(faculty["Problems Solved"]);
-    } else {
-      rows.push({
-        date: currentDate,
-        total: profileNumber(
-          faculty["Problems Solved"]
-        )
-      });
-    }
-  }
-
-  const points = rows
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(-30);
-
-  const container =
-    document.getElementById("profileProgressChart");
-
-  const range =
-    document.getElementById("profileHistoryRange");
-
-  if (!points.length) {
-    range.textContent = "";
-    container.innerHTML = `
-      <div class="profile-empty-chart">
-        Progress history will appear after faculty tracker snapshots are collected.
-      </div>
-    `;
-    return;
-  }
-
-  range.textContent =
-    points.length === 1
-      ? formatProfileDate(points[0].date)
-      : `${formatProfileDate(points[0].date)} – ${formatProfileDate(points[points.length - 1].date)}`;
-
-  if (points.length === 1) {
-    container.innerHTML = `
-      <div class="single-progress-point">
-        <span>${formatProfileDate(points[0].date)}</span>
-        <strong>${points[0].total}</strong>
-        <small>Total problems solved</small>
-      </div>
-    `;
-    return;
-  }
-
-  const width = 760;
-  const height = 260;
-  const paddingLeft = 48;
-  const paddingRight = 22;
-  const paddingTop = 24;
-  const paddingBottom = 46;
-
-  const totals = points.map((point) => point.total);
-  let minValue = Math.min(...totals);
-  let maxValue = Math.max(...totals);
-
-  if (minValue === maxValue) {
-    minValue = Math.max(0, minValue - 1);
-    maxValue += 1;
-  }
-
-  const plotWidth =
-    width - paddingLeft - paddingRight;
-
-  const plotHeight =
-    height - paddingTop - paddingBottom;
-
-  const xFor = (index) =>
-    paddingLeft
-    + (index / (points.length - 1))
-      * plotWidth;
-
-  const yFor = (value) =>
-    paddingTop
-    + ((maxValue - value)
-      / (maxValue - minValue))
-      * plotHeight;
-
-  const polyline = points
-    .map(
-      (point, index) =>
-        `${xFor(index)},${yFor(point.total)}`
-    )
-    .join(" ");
-
-  const gridValues = [
-    maxValue,
-    Math.round((maxValue + minValue) / 2),
-    minValue
-  ];
-
-  const grid = gridValues.map((value) => {
-    const y = yFor(value);
-
-    return `
-      <line
-        x1="${paddingLeft}"
-        y1="${y}"
-        x2="${width - paddingRight}"
-        y2="${y}"
-        class="profile-grid-line"
-      />
-      <text
-        x="${paddingLeft - 10}"
-        y="${y + 4}"
-        text-anchor="end"
-        class="profile-axis-text"
-      >${value}</text>
-    `;
-  }).join("");
-
-  const circles = points.map(
-    (point, index) => `
-      <circle
-        cx="${xFor(index)}"
-        cy="${yFor(point.total)}"
-        r="5"
-        class="profile-line-point"
-      >
-        <title>${formatProfileDate(point.date)}: ${point.total} solved</title>
-      </circle>
-    `
-  ).join("");
-
-  const labelIndexes = [...new Set([
-    0,
-    Math.floor((points.length - 1) / 2),
-    points.length - 1
-  ])];
-
-  const labels = labelIndexes.map(
-    (index) => `
-      <text
-        x="${xFor(index)}"
-        y="${height - 14}"
-        text-anchor="middle"
-        class="profile-axis-text"
-      >${formatProfileDate(points[index].date)}</text>
-    `
-  ).join("");
-
-  container.innerHTML = `
-    <svg
-      class="profile-progress-svg"
-      viewBox="0 0 ${width} ${height}"
-      role="img"
-      aria-label="Faculty problems solved over time"
-    >
-      ${grid}
-      <polyline
-        points="${polyline}"
-        class="profile-line-path"
-      ></polyline>
-      ${circles}
-      ${labels}
-    </svg>
-  `;
-}
-
-function renderFacultyDailyActivity() {
-  const rows = facultyHistoryRows
-    .map((row) => ({
-      date: row.activity_date,
-      solved: profileNumber(row.solved_today)
-    }))
-    .filter((row) => row.date)
-    .sort((a, b) =>
-      String(a.date).localeCompare(String(b.date))
-    )
-    .slice(-14);
-
-  const container =
-    document.getElementById("profileDailyActivity");
-
-  if (!rows.length) {
-    container.innerHTML = `
-      <div class="profile-empty-chart">
-        Daily activity will appear after faculty tracker snapshots are collected.
-      </div>
-    `;
-    return;
-  }
-
-  const maximum =
-    Math.max(1, ...rows.map((row) => row.solved));
-
-  container.innerHTML = rows.map((row) => {
-    const width =
-      row.solved === 0
-        ? 0
-        : Math.max(
-            7,
-            (row.solved / maximum) * 100
-          );
-
-    return `
-      <div class="activity-row">
-        <span class="activity-date">
-          ${formatProfileDate(row.date)}
-        </span>
-
-        <div class="activity-track">
-          <span
-            class="activity-fill"
-            style="width:${width}%"
-          ></span>
-        </div>
-
-        <strong>${row.solved}</strong>
-      </div>
-    `;
-  }).join("");
-}
-
-async function openFacultyProgressProfile(facultyDbId) {
-  const faculty = facultyViewRows.find(
-    (item) =>
-      String(item["__facultyDbId"])
-      === String(facultyDbId)
-  );
-
-  if (!faculty) return;
-
-  currentProfileMode = "faculty";
-
-  studentProfileModal.hidden = false;
-  document.body.classList.add("modal-open");
-
-  const initials = String(
-    faculty["Student Name"] || "F"
-  )
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-
-  document.getElementById("studentAvatar").textContent =
-    initials || "F";
-
-  document.getElementById("studentProfileName").textContent =
-    faculty["Student Name"] || "Faculty";
-
-  document.getElementById("profileRegisterNumber").textContent =
-    `Faculty ID: ${faculty["Register Number"] || "–"}`;
-
-  document.getElementById("profileUsername").textContent =
-    `@${faculty["LeetCode Username"] || "username"}`;
-
-  document.getElementById("profileSection").textContent =
-    faculty.Designation || "FACULTY";
-
-  document.getElementById("profileStatus").textContent =
-    faculty.Status || "Unknown";
-
-  document.getElementById("profileSectionRank").textContent =
-    `#${faculty["Overall Rank"] || "–"}`;
-
-  document.getElementById("profileOverallRank").textContent =
-    `#${faculty["Overall Rank"] || "–"}`;
-
-  document.getElementById("profileTotalSolved").textContent =
-    faculty["Problems Solved"] || "0";
-
-  document.getElementById("profile30Days").textContent =
-    faculty["Last 30 Days"] || "0";
-
-  document.getElementById("profile7Days").textContent =
-    faculty["Last 7 Days"] || "0";
-
-  document.getElementById("profileToday").textContent =
-    faculty["Solved Today"] || "0";
-
-  document.getElementById("profileLastProblem").textContent =
-    faculty["Last Problem"] || "–";
-
-  document.getElementById("profileLastSolved").textContent =
-    faculty["Last Solved"] || "–";
-
-  const leetCodeLink =
-    document.getElementById("profileLeetCodeLink");
-
-  leetCodeLink.href =
-    faculty["LeetCode Link"]
-    || `https://leetcode.com/u/${encodeURIComponent(
-      faculty["LeetCode Username"] || ""
-    )}/`;
-
-  renderDifficultyChart(faculty);
-
-  // Keep EXACTLY the same student profile UI, while student-only
-  // Daily Challenge / Coding Test modules are hidden for faculty.
-  const challengeCard =
-    document.querySelector(".profile-challenge-card");
-
-  const codingCard =
-    document.querySelector(".profile-coding-test-card");
-
-  if (challengeCard) challengeCard.hidden = true;
-  if (codingCard) codingCard.hidden = true;
-
-  document.getElementById("profileProgressChart").innerHTML =
-    `<div class="profile-empty-chart">Loading progress...</div>`;
-
-  document.getElementById("profileDailyActivity").innerHTML =
-    `<div class="profile-empty-chart">Loading activity...</div>`;
-
-  try {
-    await loadFacultyHistory(
-      faculty["__facultyDbId"]
-    );
-
-    renderFacultyProgressChart(faculty);
-    renderFacultyDailyActivity();
-  } catch (error) {
-    console.error(error);
-
-    document.getElementById("profileProgressChart").innerHTML =
-      `<div class="profile-empty-chart">Unable to load faculty history.</div>`;
-
-    document.getElementById("profileDailyActivity").innerHTML =
-      `<div class="profile-empty-chart">Unable to load faculty activity.</div>`;
-  }
-}
-
 async function openStudentProfile(registerNumber) {
-  currentProfileMode = "student";
-
-  const challengeCard =
-    document.querySelector(".profile-challenge-card");
-
-  const codingCard =
-    document.querySelector(".profile-coding-test-card");
-
-  if (challengeCard) challengeCard.hidden = false;
-  if (codingCard) codingCard.hidden = false;
-
   const student = allStudents.find(
     (item) =>
       String(item["Register Number"]) === String(registerNumber)
@@ -3784,7 +3277,6 @@ async function openStudentProfile(registerNumber) {
 }
 
 function closeStudentProfile() {
-  currentProfileMode = "student";
   studentProfileModal.hidden = true;
 
   // Keep scrolling locked only if another modal is still open.
@@ -3801,24 +3293,11 @@ function closeStudentProfile() {
 }
 
 tableBody.addEventListener("click", (event) => {
-  const facultyButton =
-    event.target.closest("[data-profile-faculty]");
-
-  if (facultyButton) {
-    openFacultyProgressProfile(
-      facultyButton.dataset.profileFaculty
-    );
-    return;
-  }
-
-  const profileButton =
-    event.target.closest("[data-profile-register]");
+  const profileButton = event.target.closest("[data-profile-register]");
 
   if (!profileButton) return;
 
-  openStudentProfile(
-    profileButton.dataset.profileRegister
-  );
+  openStudentProfile(profileButton.dataset.profileRegister);
 });
 
 closeStudentProfileButton.addEventListener("click", closeStudentProfile);
@@ -4166,53 +3645,6 @@ async function loadFacultyData() {
     facultyMembers = data || [];
     facultyLoaded = true;
 
-    const ranked = [...facultyMembers].sort((a, b) => {
-      const totalDiff =
-        Number(b.total_solved || 0) - Number(a.total_solved || 0);
-
-      if (totalDiff !== 0) return totalDiff;
-
-      return String(a.faculty_id || "").localeCompare(
-        String(b.faculty_id || ""),
-        undefined,
-        { numeric: true }
-      );
-    });
-
-    const rankById = new Map(
-      ranked.map((faculty, index) => [
-        String(faculty.id),
-        index + 1
-      ])
-    );
-
-    facultyViewRows = facultyMembers.map((faculty) => ({
-      "__faculty": true,
-      "__facultyDbId": faculty.id,
-      "Overall Rank": rankById.get(String(faculty.id)) || "–",
-      "Section Rank": rankById.get(String(faculty.id)) || "–",
-      "Register Number": faculty.faculty_id || "",
-      "Student Name": faculty.faculty_name || "",
-      "Section": faculty.department || "ECE",
-      "Designation": faculty.designation || "",
-      "Email": faculty.email || "",
-      "LeetCode Username": faculty.leetcode_username || "",
-      "LeetCode Link":
-        `https://leetcode.com/u/${faculty.leetcode_username || ""}/`,
-      "Problems Solved": Number(faculty.total_solved || 0),
-      "Solved Today": Number(faculty.solved_today || 0),
-      "Last 7 Days": Number(faculty.last_7_days || 0),
-      "Last 30 Days": Number(faculty.last_30_days || 0),
-      "Easy": Number(faculty.easy || 0),
-      "Medium": Number(faculty.medium || 0),
-      "Hard": Number(faculty.hard || 0),
-      "Total Submissions": Number(faculty.total_submissions || 0),
-      "Last Problem": faculty.last_problem || "",
-      "Last Solved": faculty.last_solved || "",
-      "Status": faculty.status || "Pending",
-      "Updated At": faculty.updated_at || faculty.tracked_at || ""
-    }));
-
     const count = document.getElementById("countFaculty");
     if (count) count.textContent = facultyMembers.length;
 
@@ -4232,20 +3664,13 @@ async function loadFacultyData() {
     if (solved7El) solved7El.textContent = solved7;
 
     renderFacultyDirectory();
-
-    if (selectedSection === "FACULTY") {
-      applySearch();
-    }
   } catch (error) {
     console.error("Faculty data load failed:", error);
-
     const body = document.getElementById("facultyTableBody");
     if (body) {
       body.innerHTML = `
         <tr>
-          <td colspan="11" class="loading-row">
-            Unable to load faculty data.
-          </td>
+          <td colspan="11" class="loading-row">Unable to load faculty data.</td>
         </tr>
       `;
     }
@@ -4456,6 +3881,222 @@ function handleFacultyTableClick(event) {
   }
 }
 
+
+function openAiAnalyst() {
+  if (!isAdmin()) {
+    openAdminLogin();
+    return;
+  }
+
+  aiAnalystModal.hidden = false;
+  document.body.classList.add("modal-open");
+
+  setTimeout(() => {
+    aiChatInput?.focus();
+  }, 50);
+}
+
+function closeAiAnalyst() {
+  aiAnalystModal.hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
+function escapeAiText(value) {
+  return escapeHTML(String(value ?? ""));
+}
+
+function formatAiAnswer(text) {
+  const escaped = escapeAiText(text);
+
+  return escaped
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/^###\s+(.+)$/gm, "<h4>$1</h4>")
+    .replace(/^##\s+(.+)$/gm, "<h3>$1</h3>")
+    .replace(/^#\s+(.+)$/gm, "<h3>$1</h3>")
+    .replace(/^[-•]\s+(.+)$/gm, "<div class=\"ai-answer-bullet\">• $1</div>")
+    .replace(/\n/g, "<br>");
+}
+
+function appendAiMessage(role, text, options = {}) {
+  const article = document.createElement("article");
+  article.className = `ai-message ${role === "user" ? "ai-message-user" : "ai-message-assistant"}`;
+
+  const avatar = document.createElement("div");
+  avatar.className = "ai-message-avatar";
+  avatar.textContent = role === "user" ? "YOU" : "AI";
+
+  const content = document.createElement("div");
+  content.className = "ai-message-content";
+
+  const title = document.createElement("strong");
+  title.textContent = role === "user" ? "You" : "Performance Analyst";
+  content.appendChild(title);
+
+  const body = document.createElement("p");
+
+  if (options.thinking) {
+    body.innerHTML = `<span class="ai-thinking"><span>Analyzing live data</span><i></i><i></i><i></i></span>`;
+  } else {
+    body.innerHTML = formatAiAnswer(text);
+  }
+
+  content.appendChild(body);
+  article.appendChild(avatar);
+  article.appendChild(content);
+  aiChatMessages.appendChild(article);
+  aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+
+  return article;
+}
+
+function setAiBusy(busy) {
+  aiChatBusy = busy;
+  sendAiChatButton.disabled = busy;
+  aiChatInput.disabled = busy;
+  aiChatStatus.textContent = busy
+    ? "Analyzing tracked data..."
+    : "Admin-only analytics";
+}
+
+function clearAiChat() {
+  aiChatHistory = [];
+  aiDownloadArea.hidden = true;
+  aiDownloadArea.innerHTML = "";
+
+  aiChatMessages.innerHTML = `
+    <article class="ai-message ai-message-assistant">
+      <div class="ai-message-avatar">AI</div>
+      <div class="ai-message-content">
+        <strong>Performance Analyst</strong>
+        <p>Conversation cleared. Ask me about students, sections, faculty, challenges, coding tests or request a downloadable report.</p>
+      </div>
+    </article>
+  `;
+}
+
+function base64ToBlob(base64, mimeType) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return new Blob([bytes], { type: mimeType || "application/octet-stream" });
+}
+
+function showAiDownload(file) {
+  if (!file?.data_base64 || !file?.filename) {
+    aiDownloadArea.hidden = true;
+    aiDownloadArea.innerHTML = "";
+    return;
+  }
+
+  aiDownloadArea.hidden = false;
+  aiDownloadArea.innerHTML = `
+    <div class="ai-download-card">
+      <div>
+        <strong>📄 ${escapeHTML(file.filename)}</strong>
+        <span>${escapeHTML(file.description || "AI-generated report from current tracked data")}</span>
+      </div>
+      <button id="downloadAiGeneratedFile" class="action-button primary" type="button">Download</button>
+    </div>
+  `;
+
+  document.getElementById("downloadAiGeneratedFile")
+    ?.addEventListener("click", () => {
+      const blob = base64ToBlob(file.data_base64, file.mime_type);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = file.filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+}
+
+async function askAiPerformanceAnalyst(message) {
+  const cleanMessage = String(message || "").trim();
+
+  if (!cleanMessage || aiChatBusy) return;
+
+  if (!isAdmin()) {
+    throw new Error("Administrator login is required.");
+  }
+
+  appendAiMessage("user", cleanMessage);
+
+  aiChatHistory.push({
+    role: "user",
+    content: cleanMessage
+  });
+
+  // Keep conversations bounded for latency/cost while preserving context.
+  aiChatHistory = aiChatHistory.slice(-10);
+
+  const thinking = appendAiMessage("assistant", "", { thinking: true });
+
+  setAiBusy(true);
+  aiDownloadArea.hidden = true;
+
+  try {
+    const { data, error } = await supabaseClient.functions.invoke(
+      "ai-performance-analyst",
+      {
+        body: {
+          message: cleanMessage,
+          history: aiChatHistory.slice(0, -1)
+        }
+      }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data?.ok) {
+      throw new Error(data?.error || "AI analyst request failed.");
+    }
+
+    thinking.remove();
+
+    const answer = data.answer || "Analysis completed.";
+    appendAiMessage("assistant", answer);
+
+    aiChatHistory.push({
+      role: "assistant",
+      content: answer
+    });
+
+    aiChatHistory = aiChatHistory.slice(-10);
+
+    if (data.download) {
+      showAiDownload(data.download);
+    }
+  } catch (error) {
+    thinking.remove();
+
+    const message =
+      error?.context?.body?.error
+      || error?.message
+      || "Unable to contact the AI Performance Analyst.";
+
+    appendAiMessage(
+      "assistant",
+      `I could not complete that request. ${message}`
+    );
+
+    console.error("AI Performance Analyst error:", error);
+  } finally {
+    setAiBusy(false);
+    aiChatInput.focus();
+  }
+}
+
 async function initialize() {
   createClient();
   await loadData();
@@ -4510,14 +4151,7 @@ homeAddProfileButton.addEventListener("click", openAddModal);
 syncNowButton.addEventListener("click", triggerLeetCodeSync);
 homeSyncNowButton.addEventListener("click", triggerLeetCodeSync);
 
-manageStudentsButton.addEventListener("click", () => {
-  if (selectedSection === "FACULTY") {
-    openFacultyDirectory();
-    return;
-  }
-
-  openManageStudents();
-});
+manageStudentsButton.addEventListener("click", openManageStudents);
 homeManageStudentsButton.addEventListener("click", openManageStudents);
 
 closeManageStudents.addEventListener("click", closeManageStudentsModal);
@@ -4594,6 +4228,41 @@ document.addEventListener("keydown", (event) => {
   if (champions) champions.hidden = true;
 
   document.body.classList.remove("modal-open");
+});
+
+
+homeAiAnalystButton?.addEventListener("click", openAiAnalyst);
+aiAnalystButton?.addEventListener("click", openAiAnalyst);
+
+document.getElementById("closeAiAnalystButton")
+  ?.addEventListener("click", closeAiAnalyst);
+
+document.querySelector("[data-close-ai-analyst]")
+  ?.addEventListener("click", closeAiAnalyst);
+
+document.getElementById("clearAiChatButton")
+  ?.addEventListener("click", clearAiChat);
+
+document.querySelectorAll("[data-ai-prompt]").forEach((button) => {
+  button.addEventListener("click", () => {
+    aiChatInput.value = button.dataset.aiPrompt || "";
+    aiChatInput.focus();
+  });
+});
+
+aiChatForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const message = aiChatInput.value.trim();
+  if (!message) return;
+  aiChatInput.value = "";
+  await askAiPerformanceAnalyst(message);
+});
+
+aiChatInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    aiChatForm?.requestSubmit();
+  }
 });
 
 initialize();
@@ -6934,7 +6603,7 @@ codingEl(
 
 
 document.getElementById("facultySectionCard")
-  ?.addEventListener("click", () => openSection("FACULTY"));
+  ?.addEventListener("click", openFacultyDirectory);
 
 document.getElementById("closeFacultyDirectoryButton")
   ?.addEventListener("click", closeFacultyDirectory);
@@ -6964,9 +6633,5 @@ document.getElementById("facultyForm")
 
 document.getElementById("facultyTableBody")
   ?.addEventListener("click", handleFacultyTableClick);
-
-
-document.getElementById("downloadFacultyExcelButton")
-  ?.addEventListener("click", downloadFacultyExcel);
 
 refreshCodingAdminLocks();
