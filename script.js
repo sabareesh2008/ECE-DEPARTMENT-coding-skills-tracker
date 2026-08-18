@@ -14,6 +14,9 @@ let codingTests = [];
 let codingAttempts = [];
 let codingAnalyticsLoaded = false;
 
+let facultyMembers = [];
+let facultyLoaded = false;
+
 let selectedSection = null;
 let pendingDeleteId = null;
 
@@ -3615,6 +3618,212 @@ function renderFacultyCodingAnalytics(students) {
   }).join("");
 }
 
+
+async function loadFacultyData() {
+  if (!supabaseClient) return;
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("faculties")
+      .select("*")
+      .order("faculty_name", { ascending: true });
+
+    if (error) throw error;
+
+    facultyMembers = data || [];
+    facultyLoaded = true;
+
+    const count = document.getElementById("countFaculty");
+    if (count) count.textContent = facultyMembers.length;
+
+    renderFacultyDirectory();
+  } catch (error) {
+    console.error("Faculty data load failed:", error);
+    const body = document.getElementById("facultyTableBody");
+    if (body) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="6" class="loading-row">Unable to load faculty data.</td>
+        </tr>
+      `;
+    }
+  }
+}
+
+function openFacultyDirectory() {
+  const modal = document.getElementById("facultyDirectoryModal");
+  if (!modal) return;
+  modal.hidden = false;
+  renderFacultyDirectory();
+}
+
+function closeFacultyDirectory() {
+  const modal = document.getElementById("facultyDirectoryModal");
+  if (modal) modal.hidden = true;
+}
+
+function renderFacultyDirectory(query = "") {
+  const body = document.getElementById("facultyTableBody");
+  if (!body) return;
+
+  const q = String(query || "").trim().toLowerCase();
+
+  const rows = facultyMembers.filter((faculty) => {
+    if (!q) return true;
+
+    return [
+      faculty.faculty_id,
+      faculty.faculty_name,
+      faculty.designation,
+      faculty.department,
+      faculty.email
+    ].some((value) =>
+      String(value || "").toLowerCase().includes(q)
+    );
+  });
+
+  if (!rows.length) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="6" class="loading-row">No faculty found.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  body.innerHTML = rows.map((faculty) => `
+    <tr>
+      <td><strong>${escapeHTML(faculty.faculty_id || "–")}</strong></td>
+      <td>${escapeHTML(faculty.faculty_name || "–")}</td>
+      <td>${escapeHTML(faculty.designation || "–")}</td>
+      <td>${escapeHTML(faculty.department || "ECE")}</td>
+      <td>
+        <a href="mailto:${escapeHTML(faculty.email || "")}">
+          ${escapeHTML(faculty.email || "–")}
+        </a>
+      </td>
+      <td class="admin-only" ${isAdmin ? "" : "hidden"}>
+        <div class="faculty-row-actions">
+          <button type="button" class="mini-action-button"
+            data-edit-faculty="${escapeHTML(faculty.id)}">Edit</button>
+          <button type="button" class="mini-action-button danger"
+            data-delete-faculty="${escapeHTML(faculty.id)}">Delete</button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function openFacultyForm(faculty = null) {
+  if (!isAdmin) return;
+
+  const modal = document.getElementById("facultyFormModal");
+  if (!modal) return;
+
+  document.getElementById("facultyFormTitle").textContent =
+    faculty ? "Edit Faculty" : "Add Faculty";
+
+  document.getElementById("facultyEditId").value = faculty?.id || "";
+  document.getElementById("facultyIdInput").value = faculty?.faculty_id || "";
+  document.getElementById("facultyNameInput").value = faculty?.faculty_name || "";
+  document.getElementById("facultyDesignationInput").value = faculty?.designation || "";
+  document.getElementById("facultyDepartmentInput").value = faculty?.department || "ECE";
+  document.getElementById("facultyEmailInput").value = faculty?.email || "";
+  document.getElementById("facultyFormMessage").textContent = "";
+
+  modal.hidden = false;
+}
+
+function closeFacultyForm() {
+  const modal = document.getElementById("facultyFormModal");
+  if (modal) modal.hidden = true;
+}
+
+async function saveFaculty(event) {
+  event.preventDefault();
+
+  if (!isAdmin || !supabaseClient) return;
+
+  const id = document.getElementById("facultyEditId").value.trim();
+
+  const payload = {
+    faculty_id: document.getElementById("facultyIdInput").value.trim(),
+    faculty_name: document.getElementById("facultyNameInput").value.trim(),
+    designation: document.getElementById("facultyDesignationInput").value.trim(),
+    department: document.getElementById("facultyDepartmentInput").value.trim(),
+    email: document.getElementById("facultyEmailInput").value.trim(),
+    updated_at: new Date().toISOString()
+  };
+
+  const message = document.getElementById("facultyFormMessage");
+
+  try {
+    const result = id
+      ? await supabaseClient.from("faculties").update(payload).eq("id", id)
+      : await supabaseClient.from("faculties").insert(payload);
+
+    if (result.error) throw result.error;
+
+    message.textContent = id
+      ? "Faculty updated successfully."
+      : "Faculty added successfully.";
+
+    await loadFacultyData();
+    setTimeout(closeFacultyForm, 400);
+  } catch (error) {
+    console.error("Faculty save failed:", error);
+    message.textContent = error.message || "Unable to save faculty.";
+  }
+}
+
+async function deleteFaculty(id) {
+  if (!isAdmin || !supabaseClient) return;
+
+  const faculty = facultyMembers.find(
+    (item) => String(item.id) === String(id)
+  );
+
+  if (!window.confirm(
+    `Delete ${faculty?.faculty_name || "this faculty member"}?`
+  )) {
+    return;
+  }
+
+  try {
+    const { error } = await supabaseClient
+      .from("faculties")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+
+    await loadFacultyData();
+  } catch (error) {
+    console.error("Faculty delete failed:", error);
+    alert(error.message || "Unable to delete faculty.");
+  }
+}
+
+function handleFacultyTableClick(event) {
+  const editButton = event.target.closest("[data-edit-faculty]");
+  const deleteButton = event.target.closest("[data-delete-faculty]");
+
+  if (editButton) {
+    const faculty = facultyMembers.find(
+      (item) =>
+        String(item.id)
+        === String(editButton.dataset.editFaculty)
+    );
+
+    if (faculty) openFacultyForm(faculty);
+    return;
+  }
+
+  if (deleteButton) {
+    deleteFaculty(deleteButton.dataset.deleteFaculty);
+  }
+}
+
 async function initialize() {
   createClient();
   await loadData();
@@ -6083,5 +6292,38 @@ codingEl(
   "click",
   returnFromCodingResult
 );
+
+
+document.getElementById("facultySectionCard")
+  ?.addEventListener("click", openFacultyDirectory);
+
+document.getElementById("closeFacultyDirectoryButton")
+  ?.addEventListener("click", closeFacultyDirectory);
+
+document.querySelector("[data-close-faculty-directory]")
+  ?.addEventListener("click", closeFacultyDirectory);
+
+document.getElementById("facultySearchInput")
+  ?.addEventListener("input", (event) => {
+    renderFacultyDirectory(event.target.value);
+  });
+
+document.getElementById("addFacultyButton")
+  ?.addEventListener("click", () => openFacultyForm());
+
+document.getElementById("closeFacultyFormButton")
+  ?.addEventListener("click", closeFacultyForm);
+
+document.getElementById("cancelFacultyFormButton")
+  ?.addEventListener("click", closeFacultyForm);
+
+document.querySelector("[data-close-faculty-form]")
+  ?.addEventListener("click", closeFacultyForm);
+
+document.getElementById("facultyForm")
+  ?.addEventListener("submit", saveFaculty);
+
+document.getElementById("facultyTableBody")
+  ?.addEventListener("click", handleFacultyTableClick);
 
 refreshCodingAdminLocks();

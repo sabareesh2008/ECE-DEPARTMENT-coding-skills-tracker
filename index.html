@@ -160,6 +160,14 @@
             <span>💻 Latest Test Passed <strong id="codingPassedOverall">0/0</strong></span>
           </div>
         </button>
+        <button class="section-card faculty-card" id="facultySectionCard" type="button">
+          <span class="section-card-title">👨‍🏫 Faculty</span>
+          <strong id="countFaculty">0</strong>
+          <span>Faculty Members</span>
+          <div class="section-challenge-mini">
+            <span>📋 Directory & Contacts</span>
+          </div>
+        </button>
 
         <button
           id="championsCardButton"
@@ -1742,6 +1750,100 @@ public class Main {
       <button id="codingResultHomeButton" class="action-button primary" type="button">
         Back to Leaderboard
       </button>
+    </section>
+  </div>
+
+
+  <!-- ======================================================
+       FACULTY DIRECTORY
+       ====================================================== -->
+  <div id="facultyDirectoryModal" class="profile-modal" hidden>
+    <div class="profile-modal-backdrop" data-close-faculty-directory></div>
+
+    <section class="faculty-directory-card">
+      <div class="faculty-directory-header">
+        <div>
+          <span class="profile-kicker">FACULTY</span>
+          <h2>👨‍🏫 Faculty Directory</h2>
+          <p>Faculty members, designation and contact information.</p>
+        </div>
+
+        <button id="closeFacultyDirectoryButton" class="icon-button" type="button" aria-label="Close faculty directory">✕</button>
+      </div>
+
+      <div class="faculty-directory-toolbar">
+        <input id="facultySearchInput" type="search"
+          placeholder="Search faculty by name, ID, designation or email..."
+          autocomplete="off" />
+
+        <button id="addFacultyButton" class="action-button primary admin-only" type="button" hidden>
+          + Add Faculty
+        </button>
+      </div>
+
+      <div class="faculty-table-wrap">
+        <table class="faculty-table">
+          <thead>
+            <tr>
+              <th>Faculty ID</th>
+              <th>Name</th>
+              <th>Designation</th>
+              <th>Department</th>
+              <th>Email</th>
+              <th class="admin-only" hidden>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="facultyTableBody">
+            <tr><td colspan="6" class="loading-row">Loading faculty...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div id="facultyFormModal" class="profile-modal" hidden>
+    <div class="profile-modal-backdrop" data-close-faculty-form></div>
+
+    <section class="faculty-form-card">
+      <div class="faculty-directory-header">
+        <div>
+          <span class="profile-kicker">ADMIN</span>
+          <h2 id="facultyFormTitle">Add Faculty</h2>
+        </div>
+
+        <button id="closeFacultyFormButton" class="icon-button" type="button" aria-label="Close faculty form">✕</button>
+      </div>
+
+      <form id="facultyForm" class="faculty-form">
+        <input id="facultyEditId" type="hidden" />
+
+        <label>Faculty ID
+          <input id="facultyIdInput" type="text" required />
+        </label>
+
+        <label>Faculty Name
+          <input id="facultyNameInput" type="text" required />
+        </label>
+
+        <label>Designation
+          <input id="facultyDesignationInput" type="text" required />
+        </label>
+
+        <label>Department
+          <input id="facultyDepartmentInput" type="text" value="ECE" required />
+        </label>
+
+        <label>Email
+          <input id="facultyEmailInput" type="email" required />
+        </label>
+
+        <div class="faculty-form-actions">
+          <button id="cancelFacultyFormButton" class="action-button secondary" type="button">Cancel</button>
+          <button class="action-button primary" type="submit">Save Faculty</button>
+        </div>
+
+        <p id="facultyFormMessage" class="form-message"></p>
+      </form>
     </section>
   </div>
 
