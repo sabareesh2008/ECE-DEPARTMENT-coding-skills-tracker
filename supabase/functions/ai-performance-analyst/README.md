@@ -1,25 +1,27 @@
-# AI Performance Analyst Edge Function
+# ECE Smart Performance Analyzer
 
-Admin-only AI analytics over Supabase performance data.
+This Supabase Edge Function is a built-in, deterministic analytics agent.
 
-Required Edge Function secrets:
+It does **not** use OpenAI, Gemini, Groq or any external LLM.
 
-- `OPENAI_API_KEY`
-- `OPENAI_MODEL` (recommended: a model available to your OpenAI project; default in source is `gpt-5.6`)
+It reads the existing Supabase analytics data and supports natural-language patterns for:
 
-Supabase provides `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to deployed functions.
+- Top / bottom students by Today, 7 Days, 30 Days or Total
+- Best student explanations
+- Student strengths / weaknesses
+- Student comparisons
+- Section comparisons and rankings
+- Students needing attention / inactive students
+- Rule-based question recommendations
+- Faculty LeetCode rankings
+- Daily Challenge analysis
+- Coding Test analysis
+- Excel / PDF / CSV generation
+- Follow-up requests such as `download that as Excel` using recent chat context
 
-Deploy:
+Required project environment variables are the standard Supabase Edge Function variables:
 
-```powershell
-npx supabase functions deploy ai-performance-analyst
-```
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
-Then set secrets:
-
-```powershell
-npx supabase secrets set OPENAI_API_KEY=YOUR_KEY
-npx supabase secrets set OPENAI_MODEL=gpt-5.6
-```
-
-The function validates the user's Supabase Auth JWT and requires `public.user_roles.role = 'admin'`.
+No `OPENAI_API_KEY` is required.

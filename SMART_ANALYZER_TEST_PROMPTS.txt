@@ -1,0 +1,17 @@
+SMART ANALYZER TEST PROMPTS
+
+1. Who is the best student this week and why?
+2. Give top 50 students this week as Excel
+3. Give bottom 20 students this month as PDF
+4. Compare ECE A and ECE F
+5. Analyze 922525106264 strengths and weaknesses
+6. Suggest 5 questions for 922525106264
+7. Show students needing attention
+8. Show inactive students as CSV
+9. Give latest coding test failed students as Excel
+10. Give pending daily challenge students this week as PDF
+11. Rank faculty this month
+12. Who are the top 10 students by coding test pass rate?
+13. Who are the top 10 students by daily challenge completion?
+14. Give section ranking
+15. Follow-up after any analysis: download that as Excel

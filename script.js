@@ -3997,7 +3997,7 @@ function showAiDownload(file) {
     <div class="ai-download-card">
       <div>
         <strong>📄 ${escapeHTML(file.filename)}</strong>
-        <span>${escapeHTML(file.description || "AI-generated report from current tracked data")}</span>
+        <span>${escapeHTML(file.description || "Analyzer-generated report from current tracked data")}</span>
       </div>
       <button id="downloadAiGeneratedFile" class="action-button primary" type="button">Download</button>
     </div>
@@ -4035,7 +4035,7 @@ async function askAiPerformanceAnalyst(message) {
     content: cleanMessage
   });
 
-  // Keep conversations bounded for latency/cost while preserving context.
+  // Keep conversations bounded while preserving useful context.
   aiChatHistory = aiChatHistory.slice(-10);
 
   const thinking = appendAiMessage("assistant", "", { thinking: true });
@@ -4059,7 +4059,7 @@ async function askAiPerformanceAnalyst(message) {
     }
 
     if (!data?.ok) {
-      throw new Error(data?.error || "AI analyst request failed.");
+      throw new Error(data?.error || "Smart analyzer request failed.");
     }
 
     thinking.remove();
@@ -4083,14 +4083,14 @@ async function askAiPerformanceAnalyst(message) {
     const message =
       error?.context?.body?.error
       || error?.message
-      || "Unable to contact the AI Performance Analyst.";
+      || "Unable to contact the Smart Performance Analyzer.";
 
     appendAiMessage(
       "assistant",
       `I could not complete that request. ${message}`
     );
 
-    console.error("AI Performance Analyst error:", error);
+    console.error("Smart Performance Analyzer error:", error);
   } finally {
     setAiBusy(false);
     aiChatInput.focus();
