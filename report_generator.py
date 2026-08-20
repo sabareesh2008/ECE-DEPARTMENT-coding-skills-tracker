@@ -1689,7 +1689,7 @@ def main() -> int:
         print("DRY RUN: email was not sent.")
         return 0
 
-    ids = send_resend_email(
+    ids = send_gmail_email(
         config,
         subject,
         html_body,
