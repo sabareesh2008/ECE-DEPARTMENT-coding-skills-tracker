@@ -1426,10 +1426,10 @@ def encode_attachment(path: Path) -> dict[str, str]:
 
 
 def send_gmail_email(
-    config: Config,
-    subject: str,
-    html_body: str,
-    attachment_paths: list[Path],
+    config,
+    subject,
+    html_body,
+    attachment_paths,
 ) -> list[str]:
     if not config.recipients:
         raise RuntimeError("No report recipients configured.")
