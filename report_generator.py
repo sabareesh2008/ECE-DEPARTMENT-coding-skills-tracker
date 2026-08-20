@@ -21,6 +21,10 @@ Environment variables:
 """
 
 from __future__ import annotations
+import smtplib
+from email.message import EmailMessage
+from email.utils import formataddr
+import mimetypes
 
 import argparse
 import base64
@@ -59,8 +63,8 @@ SECTIONS = ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F"]
 class Config:
     supabase_url: str
     supabase_key: str
-    resend_key: str
-    from_email: str
+    gmail_address: str
+    gmail_app_password: str
     recipients: list[str]
     reply_to: str | None
 
@@ -94,16 +98,13 @@ def load_config(require_email: bool = True) -> Config:
     recipients = parse_recipients(env("REPORT_TO_EMAILS"))
 
     config = Config(
-        supabase_url=env("SUPABASE_URL").rstrip("/"),
-        supabase_key=env("SUPABASE_SERVICE_ROLE_KEY"),
-        resend_key=env("RESEND_API_KEY"),
-        from_email=env(
-            "REPORT_FROM_EMAIL",
-            "ECE LeetCode Reports <onboarding@resend.dev>",
-        ),
-        recipients=recipients,
-        reply_to=env("REPORT_REPLY_TO") or None,
-    )
+    supabase_url=env("SUPABASE_URL").rstrip("/"),
+    supabase_key=env("SUPABASE_SERVICE_ROLE_KEY"),
+    gmail_address=env("GMAIL_ADDRESS"),
+    gmail_app_password=env("GMAIL_APP_PASSWORD"),
+    recipients=recipients,
+    reply_to=env("REPORT_REPLY_TO") or None,
+)
 
     missing = []
     if not config.supabase_url:
@@ -112,12 +113,12 @@ def load_config(require_email: bool = True) -> Config:
         missing.append("SUPABASE_SERVICE_ROLE_KEY")
 
     if require_email:
-        if not config.resend_key:
-            missing.append("RESEND_API_KEY")
+        if not config.gmail_address:
+            missing.append("GMAIL_ADDRESS")
+        if not config.gmail_app_password:
+            missing.append("GMAIL_APP_PASSWORD")
         if not config.recipients:
             missing.append("REPORT_TO_EMAILS")
-        if not config.from_email:
-            missing.append("REPORT_FROM_EMAIL")
 
     if missing:
         raise RuntimeError(
@@ -1424,7 +1425,7 @@ def encode_attachment(path: Path) -> dict[str, str]:
 
 
 
-def send_resend_email(
+def send_gmail_email(
     config: Config,
     subject: str,
     html_body: str,
@@ -1436,41 +1437,56 @@ def send_resend_email(
     message_ids: list[str] = []
 
     for group in chunks(config.recipients, MAX_RECIPIENTS_PER_EMAIL):
-        payload: dict[str, Any] = {
-            "from": config.from_email,
-            "to": group,
-            "subject": subject,
-            "html": html_body,
-            "attachments": [
-                encode_attachment(path)
-                for path in attachment_paths
-            ],
-        }
+        msg = EmailMessage()
+
+        msg["Subject"] = subject
+        msg["From"] = config.gmail_address
+        msg["To"] = ", ".join(group)
+
         if config.reply_to:
-            payload["reply_to"] = config.reply_to
+            msg["Reply-To"] = config.reply_to
 
-        response = requests.post(
-            RESEND_ENDPOINT,
-            headers={
-                "Authorization": f"Bearer {config.resend_key}",
-                "Content-Type": "application/json",
-            },
-            json=payload,
-            timeout=REQUEST_TIMEOUT,
-        )
+        msg.set_content("Please view this email in an HTML-compatible email client.")
+        msg.add_alternative(html_body, subtype="html")
 
-        if response.status_code >= 400:
+        for path in attachment_paths:
+            mime_type, _ = mimetypes.guess_type(path.name)
+
+            if mime_type:
+                maintype, subtype = mime_type.split("/", 1)
+            else:
+                maintype = "application"
+                subtype = "octet-stream"
+
+            with open(path, "rb") as f:
+                msg.add_attachment(
+                    f.read(),
+                    maintype=maintype,
+                    subtype=subtype,
+                    filename=path.name,
+                )
+
+        try:
+            with smtplib.SMTP("smtp.gmail.com", 587, timeout=60) as server:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+
+                server.login(
+                    config.gmail_address,
+                    config.gmail_app_password,
+                )
+
+                server.send_message(msg)
+
+            message_ids.append("gmail-sent")
+
+        except Exception as exc:
             raise RuntimeError(
-                f"Resend send failed ({response.status_code}): "
-                f"{response.text[:800]}"
-            )
-
-        data = response.json()
-        message_ids.append(str(data.get("id", "")))
+                f"Gmail send failed: {exc}"
+            ) from exc
 
     return message_ids
-
-
 def collect_supabase_data(
     config: Config,
 ) -> dict[str, list[dict[str, Any]]]:
