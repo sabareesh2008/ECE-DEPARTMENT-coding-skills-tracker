@@ -728,97 +728,71 @@ def calculate_completed_day_counts(
     leetcode_7_days: int,
     leetcode_30_days: int,
 ) -> tuple[int, int, str, int]:
-    """
-    Keep the existing 7/30-day values, then update them once per new day.
-
-    Today's solves are NOT added to 7/30 yet.
-    On the next day they become the completed-day delta.
-
-    Example:
-      yesterday total = 100
-      today total = 102
-      solved_today = 0
-      completed previous day = 2
-
-    Those 2 are added to 7-day and 30-day counts today.
-    """
 
     today = date.today()
+
+    # --------------------------------------------------------
+    # ALWAYS use the fresh LeetCode timestamps for 7/30 days.
+    #
+    # Today's solved problems are shown separately in
+    # "Solved Today", so remove them from 7/30-day completed
+    # counts.
+    # --------------------------------------------------------
+
+    last_7_days = max(
+        0,
+        safe_int(leetcode_7_days)
+        - safe_int(solved_today),
+    )
+
+    last_30_days = max(
+        0,
+        safe_int(leetcode_30_days)
+        - safe_int(solved_today),
+    )
+
+    # --------------------------------------------------------
+    # Keep DailyActivity.csv working.
+    # Find how many problems were completed since the previous
+    # stored snapshot.
+    # --------------------------------------------------------
+
     previous = latest_previous_snapshot(
         previous_history,
         register_number,
     )
 
-    # First baseline: use LeetCode's current rolling values but exclude today.
     if previous is None:
-        baseline_7 = max(0, safe_int(leetcode_7_days) - safe_int(solved_today))
-        baseline_30 = max(0, safe_int(leetcode_30_days) - safe_int(solved_today))
-
         return (
-            baseline_7,
-            baseline_30,
+            last_7_days,
+            last_30_days,
             "",
             0,
         )
-
-    previous_date_text = str(previous.get("Date", "")).strip()
-
-    try:
-        previous_date = date.fromisoformat(previous_date_text)
-    except ValueError:
-        previous_date = today - timedelta(days=1)
 
     previous_total = safe_int(
         previous.get("Problems Solved", 0)
     )
 
-    previous_7 = safe_int(
-        previous.get("Last 7 Days", 0)
-    )
-
-    previous_30 = safe_int(
-        previous.get("Last 30 Days", 0)
-    )
-
-    # Total increase since the previous stored day, excluding today's solves.
-    completed_delta = max(
+    completed_solved = max(
         0,
         safe_int(current_total)
         - previous_total
         - safe_int(solved_today),
     )
 
-    # We assign the completed increase to the day immediately before today.
-    # With the normal daily/scheduled tracker this represents yesterday.
-    completed_date = today - timedelta(days=1)
-
-    expired_7 = solved_on_date(
-        previous_activity,
-        register_number,
-        today - timedelta(days=7),
-    )
-
-    expired_30 = solved_on_date(
-        previous_activity,
-        register_number,
-        today - timedelta(days=30),
-    )
-
-    last_7_days = max(
-        0,
-        previous_7 + completed_delta - expired_7,
-    )
-
-    last_30_days = max(
-        0,
-        previous_30 + completed_delta - expired_30,
-    )
+    if completed_solved > 0:
+        completed_date = (
+            today - timedelta(days=1)
+        ).isoformat()
+    else:
+        completed_date = ""
 
     return (
         last_7_days,
         last_30_days,
-        completed_date.isoformat(),
-        completed_delta,
+        completed_date,
+        completed_solved,
     )
 
 

@@ -1,4 +1,4 @@
-name: Daily ECE Performance Report
+name: Daily ECE Section-wise Performance Reports
 
 on:
   workflow_dispatch:
@@ -10,13 +10,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: ece-daily-email-report
+  group: ece-daily-section-email-reports
   cancel-in-progress: false
 
 jobs:
-  send-daily-report:
+  send-daily-reports:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -33,21 +33,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Generate and send daily report
+      - name: Generate and send section-wise daily reports
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          REPORT_ECE_A_EMAILS: ${{ secrets.REPORT_ECE_A_EMAILS }}
+          REPORT_ECE_B_EMAILS: ${{ secrets.REPORT_ECE_B_EMAILS }}
+          REPORT_ECE_C_EMAILS: ${{ secrets.REPORT_ECE_C_EMAILS }}
+          REPORT_ECE_D_EMAILS: ${{ secrets.REPORT_ECE_D_EMAILS }}
+          REPORT_ECE_E_EMAILS: ${{ secrets.REPORT_ECE_E_EMAILS }}
+          REPORT_ECE_F_EMAILS: ${{ secrets.REPORT_ECE_F_EMAILS }}
+          REPORT_HOD_EMAILS: ${{ secrets.REPORT_HOD_EMAILS }}
           REPORT_TO_EMAILS: ${{ secrets.REPORT_TO_EMAILS }}
           REPORT_REPLY_TO: ${{ secrets.REPORT_REPLY_TO }}
         run: python report_generator.py --mode daily
 
-      - name: Upload generated report
+      - name: Upload generated reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: daily-email-report
+          name: daily-section-email-reports
           path: reports/
           if-no-files-found: ignore
           retention-days: 7

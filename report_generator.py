@@ -7,9 +7,9 @@ Data sources:
 - Supabase           -> students, Daily Challenge, Daily Coding Test
 
 Email:
-- Resend REST API
-- REPORT_TO_EMAILS supports comma/semicolon/newline-separated recipients.
-- Recipients are sent in chunks of 50 (Resend API limit per email request).
+- Gmail SMTP
+- Section-wise recipient routing for ECE A-F and HOD Overall.
+- Recipient fields support comma/semicolon/newline-separated addresses.
 
 Environment variables:
   SUPABASE_URL
@@ -66,6 +66,8 @@ class Config:
     gmail_address: str
     gmail_app_password: str
     recipients: list[str]
+    section_recipients: dict[str, list[str]]
+    hod_recipients: list[str]
     reply_to: str | None
 
 
@@ -83,42 +85,69 @@ def parse_recipients(raw: str) -> list[str]:
         address = item.strip()
         if not address:
             continue
+
         lower = address.lower()
+
         if lower in seen:
             continue
+
         if "@" not in address or address.startswith("@") or address.endswith("@"):
             raise ValueError(f"Invalid report recipient email: {address}")
+
         seen.add(lower)
         result.append(address)
 
     return result
 
 
+def section_secret_name(section: str) -> str:
+    return f"REPORT_{section.replace(' ', '_')}_EMAILS"
+
+
 def load_config(require_email: bool = True) -> Config:
-    recipients = parse_recipients(env("REPORT_TO_EMAILS"))
+    legacy_recipients = parse_recipients(env("REPORT_TO_EMAILS"))
+
+    section_recipients = {
+        section: parse_recipients(env(section_secret_name(section)))
+        for section in SECTIONS
+    }
+
+    hod_recipients = parse_recipients(env("REPORT_HOD_EMAILS"))
+
+    # Preserve the old setup: REPORT_TO_EMAILS becomes the Overall/HOD fallback.
+    if not hod_recipients:
+        hod_recipients = list(legacy_recipients)
 
     config = Config(
-    supabase_url=env("SUPABASE_URL").rstrip("/"),
-    supabase_key=env("SUPABASE_SERVICE_ROLE_KEY"),
-    gmail_address=env("GMAIL_ADDRESS"),
-    gmail_app_password=env("GMAIL_APP_PASSWORD"),
-    recipients=recipients,
-    reply_to=env("REPORT_REPLY_TO") or None,
-)
+        supabase_url=env("SUPABASE_URL").rstrip("/"),
+        supabase_key=env("SUPABASE_SERVICE_ROLE_KEY"),
+        gmail_address=env("GMAIL_ADDRESS"),
+        gmail_app_password=env("GMAIL_APP_PASSWORD"),
+        recipients=legacy_recipients,
+        section_recipients=section_recipients,
+        hod_recipients=hod_recipients,
+        reply_to=env("REPORT_REPLY_TO") or None,
+    )
 
     missing = []
+
     if not config.supabase_url:
         missing.append("SUPABASE_URL")
+
     if not config.supabase_key:
         missing.append("SUPABASE_SERVICE_ROLE_KEY")
 
     if require_email:
         if not config.gmail_address:
             missing.append("GMAIL_ADDRESS")
+
         if not config.gmail_app_password:
             missing.append("GMAIL_APP_PASSWORD")
-        if not config.recipients:
-            missing.append("REPORT_TO_EMAILS")
+
+        if not config.hod_recipients and not any(config.section_recipients.values()):
+            missing.append(
+                "REPORT_HOD_EMAILS or at least one REPORT_ECE_*_EMAILS secret"
+            )
 
     if missing:
         raise RuntimeError(
@@ -126,6 +155,16 @@ def load_config(require_email: bool = True) -> Config:
         )
 
     return config
+
+
+def scope_slug(scope_label: str) -> str:
+    return (
+        str(scope_label)
+        .strip()
+        .upper()
+        .replace(" ", "_")
+        .replace("/", "_")
+    )
 
 
 def safe_int(value: Any) -> int:
@@ -540,6 +579,7 @@ def build_daily_report(
     challenge: dict[str, Any],
     coding: dict[str, Any],
     report_date: str,
+    scope_label: str = "ECE",
 ) -> tuple[str, str]:
     total_students = len(live)
     active_today = int((live["Solved Today"] > 0).sum())
@@ -613,9 +653,9 @@ def build_daily_report(
     </div>
     """
 
-    subject = f"ECE LeetCode Daily Report · {report_date}"
+    subject = f"{scope_label} LeetCode Daily Report · {report_date}"
     return subject, report_shell(
-        "ECE LeetCode Daily Report",
+        f"{scope_label} LeetCode Daily Report",
         f"{report_date} · LeetCode + Daily Challenge + Coding Test",
         content,
     )
@@ -628,6 +668,7 @@ def build_weekly_report(
     coding: dict[str, Any],
     start_date: str,
     end_date: str,
+    scope_label: str = "ECE",
 ) -> tuple[str, str]:
     total_students = len(live)
     active_week = int((live["Last 7 Days"] > 0).sum())
@@ -728,9 +769,9 @@ def build_weekly_report(
     </div>
     """
 
-    subject = f"ECE LeetCode Weekly Report · {start_date} to {end_date}"
+    subject = f"{scope_label} LeetCode Weekly Report · {start_date} to {end_date}"
     return subject, report_shell(
-        "ECE LeetCode Weekly Report",
+        f"{scope_label} LeetCode Weekly Report",
         f"{start_date} to {end_date} · LeetCode + Daily Challenge + Coding Tests",
         content,
     )
@@ -820,9 +861,10 @@ def generate_daily_excel(
     challenge: dict[str, Any],
     coding: dict[str, Any],
     report_date: str,
+    scope_label: str = "ECE",
 ) -> Path:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    path = REPORT_DIR / f"ECE_Daily_Report_{report_date}.xlsx"
+    path = REPORT_DIR / f"{scope_slug(scope_label)}_Daily_Report_{report_date}.xlsx"
 
     top = top_students(live, "Solved Today", 10)
     sections = section_leetcode_summary(live)
@@ -909,7 +951,7 @@ def generate_daily_excel(
 
         summary.merge_range(
             "A1:B1",
-            "ECE LeetCode Daily Report",
+            f"{scope_label} LeetCode Daily Report",
             title_format,
         )
         summary.set_column("A:A", 30)
@@ -948,9 +990,10 @@ def generate_weekly_excel(
     coding: dict[str, Any],
     start_date: str,
     end_date: str,
+    scope_label: str = "ECE",
 ) -> Path:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    path = REPORT_DIR / f"ECE_Weekly_Report_{start_date}_to_{end_date}.xlsx"
+    path = REPORT_DIR / f"{scope_slug(scope_label)}_Weekly_Report_{start_date}_to_{end_date}.xlsx"
 
     total_students = len(live)
     active_week = int((live["Last 7 Days"] > 0).sum())
@@ -1048,7 +1091,7 @@ def generate_weekly_excel(
 
         summary.merge_range(
             "A1:B1",
-            "ECE LeetCode Weekly Report",
+            f"{scope_label} LeetCode Weekly Report",
             _xlsx_title_format(workbook),
         )
         summary.set_column("A:A", 31)
@@ -1173,9 +1216,10 @@ def generate_daily_pdf(
     challenge: dict[str, Any],
     coding: dict[str, Any],
     report_date: str,
+    scope_label: str = "ECE",
 ) -> Path:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    path = REPORT_DIR / f"ECE_Daily_Report_{report_date}.pdf"
+    path = REPORT_DIR / f"{scope_slug(scope_label)}_Daily_Report_{report_date}.pdf"
     styles = _pdf_styles()
 
     doc = SimpleDocTemplate(
@@ -1198,7 +1242,7 @@ def generate_daily_pdf(
     sections = section_leetcode_summary(live)
 
     story = [
-        Paragraph("ECE LeetCode Daily Report", styles["title"]),
+        Paragraph(f"{scope_label} LeetCode Daily Report", styles["title"]),
         Paragraph(
             f"{report_date} - LeetCode + Daily Challenge + Coding Test",
             styles["subtitle"],
@@ -1281,9 +1325,10 @@ def generate_weekly_pdf(
     coding: dict[str, Any],
     start_date: str,
     end_date: str,
+    scope_label: str = "ECE",
 ) -> Path:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    path = REPORT_DIR / f"ECE_Weekly_Report_{start_date}_to_{end_date}.pdf"
+    path = REPORT_DIR / f"{scope_slug(scope_label)}_Weekly_Report_{start_date}_to_{end_date}.pdf"
     styles = _pdf_styles()
 
     doc = SimpleDocTemplate(
@@ -1325,7 +1370,7 @@ def generate_weekly_pdf(
     possible = total_students * len(challenge_ids)
 
     story = [
-        Paragraph("ECE LeetCode Weekly Report", styles["title"]),
+        Paragraph(f"{scope_label} LeetCode Weekly Report", styles["title"]),
         Paragraph(
             f"{start_date} to {end_date} - LeetCode + Daily Challenge + Coding Tests",
             styles["subtitle"],
@@ -1426,19 +1471,19 @@ def encode_attachment(path: Path) -> dict[str, str]:
 
 
 def send_gmail_email(
-    config,
-    subject,
-    html_body,
-    attachment_paths,
+    config: Config,
+    recipients: list[str],
+    subject: str,
+    html_body: str,
+    attachment_paths: list[Path],
 ) -> list[str]:
-    if not config.recipients:
-        raise RuntimeError("No report recipients configured.")
+    if not recipients:
+        raise RuntimeError("No report recipients configured for this report.")
 
     message_ids: list[str] = []
 
-    for group in chunks(config.recipients, MAX_RECIPIENTS_PER_EMAIL):
+    for group in chunks(recipients, MAX_RECIPIENTS_PER_EMAIL):
         msg = EmailMessage()
-
         msg["Subject"] = subject
         msg["From"] = config.gmail_address
         msg["To"] = ", ".join(group)
@@ -1446,7 +1491,9 @@ def send_gmail_email(
         if config.reply_to:
             msg["Reply-To"] = config.reply_to
 
-        msg.set_content("Please view this email in an HTML-compatible email client.")
+        msg.set_content(
+            "Please view this email in an HTML-compatible email client."
+        )
         msg.add_alternative(html_body, subtype="html")
 
         for path in attachment_paths:
@@ -1458,9 +1505,9 @@ def send_gmail_email(
                 maintype = "application"
                 subtype = "octet-stream"
 
-            with open(path, "rb") as f:
+            with open(path, "rb") as file_handle:
                 msg.add_attachment(
-                    f.read(),
+                    file_handle.read(),
                     maintype=maintype,
                     subtype=subtype,
                     filename=path.name,
@@ -1471,22 +1518,22 @@ def send_gmail_email(
                 server.ehlo()
                 server.starttls()
                 server.ehlo()
-
                 server.login(
                     config.gmail_address,
                     config.gmail_app_password,
                 )
-
                 server.send_message(msg)
 
             message_ids.append("gmail-sent")
 
         except Exception as exc:
             raise RuntimeError(
-                f"Gmail send failed: {exc}"
+                f"Gmail send failed for {', '.join(group)}: {exc}"
             ) from exc
 
     return message_ids
+
+
 def collect_supabase_data(
     config: Config,
 ) -> dict[str, list[dict[str, Any]]]:
@@ -1519,17 +1566,69 @@ def collect_supabase_data(
     }
 
 
+def filtered_scope_data(
+    live: pd.DataFrame,
+    data: dict[str, list[dict[str, Any]]],
+    section: str | None,
+) -> tuple[pd.DataFrame, dict[str, list[dict[str, Any]]]]:
+    """Filter student, challenge-result and coding-attempt data for one section."""
+    if section is None:
+        return live.copy(), {
+            key: list(value)
+            for key, value in data.items()
+        }
+
+    key = section.strip().upper()
+
+    scoped_live = live[
+        live["Section"]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+        .eq(key)
+    ].copy()
+
+    registers = {
+        str(value).strip()
+        for value in scoped_live["Register Number"].tolist()
+        if str(value).strip()
+    }
+
+    scoped = {
+        "students": [
+            row
+            for row in data["students"]
+            if str(row.get("register_number", "")).strip() in registers
+        ],
+        "challenges": list(data["challenges"]),
+        "challenge_results": [
+            row
+            for row in data["challenge_results"]
+            if str(row.get("register_number", "")).strip() in registers
+        ],
+        "coding_tests": list(data["coding_tests"]),
+        "coding_attempts": [
+            row
+            for row in data["coding_attempts"]
+            if str(row.get("register_number", "")).strip() in registers
+        ],
+    }
+
+    return scoped_live, scoped
+
+
 def build_report(
     mode: str,
     config: Config,
     offline: bool = False,
+    section: str | None = None,
 ) -> tuple[str, str, list[Path]]:
-    live = load_live_data()
+    all_live = load_live_data()
     now = ist_now()
     today = now.date()
 
     if offline:
-        data = {
+        all_data = {
             "students": [],
             "challenges": [],
             "challenge_results": [],
@@ -1537,10 +1636,17 @@ def build_report(
             "coding_attempts": [],
         }
     else:
-        data = collect_supabase_data(config)
+        all_data = collect_supabase_data(config)
 
-    # Ensures Supabase student rows can augment any missing section/name mappings.
-    index_students(live, data["students"])
+    index_students(all_live, all_data["students"])
+
+    live, data = filtered_scope_data(
+        all_live,
+        all_data,
+        section,
+    )
+
+    scope_label = section or "ECE Overall"
 
     if mode == "daily":
         challenge = daily_challenge_stats(
@@ -1562,6 +1668,7 @@ def build_report(
             day_start,
             day_end,
         )
+
         coding = coding_test_summary(
             tests,
             data["coding_attempts"],
@@ -1573,6 +1680,7 @@ def build_report(
             challenge,
             coding,
             today.isoformat(),
+            scope_label=scope_label,
         )
 
         attachments = [
@@ -1581,12 +1689,14 @@ def build_report(
                 challenge,
                 coding,
                 today.isoformat(),
+                scope_label=scope_label,
             ),
             generate_daily_pdf(
                 live,
                 challenge,
                 coding,
                 today.isoformat(),
+                scope_label=scope_label,
             ),
         ]
 
@@ -1594,11 +1704,13 @@ def build_report(
 
     if mode == "weekly":
         start_day = today - timedelta(days=6)
+
         start = datetime.combine(
             start_day,
             datetime.min.time(),
             tzinfo=IST,
         )
+
         end = datetime.combine(
             today + timedelta(days=1),
             datetime.min.time(),
@@ -1610,6 +1722,7 @@ def build_report(
             start,
             end,
         )
+
         coding = coding_test_summary(
             tests,
             data["coding_attempts"],
@@ -1623,6 +1736,7 @@ def build_report(
             coding,
             start_day.isoformat(),
             today.isoformat(),
+            scope_label=scope_label,
         )
 
         attachments = [
@@ -1633,6 +1747,7 @@ def build_report(
                 coding,
                 start_day.isoformat(),
                 today.isoformat(),
+                scope_label=scope_label,
             ),
             generate_weekly_pdf(
                 live,
@@ -1641,6 +1756,7 @@ def build_report(
                 coding,
                 start_day.isoformat(),
                 today.isoformat(),
+                scope_label=scope_label,
             ),
         ]
 
@@ -1649,59 +1765,154 @@ def build_report(
     raise ValueError(f"Unknown report mode: {mode}")
 
 
+def configured_report_routes(
+    config: Config,
+) -> list[tuple[str, str | None, list[str]]]:
+    routes: list[tuple[str, str | None, list[str]]] = []
+
+    for section in SECTIONS:
+        recipients = config.section_recipients.get(section, [])
+
+        if recipients:
+            routes.append((section, section, recipients))
+
+    if config.hod_recipients:
+        routes.append(("OVERALL", None, config.hod_recipients))
+
+    return routes
+
+
+def write_html_copy(
+    mode: str,
+    route_label: str,
+    html_body: str,
+) -> Path:
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+
+    output = REPORT_DIR / (
+        f"latest_{mode}_{scope_slug(route_label).lower()}_report.html"
+    )
+
+    output.write_text(html_body, encoding="utf-8")
+    return output
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
+
     parser.add_argument(
         "--mode",
         choices=["daily", "weekly"],
         required=True,
     )
+
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Generate report HTML but do not send email.",
+        help="Generate reports but do not send email.",
     )
+
     parser.add_argument(
         "--offline",
         action="store_true",
-        help="Skip Supabase; useful only for local syntax/template testing.",
+        help="Skip Supabase; useful for local report testing.",
     )
+
+    parser.add_argument(
+        "--scope",
+        choices=["OVERALL", *SECTIONS],
+        help="Generate only one report, e.g. --scope 'ECE E'.",
+    )
+
     args = parser.parse_args()
 
-    config = load_config(require_email=not args.dry_run)
-
-    subject, html_body, attachment_paths = build_report(
-        args.mode,
-        config,
-        offline=args.offline,
+    config = load_config(
+        require_email=not args.dry_run
     )
 
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    output = REPORT_DIR / f"latest_{args.mode}_report.html"
-    output.write_text(html_body, encoding="utf-8")
+    if args.scope:
+        selected_routes = [
+            (
+                args.scope,
+                None if args.scope == "OVERALL" else args.scope,
+                (
+                    config.hod_recipients
+                    if args.scope == "OVERALL"
+                    else config.section_recipients.get(args.scope, [])
+                ),
+            )
+        ]
+    else:
+        selected_routes = configured_report_routes(config)
 
-    print(f"HTML report generated: {output}")
-    for attachment in attachment_paths:
-        print(f"Attachment generated: {attachment}")
-    print(f"Subject: {subject}")
+    if not selected_routes:
+        if args.dry_run:
+            selected_routes = [("OVERALL", None, [])]
+        else:
+            raise RuntimeError(
+                "No report routes configured. Add REPORT_HOD_EMAILS "
+                "and/or REPORT_ECE_A_EMAILS ... REPORT_ECE_F_EMAILS."
+            )
+
+    sent_reports = 0
+    sent_recipients = 0
+
+    for route_label, section, recipients in selected_routes:
+        print("=" * 72)
+        print(f"Building {args.mode} report for {route_label}")
+
+        subject, html_body, attachment_paths = build_report(
+            args.mode,
+            config,
+            offline=args.offline,
+            section=section,
+        )
+
+        html_output = write_html_copy(
+            args.mode,
+            route_label,
+            html_body,
+        )
+
+        print(f"HTML report generated: {html_output}")
+
+        for attachment in attachment_paths:
+            print(f"Attachment generated: {attachment}")
+
+        print(f"Subject: {subject}")
+
+        if args.dry_run:
+            print(f"DRY RUN: {route_label} email not sent.")
+            continue
+
+        if not recipients:
+            print(f"SKIPPED: no recipient configured for {route_label}.")
+            continue
+
+        ids = send_gmail_email(
+            config,
+            recipients,
+            subject,
+            html_body,
+            attachment_paths,
+        )
+
+        sent_reports += 1
+        sent_recipients += len(recipients)
+
+        print(
+            f"{route_label}: sent to {len(recipients)} recipient(s) "
+            f"in {len(ids)} Gmail send(s)."
+        )
 
     if args.dry_run:
-        print("DRY RUN: email was not sent.")
-        return 0
-
-    ids = send_gmail_email(
-        config,
-        subject,
-        html_body,
-        attachment_paths,
-    )
-
-    print(
-        f"Email sent to {len(config.recipients)} recipient(s) "
-        f"in {len(ids)} Resend request(s)."
-    )
-    for message_id in ids:
-        print(f"Resend message id: {message_id}")
+        print("DRY RUN COMPLETE.")
+    else:
+        print("=" * 72)
+        print(
+            f"SECTION-WISE EMAIL COMPLETE: {sent_reports} report(s), "
+            f"{sent_recipients} recipient(s)."
+        )
 
     return 0
 
