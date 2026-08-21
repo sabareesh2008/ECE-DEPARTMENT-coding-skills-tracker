@@ -16,6 +16,8 @@ let codingAnalyticsLoaded = false;
 
 let facultyMembers = [];
 let facultyLoaded = false;
+let facultyViewRows = [];
+let facultyHistoryRows = [];
 
 let aiChatHistory = [];
 let aiChatBusy = false;
@@ -3644,6 +3646,43 @@ async function loadFacultyData() {
 
     facultyMembers = data || [];
     facultyLoaded = true;
+    facultyViewRows = facultyMembers.map((faculty, index) => ({
+  "__faculty": true,
+  "__facultyDbId": faculty.id,
+
+  "Overall Rank": index + 1,
+  "Section Rank": index + 1,
+
+  "Register Number": "",
+  "Student Name": faculty.faculty_name || "",
+  "Section": "FACULTY",
+
+  "LeetCode Username": faculty.leetcode_username || "",
+
+  "LeetCode Link":
+    `https://leetcode.com/u/${faculty.leetcode_username || ""}/`,
+
+  "Problems Solved": Number(faculty.total_solved || 0),
+  "Solved Today": Number(faculty.solved_today || 0),
+  "Last 7 Days": Number(faculty.last_7_days || 0),
+  "Last 30 Days": Number(faculty.last_30_days || 0),
+
+  "Easy": Number(faculty.easy || 0),
+  "Medium": Number(faculty.medium || 0),
+  "Hard": Number(faculty.hard || 0),
+
+  "Total Submissions":
+    Number(faculty.total_submissions || 0),
+
+  "Last Problem": faculty.last_problem || "",
+  "Last Solved": faculty.last_solved || "",
+  "Status": faculty.status || "Pending",
+
+  "Updated At":
+    faculty.updated_at ||
+    faculty.tracked_at ||
+    ""
+}));
 
     const count = document.getElementById("countFaculty");
     if (count) count.textContent = facultyMembers.length;
@@ -4103,6 +4142,7 @@ async function initialize() {
   await restoreAdminSession();
   await loadDailyChallengeData();
   await loadCodingAnalyticsData();
+  await loadFacultyData();
   updateAdminUI();
 }
 
