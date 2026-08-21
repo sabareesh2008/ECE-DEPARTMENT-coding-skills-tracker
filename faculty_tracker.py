@@ -191,7 +191,7 @@ def load_faculties() -> list[dict[str, Any]]:
         f"{SUPABASE_URL}/rest/v1/faculties",
         headers=headers(),
         params={
-            "select": "faculty_name,leetcode_username",
+            "select": "id,faculty_name,leetcode_username",
             "order": "faculty_name.asc",
         },
         timeout=30,
