@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {
+    margin: 0; padding: 0; background: #f3f6fa;
+    font-family: Arial, Helvetica, sans-serif; color: #172033;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 24px; }
+  .hero {
+    background: #101b31; color: white; border-radius: 18px;
+    padding: 28px; margin-bottom: 18px;
+  }
+  .hero h1 { margin: 0 0 7px; font-size: 25px; }
+  .hero p { margin: 0; color: #bdc9dd; }
+  .card {
+    background: white; border-radius: 16px; padding: 20px;
+    margin-bottom: 16px; border: 1px solid #e5eaf1;
+  }
+  .card h2 { margin: 0 0 14px; font-size: 18px; }
+  .kpis {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .kpi {
+    border: 1px solid #e7ebf1; border-radius: 12px;
+    padding: 14px; background: #fafbfd;
+  }
+  .kpi span { display: block; color: #657189; font-size: 12px; }
+  .kpi strong { display: block; margin-top: 7px; font-size: 23px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e7ebf1; }
+  th { background: #f7f9fc; color: #4c5870; }
+  .table-wrap { overflow-x: auto; }
+  .muted { color: #6e788a; }
+  .footer { text-align: center; color: #818b9c; font-size: 11px; padding: 10px; }
+  @media (max-width: 680px) {
+    .kpis { grid-template-columns: 1fr 1fr; }
+    .wrap { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>ECE E LeetCode Daily Report</h1>
+      <p>2026-08-22 · LeetCode + Daily Challenge + Coding Test</p>
+    </div>
+    
+    <div class="card">
+      <h2>LeetCode Tracker · Today</h2>
+      <div class="kpis">
+        <div class="kpi"><span>Total Students</span><strong>51</strong></div>
+        <div class="kpi"><span>Active Today</span><strong>0</strong></div>
+        <div class="kpi"><span>Problems Solved Today</span><strong>0</strong></div>
+        <div class="kpi"><span>Inactive Today</span><strong>51</strong></div>
+        <div class="kpi"><span>Invalid / Error Profiles</span><strong>3</strong></div>
+        <div class="kpi"><span>Activity Rate</span><strong>0.0%</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Daily Challenge</h2>
+      <p><strong>No Daily Challenge posted</strong></p>
+      <div class="kpis">
+        <div class="kpi"><span>Completed</span><strong>0</strong></div>
+        <div class="kpi"><span>Pending</span><strong>51</strong></div>
+        <div class="kpi"><span>Completion</span><strong>0.0%</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Daily Coding Test</h2>
+      <div class="kpis">
+        <div class="kpi"><span>Tests Conducted</span><strong>0</strong></div>
+        <div class="kpi"><span>Attended</span><strong>0</strong></div>
+        <div class="kpi"><span>Not Attended</span><strong>—</strong></div>
+        <div class="kpi"><span>Passed</span><strong>0</strong></div>
+        <div class="kpi"><span>Failed</span><strong>0</strong></div>
+        <div class="kpi"><span>Pass Rate</span><strong>0.0%</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Top 10 · Solved Today</h2>
+      
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Student</th><th>Register No.</th><th>Section</th><th>Solved Today</th><th>Total</th></tr></thead>
+        <tbody><tr><td>1</td><td>SANTHOSH S</td><td>922525106283</td><td>ECE E</td><td>0</td><td>177</td></tr><tr><td>2</td><td>SABARIVASAN P</td><td>922525106265</td><td>ECE E</td><td>0</td><td>147</td></tr><tr><td>3</td><td>Santhosh S</td><td>922525106284</td><td>ECE E</td><td>0</td><td>131</td></tr><tr><td>4</td><td>SHREE HARINI L</td><td>922525106308</td><td>ECE E</td><td>0</td><td>130</td></tr><tr><td>5</td><td>SARIKA M P</td><td>922525106290</td><td>ECE E</td><td>0</td><td>124</td></tr><tr><td>6</td><td>SHAHANA S</td><td>922525106302</td><td>ECE E</td><td>0</td><td>117</td></tr><tr><td>7</td><td>SARVESWARAN R</td><td>922525106291</td><td>ECE E</td><td>0</td><td>116</td></tr><tr><td>8</td><td>Senthil.S</td><td>922525106300</td><td>ECE E</td><td>0</td><td>116</td></tr><tr><td>9</td><td>SAKTHI S</td><td>922525106268</td><td>ECE E</td><td>0</td><td>116</td></tr><tr><td>10</td><td>Sakthivel. M</td><td>922525106269</td><td>ECE E</td><td>0</td><td>109</td></tr></tbody>
+      </table>
+    </div>
+    
+    </div>
+
+    <div class="card">
+      <h2>Section Summary</h2>
+      
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Section</th><th>Students</th><th>Active Today</th><th>Solved Today</th><th>7 Days</th><th>30 Days</th></tr></thead>
+        <tbody><tr><td>ECE E</td><td>51</td><td>0</td><td>0</td><td>413</td><td>558</td></tr></tbody>
+      </table>
+    </div>
+    
+    </div>
+    
+    <div class="footer">
+      Generated automatically by the ECE LeetCode Leaderboard platform.
+    </div>
+  </div>
+</body>
+</html>
