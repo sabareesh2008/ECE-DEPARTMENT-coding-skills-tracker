@@ -1649,58 +1649,62 @@ def build_report(
     scope_label = section or "ECE Overall"
 
     if mode == "daily":
-        challenge = daily_challenge_stats(
-            today.isoformat(),
-            data["challenges"],
-            data["challenge_results"],
-            len(live),
-        )
+       
+        report_date = today - timedelta(days=1)
 
-        day_start = datetime.combine(
-            today,
-            datetime.min.time(),
-            tzinfo=IST,
-        )
-        day_end = day_start + timedelta(days=1)
+    challenge = daily_challenge_stats(
+        report_date.isoformat(),
+        data["challenges"],
+        data["challenge_results"],
+        len(live),
+    )
 
-        tests = coding_tests_in_window(
-            data["coding_tests"],
-            day_start,
-            day_end,
-        )
+    day_start = datetime.combine(
+        report_date,
+        datetime.min.time(),
+        tzinfo=IST,
+    )
 
-        coding = coding_test_summary(
-            tests,
-            data["coding_attempts"],
-            len(live),
-        )
+    day_end = day_start + timedelta(days=1)
 
-        subject, html_body = build_daily_report(
+    tests = coding_tests_in_window(
+        data["coding_tests"],
+        day_start,
+        day_end,
+    )
+
+    coding = coding_test_summary(
+        tests,
+        data["coding_attempts"],
+        len(live),
+    )
+
+    subject, html_body = build_daily_report(
+        live,
+        challenge,
+        coding,
+        report_date.isoformat(),
+        scope_label=scope_label,
+    )
+
+    attachments = [
+        generate_daily_excel(
             live,
             challenge,
             coding,
-            today.isoformat(),
+            report_date.isoformat(),
             scope_label=scope_label,
-        )
+        ),
+        generate_daily_pdf(
+            live,
+            challenge,
+            coding,
+            report_date.isoformat(),
+            scope_label=scope_label,
+        ),
+    ]
 
-        attachments = [
-            generate_daily_excel(
-                live,
-                challenge,
-                coding,
-                today.isoformat(),
-                scope_label=scope_label,
-            ),
-            generate_daily_pdf(
-                live,
-                challenge,
-                coding,
-                today.isoformat(),
-                scope_label=scope_label,
-            ),
-        ]
-
-        return subject, html_body, attachments
+    return subject, html_body, attachments
 
     if mode == "weekly":
         start_day = today - timedelta(days=6)
