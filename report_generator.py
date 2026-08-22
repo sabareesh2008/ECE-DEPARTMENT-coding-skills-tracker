@@ -259,11 +259,22 @@ def load_live_data() -> pd.DataFrame:
     )
     frame["Section"] = frame["Section"].fillna("").astype(str).str.strip()
 
+    for new_column in [
+        "Last 14 Days",
+        "Last 7 Days Submissions",
+        "Total Submissions",
+    ]:
+        if new_column not in frame.columns:
+            frame[new_column] = 0
+
     for column in [
         "Problems Solved",
         "Solved Today",
         "Last 7 Days",
+        "Last 14 Days",
         "Last 30 Days",
+        "Last 7 Days Submissions",
+        "Total Submissions",
         "Easy",
         "Medium",
         "Hard",
@@ -673,6 +684,10 @@ def build_weekly_report(
     total_students = len(live)
     active_week = int((live["Last 7 Days"] > 0).sum())
     solved_week = int(live["Last 7 Days"].sum())
+    solved_14 = int(live["Last 14 Days"].sum())
+    submissions_week = int(
+        live["Last 7 Days Submissions"].sum()
+    )
 
     top = top_students(live, "Last 7 Days", 10)
     bottom = bottom_students_week(live, 10)
@@ -707,7 +722,9 @@ def build_weekly_report(
       <div class="kpis">
         <div class="kpi"><span>Total Students</span><strong>{total_students}</strong></div>
         <div class="kpi"><span>Active This Week</span><strong>{active_week}</strong></div>
-        <div class="kpi"><span>Problems Solved</span><strong>{solved_week}</strong></div>
+        <div class="kpi"><span>Problems Solved · 7 Days</span><strong>{solved_week}</strong></div>
+        <div class="kpi"><span>Problems Solved · 14 Days</span><strong>{solved_14}</strong></div>
+        <div class="kpi"><span>Submissions · 7 Days</span><strong>{submissions_week}</strong></div>
         <div class="kpi"><span>Inactive This Week</span><strong>{max(total_students-active_week,0)}</strong></div>
         <div class="kpi"><span>Weekly Activity Rate</span><strong>{percent(active_week,total_students):.1f}%</strong></div>
         <div class="kpi"><span>Avg Problems / Student</span><strong>{(solved_week/total_students if total_students else 0):.1f}</strong></div>
@@ -881,6 +898,8 @@ def generate_daily_excel(
         ["Total Students", total_students],
         ["Active Today", active_today],
         ["Problems Solved Today", solved_today],
+        ["Problems Solved Last 14 Days", int(live["Last 14 Days"].sum())],
+        ["Submissions Last 7 Days", int(live["Last 7 Days Submissions"].sum())],
         ["Inactive Today", max(total_students - active_today, 0)],
         ["Invalid / Error Profiles", invalid],
         ["Activity Rate", f"{percent(active_today, total_students):.1f}%"],
@@ -926,7 +945,10 @@ def generate_daily_excel(
             "Section",
             "Solved Today",
             "Last 7 Days",
+            "Last 14 Days",
             "Last 30 Days",
+            "Last 7 Days Submissions",
+            "Total Submissions",
             "Problems Solved",
             "Easy",
             "Medium",
@@ -998,6 +1020,10 @@ def generate_weekly_excel(
     total_students = len(live)
     active_week = int((live["Last 7 Days"] > 0).sum())
     solved_week = int(live["Last 7 Days"].sum())
+    solved_14 = int(live["Last 14 Days"].sum())
+    submissions_week = int(
+        live["Last 7 Days Submissions"].sum()
+    )
 
     top = top_students(live, "Last 7 Days", 10)
     bottom = bottom_students_week(live, 10)
@@ -1029,6 +1055,8 @@ def generate_weekly_excel(
         ["Total Students", total_students],
         ["Active Last 7 Days", active_week],
         ["Problems Solved Last 7 Days", solved_week],
+        ["Problems Solved Last 14 Days", solved_14],
+        ["Submissions Last 7 Days", submissions_week],
         ["Inactive Last 7 Days", max(total_students - active_week, 0)],
         ["Weekly Activity Rate", f"{percent(active_week, total_students):.1f}%"],
         ["Average Problems / Student", f"{(solved_week / total_students if total_students else 0):.1f}"],
@@ -1073,7 +1101,10 @@ def generate_weekly_excel(
             "Student Name",
             "Section",
             "Last 7 Days",
+            "Last 14 Days",
             "Last 30 Days",
+            "Last 7 Days Submissions",
+            "Total Submissions",
             "Solved Today",
             "Problems Solved",
             "Easy",
@@ -1649,62 +1680,60 @@ def build_report(
     scope_label = section or "ECE Overall"
 
     if mode == "daily":
-       
         report_date = today - timedelta(days=1)
 
-    challenge = daily_challenge_stats(
-        report_date.isoformat(),
-        data["challenges"],
-        data["challenge_results"],
-        len(live),
-    )
+        challenge = daily_challenge_stats(
+            report_date.isoformat(),
+            data["challenges"],
+            data["challenge_results"],
+            len(live),
+        )
 
-    day_start = datetime.combine(
-        report_date,
-        datetime.min.time(),
-        tzinfo=IST,
-    )
+        day_start = datetime.combine(
+            report_date,
+            datetime.min.time(),
+            tzinfo=IST,
+        )
+        day_end = day_start + timedelta(days=1)
 
-    day_end = day_start + timedelta(days=1)
+        tests = coding_tests_in_window(
+            data["coding_tests"],
+            day_start,
+            day_end,
+        )
 
-    tests = coding_tests_in_window(
-        data["coding_tests"],
-        day_start,
-        day_end,
-    )
+        coding = coding_test_summary(
+            tests,
+            data["coding_attempts"],
+            len(live),
+        )
 
-    coding = coding_test_summary(
-        tests,
-        data["coding_attempts"],
-        len(live),
-    )
-
-    subject, html_body = build_daily_report(
-        live,
-        challenge,
-        coding,
-        report_date.isoformat(),
-        scope_label=scope_label,
-    )
-
-    attachments = [
-        generate_daily_excel(
+        subject, html_body = build_daily_report(
             live,
             challenge,
             coding,
             report_date.isoformat(),
             scope_label=scope_label,
-        ),
-        generate_daily_pdf(
-            live,
-            challenge,
-            coding,
-            report_date.isoformat(),
-            scope_label=scope_label,
-        ),
-    ]
+        )
 
-    return subject, html_body, attachments
+        attachments = [
+            generate_daily_excel(
+                live,
+                challenge,
+                coding,
+                report_date.isoformat(),
+                scope_label=scope_label,
+            ),
+            generate_daily_pdf(
+                live,
+                challenge,
+                coding,
+                report_date.isoformat(),
+                scope_label=scope_label,
+            ),
+        ]
+
+        return subject, html_body, attachments
 
     if mode == "weekly":
         start_day = today - timedelta(days=6)

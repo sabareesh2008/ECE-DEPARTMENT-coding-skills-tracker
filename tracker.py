@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import os
+import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta, time as dt_time
 from zoneinfo import ZoneInfo
@@ -67,6 +68,9 @@ query getUserProfile($username: String!, $limit: Int!) {
         submissions
       }
     }
+    userCalendar {
+      submissionCalendar
+    }
   }
 
   recentAcSubmissionList(
@@ -100,7 +104,9 @@ def empty_profile(status: str) -> dict[str, Any]:
         "submissions": 0,
         "solved_today": 0,
         "last_7_days": 0,
+        "last_14_days": 0,
         "last_30_days": 0,
+        "last_7_days_submissions": 0,
         "last_problem": "",
         "last_solved": "",
         "status": status,
@@ -141,6 +147,42 @@ def unique_solved_count_since(
             solved.add(title_slug)
 
     return len(solved)
+
+
+def submission_count_since(
+    submission_calendar: Any,
+    start_time: datetime,
+) -> int:
+    """Count ALL submission attempts from LeetCode's submission calendar."""
+    if not submission_calendar:
+        return 0
+
+    try:
+        calendar = (
+            json.loads(submission_calendar)
+            if isinstance(submission_calendar, str)
+            else submission_calendar
+        )
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return 0
+
+    if not isinstance(calendar, dict):
+        return 0
+
+    total = 0
+
+    for timestamp, count in calendar.items():
+        try:
+            submitted_at = datetime.fromtimestamp(
+                int(timestamp),
+                tz=IST,
+            )
+            if submitted_at >= start_time:
+                total += int(count or 0)
+        except (TypeError, ValueError, OSError):
+            continue
+
+    return total
 
 
 # ============================================================
@@ -224,6 +266,12 @@ def fetch_leetcode(username: str) -> dict[str, Any]:
             or []
         )
 
+        submission_calendar = (
+            matched_user
+            .get("userCalendar", {})
+            .get("submissionCalendar", "{}")
+        )
+
         last_problem = ""
         last_solved = ""
 
@@ -251,6 +299,10 @@ def fetch_leetcode(username: str) -> dict[str, Any]:
 
         seven_days_start = (
             now - timedelta(days=7)
+        )
+
+        fourteen_days_start = (
+            now - timedelta(days=14)
         )
 
         thirty_days_start = (
@@ -289,10 +341,20 @@ def fetch_leetcode(username: str) -> dict[str, Any]:
                     recent_submissions,
                     seven_days_start,
                 ),
+            "last_14_days":
+                unique_solved_count_since(
+                    recent_submissions,
+                    fourteen_days_start,
+                ),
             "last_30_days":
                 unique_solved_count_since(
                     recent_submissions,
                     thirty_days_start,
+                ),
+            "last_7_days_submissions":
+                submission_count_since(
+                    submission_calendar,
+                    datetime.now(IST) - timedelta(days=7),
                 ),
             "last_problem": last_problem,
             "last_solved": last_solved,
@@ -726,36 +788,20 @@ def calculate_completed_day_counts(
     current_total: int,
     solved_today: int,
     leetcode_7_days: int,
+    leetcode_14_days: int,
     leetcode_30_days: int,
-) -> tuple[int, int, str, int]:
-
+) -> tuple[int, int, int, str, int]:
     today = date.today()
 
-    # --------------------------------------------------------
-    # ALWAYS use the fresh LeetCode timestamps for 7/30 days.
-    #
-    # Today's solved problems are shown separately in
-    # "Solved Today", so remove them from 7/30-day completed
-    # counts.
-    # --------------------------------------------------------
-
     last_7_days = max(
-        0,
-        safe_int(leetcode_7_days)
-        - safe_int(solved_today),
+        0, safe_int(leetcode_7_days) - safe_int(solved_today)
     )
-
+    last_14_days = max(
+        0, safe_int(leetcode_14_days) - safe_int(solved_today)
+    )
     last_30_days = max(
-        0,
-        safe_int(leetcode_30_days)
-        - safe_int(solved_today),
+        0, safe_int(leetcode_30_days) - safe_int(solved_today)
     )
-
-    # --------------------------------------------------------
-    # Keep DailyActivity.csv working.
-    # Find how many problems were completed since the previous
-    # stored snapshot.
-    # --------------------------------------------------------
 
     previous = latest_previous_snapshot(
         previous_history,
@@ -763,36 +809,23 @@ def calculate_completed_day_counts(
     )
 
     if previous is None:
-        return (
-            last_7_days,
-            last_30_days,
-            "",
-            0,
-        )
+        return last_7_days, last_14_days, last_30_days, "", 0
 
-    previous_total = safe_int(
-        previous.get("Problems Solved", 0)
-    )
+    previous_total = safe_int(previous.get("Problems Solved", 0))
 
-    completed_solved = max(
+    completed_delta = max(
         0,
         safe_int(current_total)
         - previous_total
         - safe_int(solved_today),
     )
 
-    if completed_solved > 0:
-        completed_date = (
-            today - timedelta(days=1)
-        ).isoformat()
-    else:
-        completed_date = ""
-
     return (
         last_7_days,
+        last_14_days,
         last_30_days,
-        completed_date,
-        completed_solved,
+        (today - timedelta(days=1)).isoformat(),
+        completed_delta,
     )
 
 
@@ -1207,6 +1240,7 @@ def process_student(
 
     (
         completed_7_days,
+        completed_14_days,
         completed_30_days,
         completed_date,
         completed_solved,
@@ -1217,10 +1251,12 @@ def process_student(
         profile["total_solved"],
         profile["solved_today"],
         profile["last_7_days"],
+        profile["last_14_days"],
         profile["last_30_days"],
     )
 
     profile["last_7_days"] = completed_7_days
+    profile["last_14_days"] = completed_14_days
     profile["last_30_days"] = completed_30_days
 
     row = {
@@ -1241,8 +1277,12 @@ def process_student(
             profile["solved_today"],
         "Last 7 Days":
             profile["last_7_days"],
+        "Last 14 Days":
+            profile["last_14_days"],
         "Last 30 Days":
             profile["last_30_days"],
+        "Last 7 Days Submissions":
+            profile["last_7_days_submissions"],
         "Total Submissions":
             profile["submissions"],
         "Easy":
@@ -1270,7 +1310,9 @@ def process_student(
         f"{section} | "
         f"{student_name} | "
         f"30d={profile['last_30_days']} | "
+        f"14d={profile['last_14_days']} | "
         f"7d={profile['last_7_days']} | "
+        f"sub7d={profile['last_7_days_submissions']} | "
         f"today={profile['solved_today']} | "
         f"total={profile['total_solved']} | "
         f"{profile['status']}"
@@ -1431,7 +1473,9 @@ def add_ranks(
         "Problems Solved",
         "Solved Today",
         "Last 7 Days",
+        "Last 14 Days",
         "Last 30 Days",
+        "Last 7 Days Submissions",
         "Total Submissions",
         "Easy",
         "Medium",
@@ -1460,7 +1504,9 @@ HISTORY_COLUMNS = [
     "Problems Solved",
     "Solved Today",
     "Last 7 Days",
+    "Last 14 Days",
     "Last 30 Days",
+    "Last 7 Days Submissions",
     "Total Submissions",
     "Easy",
     "Medium",
@@ -1771,7 +1817,10 @@ def sync_ai_performance_tables(live_data: pd.DataFrame) -> None:
             "total_solved": number(row, "Problems Solved"),
             "solved_today": number(row, "Solved Today"),
             "last_7_days": number(row, "Last 7 Days"),
+            "last_14_days": number(row, "Last 14 Days"),
             "last_30_days": number(row, "Last 30 Days"),
+            "last_7_days_submissions":
+                number(row, "Last 7 Days Submissions"),
             "total_submissions": number(row, "Total Submissions"),
             "easy": number(row, "Easy"),
             "medium": number(row, "Medium"),
@@ -1790,7 +1839,10 @@ def sync_ai_performance_tables(live_data: pd.DataFrame) -> None:
             "total_solved": number(row, "Problems Solved"),
             "solved_today": number(row, "Solved Today"),
             "last_7_days": number(row, "Last 7 Days"),
+            "last_14_days": number(row, "Last 14 Days"),
             "last_30_days": number(row, "Last 30 Days"),
+            "last_7_days_submissions":
+                number(row, "Last 7 Days Submissions"),
             "easy": number(row, "Easy"),
             "medium": number(row, "Medium"),
             "hard": number(row, "Hard"),

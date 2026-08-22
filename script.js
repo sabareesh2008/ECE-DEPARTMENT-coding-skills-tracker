@@ -120,7 +120,10 @@ const exportColumns = [
   "Problems Solved",
   "Solved Today",
   "Last 7 Days",
+  "Last 14 Days",
   "Last 30 Days",
+  "Last 7 Days Submissions",
+  "Total Submissions",
   "Easy",
   "Medium",
   "Hard",
@@ -634,7 +637,9 @@ function renderStudents(students) {
         </td>
 
         <td><strong>${toNumber(student["Last 30 Days"])}</strong></td>
+        <td>${toNumber(student["Last 14 Days"])}</td>
         <td>${toNumber(student["Last 7 Days"])}</td>
+        <td>${toNumber(student["Last 7 Days Submissions"])}</td>
         <td>${toNumber(student["Solved Today"])}</td>
         <td><strong>${toNumber(student["Problems Solved"])}</strong></td>
         <td>${toNumber(student.Easy)}</td>
@@ -3665,7 +3670,10 @@ async function loadFacultyData() {
   "Problems Solved": Number(faculty.total_solved || 0),
   "Solved Today": Number(faculty.solved_today || 0),
   "Last 7 Days": Number(faculty.last_7_days || 0),
+  "Last 14 Days": Number(faculty.last_14_days || 0),
   "Last 30 Days": Number(faculty.last_30_days || 0),
+  "Last 7 Days Submissions":
+    Number(faculty.last_7_days_submissions || 0),
 
   "Easy": Number(faculty.easy || 0),
   "Medium": Number(faculty.medium || 0),
@@ -3784,7 +3792,9 @@ function renderFacultyDirectory(query = "") {
 
         <td>${toNumber(faculty.solved_today)}</td>
         <td>${toNumber(faculty.last_7_days)}</td>
+        <td>${toNumber(faculty.last_14_days)}</td>
         <td>${toNumber(faculty.last_30_days)}</td>
+        <td>${toNumber(faculty.last_7_days_submissions)}</td>
         <td><strong>${toNumber(faculty.total_solved)}</strong></td>
 
         <td>

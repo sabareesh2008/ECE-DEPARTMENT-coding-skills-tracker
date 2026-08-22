@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -29,6 +30,9 @@ query getUserProfile($username: String!, $limit: Int!) {
         count
         submissions
       }
+    }
+    userCalendar {
+      submissionCalendar
     }
   }
 
@@ -62,7 +66,9 @@ def empty_profile(status: str) -> dict[str, Any]:
         "total_submissions": 0,
         "solved_today": 0,
         "last_7_days": 0,
+        "last_14_days": 0,
         "last_30_days": 0,
+        "last_7_days_submissions": 0,
         "last_problem": "",
         "last_solved": "",
         "status": status,
@@ -98,6 +104,38 @@ def unique_since(
             solved.add(slug)
 
     return len(solved)
+
+
+def submission_count_since(
+    submission_calendar: Any,
+    start: datetime,
+) -> int:
+    if not submission_calendar:
+        return 0
+
+    try:
+        calendar = (
+            json.loads(submission_calendar)
+            if isinstance(submission_calendar, str)
+            else submission_calendar
+        )
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return 0
+
+    if not isinstance(calendar, dict):
+        return 0
+
+    total = 0
+
+    for timestamp, count in calendar.items():
+        try:
+            submitted = datetime.fromtimestamp(int(timestamp), tz=IST)
+            if submitted >= start:
+                total += int(count or 0)
+        except (TypeError, ValueError, OSError):
+            continue
+
+    return total
 
 
 def fetch_profile(username: str) -> dict[str, Any]:
@@ -147,6 +185,11 @@ def fetch_profile(username: str) -> dict[str, Any]:
 
     submissions = data.get("recentAcSubmissionList", []) or []
 
+    submission_calendar = (
+        user.get("userCalendar", {})
+        .get("submissionCalendar", "{}")
+    )
+
     now = datetime.now(IST)
 
     today_start = datetime.combine(
@@ -156,6 +199,7 @@ def fetch_profile(username: str) -> dict[str, Any]:
     )
 
     seven_start = now - timedelta(days=7)
+    fourteen_start = now - timedelta(days=14)
     thirty_start = now - timedelta(days=30)
 
     last_problem = ""
@@ -179,7 +223,13 @@ def fetch_profile(username: str) -> dict[str, Any]:
         "total_submissions": stat(stats, "All", "submissions"),
         "solved_today": unique_since(submissions, today_start),
         "last_7_days": unique_since(submissions, seven_start),
+        "last_14_days": unique_since(submissions, fourteen_start),
         "last_30_days": unique_since(submissions, thirty_start),
+        "last_7_days_submissions":
+            submission_count_since(
+                submission_calendar,
+                seven_start,
+            ),
         "last_problem": last_problem,
         "last_solved": last_solved,
         "status": "Success",
@@ -213,6 +263,10 @@ def save_history_snapshot(
         "activity_date": today,
         "total_solved": int(profile.get("total_solved", 0) or 0),
         "solved_today": int(profile.get("solved_today", 0) or 0),
+        "last_14_days": int(profile.get("last_14_days", 0) or 0),
+        "last_7_days_submissions": int(
+            profile.get("last_7_days_submissions", 0) or 0
+        ),
         "easy": int(profile.get("easy", 0) or 0),
         "medium": int(profile.get("medium", 0) or 0),
         "hard": int(profile.get("hard", 0) or 0),
