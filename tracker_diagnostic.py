@@ -1,60 +1,65 @@
-from pathlib import Path
 import sys
-import pandas as pd
-
 import tracker
 
 
-def main():
-    if len(sys.argv) < 3:
+def main() -> None:
+    if len(sys.argv) != 2:
         print(
-            "Usage: python tracker_diagnostic.py "
-            "<register_number> <leetcode_username>"
+            "Usage: python tracker_diagnostic.py <leetcode_username>"
         )
         raise SystemExit(1)
 
-    register_number = sys.argv[1].strip()
-    username = sys.argv[2].strip()
-
-    history = (
-        pd.read_csv(tracker.HISTORY_CSV, dtype=str)
-        if tracker.HISTORY_CSV.exists()
-        else pd.DataFrame()
-    )
+    username = sys.argv[1].strip()
 
     profile = tracker.fetch_leetcode(username)
 
-    result = tracker.calculate_completed_day_counts(
-        history,
-        pd.DataFrame(),
-        register_number,
-        profile["total_solved"],
-        profile["solved_today"],
-        profile["last_7_days"],
-        profile["last_14_days"],
-        profile["last_30_days"],
+    print()
+    print("============================================================")
+    print(" CODEMETRIX V4 TRACKER DIAGNOSTIC")
+    print("============================================================")
+    print("Username:", username)
+    print("Status:", profile.get("status"))
+    print("Total solved:", profile.get("total_solved"))
+    print("Easy:", profile.get("easy"))
+    print("Medium:", profile.get("medium"))
+    print("Hard:", profile.get("hard"))
+    print("Total submissions:", profile.get("submissions"))
+    print()
+    print("Solved Today:", profile.get("solved_today"))
+    print("Last 7 Days:", profile.get("last_7_days"))
+    print("Last 14 Days:", profile.get("last_14_days"))
+    print("Last 30 Days:", profile.get("last_30_days"))
+    print("7D Submissions:", profile.get("last_7_days_submissions"))
+    print()
+    print(
+        "Accepted submissions returned:",
+        profile.get("recent_accepted_returned"),
+    )
+    print(
+        "Lifetime accepted submissions:",
+        profile.get("accepted_submission_total"),
+    )
+    print(
+        "Window coverage:",
+        profile.get("window_coverage"),
     )
 
+    t = int(profile.get("solved_today", 0) or 0)
+    d7 = int(profile.get("last_7_days", 0) or 0)
+    d14 = int(profile.get("last_14_days", 0) or 0)
+    d30 = int(profile.get("last_30_days", 0) or 0)
+
     print()
-    print("========== CODEMETRIX TRACKER DIAGNOSTIC ==========")
-    print("Username:", username)
-    print("Register Number:", register_number)
-    print("Current Total Solved:", profile["total_solved"])
-    print("Recent feed returned:", len(profile["recent_submissions"]))
-    print("Recent Today:", profile["solved_today"])
-    print("Recent 7 Days:", profile["last_7_days"])
-    print("Recent 14 Days:", profile["last_14_days"])
-    print("Recent 30 Days:", profile["last_30_days"])
-    print()
-    print("FINAL Today:", result[4])
-    print("FINAL 7 Days:", result[0])
-    print("FINAL 14 Days:", result[1])
-    print("FINAL 30 Days:", result[2])
     print(
-        "Sources:",
-        tracker.calculate_completed_day_counts.last_coverage,
+        "Invariant Today <= 7 <= 14 <= 30:",
+        tracker.validate_window_order(
+            t,
+            d7,
+            d14,
+            d30,
+        ),
     )
-    print("===================================================")
+    print("============================================================")
 
 
 if __name__ == "__main__":
