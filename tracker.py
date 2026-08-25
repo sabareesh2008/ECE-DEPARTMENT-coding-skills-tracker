@@ -781,6 +781,203 @@ def solved_on_date(
     return safe_int(matches.iloc[-1]["Solved That Day"])
 
 
+def _student_history_points(
+    history: pd.DataFrame,
+    register_number: str,
+) -> pd.DataFrame:
+    """
+    Return one trustworthy cumulative-total snapshot per date for a student.
+
+    IMPORTANT:
+    - We use Problems Solved (LeetCode cumulative total).
+    - We DO NOT use old Last 7/14/30 Days columns because some historical
+      values were produced by the limited recentAcSubmissionList endpoint.
+    - Duplicate same-day rows are collapsed by keeping the last row.
+    """
+    if history.empty:
+        return pd.DataFrame(
+            columns=["_date", "_total"]
+        )
+
+    required = {
+        "Date",
+        "Register Number",
+        "Problems Solved",
+    }
+
+    if not required.issubset(history.columns):
+        return pd.DataFrame(
+            columns=["_date", "_total"]
+        )
+
+    points = history[
+        history["Register Number"].astype(str)
+        == str(register_number)
+    ].copy()
+
+    if points.empty:
+        return pd.DataFrame(
+            columns=["_date", "_total"]
+        )
+
+    points["_date"] = pd.to_datetime(
+        points["Date"],
+        errors="coerce",
+    )
+
+    points["_total"] = pd.to_numeric(
+        points["Problems Solved"],
+        errors="coerce",
+    )
+
+    points = points.dropna(
+        subset=["_date", "_total"]
+    )
+
+    if points.empty:
+        return pd.DataFrame(
+            columns=["_date", "_total"]
+        )
+
+    # If old data accidentally contains multiple rows for the same student
+    # and date, use only the latest row in file order.
+    points["_row_order"] = range(len(points))
+
+    points = (
+        points
+        .sort_values(
+            ["_date", "_row_order"]
+        )
+        .drop_duplicates(
+            subset=["_date"],
+            keep="last",
+        )
+        .sort_values("_date")
+        .reset_index(drop=True)
+    )
+
+    return points[
+        ["_date", "_total"]
+    ].copy()
+
+
+def _rolling_solved_from_total_history(
+    history: pd.DataFrame,
+    register_number: str,
+    current_total: int,
+    window_days: int,
+) -> tuple[int, bool]:
+    """
+    Calculate solved growth from cumulative LeetCode totals.
+
+    Returns:
+        (count, full_window_available)
+
+    A full window is available when we have a snapshot at or before the
+    requested boundary. If history is newer than the boundary, we return
+    the growth observed since the earliest available snapshot instead of
+    inventing data or falling back to the 20-item recent-AC feed.
+    """
+    current_total = max(0, safe_int(current_total))
+
+    points = _student_history_points(
+        history,
+        register_number,
+    )
+
+    if points.empty:
+        return 0, False
+
+    today_ts = pd.Timestamp(date.today())
+    target = today_ts - pd.Timedelta(
+        days=window_days
+    )
+
+    # Only prior snapshots belong in the baseline search.
+    points = points[
+        points["_date"] < today_ts
+    ]
+
+    if points.empty:
+        return 0, False
+
+    boundary_points = points[
+        points["_date"] <= target
+    ]
+
+    if not boundary_points.empty:
+        baseline = boundary_points.iloc[-1]
+        full_window = True
+    else:
+        # Not enough history exists yet for the full requested period.
+        # Use only the period we truly observed.
+        baseline = points.iloc[0]
+        full_window = False
+
+    baseline_total = max(
+        0,
+        safe_int(baseline["_total"]),
+    )
+
+    return (
+        max(0, current_total - baseline_total),
+        full_window,
+    )
+
+
+def _solved_since_previous_snapshot(
+    previous_history: pd.DataFrame,
+    register_number: str,
+    current_total: int,
+) -> tuple[int, str]:
+    """
+    Compute the change since the latest prior daily snapshot.
+
+    This replaces Solved Today from recentAcSubmissionList whenever a
+    previous daily snapshot exists. It therefore cannot be capped at 20.
+    """
+    points = _student_history_points(
+        previous_history,
+        register_number,
+    )
+
+    if points.empty:
+        return 0, ""
+
+    today_ts = pd.Timestamp(date.today())
+
+    prior = points[
+        points["_date"] < today_ts
+    ]
+
+    if prior.empty:
+        return 0, ""
+
+    previous = prior.iloc[-1]
+
+    previous_total = max(
+        0,
+        safe_int(previous["_total"]),
+    )
+
+    solved_delta = max(
+        0,
+        safe_int(current_total)
+        - previous_total,
+    )
+
+    previous_date = pd.Timestamp(
+        previous["_date"]
+    ).date()
+
+    # DailyActivity records the day after the previous snapshot.
+    activity_date = (
+        previous_date + timedelta(days=1)
+    ).isoformat()
+
+    return solved_delta, activity_date
+
+
 def calculate_completed_day_counts(
     previous_history: pd.DataFrame,
     previous_activity: pd.DataFrame,
@@ -791,41 +988,86 @@ def calculate_completed_day_counts(
     leetcode_14_days: int,
     leetcode_30_days: int,
 ) -> tuple[int, int, int, str, int]:
-    today = date.today()
+    """
+    Permanent rolling-solved fix.
 
-    last_7_days = max(
-        0, safe_int(leetcode_7_days) - safe_int(solved_today)
-    )
-    last_14_days = max(
-        0, safe_int(leetcode_14_days) - safe_int(solved_today)
-    )
-    last_30_days = max(
-        0, safe_int(leetcode_30_days) - safe_int(solved_today)
+    Old behavior:
+      Last 7/14/30 Days <- recentAcSubmissionList
+      This is unsafe because LeetCode may expose only ~20 recent accepted
+      submissions for a public profile, producing 20 / 20 / 20.
+
+    New behavior:
+      Last 7/14/30 Days <- cumulative total-solved history differences.
+
+    The old leetcode_* parameters remain in the signature only so the rest
+    of the tracker stays backward compatible; they are intentionally not
+    used for rolling solved counts.
+    """
+    del previous_activity
+    del leetcode_7_days
+    del leetcode_14_days
+    del leetcode_30_days
+
+    last_7_days, full_7 = (
+        _rolling_solved_from_total_history(
+            previous_history,
+            register_number,
+            current_total,
+            7,
+        )
     )
 
-    previous = latest_previous_snapshot(
-        previous_history,
-        register_number,
+    last_14_days, full_14 = (
+        _rolling_solved_from_total_history(
+            previous_history,
+            register_number,
+            current_total,
+            14,
+        )
     )
 
-    if previous is None:
-        return last_7_days, last_14_days, last_30_days, "", 0
-
-    previous_total = safe_int(previous.get("Problems Solved", 0))
-
-    completed_delta = max(
-        0,
-        safe_int(current_total)
-        - previous_total
-        - safe_int(solved_today),
+    last_30_days, full_30 = (
+        _rolling_solved_from_total_history(
+            previous_history,
+            register_number,
+            current_total,
+            30,
+        )
     )
+
+    completed_solved, completed_date = (
+        _solved_since_previous_snapshot(
+            previous_history,
+            register_number,
+            current_total,
+        )
+    )
+
+    # If there is no previous snapshot at all, keep the recent-feed
+    # Solved Today only as a first-run fallback. The rolling windows remain
+    # zero until real snapshot history exists instead of falsely becoming 20.
+    if not completed_date:
+        completed_solved = max(
+            0,
+            safe_int(solved_today),
+        )
+
+    coverage = (
+        f"history coverage "
+        f"7d={'full' if full_7 else 'partial'} "
+        f"14d={'full' if full_14 else 'partial'} "
+        f"30d={'full' if full_30 else 'partial'}"
+    )
+
+    # Stored only for console diagnostics by caller if needed.
+    calculate_completed_day_counts.last_coverage = coverage
 
     return (
         last_7_days,
         last_14_days,
         last_30_days,
-        (today - timedelta(days=1)).isoformat(),
-        completed_delta,
+        completed_date,
+        completed_solved,
     )
 
 
@@ -1259,6 +1501,17 @@ def process_student(
     profile["last_14_days"] = completed_14_days
     profile["last_30_days"] = completed_30_days
 
+    # When a prior snapshot exists, cumulative-total delta is more reliable
+    # than recentAcSubmissionList for today's solved count too.
+    if completed_date:
+        profile["solved_today"] = completed_solved
+
+    coverage_note = getattr(
+        calculate_completed_day_counts,
+        "last_coverage",
+        "",
+    )
+
     row = {
         "Section": section,
         "Register Number":
@@ -1315,7 +1568,8 @@ def process_student(
         f"sub7d={profile['last_7_days_submissions']} | "
         f"today={profile['solved_today']} | "
         f"total={profile['total_solved']} | "
-        f"{profile['status']}"
+        f"{profile['status']} | "
+        f"{coverage_note}"
     )
 
     return row
@@ -1632,10 +1886,20 @@ def update_history(
                     row[
                         "Last 7 Days"
                     ],
+                "Last 14 Days":
+                    row.get(
+                        "Last 14 Days",
+                        0,
+                    ),
                 "Last 30 Days":
                     row[
                         "Last 30 Days"
                     ],
+                "Last 7 Days Submissions":
+                    row.get(
+                        "Last 7 Days Submissions",
+                        0,
+                    ),
                 "Total Submissions":
                     row[
                         "Total Submissions"
@@ -2032,7 +2296,11 @@ def run_one_update() -> None:
                             0,
                         "Last 7 Days":
                             0,
+                        "Last 14 Days":
+                            0,
                         "Last 30 Days":
+                            0,
+                        "Last 7 Days Submissions":
                             0,
                         "Total Submissions":
                             0,
