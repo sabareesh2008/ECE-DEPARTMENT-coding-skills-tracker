@@ -267,77 +267,103 @@
           </div>
         </div>
 
-        <div class="actions">
+        <div class="admin-actions admin-actions-popup">
+      <button
+        id="adminActionsMenuButton"
+        class="admin-actions-trigger"
+        type="button"
+        aria-expanded="false"
+        aria-controls="adminActionsMenu"
+      >
+        <span class="admin-actions-trigger-icon">⚙</span>
+        <span>Admin Actions</span>
+        <span class="admin-actions-chevron">▾</span>
+      </button>
+
+      <div
+        id="adminActionsMenu"
+        class="admin-actions-menu"
+        hidden
+      >
+        <div class="admin-actions-menu-header">
+          <div>
+            <strong>Admin Actions</strong>
+            <span>Manage, export and analyze</span>
+          </div>
           <button
+            id="adminActionsMenuClose"
+            class="admin-actions-close"
+            type="button"
+            aria-label="Close admin actions"
+          >×</button>
+        </div>
+
+        <div class="admin-actions-menu-grid">
+          <div class="admin-menu-item"><button
             id="downloadCsvButton"
             class="action-button secondary"
             type="button"
           >
             CSV
-          </button>
-
-          <button
+          </button></div>
+          <div class="admin-menu-item"><button
             id="downloadPdfButton"
             class="action-button secondary"
             type="button"
           >
             PDF
-          </button>
-
-          <button
+          </button></div>
+          <div class="admin-menu-item"><button
             id="addProfileButton"
             class="action-button primary admin-only"
             type="button"
             hidden
           >
             + Add Profile
-          </button>
-
-          <button
+          </button></div>
+          <div class="admin-menu-item"><button
             id="syncNowButton"
             class="action-button secondary admin-only"
             type="button"
             hidden
           >
             ↻ Sync Now
-          </button>
-
-          <button
+          </button></div>
+          <div class="admin-menu-item"><button
             id="manageStudentsButton"
             class="action-button secondary admin-only"
             type="button"
             hidden
           >
             Manage Students
-          </button>
-
-          <button
+          </button></div>
+          <div class="admin-menu-item"><button
             id="facultyAnalyticsButton"
             class="action-button secondary admin-only"
             type="button"
             hidden
           >
             Faculty Analytics
-          </button>
-
-          <button
+          </button></div>
+          <div class="admin-menu-item"><button
             id="aiAnalystButton"
             class="action-button ai-analyst-button admin-only"
             type="button"
             hidden
           >
             🤖 AI Analyst
-          </button>
-
-          <button
+          </button></div>
+          <div class="admin-menu-item"><button
             id="adminLogoutButton"
             class="action-button secondary admin-only"
             type="button"
             hidden
           >
             Logout
-          </button>
+          </button></div>
         </div>
+      </div>
+    </div>
       </section>
 
       <section class="legend">

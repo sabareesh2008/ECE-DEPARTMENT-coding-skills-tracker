@@ -6678,3 +6678,77 @@ document.getElementById("facultyTableBody")
   ?.addEventListener("click", handleFacultyTableClick);
 
 refreshCodingAdminLocks();
+
+
+// ============================================================
+// ADMIN ACTIONS POPUP MENU
+// ============================================================
+const adminActionsMenuButton =
+  document.getElementById("adminActionsMenuButton");
+
+const adminActionsMenu =
+  document.getElementById("adminActionsMenu");
+
+const adminActionsMenuClose =
+  document.getElementById("adminActionsMenuClose");
+
+function setAdminActionsMenu(open) {
+  if (!adminActionsMenu || !adminActionsMenuButton) {
+    return;
+  }
+
+  adminActionsMenu.hidden = !open;
+  adminActionsMenuButton.setAttribute(
+    "aria-expanded",
+    open ? "true" : "false"
+  );
+
+  document.body.classList.toggle(
+    "admin-actions-open",
+    open
+  );
+}
+
+adminActionsMenuButton?.addEventListener("click", (event) => {
+  event.stopPropagation();
+
+  setAdminActionsMenu(
+    adminActionsMenu?.hidden ?? true
+  );
+});
+
+adminActionsMenuClose?.addEventListener("click", () => {
+  setAdminActionsMenu(false);
+});
+
+adminActionsMenu?.addEventListener("click", (event) => {
+  event.stopPropagation();
+
+  const clickedAction = event.target.closest(
+    ".admin-actions-menu-grid button"
+  );
+
+  if (clickedAction) {
+    // Close after an existing admin action is selected.
+    // The original button listener still runs normally.
+    window.setTimeout(() => {
+      setAdminActionsMenu(false);
+    }, 0);
+  }
+});
+
+document.addEventListener("click", (event) => {
+  if (
+    adminActionsMenu &&
+    !adminActionsMenu.hidden &&
+    !event.target.closest(".admin-actions-popup")
+  ) {
+    setAdminActionsMenu(false);
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    setAdminActionsMenu(false);
+  }
+});
