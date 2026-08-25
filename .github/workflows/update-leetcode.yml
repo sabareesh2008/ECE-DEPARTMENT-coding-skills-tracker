@@ -3,6 +3,8 @@ name: Update LeetCode Leaderboard
 on:
   schedule:
     - cron: "*/5 * * * *"
+    # Daily IST boundary snapshot: 00:00 IST = 18:30 UTC
+    - cron: "30 18 * * *"
 
   workflow_dispatch:
 

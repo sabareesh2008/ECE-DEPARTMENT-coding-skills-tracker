@@ -140,7 +140,8 @@ def unique_solved_count_since(
             continue
 
         submission_time = datetime.fromtimestamp(
-            int(timestamp)
+            int(timestamp),
+            tz=IST,
         )
 
         if submission_time >= start_time:
@@ -290,11 +291,12 @@ def fetch_leetcode(username: str) -> dict[str, Any]:
                     tz=IST,
                 ).strftime("%Y-%m-%d %H:%M:%S IST")
 
-        now = datetime.now()
+        now = ist_now()
 
         today_start = datetime.combine(
-            date.today(),
-            datetime.min.time(),
+            ist_today(),
+            dt_time.min,
+            tzinfo=IST,
         )
 
         seven_days_start = (
@@ -354,7 +356,7 @@ def fetch_leetcode(username: str) -> dict[str, Any]:
             "last_7_days_submissions":
                 submission_count_since(
                     submission_calendar,
-                    datetime.now(IST) - timedelta(days=7),
+                    now - timedelta(days=7),
                 ),
             "last_problem": last_problem,
             "last_solved": last_solved,
@@ -695,6 +697,16 @@ def safe_int(value: Any) -> int:
         return 0
 
 
+def ist_now() -> datetime:
+    """Single source of truth for CodeMetrix tracker time."""
+    return datetime.now(IST)
+
+
+def ist_today() -> date:
+    """Calendar date in Asia/Kolkata, not the GitHub runner's UTC date."""
+    return ist_now().date()
+
+
 def load_daily_activity_file() -> pd.DataFrame:
     columns = [
         "Date",
@@ -744,7 +756,7 @@ def latest_previous_snapshot(
         errors="coerce",
     )
 
-    today = pd.Timestamp(date.today())
+    today = pd.Timestamp(ist_today())
 
     student_history = student_history[
         student_history["_date"] < today
@@ -781,23 +793,20 @@ def solved_on_date(
     return safe_int(matches.iloc[-1]["Solved That Day"])
 
 
-def _student_history_points(
+def _student_total_history(
     history: pd.DataFrame,
     register_number: str,
 ) -> pd.DataFrame:
     """
-    Return one trustworthy cumulative-total snapshot per date for a student.
+    One cumulative Problems Solved snapshot per stored calendar date.
 
-    IMPORTANT:
-    - We use Problems Solved (LeetCode cumulative total).
-    - We DO NOT use old Last 7/14/30 Days columns because some historical
-      values were produced by the limited recentAcSubmissionList endpoint.
-    - Duplicate same-day rows are collapsed by keeping the last row.
+    Historical 7/14/30 columns are deliberately ignored because older
+    CodeMetrix versions could save capped values from recent submissions.
     """
-    if history.empty:
-        return pd.DataFrame(
-            columns=["_date", "_total"]
-        )
+    columns = ["_date", "_total", "_order"]
+
+    if history is None or history.empty:
+        return pd.DataFrame(columns=columns)
 
     required = {
         "Date",
@@ -806,48 +815,39 @@ def _student_history_points(
     }
 
     if not required.issubset(history.columns):
-        return pd.DataFrame(
-            columns=["_date", "_total"]
-        )
+        return pd.DataFrame(columns=columns)
 
-    points = history[
+    frame = history[
         history["Register Number"].astype(str)
         == str(register_number)
     ].copy()
 
-    if points.empty:
-        return pd.DataFrame(
-            columns=["_date", "_total"]
-        )
+    if frame.empty:
+        return pd.DataFrame(columns=columns)
 
-    points["_date"] = pd.to_datetime(
-        points["Date"],
+    frame["_date"] = pd.to_datetime(
+        frame["Date"],
+        errors="coerce",
+    ).dt.date
+
+    frame["_total"] = pd.to_numeric(
+        frame["Problems Solved"],
         errors="coerce",
     )
 
-    points["_total"] = pd.to_numeric(
-        points["Problems Solved"],
-        errors="coerce",
-    )
+    frame["_order"] = range(len(frame))
 
-    points = points.dropna(
+    frame = frame.dropna(
         subset=["_date", "_total"]
     )
 
-    if points.empty:
-        return pd.DataFrame(
-            columns=["_date", "_total"]
-        )
+    if frame.empty:
+        return pd.DataFrame(columns=columns)
 
-    # If old data accidentally contains multiple rows for the same student
-    # and date, use only the latest row in file order.
-    points["_row_order"] = range(len(points))
-
-    points = (
-        points
-        .sort_values(
-            ["_date", "_row_order"]
-        )
+    # True duplicate protection for local History.csv.
+    frame = (
+        frame
+        .sort_values(["_date", "_order"])
         .drop_duplicates(
             subset=["_date"],
             keep="last",
@@ -856,126 +856,99 @@ def _student_history_points(
         .reset_index(drop=True)
     )
 
-    return points[
-        ["_date", "_total"]
-    ].copy()
+    return frame[columns]
 
 
-def _rolling_solved_from_total_history(
+def _total_on_exact_date(
     history: pd.DataFrame,
     register_number: str,
-    current_total: int,
-    window_days: int,
-) -> tuple[int, bool]:
-    """
-    Calculate solved growth from cumulative LeetCode totals.
-
-    Returns:
-        (count, full_window_available)
-
-    A full window is available when we have a snapshot at or before the
-    requested boundary. If history is newer than the boundary, we return
-    the growth observed since the earliest available snapshot instead of
-    inventing data or falling back to the 20-item recent-AC feed.
-    """
-    current_total = max(0, safe_int(current_total))
-
-    points = _student_history_points(
+    target_date: date,
+) -> int | None:
+    """Return the cumulative total only when the exact boundary exists."""
+    frame = _student_total_history(
         history,
         register_number,
     )
 
-    if points.empty:
-        return 0, False
+    if frame.empty:
+        return None
 
-    today_ts = pd.Timestamp(date.today())
-    target = today_ts - pd.Timedelta(
-        days=window_days
-    )
-
-    # Only prior snapshots belong in the baseline search.
-    points = points[
-        points["_date"] < today_ts
+    matches = frame[
+        frame["_date"] == target_date
     ]
 
-    if points.empty:
-        return 0, False
+    if matches.empty:
+        return None
 
-    boundary_points = points[
-        points["_date"] <= target
-    ]
-
-    if not boundary_points.empty:
-        baseline = boundary_points.iloc[-1]
-        full_window = True
-    else:
-        # Not enough history exists yet for the full requested period.
-        # Use only the period we truly observed.
-        baseline = points.iloc[0]
-        full_window = False
-
-    baseline_total = max(
+    return max(
         0,
-        safe_int(baseline["_total"]),
-    )
-
-    return (
-        max(0, current_total - baseline_total),
-        full_window,
+        safe_int(matches.iloc[-1]["_total"]),
     )
 
 
-def _solved_since_previous_snapshot(
-    previous_history: pd.DataFrame,
+def _count_since_calendar_boundary(
+    history: pd.DataFrame,
     register_number: str,
     current_total: int,
-) -> tuple[int, str]:
+    days: int,
+) -> tuple[int | None, bool]:
     """
-    Compute the change since the latest prior daily snapshot.
+    Exact CodeMetrix calendar-window count.
 
-    This replaces Solved Today from recentAcSubmissionList whenever a
-    previous daily snapshot exists. It therefore cannot be capped at 20.
+    Last N Days =
+        current cumulative solved
+        - cumulative solved at end of day N days ago.
+
+    This gives today + the previous N-1 calendar days.
     """
-    points = _student_history_points(
-        previous_history,
+    boundary = ist_today() - timedelta(days=days)
+
+    baseline = _total_on_exact_date(
+        history,
         register_number,
+        boundary,
     )
 
-    if points.empty:
-        return 0, ""
+    if baseline is None:
+        return None, False
 
-    today_ts = pd.Timestamp(date.today())
-
-    prior = points[
-        points["_date"] < today_ts
-    ]
-
-    if prior.empty:
-        return 0, ""
-
-    previous = prior.iloc[-1]
-
-    previous_total = max(
-        0,
-        safe_int(previous["_total"]),
+    return (
+        max(
+            0,
+            safe_int(current_total) - baseline,
+        ),
+        True,
     )
 
-    solved_delta = max(
-        0,
-        safe_int(current_total)
-        - previous_total,
+
+def _count_today_from_history(
+    history: pd.DataFrame,
+    register_number: str,
+    current_total: int,
+) -> tuple[int | None, bool]:
+    """
+    Today =
+        current cumulative solved
+        - yesterday's final cumulative solved.
+    """
+    yesterday = ist_today() - timedelta(days=1)
+
+    baseline = _total_on_exact_date(
+        history,
+        register_number,
+        yesterday,
     )
 
-    previous_date = pd.Timestamp(
-        previous["_date"]
-    ).date()
+    if baseline is None:
+        return None, False
 
-    # DailyActivity records the day after the previous snapshot.
-    activity_date = (
-        previous_date + timedelta(days=1)
-    ).isoformat()
-
-    return solved_delta, activity_date
+    return (
+        max(
+            0,
+            safe_int(current_total) - baseline,
+        ),
+        True,
+    )
 
 
 def calculate_completed_day_counts(
@@ -989,85 +962,74 @@ def calculate_completed_day_counts(
     leetcode_30_days: int,
 ) -> tuple[int, int, int, str, int]:
     """
-    Permanent rolling-solved fix.
+    CodeMetrix Exact Tracker V2.
 
-    Old behavior:
-      Last 7/14/30 Days <- recentAcSubmissionList
-      This is unsafe because LeetCode may expose only ~20 recent accepted
-      submissions for a public profile, producing 20 / 20 / 20.
+    The public recent accepted list is NOT used for 7/14/30 solved counts.
+    It can be capped for active profiles.
 
-    New behavior:
-      Last 7/14/30 Days <- cumulative total-solved history differences.
+    Rolling solved counts come only from cumulative Problems Solved
+    snapshots already stored by CodeMetrix.
 
-    The old leetcode_* parameters remain in the signature only so the rest
-    of the tracker stays backward compatible; they are intentionally not
-    used for rolling solved counts.
+    Missing exact boundary:
+        return 0 and mark the period unavailable;
+        never manufacture 20 / 20 / 20.
     """
     del previous_activity
     del leetcode_7_days
     del leetcode_14_days
     del leetcode_30_days
 
-    last_7_days, full_7 = (
-        _rolling_solved_from_total_history(
-            previous_history,
-            register_number,
-            current_total,
-            7,
-        )
+    today_value, today_exact = _count_today_from_history(
+        previous_history,
+        register_number,
+        current_total,
     )
 
-    last_14_days, full_14 = (
-        _rolling_solved_from_total_history(
-            previous_history,
-            register_number,
-            current_total,
-            14,
-        )
+    seven_value, seven_exact = _count_since_calendar_boundary(
+        previous_history,
+        register_number,
+        current_total,
+        7,
     )
 
-    last_30_days, full_30 = (
-        _rolling_solved_from_total_history(
-            previous_history,
-            register_number,
-            current_total,
-            30,
-        )
+    fourteen_value, fourteen_exact = _count_since_calendar_boundary(
+        previous_history,
+        register_number,
+        current_total,
+        14,
     )
 
-    completed_solved, completed_date = (
-        _solved_since_previous_snapshot(
-            previous_history,
-            register_number,
-            current_total,
-        )
+    thirty_value, thirty_exact = _count_since_calendar_boundary(
+        previous_history,
+        register_number,
+        current_total,
+        30,
     )
 
-    # If there is no previous snapshot at all, keep the recent-feed
-    # Solved Today only as a first-run fallback. The rolling windows remain
-    # zero until real snapshot history exists instead of falsely becoming 20.
-    if not completed_date:
-        completed_solved = max(
+    # First-day bootstrap only. Never used for 7/14/30.
+    if today_value is None:
+        final_today = max(
             0,
             safe_int(solved_today),
         )
+        completed_date = ""
+    else:
+        final_today = today_value
+        completed_date = ist_today().isoformat()
 
-    coverage = (
-        f"history coverage "
-        f"7d={'full' if full_7 else 'partial'} "
-        f"14d={'full' if full_14 else 'partial'} "
-        f"30d={'full' if full_30 else 'partial'}"
-    )
-
-    # Stored only for console diagnostics by caller if needed.
-    calculate_completed_day_counts.last_coverage = coverage
+    calculate_completed_day_counts.last_coverage = {
+        "today": today_exact,
+        "7d": seven_exact,
+        "14d": fourteen_exact,
+        "30d": thirty_exact,
+    }
 
     return (
-        last_7_days,
-        last_14_days,
-        last_30_days,
+        seven_value if seven_value is not None else 0,
+        fourteen_value if fourteen_value is not None else 0,
+        thirty_value if thirty_value is not None else 0,
         completed_date,
-        completed_solved,
+        final_today,
     )
 
 
@@ -1501,15 +1463,21 @@ def process_student(
     profile["last_14_days"] = completed_14_days
     profile["last_30_days"] = completed_30_days
 
-    # When a prior snapshot exists, cumulative-total delta is more reliable
-    # than recentAcSubmissionList for today's solved count too.
-    if completed_date:
-        profile["solved_today"] = completed_solved
-
-    coverage_note = getattr(
+    coverage = getattr(
         calculate_completed_day_counts,
         "last_coverage",
-        "",
+        {},
+    )
+
+    if coverage.get("today"):
+        profile["solved_today"] = completed_solved
+
+    coverage_note = (
+        "coverage="
+        f"T:{'OK' if coverage.get('today') else 'BOOT'} "
+        f"7:{'OK' if coverage.get('7d') else 'NA'} "
+        f"14:{'OK' if coverage.get('14d') else 'NA'} "
+        f"30:{'OK' if coverage.get('30d') else 'NA'}"
     )
 
     row = {
@@ -1804,9 +1772,7 @@ def update_history(
         dict[str, Any]
     ],
 ) -> pd.DataFrame:
-    today_text = (
-        date.today().isoformat()
-    )
+    today_text = ist_today().isoformat()
 
     history = (
         previous_history.copy()
