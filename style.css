@@ -3823,7 +3823,9 @@ body.modal-open {
 }
 
 
-/* Main leaderboard: compact Easy / Medium / Hard */
+/* ============================================================
+   MAIN LEADERBOARD — COMPACT EASY / MEDIUM / HARD
+   ============================================================ */
 .emh-cell {
   white-space: nowrap;
   font-weight: 700;
