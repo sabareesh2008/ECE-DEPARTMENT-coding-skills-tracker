@@ -3821,3 +3821,16 @@ body.modal-open {
     .ai-chat-shell { min-height: 620px; }
     .ai-chat-messages { max-height: 500px; }
 }
+
+
+/* Main leaderboard: compact Easy / Medium / Hard */
+.emh-cell {
+  white-space: nowrap;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.emh-separator {
+  opacity: 0.45;
+  margin: 0 5px;
+}

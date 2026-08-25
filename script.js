@@ -564,7 +564,7 @@ function renderStudents(students) {
   visibleStudents = students;
 
   const overall = selectedSection === "OVERALL";
-  const columnCount = overall ? 13 : 12;
+  const columnCount = overall ? 10 : 9;
 
   document.querySelectorAll(".overall-only").forEach((element) => {
     element.hidden = !overall;
@@ -599,42 +599,6 @@ function renderStudents(students) {
 
     return `
       <tr>
-        <td>
-          <span class="rank-badge">
-            ${escapeHTML(rank || "–")}
-          </span>
-        </td>
-
-        ${sectionCell}
-
-        <td class="register-number-cell">
-          ${escapeHTML(student["Register Number"] || "–")}
-        </td>
-
-        <td>
-          <button
-            class="student-name student-profile-link"
-            type="button"
-            data-profile-register="${escapeHTML(student["Register Number"])}"
-            title="Open student progress profile"
-          >
-            ${escapeHTML(student["Student Name"] || "Student")} ↗
-          </button>
-        </td>
-
-        <td>
-          <a
-            class="leetcode-link"
-            href="${escapeHTML(
-              student["LeetCode Link"]
-              || `https://leetcode.com/u/${student["LeetCode Username"] || ""}/`
-            )}"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            ${escapeHTML(student["LeetCode Username"] || "–")}
-          </a>
-        </td>
 
         <td><strong>${toNumber(student["Last 30 Days"])}</strong></td>
         <td>${toNumber(student["Last 14 Days"])}</td>
@@ -642,9 +606,13 @@ function renderStudents(students) {
         <td>${toNumber(student["Last 7 Days Submissions"])}</td>
         <td>${toNumber(student["Solved Today"])}</td>
         <td><strong>${toNumber(student["Problems Solved"])}</strong></td>
-        <td>${toNumber(student.Easy)}</td>
-        <td>${toNumber(student.Medium)}</td>
-        <td>${toNumber(student.Hard)}</td>
+        <td class="emh-cell">
+          <span title="Easy">${toNumber(student.Easy)}</span>
+          <span class="emh-separator">/</span>
+          <span title="Medium">${toNumber(student.Medium)}</span>
+          <span class="emh-separator">/</span>
+          <span title="Hard">${toNumber(student.Hard)}</span>
+        </td>
 
         <td>
           <span class="student-status ${statusClass}">
