@@ -41,7 +41,7 @@ SUPABASE_SERVICE_ROLE_KEY = os.getenv(
 
 LEETCODE_URL = "https://leetcode.com/graphql"
 
-RECENT_SUBMISSION_LIMIT = 300
+RECENT_SUBMISSION_LIMIT = 2000
 IST = ZoneInfo("Asia/Kolkata")
 
 # Check up to 10 LeetCode profiles at the same time.
@@ -951,6 +951,89 @@ def _count_today_from_history(
     )
 
 
+
+def _latest_positive_historical_metric(
+    history: pd.DataFrame,
+    register_number: str,
+    column_name: str,
+) -> int | None:
+    """
+    Last-resort continuity fallback.
+
+    Used only when:
+      - the exact cumulative-total boundary is missing, AND
+      - the current recent accepted feed does not cover enough history.
+
+    This prevents a known old non-zero rolling value from suddenly becoming 0.
+    It is marked as CACHED in the console, so it is never presented internally
+    as an exact boundary-derived value.
+    """
+    if (
+        history is None
+        or history.empty
+        or column_name not in history.columns
+        or "Register Number" not in history.columns
+    ):
+        return None
+
+    rows = history[
+        history["Register Number"].astype(str)
+        == str(register_number)
+    ].copy()
+
+    if rows.empty:
+        return None
+
+    if "Date" in rows.columns:
+        rows["_date"] = pd.to_datetime(
+            rows["Date"],
+            errors="coerce",
+        )
+        rows = rows.sort_values("_date")
+
+    values = pd.to_numeric(
+        rows[column_name],
+        errors="coerce",
+    ).dropna()
+
+    values = values[
+        values > 0
+    ]
+
+    if values.empty:
+        return None
+
+    return int(values.iloc[-1])
+
+
+def _choose_window_value(
+    exact_history_value: int | None,
+    recent_feed_value: int,
+    cached_history_value: int | None,
+) -> tuple[int, str]:
+    """
+    Priority:
+      1. EXACT   -> cumulative total boundary exists.
+      2. RECENT  -> recent accepted feed produced a non-zero current value.
+      3. CACHED  -> retain last known non-zero rolling value instead of false 0.
+      4. ZERO    -> genuinely no usable information exists.
+
+    This fixes the V2 behavior where a missing 30-day boundary forced 0.
+    """
+    if exact_history_value is not None:
+        return max(0, safe_int(exact_history_value)), "EXACT"
+
+    recent_value = max(0, safe_int(recent_feed_value))
+
+    if recent_value > 0:
+        return recent_value, "RECENT"
+
+    if cached_history_value is not None:
+        return max(0, safe_int(cached_history_value)), "CACHED"
+
+    return 0, "ZERO"
+
+
 def calculate_completed_day_counts(
     previous_history: pd.DataFrame,
     previous_activity: pd.DataFrame,
@@ -962,22 +1045,21 @@ def calculate_completed_day_counts(
     leetcode_30_days: int,
 ) -> tuple[int, int, int, str, int]:
     """
-    CodeMetrix Exact Tracker V2.
+    CodeMetrix Tracker V3.
 
-    The public recent accepted list is NOT used for 7/14/30 solved counts.
-    It can be capped for active profiles.
+    Exact source when available:
+      cumulative Problems Solved snapshots.
 
-    Rolling solved counts come only from cumulative Problems Solved
-    snapshots already stored by CodeMetrix.
+    Safe fallback when an exact historical boundary is missing:
+      current high-limit recent accepted feed.
 
-    Missing exact boundary:
-        return 0 and mark the period unavailable;
-        never manufacture 20 / 20 / 20.
+    Final continuity fallback:
+      last known non-zero historical rolling value.
+
+    This specifically prevents the broken V2 behavior:
+      missing 30-day boundary -> forced 0.
     """
     del previous_activity
-    del leetcode_7_days
-    del leetcode_14_days
-    del leetcode_30_days
 
     today_value, today_exact = _count_today_from_history(
         previous_history,
@@ -985,49 +1067,91 @@ def calculate_completed_day_counts(
         current_total,
     )
 
-    seven_value, seven_exact = _count_since_calendar_boundary(
+    seven_exact_value, seven_exact = _count_since_calendar_boundary(
         previous_history,
         register_number,
         current_total,
         7,
     )
 
-    fourteen_value, fourteen_exact = _count_since_calendar_boundary(
+    fourteen_exact_value, fourteen_exact = _count_since_calendar_boundary(
         previous_history,
         register_number,
         current_total,
         14,
     )
 
-    thirty_value, thirty_exact = _count_since_calendar_boundary(
+    thirty_exact_value, thirty_exact = _count_since_calendar_boundary(
         previous_history,
         register_number,
         current_total,
         30,
     )
 
-    # First-day bootstrap only. Never used for 7/14/30.
+    cached_7 = _latest_positive_historical_metric(
+        previous_history,
+        register_number,
+        "Last 7 Days",
+    )
+
+    cached_14 = _latest_positive_historical_metric(
+        previous_history,
+        register_number,
+        "Last 14 Days",
+    )
+
+    cached_30 = _latest_positive_historical_metric(
+        previous_history,
+        register_number,
+        "Last 30 Days",
+    )
+
+    final_7, source_7 = _choose_window_value(
+        seven_exact_value,
+        leetcode_7_days,
+        cached_7,
+    )
+
+    final_14, source_14 = _choose_window_value(
+        fourteen_exact_value,
+        leetcode_14_days,
+        cached_14,
+    )
+
+    final_30, source_30 = _choose_window_value(
+        thirty_exact_value,
+        leetcode_30_days,
+        cached_30,
+    )
+
+    # Today: cumulative-history delta is preferred.
+    # If yesterday's exact snapshot is absent, use today's accepted feed.
     if today_value is None:
         final_today = max(
             0,
             safe_int(solved_today),
         )
+        today_source = "RECENT"
         completed_date = ""
     else:
-        final_today = today_value
+        final_today = max(
+            0,
+            safe_int(today_value),
+        )
+        today_source = "EXACT"
         completed_date = ist_today().isoformat()
 
     calculate_completed_day_counts.last_coverage = {
-        "today": today_exact,
-        "7d": seven_exact,
-        "14d": fourteen_exact,
-        "30d": thirty_exact,
+        "today": today_source,
+        "7d": source_7,
+        "14d": source_14,
+        "30d": source_30,
     }
 
     return (
-        seven_value if seven_value is not None else 0,
-        fourteen_value if fourteen_value is not None else 0,
-        thirty_value if thirty_value is not None else 0,
+        final_7,
+        final_14,
+        final_30,
         completed_date,
         final_today,
     )
@@ -1469,15 +1593,15 @@ def process_student(
         {},
     )
 
-    if coverage.get("today"):
+    if coverage.get("today") == "EXACT":
         profile["solved_today"] = completed_solved
 
     coverage_note = (
-        "coverage="
-        f"T:{'OK' if coverage.get('today') else 'BOOT'} "
-        f"7:{'OK' if coverage.get('7d') else 'NA'} "
-        f"14:{'OK' if coverage.get('14d') else 'NA'} "
-        f"30:{'OK' if coverage.get('30d') else 'NA'}"
+        "source="
+        f"T:{coverage.get('today', 'ZERO')} "
+        f"7:{coverage.get('7d', 'ZERO')} "
+        f"14:{coverage.get('14d', 'ZERO')} "
+        f"30:{coverage.get('30d', 'ZERO')}"
     )
 
     row = {
