@@ -316,19 +316,49 @@ def index_students(
     return result
 
 
-def daily_challenge_stats(
-    today: str,
-    challenges: list[dict[str, Any]],
-    results: list[dict[str, Any]],
-    total_students: int,
-) -> dict[str, Any]:
-    challenge = next(
-        (
-            item
-            for item in challenges
-            if str(item.get("challenge_date", "")) == today
-        ),
-        None,
+def daily_challenge_stats_in_window(
+    start_time,
+    end_time,
+    challenges,
+    challenge_results,
+    total_students,
+):
+    """
+    Daily Challenge statistics for the exact reporting window.
+
+    Example:
+        Aug 24 07:00 AM IST
+        ->
+        Aug 25 07:00 AM IST
+    """
+
+    # --------------------------------------------------------
+    # Find the Daily Challenge belonging to this 24-hour window
+    # --------------------------------------------------------
+
+    window_challenges = []
+
+    for challenge in challenges:
+
+        raw_time = (
+            challenge.get("created_at")
+            or challenge.get("starts_at")
+            or challenge.get("challenge_date")
+        )
+
+        challenge_time = parse_datetime(raw_time)
+
+        if not challenge_time:
+            continue
+
+        if start_time <= challenge_time < end_time:
+            window_challenges.append(challenge)
+
+    # Use the latest challenge in the reporting window
+    challenge = (
+        window_challenges[-1]
+        if window_challenges
+        else None
     )
 
     if not challenge:
@@ -340,30 +370,88 @@ def daily_challenge_stats(
             "completion_rate": 0.0,
         }
 
-    challenge_id = str(challenge.get("id"))
-    completed_registers = {
-        str(item.get("register_number", "")).strip()
-        for item in results
-        if str(item.get("challenge_id")) == challenge_id
-        and bool(item.get("completed"))
-    }
-    completed_registers.discard("")
+    challenge_id = str(
+        challenge.get("id", "")
+    )
 
-    completed = len(completed_registers)
+    # --------------------------------------------------------
+    # Find students who completed this challenge
+    # between 7 AM -> next 7 AM
+    # --------------------------------------------------------
+
+    completed_registers = set()
+
+    for result in challenge_results:
+
+        if str(
+            result.get("challenge_id", "")
+        ) != challenge_id:
+            continue
+
+        if not bool(
+            result.get("completed")
+        ):
+            continue
+
+        raw_time = (
+            result.get("completed_at")
+            or result.get("submitted_at")
+            or result.get("created_at")
+        )
+
+        result_time = parse_datetime(raw_time)
+
+        if not result_time:
+            continue
+
+        if not (
+            start_time
+            <= result_time
+            < end_time
+        ):
+            continue
+
+        register_number = str(
+            result.get(
+                "register_number",
+                ""
+            )
+        ).strip()
+
+        if register_number:
+            completed_registers.add(
+                register_number
+            )
+
+    completed = len(
+        completed_registers
+    )
+
     return {
         "exists": True,
+
         "title": (
             challenge.get("title")
             or challenge.get("problem_title")
             or challenge.get("problem_name")
             or "Daily Challenge"
         ),
+
         "completed": completed,
-        "pending": max(total_students - completed, 0),
-        "completion_rate": percent(completed, total_students),
+
+        "pending": max(
+            total_students - completed,
+            0,
+        ),
+
+        "completion_rate": (
+            completed
+            / total_students
+            * 100
+            if total_students
+            else 0.0
+        ),
     }
-
-
 def coding_tests_in_window(
     tests: list[dict[str, Any]],
     start: datetime,
@@ -1680,60 +1768,84 @@ def build_report(
     scope_label = section or "ECE Overall"
 
     if mode == "daily":
-        report_date = today - timedelta(days=1)
 
-        challenge = daily_challenge_stats(
-            report_date.isoformat(),
-            data["challenges"],
-            data["challenge_results"],
-            len(live),
-        )
+    # Exact 24-hour reporting window:
+    # Yesterday 07:00 AM IST -> Today 07:00 AM IST
 
-        day_start = datetime.combine(
-            report_date,
-            datetime.min.time(),
-            tzinfo=IST,
-        )
-        day_end = day_start + timedelta(days=1)
+        report_end = datetime.combine(
+        today,
+        datetime.min.time(),
+        tzinfo=IST,
+    ).replace(
+        hour=7,
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
 
-        tests = coding_tests_in_window(
-            data["coding_tests"],
-            day_start,
-            day_end,
-        )
+    report_start = report_end - timedelta(hours=24)
 
-        coding = coding_test_summary(
-            tests,
-            data["coding_attempts"],
-            len(live),
-        )
+    report_label = (
+        f"{report_start.strftime('%Y-%m-%d %I:%M %p')} "
+        f"to "
+        f"{report_end.strftime('%Y-%m-%d %I:%M %p')}"
+    )
 
-        subject, html_body = build_daily_report(
+    print(
+        f"Daily report window: "
+        f"{report_start.isoformat()} "
+        f"-> {report_end.isoformat()}"
+    )
+
+    tests = coding_tests_in_window(
+        data["coding_tests"],
+        report_start,
+        report_end,
+    )
+
+    coding = coding_test_summary(
+        tests,
+        data["coding_attempts"],
+        len(live),
+    )
+
+    challenge = daily_challenge_stats_in_window(
+        report_start,
+        report_end,
+        data["challenges"],
+        data["challenge_results"],
+        len(live),
+    )
+
+    subject, html_body = build_daily_report(
+        live,
+        challenge,
+        coding,
+        report_label,
+        scope_label=scope_label,
+    )
+
+    file_date = report_end.date().isoformat()
+
+    attachments = [
+        generate_daily_excel(
             live,
             challenge,
             coding,
-            report_date.isoformat(),
+            file_date,
             scope_label=scope_label,
-        )
+        ),
 
-        attachments = [
-            generate_daily_excel(
-                live,
-                challenge,
-                coding,
-                report_date.isoformat(),
-                scope_label=scope_label,
-            ),
-            generate_daily_pdf(
-                live,
-                challenge,
-                coding,
-                report_date.isoformat(),
-                scope_label=scope_label,
-            ),
-        ]
+        generate_daily_pdf(
+            live,
+            challenge,
+            coding,
+            file_date,
+            scope_label=scope_label,
+        ),
+    ]
 
-        return subject, html_body, attachments
+    return subject, html_body, attachments
 
     if mode == "weekly":
         start_day = today - timedelta(days=6)
