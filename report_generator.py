@@ -4,7 +4,7 @@ ECE LeetCode Platform - Automated Daily / Weekly Email Reports
 
 Data sources:
 - LiveData.csv       -> LeetCode tracker metrics
-- Supabase           -> students, Daily Challenge, Daily Coding Test
+- LeetCode public profile feed -> exact 07:00-to-07:00 accepted activity
 
 Email:
 - Gmail SMTP
@@ -33,13 +33,15 @@ import json
 import os
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timedelta, timezone, time as dt_time
 from pathlib import Path
 from typing import Any, Iterable
 from zoneinfo import ZoneInfo
 
 import pandas as pd
 import requests
+import tracker as leetcode_tracker
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4, landscape
@@ -50,6 +52,29 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 ROOT = Path(__file__).resolve().parent
 LIVE_DATA_PATH = ROOT / "LiveData.csv"
 REPORT_DIR = ROOT / "reports"
+
+REPORT_ACTIVITY_QUERY = """
+query reportActivity($username: String!, $acceptedLimit: Int!) {
+  matchedUser(username: $username) {
+    username
+    submitStatsGlobal {
+      acSubmissionNum { difficulty count submissions }
+      totalSubmissionNum { difficulty count submissions }
+    }
+  }
+  recentAcSubmissionList(username: $username, limit: $acceptedLimit) {
+    title
+    titleSlug
+    timestamp
+  }
+  recentSubmissionList(username: $username) {
+    title
+    titleSlug
+    timestamp
+    statusDisplay
+  }
+}
+"""
 
 IST = ZoneInfo("Asia/Kolkata")
 RESEND_ENDPOINT = "https://api.resend.com/emails"
@@ -106,18 +131,13 @@ def section_secret_name(section: str) -> str:
 
 def load_config(require_email: bool = True) -> Config:
     legacy_recipients = parse_recipients(env("REPORT_TO_EMAILS"))
-
     section_recipients = {
         section: parse_recipients(env(section_secret_name(section)))
         for section in SECTIONS
     }
-
     hod_recipients = parse_recipients(env("REPORT_HOD_EMAILS"))
-
-    # Preserve the old setup: REPORT_TO_EMAILS becomes the Overall/HOD fallback.
     if not hod_recipients:
         hod_recipients = list(legacy_recipients)
-
     config = Config(
         supabase_url=env("SUPABASE_URL").rstrip("/"),
         supabase_key=env("SUPABASE_SERVICE_ROLE_KEY"),
@@ -128,32 +148,16 @@ def load_config(require_email: bool = True) -> Config:
         hod_recipients=hod_recipients,
         reply_to=env("REPORT_REPLY_TO") or None,
     )
-
     missing = []
-
-    if not config.supabase_url:
-        missing.append("SUPABASE_URL")
-
-    if not config.supabase_key:
-        missing.append("SUPABASE_SERVICE_ROLE_KEY")
-
     if require_email:
         if not config.gmail_address:
             missing.append("GMAIL_ADDRESS")
-
         if not config.gmail_app_password:
             missing.append("GMAIL_APP_PASSWORD")
-
         if not config.hod_recipients and not any(config.section_recipients.values()):
-            missing.append(
-                "REPORT_HOD_EMAILS or at least one REPORT_ECE_*_EMAILS secret"
-            )
-
+            missing.append("REPORT_HOD_EMAILS or at least one REPORT_ECE_*_EMAILS secret")
     if missing:
-        raise RuntimeError(
-            "Missing required environment variable(s): " + ", ".join(missing)
-        )
-
+        raise RuntimeError("Missing required environment variable(s): " + ", ".join(missing))
     return config
 
 
@@ -236,55 +240,243 @@ def supabase_get(
 def load_live_data() -> pd.DataFrame:
     if not LIVE_DATA_PATH.exists():
         raise FileNotFoundError(f"Missing {LIVE_DATA_PATH.name}")
-
     frame = pd.read_csv(LIVE_DATA_PATH, dtype={"Register Number": str})
     required = {
-        "Section",
-        "Register Number",
-        "Student Name",
-        "Problems Solved",
-        "Solved Today",
-        "Last 7 Days",
-        "Last 30 Days",
-        "Status",
+        "Section", "Register Number", "Student Name", "LeetCode Username",
+        "Problems Solved", "Solved Today", "Last 7 Days", "Last 14 Days",
+        "Last 30 Days", "Last 7 Days Submissions", "Total Submissions", "Status",
     }
     missing = sorted(required - set(frame.columns))
     if missing:
-        raise RuntimeError(
-            "LiveData.csv is missing required column(s): " + ", ".join(missing)
-        )
-
-    frame["Register Number"] = (
-        frame["Register Number"].fillna("").astype(str).str.strip()
-    )
-    frame["Section"] = frame["Section"].fillna("").astype(str).str.strip()
-
-    for new_column in [
-        "Last 14 Days",
-        "Last 7 Days Submissions",
-        "Total Submissions",
-    ]:
-        if new_column not in frame.columns:
-            frame[new_column] = 0
-
-    for column in [
-        "Problems Solved",
-        "Solved Today",
-        "Last 7 Days",
-        "Last 14 Days",
-        "Last 30 Days",
-        "Last 7 Days Submissions",
-        "Total Submissions",
-        "Easy",
-        "Medium",
-        "Hard",
-    ]:
-        if column in frame.columns:
-            frame[column] = pd.to_numeric(
-                frame[column], errors="coerce"
-            ).fillna(0).astype(int)
-
+        raise RuntimeError("LiveData.csv is missing required column(s): " + ", ".join(missing))
+    for col in ["Register Number","Section","LeetCode Username"]:
+        frame[col] = frame[col].fillna("").astype(str).str.strip()
+    for col in ["Problems Solved","Solved Today","Last 7 Days","Last 14 Days","Last 30 Days","Last 7 Days Submissions","Total Submissions","Easy","Medium","Hard"]:
+        if col not in frame.columns:
+            frame[col]=0
+        frame[col]=pd.to_numeric(frame[col],errors="coerce").fillna(0).astype(int)
     return frame
+
+
+
+def _report_stat(items: list[dict[str, Any]], difficulty: str, field: str) -> int:
+    for item in items or []:
+        if str(item.get("difficulty", "")).lower() == difficulty.lower():
+            return safe_int(item.get(field, 0))
+    return 0
+
+
+def _normalize_report_submissions(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    result=[]
+    for row in rows or []:
+        try:
+            submitted_at=datetime.fromtimestamp(int(row.get("timestamp")),tz=IST)
+        except (TypeError,ValueError,OSError):
+            continue
+        item=dict(row)
+        item["_submitted_at"]=submitted_at
+        item["_problem_key"]=str(item.get("titleSlug") or item.get("title") or "").strip()
+        result.append(item)
+    result.sort(key=lambda x:x["_submitted_at"],reverse=True)
+    return result
+
+
+def _report_feed_covers(rows: list[dict[str, Any]], lifetime_count: int, start_time: datetime) -> bool:
+    lifetime_count=max(0,safe_int(lifetime_count))
+    if lifetime_count==0: return True
+    if not rows: return False
+    if len(rows)>=lifetime_count: return True
+    oldest=rows[-1].get("_submitted_at")
+    return bool(isinstance(oldest,datetime) and oldest<=start_time)
+
+
+def _count_attempts_between(rows: list[dict[str, Any]], start_time: datetime, end_time: datetime) -> int:
+    return sum(1 for row in rows if isinstance(row.get("_submitted_at"),datetime) and start_time<=row["_submitted_at"]<end_time)
+
+
+def _count_solved_between(rows: list[dict[str, Any]], start_time: datetime, end_time: datetime) -> int:
+    solved=set()
+    for row in rows:
+        dt=row.get("_submitted_at"); key=row.get("_problem_key")
+        if isinstance(dt,datetime) and key and start_time<=dt<end_time:
+            solved.add(str(key))
+    return len(solved)
+
+
+def fetch_report_activity(username: str, start_time: datetime, end_time: datetime) -> dict[str, Any]:
+    """Fetch report data without requesting the private submission calendar."""
+    if not username:
+        return {"status":"Username missing","solved":0,"solved_coverage":"ERROR","recent_attempts":0,"attempt_coverage":"ERROR","current_total_submissions":None}
+    body={"operationName":"reportActivity","query":REPORT_ACTIVITY_QUERY,"variables":{"username":username,"acceptedLimit":2000}}
+    headers={"Content-Type":"application/json","Accept":"application/json","Origin":"https://leetcode.com","Referer":f"https://leetcode.com/u/{username}/","User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/151.0.0.0 Safari/537.36"}
+    last_error=""
+    for attempt in range(1,4):
+        try:
+            response=requests.post(leetcode_tracker.LEETCODE_URL,json=body,headers=headers,timeout=35)
+            if response.status_code in {429,500,502,503,504} and attempt<3:
+                import time; time.sleep(attempt*2); continue
+            if response.status_code!=200:
+                return {"status":f"HTTP {response.status_code}","solved":0,"solved_coverage":"ERROR","recent_attempts":0,"attempt_coverage":"ERROR","current_total_submissions":None}
+            payload=response.json(); data=payload.get("data",{}) or {}; matched=data.get("matchedUser")
+            if matched is None:
+                return {"status":"User not found","solved":0,"solved_coverage":"ERROR","recent_attempts":0,"attempt_coverage":"ERROR","current_total_submissions":None}
+            stats=matched.get("submitStatsGlobal",{}) or {}; ac=stats.get("acSubmissionNum",[]) or []; total=stats.get("totalSubmissionNum",[]) or []
+            lifetime_ac=_report_stat(ac,"All","submissions")
+            lifetime_total=max(_report_stat(total,"All","submissions"),_report_stat(total,"All","count"))
+            ac_rows=_normalize_report_submissions(data.get("recentAcSubmissionList",[]) or [])
+            attempt_rows=_normalize_report_submissions(data.get("recentSubmissionList",[]) or [])
+            solved=_count_solved_between(ac_rows,start_time,end_time)
+            attempts=_count_attempts_between(attempt_rows,start_time,end_time)
+            return {"status":"Success","solved":solved,"solved_coverage":"FULL" if _report_feed_covers(ac_rows,lifetime_ac,start_time) else "PARTIAL","recent_attempts":attempts,"attempt_coverage":"FULL" if _report_feed_covers(attempt_rows,lifetime_total,start_time) else "PARTIAL","current_total_submissions":lifetime_total}
+        except Exception as exc:
+            last_error=str(exc)
+            if attempt<3:
+                import time; time.sleep(attempt*2)
+    return {"status":last_error or "LeetCode fetch failed","solved":0,"solved_coverage":"ERROR","recent_attempts":0,"attempt_coverage":"ERROR","current_total_submissions":None}
+
+
+def supabase_report_snapshot_get(config: Config, boundary: datetime, register_numbers: list[str]) -> dict[str,int]:
+    if not config.supabase_url or not config.supabase_key or not register_numbers: return {}
+    boundary_text=boundary.astimezone(timezone.utc).isoformat()
+    try:
+        rows=supabase_get(config,"report_submission_snapshots",params={"select":"register_number,total_submissions,boundary_at","boundary_at":f"eq.{boundary_text}"})
+    except Exception:
+        return {}
+    wanted={str(x).strip() for x in register_numbers}
+    return {str(r.get("register_number","")).strip():safe_int(r.get("total_submissions")) for r in rows if str(r.get("register_number","")).strip() in wanted}
+
+
+def supabase_report_snapshot_upsert(config: Config, live: pd.DataFrame, boundary: datetime) -> None:
+    if not config.supabase_url or not config.supabase_key or live.empty: return
+    age=ist_now()-boundary
+    if age.total_seconds()<0 or age>timedelta(minutes=45): return
+    rows=[]
+    for _,row in live.iterrows():
+        current=row.get("_Current Total Submissions")
+        if current is None or pd.isna(current): continue
+        reg=str(row.get("Register Number","")).strip()
+        if not reg: continue
+        rows.append({"register_number":reg,"boundary_at":boundary.astimezone(timezone.utc).isoformat(),"total_submissions":safe_int(current)})
+    if not rows: return
+    response=requests.post(f"{config.supabase_url}/rest/v1/report_submission_snapshots",headers={"apikey":config.supabase_key,"Authorization":f"Bearer {config.supabase_key}","Content-Type":"application/json","Prefer":"resolution=merge-duplicates,return=minimal"},params={"on_conflict":"register_number,boundary_at"},json=rows,timeout=REQUEST_TIMEOUT)
+    response.raise_for_status()
+
+
+def _display_submission(value: Any, coverage: Any) -> str:
+    c=str(coverage or "").upper(); amount=max(0,safe_int(value))
+    if c in {"EXACT","FULL","OFFLINE"}: return str(amount)
+    if c=="PARTIAL": return f"{amount}+" if amount else "N/A"
+    return "N/A"
+
+def latest_7am_boundary(now: datetime | None = None) -> datetime:
+    current = now.astimezone(IST) if now else ist_now()
+    boundary = datetime.combine(current.date(), dt_time(hour=7), tzinfo=IST)
+    if current < boundary:
+        boundary -= timedelta(days=1)
+    return boundary
+
+
+def format_window(start: datetime, end: datetime) -> str:
+    return f"{start.strftime('%d %b %Y %I:%M %p')} to {end.strftime('%d %b %Y %I:%M %p')} IST"
+
+
+def count_distinct_accepted_between(recent_submissions, start_time: datetime, end_time: datetime) -> int:
+    solved=set()
+    for item in recent_submissions or []:
+        dt=item.get("_submitted_at"); key=item.get("_problem_key")
+        if isinstance(dt,datetime) and key and start_time <= dt < end_time:
+            solved.add(str(key))
+    return len(solved)
+
+
+def _window_activity_for_username(username: str, start_time: datetime, end_time: datetime) -> dict[str, Any]:
+    if not username:
+        return {"solved":0,"coverage":"ERROR","status":"Username missing"}
+    profile=leetcode_tracker.fetch_leetcode(username)
+    status=str(profile.get("status","")).strip()
+    if status != "Success":
+        return {"solved":0,"coverage":"ERROR","status":status or "LeetCode fetch failed"}
+    recent=profile.get("recent_submissions",[]) or []
+    solved=count_distinct_accepted_between(recent,start_time,end_time)
+    full=leetcode_tracker.accepted_feed_covers_window(
+        recent, profile.get("accepted_submission_total",0), start_time
+    )
+    return {"solved":solved,"coverage":"FULL" if full else "PARTIAL","status":"Success"}
+
+
+
+def refresh_report_window_activity(live: pd.DataFrame, start_time: datetime, end_time: datetime, config: Config, offline: bool=False) -> pd.DataFrame:
+    frame=live.copy()
+    if frame.empty:
+        for c in ["Report Window Solved","Report Window Coverage","Report Window Status","Report Window Submissions","Report Submission Coverage","_Current Total Submissions"]: frame[c]=pd.Series(dtype="object")
+        return frame
+    if offline:
+        preview="Solved Today" if (end_time-start_time)<=timedelta(days=1) else "Last 7 Days"
+        frame["Report Window Solved"]=frame[preview].fillna(0).astype(int)
+        frame["Report Window Submissions"]=frame["Last 7 Days Submissions"].fillna(0).astype(int) if "Last 7 Days Submissions" in frame.columns else 0
+        frame["Report Window Coverage"]="OFFLINE"; frame["Report Submission Coverage"]="OFFLINE"; frame["Report Window Status"]="Offline preview"; frame["_Current Total Submissions"]=None
+        return frame
+    registers=frame["Register Number"].fillna("").astype(str).str.strip().tolist(); usernames=frame["LeetCode Username"].fillna("").astype(str).str.strip().tolist()
+    baseline=supabase_report_snapshot_get(config,start_time,registers)
+    unique=list(dict.fromkeys(u for u in usernames if u)); results={}
+    with ThreadPoolExecutor(max_workers=6) as ex:
+        fmap={ex.submit(fetch_report_activity,u,start_time,end_time):u for u in unique}
+        for f in as_completed(fmap):
+            u=fmap[f]
+            try: results[u]=f.result()
+            except Exception as e: results[u]={"status":f"Report fetch error: {e}","solved":0,"solved_coverage":"ERROR","recent_attempts":0,"attempt_coverage":"ERROR","current_total_submissions":None}
+    solved=[]; scov=[]; subs=[]; subcov=[]; statuses=[]; currents=[]
+    for reg,u in zip(registers,usernames):
+        r=results.get(u,{"status":"Username missing","solved":0,"solved_coverage":"ERROR","recent_attempts":0,"attempt_coverage":"ERROR","current_total_submissions":None})
+        solved.append(max(0,safe_int(r.get("solved",0)))); scov.append(str(r.get("solved_coverage","ERROR"))); current=r.get("current_total_submissions"); currents.append(current)
+        old=baseline.get(reg)
+        if old is not None and current is not None:
+            subs.append(max(0,safe_int(current)-safe_int(old))); subcov.append("EXACT")
+        else:
+            subs.append(max(0,safe_int(r.get("recent_attempts",0)))); subcov.append(str(r.get("attempt_coverage","ERROR")))
+        statuses.append(str(r.get("status","Unknown")))
+    frame["Report Window Solved"]=solved; frame["Report Window Coverage"]=scov; frame["Report Window Submissions"]=subs; frame["Report Submission Coverage"]=subcov; frame["Report Window Status"]=statuses; frame["_Current Total Submissions"]=currents
+    return frame
+
+
+
+def report_window_masks(live: pd.DataFrame):
+    solved=pd.to_numeric(live["Report Window Solved"],errors="coerce").fillna(0)
+    subs=pd.to_numeric(live["Report Window Submissions"],errors="coerce").fillna(0)
+    scov=live["Report Window Coverage"].fillna("ERROR").astype(str).str.upper(); subcov=live["Report Submission Coverage"].fillna("ERROR").astype(str).str.upper()
+    active=(solved>0)|(subs>0)
+    reliable_solved=scov.isin(["FULL","OFFLINE"]); reliable_subs=subcov.isin(["EXACT","FULL","OFFLINE"])
+    inactive=(solved==0)&(subs==0)&reliable_solved&reliable_subs
+    unknown=(~active)&(~inactive)
+    return active,inactive,unknown
+
+
+
+def inactive_students(live: pd.DataFrame):
+    _,mask,_=report_window_masks(live); rows=live[mask].sort_values(["Section","Register Number"],kind="stable")
+    return [{"name":r.get("Student Name","Student"),"register":r.get("Register Number",""),"section":r.get("Section",""),"solved":safe_int(r.get("Report Window Solved")),"window_submissions":safe_int(r.get("Report Window Submissions")),"submission_coverage":r.get("Report Submission Coverage","ERROR"),"week":safe_int(r.get("Last 7 Days")),"fortnight":safe_int(r.get("Last 14 Days")),"month":safe_int(r.get("Last 30 Days")),"total":safe_int(r.get("Problems Solved")),"easy":safe_int(r.get("Easy")),"medium":safe_int(r.get("Medium")),"hard":safe_int(r.get("Hard"))} for _,r in rows.iterrows()]
+
+
+
+def report_window_students(live: pd.DataFrame,count:int=10,ascending:bool=False,exclude_inactive:bool=False):
+    subset=live[live["Report Window Coverage"].fillna("ERROR").astype(str).str.upper().ne("ERROR")].copy()
+    if exclude_inactive and not subset.empty:
+        _,mask,_=report_window_masks(subset); subset=subset[~mask].copy()
+    if subset.empty: return []
+    subset["_ws"]=pd.to_numeric(subset["Report Window Solved"],errors="coerce").fillna(0); subset["_sub"]=pd.to_numeric(subset["Report Window Submissions"],errors="coerce").fillna(0)
+    subset=subset.sort_values(["_ws","_sub","Problems Solved"],ascending=[ascending,ascending,ascending],kind="stable").head(count)
+    return [{"name":r.get("Student Name","Student"),"register":r.get("Register Number",""),"section":r.get("Section",""),"value":safe_int(r.get("Report Window Solved")),"window_submissions":safe_int(r.get("Report Window Submissions")),"submission_coverage":r.get("Report Submission Coverage","ERROR"),"week":safe_int(r.get("Last 7 Days")),"fortnight":safe_int(r.get("Last 14 Days")),"month":safe_int(r.get("Last 30 Days")),"total":safe_int(r.get("Problems Solved")),"easy":safe_int(r.get("Easy")),"medium":safe_int(r.get("Medium")),"hard":safe_int(r.get("Hard"))} for _,r in subset.iterrows()]
+
+
+
+def section_report_summary(live: pd.DataFrame):
+    rows=[]; sections=SECTIONS+sorted({x for x in live["Section"].dropna().astype(str) if x and x not in SECTIONS})
+    for sec in sections:
+        sub=live[live["Section"]==sec]
+        if sub.empty: continue
+        a,i,u=report_window_masks(sub)
+        rows.append({"section":sec,"students":len(sub),"active":int(a.sum()),"inactive":int(i.sum()),"unknown":int(u.sum()),"window_solved":int(pd.to_numeric(sub["Report Window Solved"],errors="coerce").fillna(0).sum()),"window_submissions":int(pd.to_numeric(sub["Report Window Submissions"],errors="coerce").fillna(0).sum()),"week":int(sub["Last 7 Days"].sum()),"fortnight":int(sub["Last 14 Days"].sum()),"month":int(sub["Last 30 Days"].sum())})
+    return rows
 
 
 def index_students(
@@ -673,213 +865,31 @@ def report_shell(title: str, subtitle: str, content: str) -> str:
 </html>"""
 
 
-def build_daily_report(
-    live: pd.DataFrame,
-    challenge: dict[str, Any],
-    coding: dict[str, Any],
-    report_date: str,
-    scope_label: str = "ECE",
-) -> tuple[str, str]:
-    total_students = len(live)
-    active_today = int((live["Solved Today"] > 0).sum())
-    solved_today = int(live["Solved Today"].sum())
-    invalid = int((live["Status"].astype(str).str.lower() != "success").sum())
 
-    top = top_students(live, "Solved Today", 10)
-    sections = section_leetcode_summary(live)
-
-    coding_not_attended = coding.get("not_attended")
-    if coding_not_attended is None:
-        coding_not_attended_text = "—"
-    else:
-        coding_not_attended_text = str(coding_not_attended)
-
-    content = f"""
-    <div class="card">
-      <h2>LeetCode Tracker · Today</h2>
-      <div class="kpis">
-        <div class="kpi"><span>Total Students</span><strong>{total_students}</strong></div>
-        <div class="kpi"><span>Active Today</span><strong>{active_today}</strong></div>
-        <div class="kpi"><span>Problems Solved Today</span><strong>{solved_today}</strong></div>
-        <div class="kpi"><span>Inactive Today</span><strong>{max(total_students-active_today,0)}</strong></div>
-        <div class="kpi"><span>Invalid / Error Profiles</span><strong>{invalid}</strong></div>
-        <div class="kpi"><span>Activity Rate</span><strong>{percent(active_today,total_students):.1f}%</strong></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Daily Challenge</h2>
-      <p><strong>{esc(challenge["title"])}</strong></p>
-      <div class="kpis">
-        <div class="kpi"><span>Completed</span><strong>{challenge["completed"]}</strong></div>
-        <div class="kpi"><span>Pending</span><strong>{challenge["pending"]}</strong></div>
-        <div class="kpi"><span>Completion</span><strong>{challenge["completion_rate"]:.1f}%</strong></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Daily Coding Test</h2>
-      <div class="kpis">
-        <div class="kpi"><span>Tests Conducted</span><strong>{coding["tests_conducted"]}</strong></div>
-        <div class="kpi"><span>Attended</span><strong>{coding["attended"]}</strong></div>
-        <div class="kpi"><span>Not Attended</span><strong>{coding_not_attended_text}</strong></div>
-        <div class="kpi"><span>Passed</span><strong>{coding["passed"]}</strong></div>
-        <div class="kpi"><span>Failed</span><strong>{coding["failed"]}</strong></div>
-        <div class="kpi"><span>Pass Rate</span><strong>{coding["pass_rate"]:.1f}%</strong></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Top 10 · Solved Today</h2>
-      {table_html(
-          ["#", "Student", "Register No.", "Section", "Solved Today", "Total"],
-          [
-              [i, item["name"], item["register"], item["section"], item["value"], item["total"]]
-              for i, item in enumerate(top, 1)
-          ],
-      )}
-    </div>
-
-    <div class="card">
-      <h2>Section Summary</h2>
-      {table_html(
-          ["Section", "Students", "Active Today", "Solved Today", "7 Days", "30 Days"],
-          [
-              [x["section"], x["students"], x["active_today"], x["today"], x["week"], x["month"]]
-              for x in sections
-          ],
-      )}
-    </div>
-    """
-
-    subject = f"{scope_label} LeetCode Daily Report · {report_date}"
-    return subject, report_shell(
-        f"{scope_label} LeetCode Daily Report",
-        f"{report_date} · LeetCode + Daily Challenge + Coding Test",
-        content,
-    )
+def build_daily_report(live: pd.DataFrame,report_date:str,report_window:str,scope_label:str="ECE") -> tuple[str,str]:
+    total=len(live); active,inactive,unknown=report_window_masks(live); top=report_window_students(live,10,False); zeros=inactive_students(live); sections=section_report_summary(live)
+    solved=int(live["Report Window Solved"].sum()); subs=int(live["Report Window Submissions"].sum())
+    top_rows=[[n,x["name"],x["register"],x["section"],x["value"],_display_submission(x["window_submissions"],x["submission_coverage"]),x["week"],x["fortnight"],x["month"],x["total"]] for n,x in enumerate(top,1)]
+    zero_rows=[[n,x["name"],x["register"],x["section"],0,0,x["week"],x["fortnight"],x["month"],x["total"]] for n,x in enumerate(zeros,1)]
+    content=f'''<div class="card"><h2>LeetCode Daily Summary</h2><p class="muted"><strong>Report Window:</strong> {esc(report_window)}</p><div class="kpis"><div class="kpi"><span>Total Students</span><strong>{total}</strong></div><div class="kpi"><span>Active Today</span><strong>{int(active.sum())}</strong></div><div class="kpi"><span>0 Solved / 0 Submission</span><strong>{int(inactive.sum())}</strong></div><div class="kpi"><span>Problems Solved Today</span><strong>{solved}</strong></div><div class="kpi"><span>Today Submissions</span><strong>{subs}</strong></div><div class="kpi"><span>Unverified Profiles</span><strong>{int(unknown.sum())}</strong></div></div></div>
+    <div class="card"><h2>Top 10 Students - Today</h2>{table_html(["#","Student","Register No.","Section","Today Solved","Today Submissions","7 Days","14 Days","30 Days","Total Solved"],top_rows)}</div>
+    <div class="card"><h2>0 Solved Today Students</h2><p class="muted">Only students with 0 solved AND 0 submissions in the complete 07:00 AM to 07:00 AM window are listed. Students who submitted code today are excluded.</p>{table_html(["#","Student","Register No.","Section","Today Solved","Today Submissions","7 Days","14 Days","30 Days","Total Solved"],zero_rows)}</div>
+    <div class="card"><h2>Section Summary</h2>{table_html(["Section","Students","Active","0 Solved / 0 Submission","Today Solved","Today Submissions","7 Days","14 Days","30 Days"],[[x["section"],x["students"],x["active"],x["inactive"],x["window_solved"],x["window_submissions"],x["week"],x["fortnight"],x["month"]] for x in sections])}</div>'''
+    subject=f"{scope_label} LeetCode Daily Report - {report_date}"; return subject,report_shell(f"{scope_label} LeetCode Daily Report",f"Reporting Date: {report_date} | {report_window}",content)
 
 
-def build_weekly_report(
-    live: pd.DataFrame,
-    challenges: list[dict[str, Any]],
-    challenge_results: list[dict[str, Any]],
-    coding: dict[str, Any],
-    start_date: str,
-    end_date: str,
-    scope_label: str = "ECE",
-) -> tuple[str, str]:
-    total_students = len(live)
-    active_week = int((live["Last 7 Days"] > 0).sum())
-    solved_week = int(live["Last 7 Days"].sum())
-    solved_14 = int(live["Last 14 Days"].sum())
-    submissions_week = int(
-        live["Last 7 Days Submissions"].sum()
-    )
 
-    top = top_students(live, "Last 7 Days", 10)
-    bottom = bottom_students_week(live, 10)
-    sections = section_leetcode_summary(live)
-
-    challenge_ids = {
-        str(item.get("id"))
-        for item in challenges
-        if start_date <= str(item.get("challenge_date", "")) <= end_date
-    }
-    weekly_results = [
-        result
-        for result in challenge_results
-        if str(result.get("challenge_id")) in challenge_ids
-        and bool(result.get("completed"))
-    ]
-    unique_completed_pairs = {
-        (
-            str(item.get("challenge_id")),
-            str(item.get("register_number", "")).strip(),
-        )
-        for item in weekly_results
-        if item.get("register_number")
-    }
-    challenges_posted = len(challenge_ids)
-    possible_completions = total_students * challenges_posted
-    completed_challenges = len(unique_completed_pairs)
-
-    content = f"""
-    <div class="card">
-      <h2>LeetCode Tracker · Last 7 Days</h2>
-      <div class="kpis">
-        <div class="kpi"><span>Total Students</span><strong>{total_students}</strong></div>
-        <div class="kpi"><span>Active This Week</span><strong>{active_week}</strong></div>
-        <div class="kpi"><span>Problems Solved · 7 Days</span><strong>{solved_week}</strong></div>
-        <div class="kpi"><span>Problems Solved · 14 Days</span><strong>{solved_14}</strong></div>
-        <div class="kpi"><span>Submissions · 7 Days</span><strong>{submissions_week}</strong></div>
-        <div class="kpi"><span>Inactive This Week</span><strong>{max(total_students-active_week,0)}</strong></div>
-        <div class="kpi"><span>Weekly Activity Rate</span><strong>{percent(active_week,total_students):.1f}%</strong></div>
-        <div class="kpi"><span>Avg Problems / Student</span><strong>{(solved_week/total_students if total_students else 0):.1f}</strong></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Daily Challenge · Weekly</h2>
-      <div class="kpis">
-        <div class="kpi"><span>Challenges Posted</span><strong>{challenges_posted}</strong></div>
-        <div class="kpi"><span>Total Completions</span><strong>{completed_challenges}</strong></div>
-        <div class="kpi"><span>Completion Rate</span><strong>{percent(completed_challenges,possible_completions):.1f}%</strong></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Coding Tests · Weekly</h2>
-      <div class="kpis">
-        <div class="kpi"><span>Tests Conducted</span><strong>{coding["tests_conducted"]}</strong></div>
-        <div class="kpi"><span>Unique Students Attended</span><strong>{coding["attended"]}</strong></div>
-        <div class="kpi"><span>Passed Attempts</span><strong>{coding["passed"]}</strong></div>
-        <div class="kpi"><span>Failed Attempts</span><strong>{coding["failed"]}</strong></div>
-        <div class="kpi"><span>Pass Rate</span><strong>{coding["pass_rate"]:.1f}%</strong></div>
-        <div class="kpi"><span>Violations</span><strong>{coding["violations"]}</strong></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Top 10 · Last 7 Days</h2>
-      {table_html(
-          ["#", "Student", "Register No.", "Section", "7 Days", "Total"],
-          [
-              [i, item["name"], item["register"], item["section"], item["value"], item["total"]]
-              for i, item in enumerate(top, 1)
-          ],
-      )}
-    </div>
-
-    <div class="card">
-      <h2>Bottom 10 · Last 7 Days</h2>
-      {table_html(
-          ["#", "Student", "Register No.", "Section", "7 Days", "Total"],
-          [
-              [i, item["name"], item["register"], item["section"], item["value"], item["total"]]
-              for i, item in enumerate(bottom, 1)
-          ],
-      )}
-    </div>
-
-    <div class="card">
-      <h2>Section Performance</h2>
-      {table_html(
-          ["Section", "Students", "7-Day Solved", "30-Day Solved", "Active Today"],
-          [
-              [x["section"], x["students"], x["week"], x["month"], x["active_today"]]
-              for x in sections
-          ],
-      )}
-    </div>
-    """
-
-    subject = f"{scope_label} LeetCode Weekly Report · {start_date} to {end_date}"
-    return subject, report_shell(
-        f"{scope_label} LeetCode Weekly Report",
-        f"{start_date} to {end_date} · LeetCode + Daily Challenge + Coding Tests",
-        content,
-    )
+def build_weekly_report(live: pd.DataFrame,start_date:str,end_date:str,report_window:str,scope_label:str="ECE") -> tuple[str,str]:
+    total=len(live); active,inactive,unknown=report_window_masks(live); top=report_window_students(live,10,False); zeros=inactive_students(live); bottom=report_window_students(live,10,True,True); sections=section_report_summary(live)
+    solved=int(live["Report Window Solved"].sum()); subs=int(live["Report Window Submissions"].sum())
+    def rows(items): return [[n,x["name"],x["register"],x["section"],x.get("value",x.get("solved",0)),_display_submission(x["window_submissions"],x["submission_coverage"]),x["fortnight"],x["month"],x["total"]] for n,x in enumerate(items,1)]
+    headers=["#","Student","Register No.","Section","Week Solved","Week Submissions","14 Days","30 Days","Total Solved"]
+    content=f'''<div class="card"><h2>LeetCode Weekly Summary</h2><p class="muted"><strong>Report Window:</strong> {esc(report_window)}</p><div class="kpis"><div class="kpi"><span>Total Students</span><strong>{total}</strong></div><div class="kpi"><span>Active This Week</span><strong>{int(active.sum())}</strong></div><div class="kpi"><span>0 Solved / 0 Submission</span><strong>{int(inactive.sum())}</strong></div><div class="kpi"><span>Problems Solved This Week</span><strong>{solved}</strong></div><div class="kpi"><span>Weekly Submissions</span><strong>{subs}</strong></div><div class="kpi"><span>Unverified Profiles</span><strong>{int(unknown.sum())}</strong></div></div></div>
+    <div class="card"><h2>Top 10 Students - This Week</h2>{table_html(headers,rows(top))}</div>
+    <div class="card"><h2>0 Solved This Week Students</h2><p class="muted">Only students with 0 solved AND 0 submissions in the complete weekly report window are listed.</p>{table_html(headers,rows(zeros))}</div>
+    <div class="card"><h2>Bottom 10 Students - This Week</h2><p class="muted">Completely inactive 0/0 students are shown separately above and are excluded here.</p>{table_html(headers,rows(bottom))}</div>
+    <div class="card"><h2>Section Performance</h2>{table_html(["Section","Students","Active","0 Solved / 0 Submission","Week Solved","Week Submissions","14 Days","30 Days"],[[x["section"],x["students"],x["active"],x["inactive"],x["window_solved"],x["window_submissions"],x["fortnight"],x["month"]] for x in sections])}</div>'''
+    subject=f"{scope_label} LeetCode Weekly Report - {start_date} to {end_date}"; return subject,report_shell(f"{scope_label} LeetCode Weekly Report",report_window,content)
 
 
 
@@ -961,300 +971,31 @@ def _write_dataframe_sheet(
     worksheet.autofilter(2, 0, 2 + len(frame), max_col)
 
 
-def generate_daily_excel(
-    live: pd.DataFrame,
-    challenge: dict[str, Any],
-    coding: dict[str, Any],
-    report_date: str,
-    scope_label: str = "ECE",
-) -> Path:
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    path = REPORT_DIR / f"{scope_slug(scope_label)}_Daily_Report_{report_date}.xlsx"
 
-    top = top_students(live, "Solved Today", 10)
-    sections = section_leetcode_summary(live)
-
-    total_students = len(live)
-    active_today = int((live["Solved Today"] > 0).sum())
-    solved_today = int(live["Solved Today"].sum())
-    invalid = int(
-        (live["Status"].astype(str).str.lower() != "success").sum()
-    )
-
-    summary_rows = [
-        ["Report Date", report_date],
-        ["Total Students", total_students],
-        ["Active Today", active_today],
-        ["Problems Solved Today", solved_today],
-        ["Problems Solved Last 14 Days", int(live["Last 14 Days"].sum())],
-        ["Submissions Last 7 Days", int(live["Last 7 Days Submissions"].sum())],
-        ["Inactive Today", max(total_students - active_today, 0)],
-        ["Invalid / Error Profiles", invalid],
-        ["Activity Rate", f"{percent(active_today, total_students):.1f}%"],
-        ["Daily Challenge", challenge["title"]],
-        ["Challenge Completed", challenge["completed"]],
-        ["Challenge Pending", challenge["pending"]],
-        ["Challenge Completion", f'{challenge["completion_rate"]:.1f}%'],
-        ["Coding Tests Conducted", coding["tests_conducted"]],
-        ["Coding Test Attended", coding["attended"]],
-        ["Coding Test Passed", coding["passed"]],
-        ["Coding Test Failed", coding["failed"]],
-        ["Coding Test Pass Rate", f'{coding["pass_rate"]:.1f}%'],
-    ]
-
-    top_frame = pd.DataFrame([
-        {
-            "Rank": i,
-            "Student": item["name"],
-            "Register Number": item["register"],
-            "Section": item["section"],
-            "Solved Today": item["value"],
-            "Total Solved": item["total"],
-        }
-        for i, item in enumerate(top, 1)
-    ])
-
-    section_frame = pd.DataFrame([
-        {
-            "Section": item["section"],
-            "Students": item["students"],
-            "Active Today": item["active_today"],
-            "Solved Today": item["today"],
-            "7 Days": item["week"],
-            "30 Days": item["month"],
-        }
-        for item in sections
-    ])
-
-    full_columns = [
-        column for column in [
-            "Register Number",
-            "Student Name",
-            "Section",
-            "Solved Today",
-            "Last 7 Days",
-            "Last 14 Days",
-            "Last 30 Days",
-            "Last 7 Days Submissions",
-            "Total Submissions",
-            "Problems Solved",
-            "Easy",
-            "Medium",
-            "Hard",
-            "Status",
-        ]
-        if column in live.columns
-    ]
-    student_frame = live[full_columns].copy()
-
-    with pd.ExcelWriter(
-        path,
-        engine="xlsxwriter",
-    ) as writer:
-        workbook = writer.book
-
-        summary = workbook.add_worksheet("Summary")
-        writer.sheets["Summary"] = summary
-        title_format = _xlsx_title_format(workbook)
-        label_format = _xlsx_kpi_label(workbook)
-        value_format = _xlsx_kpi_value(workbook)
-
-        summary.merge_range(
-            "A1:B1",
-            f"{scope_label} LeetCode Daily Report",
-            title_format,
-        )
-        summary.set_column("A:A", 30)
-        summary.set_column("B:B", 28)
-
-        for row_index, (label, value) in enumerate(summary_rows, start=2):
-            summary.write(row_index - 1, 0, label, label_format)
-            summary.write(row_index - 1, 1, value, value_format)
-
-        _write_dataframe_sheet(
-            writer,
-            "Top 10 Today",
-            top_frame,
-            "Top 10 - Solved Today",
-        )
-        _write_dataframe_sheet(
-            writer,
-            "Section Summary",
-            section_frame,
-            "ECE Section Summary",
-        )
-        _write_dataframe_sheet(
-            writer,
-            "Student Data",
-            student_frame,
-            "Student Activity Data",
-        )
-
+def generate_daily_excel(live:pd.DataFrame,report_date:str,report_window:str,scope_label:str="ECE") -> Path:
+    REPORT_DIR.mkdir(parents=True,exist_ok=True); path=REPORT_DIR/f"{scope_slug(scope_label)}_Daily_Report_{report_date}.xlsx"; active,inactive,unknown=report_window_masks(live); top=report_window_students(live,10,False); zeros=inactive_students(live); sections=section_report_summary(live)
+    summary_rows=[["Reporting Date",report_date],["Report Window",report_window],["Total Students",len(live)],["Active Today",int(active.sum())],["0 Solved / 0 Submission",int(inactive.sum())],["Problems Solved Today",int(live["Report Window Solved"].sum())],["Today Submissions",int(live["Report Window Submissions"].sum())],["Unverified Profiles",int(unknown.sum())]]
+    def frame(items): return pd.DataFrame([{"Rank":n,"Student":x["name"],"Register Number":x["register"],"Section":x["section"],"Today Solved":x.get("value",x.get("solved",0)),"Today Submissions":_display_submission(x["window_submissions"],x["submission_coverage"]),"7 Days":x["week"],"14 Days":x["fortnight"],"30 Days":x["month"],"Total Solved":x["total"],"E / M / H":f'{x["easy"]} / {x["medium"]} / {x["hard"]}'} for n,x in enumerate(items,1)])
+    sec=pd.DataFrame([{"Section":x["section"],"Students":x["students"],"Active":x["active"],"0 Solved / 0 Submission":x["inactive"],"Today Solved":x["window_solved"],"Today Submissions":x["window_submissions"],"7 Days":x["week"],"14 Days":x["fortnight"],"30 Days":x["month"]} for x in sections])
+    cols=[c for c in ["Register Number","Student Name","Section","Report Window Solved","Report Window Submissions","Last 7 Days","Last 14 Days","Last 30 Days","Problems Solved","Easy","Medium","Hard","Report Window Coverage","Report Submission Coverage","Status"] if c in live.columns]; students=live[cols].copy().rename(columns={"Report Window Solved":"Today Solved","Report Window Submissions":"Today Submissions","Problems Solved":"Total Solved"})
+    with pd.ExcelWriter(path,engine="xlsxwriter") as writer:
+        wb=writer.book; sh=wb.add_worksheet("Summary"); writer.sheets["Summary"]=sh; sh.merge_range("A1:B1",f"{scope_label} LeetCode Daily Report",_xlsx_title_format(wb)); sh.set_column("A:A",32); sh.set_column("B:B",52)
+        for n,(label,value) in enumerate(summary_rows,start=2): sh.write(n-1,0,label,_xlsx_kpi_label(wb)); sh.write(n-1,1,value,_xlsx_kpi_value(wb))
+        _write_dataframe_sheet(writer,"Top 10 Today",frame(top),"Top 10 Students - Today"); _write_dataframe_sheet(writer,"0 Solved Today",frame(zeros),"0 Solved Today - Also 0 Today Submissions"); _write_dataframe_sheet(writer,"Section Summary",sec,"Section Summary"); _write_dataframe_sheet(writer,"Student Data",students,"Student LeetCode Daily Data")
     return path
 
 
-def generate_weekly_excel(
-    live: pd.DataFrame,
-    challenges: list[dict[str, Any]],
-    challenge_results: list[dict[str, Any]],
-    coding: dict[str, Any],
-    start_date: str,
-    end_date: str,
-    scope_label: str = "ECE",
-) -> Path:
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    path = REPORT_DIR / f"{scope_slug(scope_label)}_Weekly_Report_{start_date}_to_{end_date}.xlsx"
 
-    total_students = len(live)
-    active_week = int((live["Last 7 Days"] > 0).sum())
-    solved_week = int(live["Last 7 Days"].sum())
-    solved_14 = int(live["Last 14 Days"].sum())
-    submissions_week = int(
-        live["Last 7 Days Submissions"].sum()
-    )
-
-    top = top_students(live, "Last 7 Days", 10)
-    bottom = bottom_students_week(live, 10)
-    sections = section_leetcode_summary(live)
-
-    challenge_ids = {
-        str(item.get("id"))
-        for item in challenges
-        if start_date <= str(item.get("challenge_date", "")) <= end_date
-    }
-    weekly_results = [
-        result
-        for result in challenge_results
-        if str(result.get("challenge_id")) in challenge_ids
-        and bool(result.get("completed"))
-    ]
-    completion_pairs = {
-        (
-            str(item.get("challenge_id")),
-            str(item.get("register_number", "")).strip(),
-        )
-        for item in weekly_results
-        if item.get("register_number")
-    }
-    possible = total_students * len(challenge_ids)
-
-    summary_rows = [
-        ["Period", f"{start_date} to {end_date}"],
-        ["Total Students", total_students],
-        ["Active Last 7 Days", active_week],
-        ["Problems Solved Last 7 Days", solved_week],
-        ["Problems Solved Last 14 Days", solved_14],
-        ["Submissions Last 7 Days", submissions_week],
-        ["Inactive Last 7 Days", max(total_students - active_week, 0)],
-        ["Weekly Activity Rate", f"{percent(active_week, total_students):.1f}%"],
-        ["Average Problems / Student", f"{(solved_week / total_students if total_students else 0):.1f}"],
-        ["Challenges Posted", len(challenge_ids)],
-        ["Challenge Completions", len(completion_pairs)],
-        ["Challenge Completion Rate", f"{percent(len(completion_pairs), possible):.1f}%"],
-        ["Coding Tests Conducted", coding["tests_conducted"]],
-        ["Unique Students Attended", coding["attended"]],
-        ["Passed Attempts", coding["passed"]],
-        ["Failed Attempts", coding["failed"]],
-        ["Pass Rate", f'{coding["pass_rate"]:.1f}%'],
-        ["Violations", coding["violations"]],
-    ]
-
-    def performer_frame(items, label):
-        return pd.DataFrame([
-            {
-                "Rank": i,
-                "Student": item["name"],
-                "Register Number": item["register"],
-                "Section": item["section"],
-                label: item["value"],
-                "Total Solved": item["total"],
-            }
-            for i, item in enumerate(items, 1)
-        ])
-
-    section_frame = pd.DataFrame([
-        {
-            "Section": item["section"],
-            "Students": item["students"],
-            "7-Day Solved": item["week"],
-            "30-Day Solved": item["month"],
-            "Active Today": item["active_today"],
-        }
-        for item in sections
-    ])
-
-    full_columns = [
-        column for column in [
-            "Register Number",
-            "Student Name",
-            "Section",
-            "Last 7 Days",
-            "Last 14 Days",
-            "Last 30 Days",
-            "Last 7 Days Submissions",
-            "Total Submissions",
-            "Solved Today",
-            "Problems Solved",
-            "Easy",
-            "Medium",
-            "Hard",
-            "Status",
-        ]
-        if column in live.columns
-    ]
-
-    with pd.ExcelWriter(path, engine="xlsxwriter") as writer:
-        workbook = writer.book
-        summary = workbook.add_worksheet("Summary")
-        writer.sheets["Summary"] = summary
-
-        summary.merge_range(
-            "A1:B1",
-            f"{scope_label} LeetCode Weekly Report",
-            _xlsx_title_format(workbook),
-        )
-        summary.set_column("A:A", 31)
-        summary.set_column("B:B", 29)
-
-        for row_index, (label, value) in enumerate(summary_rows, start=2):
-            summary.write(
-                row_index - 1,
-                0,
-                label,
-                _xlsx_kpi_label(workbook),
-            )
-            summary.write(
-                row_index - 1,
-                1,
-                value,
-                _xlsx_kpi_value(workbook),
-            )
-
-        _write_dataframe_sheet(
-            writer,
-            "Top 10",
-            performer_frame(top, "7 Days"),
-            "Top 10 - Last 7 Days",
-        )
-        _write_dataframe_sheet(
-            writer,
-            "Bottom 10",
-            performer_frame(bottom, "7 Days"),
-            "Bottom 10 - Last 7 Days",
-        )
-        _write_dataframe_sheet(
-            writer,
-            "Section Summary",
-            section_frame,
-            "ECE Section Performance",
-        )
-        _write_dataframe_sheet(
-            writer,
-            "Student Data",
-            live[full_columns].copy(),
-            "Student Weekly Activity Data",
-        )
-
+def generate_weekly_excel(live:pd.DataFrame,start_date:str,end_date:str,report_window:str,scope_label:str="ECE") -> Path:
+    REPORT_DIR.mkdir(parents=True,exist_ok=True); path=REPORT_DIR/f"{scope_slug(scope_label)}_Weekly_Report_{start_date}_to_{end_date}.xlsx"; active,inactive,unknown=report_window_masks(live); top=report_window_students(live,10,False); zeros=inactive_students(live); bottom=report_window_students(live,10,True,True); sections=section_report_summary(live)
+    summary_rows=[["Period",f"{start_date} to {end_date}"],["Report Window",report_window],["Total Students",len(live)],["Active This Week",int(active.sum())],["0 Solved / 0 Submission",int(inactive.sum())],["Problems Solved This Week",int(live["Report Window Solved"].sum())],["Weekly Submissions",int(live["Report Window Submissions"].sum())],["Unverified Profiles",int(unknown.sum())]]
+    def frame(items): return pd.DataFrame([{"Rank":n,"Student":x["name"],"Register Number":x["register"],"Section":x["section"],"Week Solved":x.get("value",x.get("solved",0)),"Week Submissions":_display_submission(x["window_submissions"],x["submission_coverage"]),"14 Days":x["fortnight"],"30 Days":x["month"],"Total Solved":x["total"],"E / M / H":f'{x["easy"]} / {x["medium"]} / {x["hard"]}'} for n,x in enumerate(items,1)])
+    sec=pd.DataFrame([{"Section":x["section"],"Students":x["students"],"Active":x["active"],"0 Solved / 0 Submission":x["inactive"],"Week Solved":x["window_solved"],"Week Submissions":x["window_submissions"],"14 Days":x["fortnight"],"30 Days":x["month"]} for x in sections])
+    cols=[c for c in ["Register Number","Student Name","Section","Report Window Solved","Report Window Submissions","Last 14 Days","Last 30 Days","Problems Solved","Easy","Medium","Hard","Report Window Coverage","Report Submission Coverage","Status"] if c in live.columns]; students=live[cols].copy().rename(columns={"Report Window Solved":"Week Solved","Report Window Submissions":"Week Submissions","Problems Solved":"Total Solved"})
+    with pd.ExcelWriter(path,engine="xlsxwriter") as writer:
+        wb=writer.book; sh=wb.add_worksheet("Summary"); writer.sheets["Summary"]=sh; sh.merge_range("A1:B1",f"{scope_label} LeetCode Weekly Report",_xlsx_title_format(wb)); sh.set_column("A:A",32); sh.set_column("B:B",52)
+        for n,(label,value) in enumerate(summary_rows,start=2): sh.write(n-1,0,label,_xlsx_kpi_label(wb)); sh.write(n-1,1,value,_xlsx_kpi_value(wb))
+        _write_dataframe_sheet(writer,"Top 10",frame(top),"Top 10 Students - This Week"); _write_dataframe_sheet(writer,"0 Solved Week",frame(zeros),"0 Solved This Week - Also 0 Weekly Submissions"); _write_dataframe_sheet(writer,"Bottom 10",frame(bottom),"Bottom 10 Students - This Week"); _write_dataframe_sheet(writer,"Section Summary",sec,"Section Weekly Summary"); _write_dataframe_sheet(writer,"Student Data",students,"Student LeetCode Weekly Data")
     return path
 
 
@@ -1330,254 +1071,22 @@ def _pdf_table(data: list[list[Any]], widths=None) -> Table:
     return table
 
 
-def generate_daily_pdf(
-    live: pd.DataFrame,
-    challenge: dict[str, Any],
-    coding: dict[str, Any],
-    report_date: str,
-    scope_label: str = "ECE",
-) -> Path:
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    path = REPORT_DIR / f"{scope_slug(scope_label)}_Daily_Report_{report_date}.pdf"
-    styles = _pdf_styles()
 
-    doc = SimpleDocTemplate(
-        str(path),
-        pagesize=landscape(A4),
-        rightMargin=12 * mm,
-        leftMargin=12 * mm,
-        topMargin=12 * mm,
-        bottomMargin=12 * mm,
-        title=f"ECE LeetCode Daily Report - {report_date}",
-    )
-
-    total_students = len(live)
-    active_today = int((live["Solved Today"] > 0).sum())
-    solved_today = int(live["Solved Today"].sum())
-    invalid = int(
-        (live["Status"].astype(str).str.lower() != "success").sum()
-    )
-    top = top_students(live, "Solved Today", 10)
-    sections = section_leetcode_summary(live)
-
-    story = [
-        Paragraph(f"{scope_label} LeetCode Daily Report", styles["title"]),
-        Paragraph(
-            f"{report_date} - LeetCode + Daily Challenge + Coding Test",
-            styles["subtitle"],
-        ),
-        Paragraph("LeetCode Tracker", styles["heading"]),
-        _pdf_table([
-            ["Metric", "Value"],
-            ["Total Students", total_students],
-            ["Active Today", active_today],
-            ["Problems Solved Today", solved_today],
-            ["Inactive Today", max(total_students - active_today, 0)],
-            ["Invalid / Error Profiles", invalid],
-            ["Activity Rate", f"{percent(active_today, total_students):.1f}%"],
-        ], [65 * mm, 35 * mm]),
-        Spacer(1, 7),
-        Paragraph("Daily Challenge", styles["heading"]),
-        _pdf_table([
-            ["Challenge", "Completed", "Pending", "Completion"],
-            [
-                challenge["title"],
-                challenge["completed"],
-                challenge["pending"],
-                f'{challenge["completion_rate"]:.1f}%',
-            ],
-        ], [100 * mm, 35 * mm, 35 * mm, 35 * mm]),
-        Spacer(1, 7),
-        Paragraph("Daily Coding Test", styles["heading"]),
-        _pdf_table([
-            ["Tests", "Attended", "Passed", "Failed", "Pass Rate"],
-            [
-                coding["tests_conducted"],
-                coding["attended"],
-                coding["passed"],
-                coding["failed"],
-                f'{coding["pass_rate"]:.1f}%',
-            ],
-        ]),
-        Spacer(1, 7),
-        Paragraph("Top 10 - Solved Today", styles["heading"]),
-        _pdf_table(
-            [["#", "Student", "Register No.", "Section", "Today", "Total"]] +
-            [
-                [
-                    i,
-                    item["name"],
-                    item["register"],
-                    item["section"],
-                    item["value"],
-                    item["total"],
-                ]
-                for i, item in enumerate(top, 1)
-            ]
-        ),
-        PageBreak(),
-        Paragraph("Section Summary", styles["heading"]),
-        _pdf_table(
-            [["Section", "Students", "Active Today", "Solved Today", "7 Days", "30 Days"]] +
-            [
-                [
-                    item["section"],
-                    item["students"],
-                    item["active_today"],
-                    item["today"],
-                    item["week"],
-                    item["month"],
-                ]
-                for item in sections
-            ]
-        ),
-    ]
-
-    doc.build(story)
-    return path
+def generate_daily_pdf(live:pd.DataFrame,report_date:str,report_window:str,scope_label:str="ECE") -> Path:
+    REPORT_DIR.mkdir(parents=True,exist_ok=True); path=REPORT_DIR/f"{scope_slug(scope_label)}_Daily_Report_{report_date}.pdf"; styles=_pdf_styles(); doc=SimpleDocTemplate(str(path),pagesize=landscape(A4),rightMargin=12*mm,leftMargin=12*mm,topMargin=12*mm,bottomMargin=12*mm,title=f"{scope_label} LeetCode Daily Report - {report_date}"); active,inactive,unknown=report_window_masks(live); top=report_window_students(live,10,False); zeros=inactive_students(live); sections=section_report_summary(live)
+    headers=["#","Student","Register No.","Section","Today Solved","Today Subs","7D","14D","30D","Total Solved"]
+    def rows(items): return [[n,x["name"],x["register"],x["section"],x.get("value",x.get("solved",0)),_display_submission(x["window_submissions"],x["submission_coverage"]),x["week"],x["fortnight"],x["month"],x["total"]] for n,x in enumerate(items,1)]
+    story=[Paragraph(f"{scope_label} LeetCode Daily Report",styles["title"]),Paragraph(f"Reporting Date: {report_date} | {report_window}",styles["subtitle"]),Paragraph("LeetCode Daily Summary",styles["heading"]),_pdf_table([["Metric","Value"],["Total Students",len(live)],["Active Today",int(active.sum())],["0 Solved / 0 Submission",int(inactive.sum())],["Problems Solved Today",int(live["Report Window Solved"].sum())],["Today Submissions",int(live["Report Window Submissions"].sum())],["Unverified Profiles",int(unknown.sum())]],[72*mm,45*mm]),Spacer(1,8),Paragraph("Top 10 Students - Today",styles["heading"]),_pdf_table([headers]+rows(top)),PageBreak(),Paragraph("0 Solved Today Students",styles["heading"]),Paragraph("Only 0 solved + 0 submission students are listed.",styles["subtitle"]),_pdf_table([headers]+rows(zeros)),Spacer(1,10),Paragraph("Section Summary",styles["heading"]),_pdf_table([["Section","Students","Active","0/0","Today Solved","Today Subs","7D","14D","30D"]]+[[x["section"],x["students"],x["active"],x["inactive"],x["window_solved"],x["window_submissions"],x["week"],x["fortnight"],x["month"]] for x in sections])]
+    doc.build(story); return path
 
 
-def generate_weekly_pdf(
-    live: pd.DataFrame,
-    challenges: list[dict[str, Any]],
-    challenge_results: list[dict[str, Any]],
-    coding: dict[str, Any],
-    start_date: str,
-    end_date: str,
-    scope_label: str = "ECE",
-) -> Path:
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    path = REPORT_DIR / f"{scope_slug(scope_label)}_Weekly_Report_{start_date}_to_{end_date}.pdf"
-    styles = _pdf_styles()
 
-    doc = SimpleDocTemplate(
-        str(path),
-        pagesize=landscape(A4),
-        rightMargin=12 * mm,
-        leftMargin=12 * mm,
-        topMargin=12 * mm,
-        bottomMargin=12 * mm,
-        title=f"ECE LeetCode Weekly Report - {start_date} to {end_date}",
-    )
-
-    total_students = len(live)
-    active_week = int((live["Last 7 Days"] > 0).sum())
-    solved_week = int(live["Last 7 Days"].sum())
-    top = top_students(live, "Last 7 Days", 10)
-    bottom = bottom_students_week(live, 10)
-    sections = section_leetcode_summary(live)
-
-    challenge_ids = {
-        str(item.get("id"))
-        for item in challenges
-        if start_date <= str(item.get("challenge_date", "")) <= end_date
-    }
-    weekly_results = [
-        result
-        for result in challenge_results
-        if str(result.get("challenge_id")) in challenge_ids
-        and bool(result.get("completed"))
-    ]
-    completion_pairs = {
-        (
-            str(item.get("challenge_id")),
-            str(item.get("register_number", "")).strip(),
-        )
-        for item in weekly_results
-        if item.get("register_number")
-    }
-    possible = total_students * len(challenge_ids)
-
-    story = [
-        Paragraph(f"{scope_label} LeetCode Weekly Report", styles["title"]),
-        Paragraph(
-            f"{start_date} to {end_date} - LeetCode + Daily Challenge + Coding Tests",
-            styles["subtitle"],
-        ),
-        Paragraph("LeetCode Tracker - Last 7 Days", styles["heading"]),
-        _pdf_table([
-            ["Metric", "Value"],
-            ["Total Students", total_students],
-            ["Active This Week", active_week],
-            ["Problems Solved", solved_week],
-            ["Inactive This Week", max(total_students - active_week, 0)],
-            ["Weekly Activity Rate", f"{percent(active_week, total_students):.1f}%"],
-            ["Avg Problems / Student", f"{(solved_week/total_students if total_students else 0):.1f}"],
-        ], [65 * mm, 35 * mm]),
-        Spacer(1, 7),
-        Paragraph("Daily Challenge - Weekly", styles["heading"]),
-        _pdf_table([
-            ["Challenges Posted", "Total Completions", "Completion Rate"],
-            [
-                len(challenge_ids),
-                len(completion_pairs),
-                f"{percent(len(completion_pairs), possible):.1f}%",
-            ],
-        ]),
-        Spacer(1, 7),
-        Paragraph("Coding Tests - Weekly", styles["heading"]),
-        _pdf_table([
-            ["Tests", "Unique Attended", "Passed", "Failed", "Pass Rate", "Violations"],
-            [
-                coding["tests_conducted"],
-                coding["attended"],
-                coding["passed"],
-                coding["failed"],
-                f'{coding["pass_rate"]:.1f}%',
-                coding["violations"],
-            ],
-        ]),
-        Spacer(1, 7),
-        Paragraph("Top 10 - Last 7 Days", styles["heading"]),
-        _pdf_table(
-            [["#", "Student", "Register No.", "Section", "7 Days", "Total"]] +
-            [
-                [
-                    i,
-                    item["name"],
-                    item["register"],
-                    item["section"],
-                    item["value"],
-                    item["total"],
-                ]
-                for i, item in enumerate(top, 1)
-            ]
-        ),
-        PageBreak(),
-        Paragraph("Bottom 10 - Last 7 Days", styles["heading"]),
-        _pdf_table(
-            [["#", "Student", "Register No.", "Section", "7 Days", "Total"]] +
-            [
-                [
-                    i,
-                    item["name"],
-                    item["register"],
-                    item["section"],
-                    item["value"],
-                    item["total"],
-                ]
-                for i, item in enumerate(bottom, 1)
-            ]
-        ),
-        Spacer(1, 10),
-        Paragraph("Section Performance", styles["heading"]),
-        _pdf_table(
-            [["Section", "Students", "7-Day Solved", "30-Day Solved", "Active Today"]] +
-            [
-                [
-                    item["section"],
-                    item["students"],
-                    item["week"],
-                    item["month"],
-                    item["active_today"],
-                ]
-                for item in sections
-            ]
-        ),
-    ]
-
-    doc.build(story)
-    return path
+def generate_weekly_pdf(live:pd.DataFrame,start_date:str,end_date:str,report_window:str,scope_label:str="ECE") -> Path:
+    REPORT_DIR.mkdir(parents=True,exist_ok=True); path=REPORT_DIR/f"{scope_slug(scope_label)}_Weekly_Report_{start_date}_to_{end_date}.pdf"; styles=_pdf_styles(); doc=SimpleDocTemplate(str(path),pagesize=landscape(A4),rightMargin=12*mm,leftMargin=12*mm,topMargin=12*mm,bottomMargin=12*mm,title=f"{scope_label} LeetCode Weekly Report - {start_date} to {end_date}"); active,inactive,unknown=report_window_masks(live); top=report_window_students(live,10,False); zeros=inactive_students(live); bottom=report_window_students(live,10,True,True); sections=section_report_summary(live)
+    headers=["#","Student","Register No.","Section","Week Solved","Week Subs","14D","30D","Total Solved"]
+    def rows(items): return [[n,x["name"],x["register"],x["section"],x.get("value",x.get("solved",0)),_display_submission(x["window_submissions"],x["submission_coverage"]),x["fortnight"],x["month"],x["total"]] for n,x in enumerate(items,1)]
+    story=[Paragraph(f"{scope_label} LeetCode Weekly Report",styles["title"]),Paragraph(report_window,styles["subtitle"]),Paragraph("LeetCode Weekly Summary",styles["heading"]),_pdf_table([["Metric","Value"],["Total Students",len(live)],["Active This Week",int(active.sum())],["0 Solved / 0 Submission",int(inactive.sum())],["Problems Solved This Week",int(live["Report Window Solved"].sum())],["Weekly Submissions",int(live["Report Window Submissions"].sum())],["Unverified Profiles",int(unknown.sum())]],[72*mm,45*mm]),Spacer(1,8),Paragraph("Top 10 Students - This Week",styles["heading"]),_pdf_table([headers]+rows(top)),PageBreak(),Paragraph("0 Solved This Week Students",styles["heading"]),Paragraph("Only 0 solved + 0 weekly submission students are listed.",styles["subtitle"]),_pdf_table([headers]+rows(zeros)),Spacer(1,10),Paragraph("Bottom 10 Students - This Week",styles["heading"]),Paragraph("Completely inactive 0/0 students are excluded here.",styles["subtitle"]),_pdf_table([headers]+rows(bottom)),Spacer(1,10),Paragraph("Section Performance",styles["heading"]),_pdf_table([["Section","Students","Active","0/0","Week Solved","Week Subs","14D","30D"]]+[[x["section"],x["students"],x["active"],x["inactive"],x["window_solved"],x["window_submissions"],x["fortnight"],x["month"]] for x in sections])]
+    doc.build(story); return path
 
 
 def encode_attachment(path: Path) -> dict[str, str]:
@@ -1736,177 +1245,21 @@ def filtered_scope_data(
     return scoped_live, scoped
 
 
-def build_report(
-    mode: str,
-    config: Config,
-    offline: bool = False,
-    section: str | None = None,
-) -> tuple[str, str, list[Path]]:
-    all_live = load_live_data()
-    now = ist_now()
-    today = now.date()
 
-    if offline:
-        all_data = {
-            "students": [],
-            "challenges": [],
-            "challenge_results": [],
-            "coding_tests": [],
-            "coding_attempts": [],
-        }
+def build_report(mode:str,config:Config,offline:bool=False,section:str|None=None) -> tuple[str,str,list[Path]]:
+    all_live=load_live_data()
+    if section is None: live=all_live.copy()
     else:
-        all_data = collect_supabase_data(config)
-
-    index_students(all_live, all_data["students"])
-
-    live, data = filtered_scope_data(
-        all_live,
-        all_data,
-        section,
-    )
-
-    scope_label = section or "ECE Overall"
-
-    if mode == "daily":
-
-    # Exact 24-hour reporting window:
-    # Yesterday 07:00 AM IST -> Today 07:00 AM IST
-
-        report_end = datetime.combine(
-        today,
-        datetime.min.time(),
-        tzinfo=IST,
-    ).replace(
-        hour=7,
-        minute=0,
-        second=0,
-        microsecond=0,
-    )
-
-    report_start = report_end - timedelta(hours=24)
-
-    report_label = (
-        f"{report_start.strftime('%Y-%m-%d %I:%M %p')} "
-        f"to "
-        f"{report_end.strftime('%Y-%m-%d %I:%M %p')}"
-    )
-
-    print(
-        f"Daily report window: "
-        f"{report_start.isoformat()} "
-        f"-> {report_end.isoformat()}"
-    )
-
-    tests = coding_tests_in_window(
-        data["coding_tests"],
-        report_start,
-        report_end,
-    )
-
-    coding = coding_test_summary(
-        tests,
-        data["coding_attempts"],
-        len(live),
-    )
-
-    challenge = daily_challenge_stats_in_window(
-        report_start,
-        report_end,
-        data["challenges"],
-        data["challenge_results"],
-        len(live),
-    )
-
-    subject, html_body = build_daily_report(
-        live,
-        challenge,
-        coding,
-        report_label,
-        scope_label=scope_label,
-    )
-
-    file_date = report_end.date().isoformat()
-
-    attachments = [
-        generate_daily_excel(
-            live,
-            challenge,
-            coding,
-            file_date,
-            scope_label=scope_label,
-        ),
-
-        generate_daily_pdf(
-            live,
-            challenge,
-            coding,
-            file_date,
-            scope_label=scope_label,
-        ),
-    ]
-
-    return subject, html_body, attachments
-
-    if mode == "weekly":
-        start_day = today - timedelta(days=6)
-
-        start = datetime.combine(
-            start_day,
-            datetime.min.time(),
-            tzinfo=IST,
-        )
-
-        end = datetime.combine(
-            today + timedelta(days=1),
-            datetime.min.time(),
-            tzinfo=IST,
-        )
-
-        tests = coding_tests_in_window(
-            data["coding_tests"],
-            start,
-            end,
-        )
-
-        coding = coding_test_summary(
-            tests,
-            data["coding_attempts"],
-            len(live),
-        )
-
-        subject, html_body = build_weekly_report(
-            live,
-            data["challenges"],
-            data["challenge_results"],
-            coding,
-            start_day.isoformat(),
-            today.isoformat(),
-            scope_label=scope_label,
-        )
-
-        attachments = [
-            generate_weekly_excel(
-                live,
-                data["challenges"],
-                data["challenge_results"],
-                coding,
-                start_day.isoformat(),
-                today.isoformat(),
-                scope_label=scope_label,
-            ),
-            generate_weekly_pdf(
-                live,
-                data["challenges"],
-                data["challenge_results"],
-                coding,
-                start_day.isoformat(),
-                today.isoformat(),
-                scope_label=scope_label,
-            ),
-        ]
-
-        return subject, html_body, attachments
-
+        key=section.strip().upper(); live=all_live[all_live["Section"].astype(str).str.strip().str.upper().eq(key)].copy()
+    scope_label=section or "ECE Overall"; report_end=latest_7am_boundary()
+    if mode=="daily":
+        report_start=report_end-timedelta(days=1); live=refresh_report_window_activity(live,report_start,report_end,config,offline)
+        if not offline: supabase_report_snapshot_upsert(config,live,report_end)
+        display=report_start.strftime("%d %b %Y"); file_date=report_start.date().isoformat(); window=format_window(report_start,report_end); print(f"Daily report window: {report_start.isoformat()} -> {report_end.isoformat()}")
+        subject,body=build_daily_report(live,display,window,scope_label); return subject,body,[generate_daily_excel(live,file_date,window,scope_label),generate_daily_pdf(live,file_date,window,scope_label)]
+    if mode=="weekly":
+        report_start=report_end-timedelta(days=7); live=refresh_report_window_activity(live,report_start,report_end,config,offline); start_iso=report_start.date().isoformat(); end_iso=report_end.date().isoformat(); window=format_window(report_start,report_end); print(f"Weekly report window: {report_start.isoformat()} -> {report_end.isoformat()}")
+        subject,body=build_weekly_report(live,report_start.strftime("%d %b %Y"),report_end.strftime("%d %b %Y"),window,scope_label); return subject,body,[generate_weekly_excel(live,start_iso,end_iso,window,scope_label),generate_weekly_pdf(live,start_iso,end_iso,window,scope_label)]
     raise ValueError(f"Unknown report mode: {mode}")
 
 
@@ -1960,7 +1313,7 @@ def main() -> int:
     parser.add_argument(
         "--offline",
         action="store_true",
-        help="Skip Supabase; useful for local report testing.",
+        help="Skip LeetCode refresh and use LiveData only for local preview.",
     )
 
     parser.add_argument(
