@@ -418,22 +418,40 @@ def fetch_leetcode(username: str) -> dict[str, Any]:
                     "Invalid JSON response"
                 )
 
-            if response_data.get("errors"):
-                messages = [
-                    str(
-                        error.get(
-                            "message",
-                            "GraphQL error",
-                        )
-                    )
-                    for error in response_data["errors"]
-                ]
+            graphql_errors = response_data.get("errors") or []
 
-                return empty_profile(
-                    " | ".join(messages)
+            calendar_permission_error = False
+            fatal_messages = []
+
+            for error in graphql_errors:
+                message = str(
+                    error.get(
+                        "message",
+                        "GraphQL error",
+                    )
                 )
 
-            data = response_data.get("data", {})
+                lowered = message.lower()
+
+                if (
+                    "calendar" in lowered
+                    and (
+                        "permission" in lowered
+                        or "no permission" in lowered
+                    )
+                ):
+                    calendar_permission_error = True
+                else:
+                    fatal_messages.append(message)
+
+            data = response_data.get("data", {}) or {}
+
+            # GraphQL may return useful matchedUser/recentAcSubmissionList data
+            # together with a field-level calendar permission error.
+            if fatal_messages and not data:
+                return empty_profile(
+                    " | ".join(fatal_messages)
+                )
             matched_user = data.get("matchedUser")
 
             if matched_user is None:
@@ -468,10 +486,24 @@ def fetch_leetcode(username: str) -> dict[str, Any]:
                 )
             )
 
+            user_calendar = (
+                matched_user.get("userCalendar")
+                if isinstance(matched_user, dict)
+                else None
+            )
+
+            calendar_available = (
+                not calendar_permission_error
+                and isinstance(user_calendar, dict)
+            )
+
             submission_calendar = (
-                matched_user
-                .get("userCalendar", {})
-                .get("submissionCalendar", "{}")
+                user_calendar.get(
+                    "submissionCalendar",
+                    "{}",
+                )
+                if calendar_available
+                else "{}"
             )
 
             easy = get_stat(
@@ -662,6 +694,14 @@ def fetch_leetcode(username: str) -> dict[str, Any]:
                     accepted_submission_total,
                 "recent_accepted_returned":
                     len(recent_submissions),
+                "calendar_available":
+                    calendar_available,
+                "calendar_note":
+                    (
+                        ""
+                        if calendar_available
+                        else "Calendar unavailable"
+                    ),
             }
 
             return result
@@ -1024,6 +1064,8 @@ def load_daily_activity_file() -> pd.DataFrame:
         "LeetCode Username",
         "Problems Solved",
         "Solved That Day",
+        "Source",
+        "Exact",
     ]
 
     if not DAILY_ACTIVITY_CSV.exists():
@@ -1101,6 +1143,287 @@ def solved_on_date(
     return safe_int(matches.iloc[-1]["Solved That Day"])
 
 
+
+def _student_daily_total_snapshots(
+    history: pd.DataFrame,
+    register_number: str,
+) -> pd.DataFrame:
+    """
+    One cumulative LeetCode Problems Solved snapshot per calendar date.
+
+    This is the authoritative source for NEW unique problems solved.
+    We intentionally ignore old Last 7/14/30 columns because those columns
+    were produced by earlier tracker versions and may contain capped values.
+    """
+    columns = ["_date", "_total", "_order"]
+
+    if history is None or history.empty:
+        return pd.DataFrame(columns=columns)
+
+    required = {
+        "Date",
+        "Register Number",
+        "Problems Solved",
+    }
+
+    if not required.issubset(history.columns):
+        return pd.DataFrame(columns=columns)
+
+    frame = history[
+        history["Register Number"].astype(str)
+        == str(register_number)
+    ].copy()
+
+    if frame.empty:
+        return pd.DataFrame(columns=columns)
+
+    frame["_date"] = pd.to_datetime(
+        frame["Date"],
+        errors="coerce",
+    ).dt.date
+
+    frame["_total"] = pd.to_numeric(
+        frame["Problems Solved"],
+        errors="coerce",
+    )
+
+    frame["_order"] = range(len(frame))
+
+    frame = frame.dropna(
+        subset=["_date", "_total"]
+    )
+
+    if frame.empty:
+        return pd.DataFrame(columns=columns)
+
+    frame = (
+        frame
+        .sort_values(["_date", "_order"])
+        .drop_duplicates(
+            subset=["_date"],
+            keep="last",
+        )
+        .sort_values("_date")
+        .reset_index(drop=True)
+    )
+
+    # Cumulative total cannot legitimately decrease.
+    # If an old corrupt row decreases, keep the running maximum so that
+    # one bad historical record cannot create a fake rolling spike.
+    frame["_total"] = (
+        frame["_total"]
+        .astype(float)
+        .cummax()
+        .astype(int)
+    )
+
+    return frame[columns]
+
+
+def _history_window_value(
+    history: pd.DataFrame,
+    register_number: str,
+    current_total: int,
+    days: int,
+) -> tuple[int | None, str]:
+    """
+    Calendar-window calculation from cumulative solved totals.
+
+    For Last N Days:
+      current total - end-of-day total from N days ago.
+
+    EXACT:
+      exact boundary date exists.
+
+    LOWER_BOUND:
+      boundary is missing, but a later snapshot exists inside the requested
+      window. We can safely prove at least the solves after that snapshot.
+
+    MISSING:
+      no useful snapshot exists.
+    """
+    current_total = max(0, safe_int(current_total))
+
+    frame = _student_daily_total_snapshots(
+        history,
+        register_number,
+    )
+
+    if frame.empty:
+        return None, "MISSING"
+
+    target_date = ist_today() - timedelta(days=days)
+
+    exact = frame[
+        frame["_date"] == target_date
+    ]
+
+    if not exact.empty:
+        baseline = safe_int(
+            exact.iloc[-1]["_total"]
+        )
+
+        return (
+            max(0, current_total - baseline),
+            "HISTORY_EXACT",
+        )
+
+    # A snapshot after the missing boundary gives a guaranteed lower bound:
+    # every increase after that snapshot definitely belongs to the window.
+    after = frame[
+        (frame["_date"] > target_date)
+        & (frame["_date"] < ist_today())
+    ]
+
+    if not after.empty:
+        baseline = safe_int(
+            after.iloc[0]["_total"]
+        )
+
+        return (
+            max(0, current_total - baseline),
+            "LOWER_BOUND",
+        )
+
+    return None, "MISSING"
+
+
+def _choose_rolling_value(
+    history_value: int | None,
+    history_source: str,
+    recent_value: int,
+    recent_full: bool,
+) -> tuple[int, str]:
+    """
+    Source priority for NEW problems solved:
+
+    1. Cumulative history exact boundary.
+       This is the strongest source because cumulative total only increases
+       when a genuinely new problem is solved.
+
+    2. Fully-covered recent accepted feed.
+       Used only when no exact cumulative boundary exists.
+
+    3. Cumulative-history lower bound.
+       Never substitutes the old capped 20.
+
+    4. Zero / insufficient history.
+    """
+    if history_source == "HISTORY_EXACT" and history_value is not None:
+        return max(0, safe_int(history_value)), "HISTORY_EXACT"
+
+    if recent_full:
+        return max(0, safe_int(recent_value)), "RECENT_FULL"
+
+    if history_source == "LOWER_BOUND" and history_value is not None:
+        return max(0, safe_int(history_value)), "LOWER_BOUND"
+
+    return 0, "INSUFFICIENT_HISTORY"
+
+
+def calculate_rolling_metrics(
+    previous_history: pd.DataFrame,
+    register_number: str,
+    profile: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Permanent rolling-metric engine.
+
+    It does NOT trust a truncated recentAcSubmissionList for 7/14/30.
+    The old 20 / 20 / 20 collapse is therefore removed.
+    """
+    current_total = max(
+        0,
+        safe_int(profile.get("total_solved")),
+    )
+
+    coverage = profile.get(
+        "window_coverage",
+        {},
+    ) or {}
+
+    h_today, s_today = _history_window_value(
+        previous_history,
+        register_number,
+        current_total,
+        1,
+    )
+
+    h_7, s_7 = _history_window_value(
+        previous_history,
+        register_number,
+        current_total,
+        7,
+    )
+
+    h_14, s_14 = _history_window_value(
+        previous_history,
+        register_number,
+        current_total,
+        14,
+    )
+
+    h_30, s_30 = _history_window_value(
+        previous_history,
+        register_number,
+        current_total,
+        30,
+    )
+
+    today, today_source = _choose_rolling_value(
+        h_today,
+        s_today,
+        profile.get("solved_today", 0),
+        bool(coverage.get("today")),
+    )
+
+    seven, seven_source = _choose_rolling_value(
+        h_7,
+        s_7,
+        profile.get("last_7_days", 0),
+        bool(coverage.get("7d")),
+    )
+
+    fourteen, fourteen_source = _choose_rolling_value(
+        h_14,
+        s_14,
+        profile.get("last_14_days", 0),
+        bool(coverage.get("14d")),
+    )
+
+    thirty, thirty_source = _choose_rolling_value(
+        h_30,
+        s_30,
+        profile.get("last_30_days", 0),
+        bool(coverage.get("30d")),
+    )
+
+    # Nested windows can never decrease.
+    # For a partial longer window, the shorter-window result is itself a
+    # mathematically valid lower bound.
+    seven = max(seven, today)
+    fourteen = max(fourteen, seven)
+    thirty = max(thirty, fourteen)
+
+    if fourteen_source == "LOWER_BOUND" and fourteen == seven:
+        fourteen_source = "LOWER_BOUND"
+
+    if thirty_source in {"LOWER_BOUND", "INSUFFICIENT_HISTORY"}:
+        if thirty >= fourteen and fourteen > 0:
+            thirty_source = "LOWER_BOUND"
+
+    return {
+        "today": today,
+        "7d": seven,
+        "14d": fourteen,
+        "30d": thirty,
+        "today_source": today_source,
+        "7d_source": seven_source,
+        "14d_source": fourteen_source,
+        "30d_source": thirty_source,
+    }
+
+
 def calculate_completed_day_counts(
     previous_history: pd.DataFrame,
     previous_activity: pd.DataFrame,
@@ -1112,25 +1435,38 @@ def calculate_completed_day_counts(
     leetcode_30_days: int,
 ) -> tuple[int, int, int, str, int]:
     """
-    Compatibility wrapper.
+    Backward-compatible wrapper used by older project code/tests.
 
-    V4 intentionally DOES NOT derive rolling accepted-problem activity
-    from cumulative total-solved history.
-
-    All rolling values already come from the SAME accepted-submission
-    definition in fetch_leetcode(), preventing metric mixing.
+    New tracker execution uses calculate_rolling_metrics() directly.
     """
-    del previous_history
     del previous_activity
-    del register_number
-    del current_total
+
+    pseudo_profile = {
+        "total_solved": current_total,
+        "solved_today": solved_today,
+        "last_7_days": leetcode_7_days,
+        "last_14_days": leetcode_14_days,
+        "last_30_days": leetcode_30_days,
+        "window_coverage": {
+            "today": False,
+            "7d": False,
+            "14d": False,
+            "30d": False,
+        },
+    }
+
+    metrics = calculate_rolling_metrics(
+        previous_history,
+        register_number,
+        pseudo_profile,
+    )
 
     return (
-        max(0, safe_int(leetcode_7_days)),
-        max(0, safe_int(leetcode_14_days)),
-        max(0, safe_int(leetcode_30_days)),
+        metrics["7d"],
+        metrics["14d"],
+        metrics["30d"],
         ist_today().isoformat(),
-        max(0, safe_int(solved_today)),
+        metrics["today"],
     )
 
 
@@ -1146,9 +1482,15 @@ def update_completed_daily_activity(
         "LeetCode Username",
         "Problems Solved",
         "Solved That Day",
+        "Source",
+        "Exact",
     ]
 
     activity = previous_activity.copy()
+
+    for column in columns:
+        if column not in activity.columns:
+            activity[column] = ""
 
     new_rows = []
 
@@ -1157,11 +1499,21 @@ def update_completed_daily_activity(
         completed_solved = safe_int(
             row.get("_Completed Solved", 0)
         )
+        source = str(
+            row.get(
+                "_Completed Source",
+                "",
+            )
+        )
 
         if not completed_date:
             continue
 
-        # Replace an existing record for this student/date.
+        exact = source in {
+            "HISTORY_EXACT",
+            "RECENT_FULL",
+        }
+
         if not activity.empty:
             activity = activity[
                 ~(
@@ -1181,6 +1533,8 @@ def update_completed_daily_activity(
             "LeetCode Username": row["LeetCode Username"],
             "Problems Solved": row["Problems Solved"],
             "Solved That Day": completed_solved,
+            "Source": source,
+            "Exact": "true" if exact else "false",
         })
 
     if new_rows:
@@ -1614,9 +1968,7 @@ def process_student(
         f"{student_name} ({username})"
     )
 
-    profile = fetch_leetcode(
-        username
-    )
+    profile = fetch_leetcode(username)
 
     fetch_success = (
         profile.get("status") == "Success"
@@ -1636,8 +1988,6 @@ def process_student(
             fetch_error,
         )
 
-    # Only evaluate challenges from a fresh successful accepted feed.
-    # A network failure must never be written as "challenge not completed".
     if fetch_success:
         for challenge in recent_challenges:
             challenge_done, challenge_done_at = (
@@ -1652,9 +2002,7 @@ def process_student(
 
             challenge_saved = (
                 save_challenge_result(
-                    int(
-                        challenge["id"]
-                    ),
+                    int(challenge["id"]),
                     register_number,
                     challenge_done,
                     challenge_done_at,
@@ -1669,26 +2017,56 @@ def process_student(
                     f"{'saved ✅' if challenge_saved else 'save warning ⚠️'}"
                 )
 
-    # All four values use one consistent definition and one source.
-    completed_7_days = max(
-        0,
-        safe_int(profile["last_7_days"]),
+    if fetch_success:
+        rolling = calculate_rolling_metrics(
+            previous_history,
+            register_number,
+            profile,
+        )
+    else:
+        rolling = {
+            "today": safe_int(profile.get("solved_today")),
+            "7d": safe_int(profile.get("last_7_days")),
+            "14d": safe_int(profile.get("last_14_days")),
+            "30d": safe_int(profile.get("last_30_days")),
+            "today_source": "STALE",
+            "7d_source": "STALE",
+            "14d_source": "STALE",
+            "30d_source": "STALE",
+        }
+
+    completed_solved = rolling["today"]
+    completed_7_days = rolling["7d"]
+    completed_14_days = rolling["14d"]
+    completed_30_days = rolling["30d"]
+
+    # Calendar permission is independent from solved tracking.
+    # Keep the previous 7D submission value when only the calendar is hidden.
+    weekly_submissions = safe_int(
+        profile.get(
+            "last_7_days_submissions",
+            0,
+        )
     )
 
-    completed_14_days = max(
-        0,
-        safe_int(profile["last_14_days"]),
+    calendar_available = profile.get(
+        "calendar_available",
+        True,
     )
 
-    completed_30_days = max(
-        0,
-        safe_int(profile["last_30_days"]),
-    )
+    if fetch_success and not calendar_available:
+        old = previous_good_row(
+            previous_history,
+            register_number,
+        )
 
-    completed_solved = max(
-        0,
-        safe_int(profile["solved_today"]),
-    )
+        if old is not None:
+            weekly_submissions = safe_int(
+                old.get(
+                    "Last 7 Days Submissions",
+                    weekly_submissions,
+                )
+            )
 
     completed_date = (
         ist_today().isoformat()
@@ -1696,45 +2074,20 @@ def process_student(
         else ""
     )
 
-    if fetch_success and not validate_window_order(
-        completed_solved,
-        completed_7_days,
-        completed_14_days,
-        completed_30_days,
-    ):
-        raise RuntimeError(
-            "Rolling-window invariant failed: "
-            f"today={completed_solved}, "
-            f"7d={completed_7_days}, "
-            f"14d={completed_14_days}, "
-            f"30d={completed_30_days}"
-        )
-
-    coverage = profile.get(
-        "window_coverage",
-        {},
-    )
-
-    coverage_note = (
-        "coverage="
-        f"T:{'FULL' if coverage.get('today') else 'PARTIAL'} "
-        f"7:{'FULL' if coverage.get('7d') else 'PARTIAL'} "
-        f"14:{'FULL' if coverage.get('14d') else 'PARTIAL'} "
-        f"30:{'FULL' if coverage.get('30d') else 'PARTIAL'}"
+    source_note = (
+        f"T:{rolling['today_source']} "
+        f"7:{rolling['7d_source']} "
+        f"14:{rolling['14d_source']} "
+        f"30:{rolling['30d_source']}"
     )
 
     row = {
         "Section": section,
-        "Register Number":
-            register_number,
-        "Student Name":
-            student_name,
-        "LeetCode Username":
-            username,
-        "LeetCode Link": (
-            "https://leetcode.com/u/"
-            f"{username}/"
-        ),
+        "Register Number": register_number,
+        "Student Name": student_name,
+        "LeetCode Username": username,
+        "LeetCode Link":
+            f"https://leetcode.com/u/{username}/",
         "Problems Solved":
             profile["total_solved"],
         "Solved Today":
@@ -1746,7 +2099,7 @@ def process_student(
         "Last 30 Days":
             completed_30_days,
         "Last 7 Days Submissions":
-            profile["last_7_days_submissions"],
+            weekly_submissions,
         "Total Submissions":
             profile["submissions"],
         "Easy":
@@ -1763,15 +2116,29 @@ def process_student(
             profile["status"],
         "Updated At":
             updated_at,
+        "7D Source":
+            rolling["7d_source"],
+        "14D Source":
+            rolling["14d_source"],
+        "30D Source":
+            rolling["30d_source"],
         "_Completed Date":
             completed_date,
         "_Completed Solved":
             completed_solved,
+        "_Completed Source":
+            rolling["today_source"],
         "_Fresh Success":
             fetch_success,
         "_Coverage":
-            coverage_note,
+            source_note,
     }
+
+    calendar_note = (
+        ""
+        if calendar_available
+        else " | calendar unavailable; 7D submissions preserved"
+    )
 
     print(
         f"[DONE  {position}/{total_students}] "
@@ -1780,13 +2147,12 @@ def process_student(
         f"30d={completed_30_days} | "
         f"14d={completed_14_days} | "
         f"7d={completed_7_days} | "
-        f"sub7d={profile['last_7_days_submissions']} | "
+        f"sub7d={weekly_submissions} | "
         f"today={completed_solved} | "
         f"total={profile['total_solved']} | "
         f"{profile['status']} | "
-        f"{coverage_note} | "
-        f"acceptedReturned={profile.get('recent_accepted_returned', 0)}/"
-        f"{profile.get('accepted_submission_total', 0)}"
+        f"sources={source_note}"
+        f"{calendar_note}"
     )
 
     return row
@@ -2601,6 +2967,7 @@ def run_one_update() -> None:
             "_Completed Solved",
             "_Fresh Success",
             "_Coverage",
+            "_Completed Source",
         ],
         errors="ignore",
     )

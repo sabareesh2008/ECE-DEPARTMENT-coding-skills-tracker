@@ -3098,11 +3098,14 @@ function renderProgressChart(registerNumber, student) {
 function renderDailyActivity(registerNumber) {
   const rows = dailyActivityRows
     .filter(
-      (row) => String(row["Register Number"]) === String(registerNumber)
+      (row) =>
+        String(row["Register Number"]) === String(registerNumber)
+        && String(row["Exact"] || "").toLowerCase() === "true"
     )
     .map((row) => ({
       date: row.Date,
-      solved: profileNumber(row["Solved That Day"])
+      solved: profileNumber(row["Solved That Day"]),
+      source: row["Source"] || "HISTORY_EXACT"
     }))
     .filter((row) => row.date)
     .sort((a, b) => String(a.date).localeCompare(String(b.date)))
@@ -3113,7 +3116,8 @@ function renderDailyActivity(registerNumber) {
   if (!rows.length) {
     container.innerHTML = `
       <div class="profile-empty-chart">
-        Daily activity will appear as completed-day data is collected.
+        Exact daily activity will appear as reliable daily snapshots are collected.
+        Legacy multi-day gap spikes are hidden.
       </div>
     `;
     return;
