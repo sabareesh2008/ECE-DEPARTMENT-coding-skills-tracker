@@ -255,6 +255,17 @@ function toNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
+function rollingDisplay(student, valueKey, sourceKey) {
+  const source = String(student[sourceKey] || "").trim().toUpperCase();
+
+  if (source === "INSUFFICIENT_HISTORY") {
+    return "N/A";
+  }
+
+  return String(toNumber(student[valueKey]));
+}
+
+
 function escapeHTML(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -625,9 +636,9 @@ function renderStudents(students) {
           </button>
         </td>
 
-        <td><strong>${toNumber(student["Last 30 Days"])}</strong></td>
-        <td>${toNumber(student["Last 14 Days"])}</td>
-        <td>${toNumber(student["Last 7 Days"])}</td>
+        <td><strong>${rollingDisplay(student, "Last 30 Days", "30D Source")}</strong></td>
+        <td>${rollingDisplay(student, "Last 14 Days", "14D Source")}</td>
+        <td>${rollingDisplay(student, "Last 7 Days", "7D Source")}</td>
         <td>${toNumber(student["Last 7 Days Submissions"])}</td>
         <td>${toNumber(student["Solved Today"])}</td>
         <td><strong>${toNumber(student["Problems Solved"])}</strong></td>
@@ -3187,9 +3198,11 @@ async function openStudentProfile(registerNumber) {
   document.getElementById("profileTotalSolved").textContent =
     student["Problems Solved"] || "0";
   document.getElementById("profile30Days").textContent =
-    student["Last 30 Days"] || "0";
+    rollingDisplay(student, "Last 30 Days", "30D Source");
+  document.getElementById("profile14Days").textContent =
+    rollingDisplay(student, "Last 14 Days", "14D Source");
   document.getElementById("profile7Days").textContent =
-    student["Last 7 Days"] || "0";
+    rollingDisplay(student, "Last 7 Days", "7D Source");
   document.getElementById("profileToday").textContent =
     student["Solved Today"] || "0";
 

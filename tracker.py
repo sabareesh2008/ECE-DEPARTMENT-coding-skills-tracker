@@ -1147,13 +1147,25 @@ def solved_on_date(
 def _student_daily_total_snapshots(
     history: pd.DataFrame,
     register_number: str,
+    username: str = "",
+    current_total: int | None = None,
 ) -> pd.DataFrame:
     """
-    One cumulative LeetCode Problems Solved snapshot per calendar date.
+    Return trustworthy cumulative Problems Solved snapshots.
 
-    This is the authoritative source for NEW unique problems solved.
-    We intentionally ignore old Last 7/14/30 columns because those columns
-    were produced by earlier tracker versions and may contain capped values.
+    Protection rules:
+    - same register number
+    - same LeetCode username when username history exists
+    - Status must be Success when Status exists
+    - valid date + non-negative total
+    - historical total cannot exceed current total
+    - obvious E/M/H-vs-total corruption is rejected
+    - decreasing cumulative rows are discarded
+    - leading zero bootstrap rows are ignored once a later positive snapshot
+      exists; this prevents a failed first fetch of 0 from becoming a fake
+      152-problem 7-day increase
+
+    Old rolling 7/14/30 columns are never used as calculation inputs.
     """
     columns = ["_date", "_total", "_order"]
 
@@ -1170,9 +1182,44 @@ def _student_daily_total_snapshots(
         return pd.DataFrame(columns=columns)
 
     frame = history[
-        history["Register Number"].astype(str)
-        == str(register_number)
+        history["Register Number"].astype(str).str.strip()
+        == str(register_number).strip()
     ].copy()
+
+    if frame.empty:
+        return pd.DataFrame(columns=columns)
+
+    # A register number can survive while the linked LeetCode username changes.
+    # Never mix the old account's cumulative totals into the new account.
+    if username and "LeetCode Username" in frame.columns:
+        wanted = str(username).strip().lower()
+
+        username_series = (
+            frame["LeetCode Username"]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+            .str.lower()
+        )
+
+        username_rows = frame[username_series == wanted].copy()
+
+        if not username_rows.empty:
+            frame = username_rows
+        else:
+            return pd.DataFrame(columns=columns)
+
+    # A failed request must never become a cumulative baseline.
+    if "Status" in frame.columns:
+        status = (
+            frame["Status"]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+            .str.lower()
+        )
+
+        frame = frame[status == "success"].copy()
 
     if frame.empty:
         return pd.DataFrame(columns=columns)
@@ -1193,6 +1240,44 @@ def _student_daily_total_snapshots(
         subset=["_date", "_total"]
     )
 
+    frame = frame[
+        frame["_total"] >= 0
+    ].copy()
+
+    if current_total is not None:
+        current_total = max(0, safe_int(current_total))
+
+        # A historical cumulative total above the current cumulative total is
+        # impossible for the same LeetCode account.
+        frame = frame[
+            frame["_total"] <= current_total
+        ].copy()
+
+    if frame.empty:
+        return pd.DataFrame(columns=columns)
+
+    # Independent corruption check using the difficulty totals.
+    difficulty_columns = {"Easy", "Medium", "Hard"}
+
+    if difficulty_columns.issubset(frame.columns):
+        easy = pd.to_numeric(frame["Easy"], errors="coerce")
+        medium = pd.to_numeric(frame["Medium"], errors="coerce")
+        hard = pd.to_numeric(frame["Hard"], errors="coerce")
+
+        difficulty_sum = easy + medium + hard
+        known_difficulty = (
+            easy.notna()
+            & medium.notna()
+            & hard.notna()
+        )
+
+        valid_breakdown = (
+            ~known_difficulty
+            | (difficulty_sum == frame["_total"])
+        )
+
+        frame = frame[valid_breakdown].copy()
+
     if frame.empty:
         return pd.DataFrame(columns=columns)
 
@@ -1207,46 +1292,70 @@ def _student_daily_total_snapshots(
         .reset_index(drop=True)
     )
 
-    # Cumulative total cannot legitimately decrease.
-    # If an old corrupt row decreases, keep the running maximum so that
-    # one bad historical record cannot create a fake rolling spike.
-    frame["_total"] = (
-        frame["_total"]
-        .astype(float)
-        .cummax()
-        .astype(int)
-    )
+    # If a profile later has a positive cumulative total, old leading zero
+    # snapshots are too risky to use as an exact baseline. They may have come
+    # from an early API/profile fetch failure that was historically saved as
+    # Success. Dropping them can only reduce certainty; it cannot fabricate a
+    # huge rolling value.
+    positive_positions = frame.index[
+        frame["_total"] > 0
+    ].tolist()
 
-    return frame[columns]
+    if positive_positions:
+        first_positive = positive_positions[0]
+        frame = frame.loc[first_positive:].copy()
+
+    if frame.empty:
+        return pd.DataFrame(columns=columns)
+
+    # Cumulative solved count cannot decrease for the same account.
+    # Discard the decreasing row instead of carrying a previous value forward,
+    # because carrying it forward would falsely create an "exact" snapshot.
+    trusted_rows = []
+    last_total = None
+
+    for _, row in frame.iterrows():
+        total = safe_int(row["_total"])
+
+        if last_total is None or total >= last_total:
+            trusted_rows.append(row)
+            last_total = total
+
+    if not trusted_rows:
+        return pd.DataFrame(columns=columns)
+
+    trusted = pd.DataFrame(trusted_rows)
+
+    return trusted[columns].reset_index(drop=True)
 
 
 def _history_window_value(
     history: pd.DataFrame,
     register_number: str,
+    username: str,
     current_total: int,
     days: int,
 ) -> tuple[int | None, str]:
     """
-    Calendar-window calculation from cumulative solved totals.
+    Calculate a rolling NEW-problem count from trustworthy cumulative totals.
 
-    For Last N Days:
-      current total - end-of-day total from N days ago.
-
-    EXACT:
-      exact boundary date exists.
+    HISTORY_EXACT:
+      trustworthy snapshot exists exactly N calendar days ago.
 
     LOWER_BOUND:
-      boundary is missing, but a later snapshot exists inside the requested
-      window. We can safely prove at least the solves after that snapshot.
+      the exact boundary is absent, but a later trustworthy snapshot exists.
+      This value is guaranteed, but may undercount the full window.
 
     MISSING:
-      no useful snapshot exists.
+      insufficient trustworthy history.
     """
     current_total = max(0, safe_int(current_total))
 
     frame = _student_daily_total_snapshots(
         history,
         register_number,
+        username=username,
+        current_total=current_total,
     )
 
     if frame.empty:
@@ -1263,13 +1372,13 @@ def _history_window_value(
             exact.iloc[-1]["_total"]
         )
 
-        return (
-            max(0, current_total - baseline),
-            "HISTORY_EXACT",
-        )
+        value = current_total - baseline
 
-    # A snapshot after the missing boundary gives a guaranteed lower bound:
-    # every increase after that snapshot definitely belongs to the window.
+        if value < 0 or value > current_total:
+            return None, "MISSING"
+
+        return value, "HISTORY_EXACT"
+
     after = frame[
         (frame["_date"] > target_date)
         & (frame["_date"] < ist_today())
@@ -1280,10 +1389,12 @@ def _history_window_value(
             after.iloc[0]["_total"]
         )
 
-        return (
-            max(0, current_total - baseline),
-            "LOWER_BOUND",
-        )
+        value = current_total - baseline
+
+        if value < 0 or value > current_total:
+            return None, "MISSING"
+
+        return value, "LOWER_BOUND"
 
     return None, "MISSING"
 
@@ -1295,28 +1406,46 @@ def _choose_rolling_value(
     recent_full: bool,
 ) -> tuple[int, str]:
     """
-    Source priority for NEW problems solved:
+    Choose one trustworthy source.
 
-    1. Cumulative history exact boundary.
-       This is the strongest source because cumulative total only increases
-       when a genuinely new problem is solved.
+    Important cross-check:
+    If the recent accepted feed is proven complete for the window, the number
+    of NEW problems from cumulative history cannot be greater than the number
+    of distinct accepted problems seen in that complete window.
 
-    2. Fully-covered recent accepted feed.
-       Used only when no exact cumulative boundary exists.
-
-    3. Cumulative-history lower bound.
-       Never substitutes the old capped 20.
-
-    4. Zero / insufficient history.
+    Therefore, when:
+      history exact = 152
+      recent complete = 0
+    the historical boundary is rejected as contaminated instead of publishing
+    an impossible 152.
     """
-    if history_source == "HISTORY_EXACT" and history_value is not None:
-        return max(0, safe_int(history_value)), "HISTORY_EXACT"
+    recent_value = max(0, safe_int(recent_value))
+
+    if (
+        history_source == "HISTORY_EXACT"
+        and history_value is not None
+    ):
+        history_value = max(
+            0,
+            safe_int(history_value),
+        )
+
+        if recent_full and history_value > recent_value:
+            return recent_value, "RECENT_FULL_HISTORY_REJECTED"
+
+        return history_value, "HISTORY_EXACT"
 
     if recent_full:
-        return max(0, safe_int(recent_value)), "RECENT_FULL"
+        return recent_value, "RECENT_FULL"
 
-    if history_source == "LOWER_BOUND" and history_value is not None:
-        return max(0, safe_int(history_value)), "LOWER_BOUND"
+    if (
+        history_source == "LOWER_BOUND"
+        and history_value is not None
+    ):
+        return (
+            max(0, safe_int(history_value)),
+            "LOWER_BOUND",
+        )
 
     return 0, "INSUFFICIENT_HISTORY"
 
@@ -1324,13 +1453,17 @@ def _choose_rolling_value(
 def calculate_rolling_metrics(
     previous_history: pd.DataFrame,
     register_number: str,
+    username: str,
     profile: dict[str, Any],
 ) -> dict[str, Any]:
     """
-    Permanent rolling-metric engine.
+    Final rolling NEW-problem calculation.
 
-    It does NOT trust a truncated recentAcSubmissionList for 7/14/30.
-    The old 20 / 20 / 20 collapse is therefore removed.
+    Invariants enforced before output:
+      0 <= Today <= 7D <= 14D <= 30D <= Total Solved
+
+    A missing/partial source is never allowed to overwrite a stronger shorter
+    window with an impossible smaller value.
     """
     current_total = max(
         0,
@@ -1342,86 +1475,70 @@ def calculate_rolling_metrics(
         {},
     ) or {}
 
-    h_today, s_today = _history_window_value(
-        previous_history,
-        register_number,
-        current_total,
-        1,
+    values = {}
+
+    for label, days, recent_key, coverage_key in [
+        ("today", 1, "solved_today", "today"),
+        ("7d", 7, "last_7_days", "7d"),
+        ("14d", 14, "last_14_days", "14d"),
+        ("30d", 30, "last_30_days", "30d"),
+    ]:
+        history_value, history_source = _history_window_value(
+            previous_history,
+            register_number,
+            username,
+            current_total,
+            days,
+        )
+
+        value, source = _choose_rolling_value(
+            history_value,
+            history_source,
+            profile.get(recent_key, 0),
+            bool(coverage.get(coverage_key)),
+        )
+
+        values[label] = min(
+            current_total,
+            max(0, safe_int(value)),
+        )
+
+        values[f"{label}_source"] = source
+
+    # Nested calendar windows.
+    if values["7d"] < values["today"]:
+        values["7d"] = values["today"]
+        values["7d_source"] = "DERIVED_LOWER_BOUND"
+
+    if values["14d"] < values["7d"]:
+        values["14d"] = values["7d"]
+        values["14d_source"] = "DERIVED_LOWER_BOUND"
+
+    if values["30d"] < values["14d"]:
+        values["30d"] = values["14d"]
+        values["30d_source"] = "DERIVED_LOWER_BOUND"
+
+    # Final hard guard. This should always pass after normalization.
+    valid = (
+        0
+        <= values["today"]
+        <= values["7d"]
+        <= values["14d"]
+        <= values["30d"]
+        <= current_total
     )
 
-    h_7, s_7 = _history_window_value(
-        previous_history,
-        register_number,
-        current_total,
-        7,
-    )
+    if not valid:
+        raise RuntimeError(
+            "Rolling metric integrity failure: "
+            f"today={values['today']} "
+            f"7d={values['7d']} "
+            f"14d={values['14d']} "
+            f"30d={values['30d']} "
+            f"total={current_total}"
+        )
 
-    h_14, s_14 = _history_window_value(
-        previous_history,
-        register_number,
-        current_total,
-        14,
-    )
-
-    h_30, s_30 = _history_window_value(
-        previous_history,
-        register_number,
-        current_total,
-        30,
-    )
-
-    today, today_source = _choose_rolling_value(
-        h_today,
-        s_today,
-        profile.get("solved_today", 0),
-        bool(coverage.get("today")),
-    )
-
-    seven, seven_source = _choose_rolling_value(
-        h_7,
-        s_7,
-        profile.get("last_7_days", 0),
-        bool(coverage.get("7d")),
-    )
-
-    fourteen, fourteen_source = _choose_rolling_value(
-        h_14,
-        s_14,
-        profile.get("last_14_days", 0),
-        bool(coverage.get("14d")),
-    )
-
-    thirty, thirty_source = _choose_rolling_value(
-        h_30,
-        s_30,
-        profile.get("last_30_days", 0),
-        bool(coverage.get("30d")),
-    )
-
-    # Nested windows can never decrease.
-    # For a partial longer window, the shorter-window result is itself a
-    # mathematically valid lower bound.
-    seven = max(seven, today)
-    fourteen = max(fourteen, seven)
-    thirty = max(thirty, fourteen)
-
-    if fourteen_source == "LOWER_BOUND" and fourteen == seven:
-        fourteen_source = "LOWER_BOUND"
-
-    if thirty_source in {"LOWER_BOUND", "INSUFFICIENT_HISTORY"}:
-        if thirty >= fourteen and fourteen > 0:
-            thirty_source = "LOWER_BOUND"
-
-    return {
-        "today": today,
-        "7d": seven,
-        "14d": fourteen,
-        "30d": thirty,
-        "today_source": today_source,
-        "7d_source": seven_source,
-        "14d_source": fourteen_source,
-        "30d_source": thirty_source,
-    }
+    return values
 
 
 def calculate_completed_day_counts(
@@ -1435,9 +1552,11 @@ def calculate_completed_day_counts(
     leetcode_30_days: int,
 ) -> tuple[int, int, int, str, int]:
     """
-    Backward-compatible wrapper used by older project code/tests.
+    Backward-compatible helper.
 
-    New tracker execution uses calculate_rolling_metrics() directly.
+    Main tracker execution uses calculate_rolling_metrics() with the real
+    username. This wrapper intentionally uses an empty username only for older
+    internal callers/tests.
     """
     del previous_activity
 
@@ -1458,6 +1577,7 @@ def calculate_completed_day_counts(
     metrics = calculate_rolling_metrics(
         previous_history,
         register_number,
+        "",
         pseudo_profile,
     )
 
@@ -1937,6 +2057,62 @@ def stale_profile_from_history(
     }
 
 
+def validate_student_output(
+    row: dict[str, Any],
+) -> None:
+    """
+    Reject impossible student metrics before they reach LiveData/History/
+    Supabase/frontend.
+    """
+    total = max(
+        0,
+        safe_int(row.get("Problems Solved")),
+    )
+
+    today = max(
+        0,
+        safe_int(row.get("Solved Today")),
+    )
+
+    seven = max(
+        0,
+        safe_int(row.get("Last 7 Days")),
+    )
+
+    fourteen = max(
+        0,
+        safe_int(row.get("Last 14 Days")),
+    )
+
+    thirty = max(
+        0,
+        safe_int(row.get("Last 30 Days")),
+    )
+
+    easy = max(0, safe_int(row.get("Easy")))
+    medium = max(0, safe_int(row.get("Medium")))
+    hard = max(0, safe_int(row.get("Hard")))
+
+    if not (
+        today
+        <= seven
+        <= fourteen
+        <= thirty
+        <= total
+    ):
+        raise RuntimeError(
+            "Impossible rolling metrics: "
+            f"T={today}, 7={seven}, 14={fourteen}, "
+            f"30={thirty}, total={total}"
+        )
+
+    if total > 0 and (easy + medium + hard) != total:
+        raise RuntimeError(
+            "Difficulty total mismatch: "
+            f"E={easy}, M={medium}, H={hard}, total={total}"
+        )
+
+
 def process_student(
     position: int,
     total_students: int,
@@ -2021,6 +2197,7 @@ def process_student(
         rolling = calculate_rolling_metrics(
             previous_history,
             register_number,
+            username,
             profile,
         )
     else:
@@ -2133,6 +2310,8 @@ def process_student(
         "_Coverage":
             source_note,
     }
+
+    validate_student_output(row)
 
     calendar_note = (
         ""
