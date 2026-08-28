@@ -4052,3 +4052,67 @@ body.modal-open {
     width: 100%;
   }
 }
+
+
+/* ============================================================
+   CODEMETRIX TRACKER ENTRY + GITHUB MODE
+   Existing LeetCode UI styles above are intentionally untouched.
+   ============================================================ */
+
+.tracker-entry-page .tracker-entry-hero {
+  padding-bottom: 24px;
+}
+
+.tracker-entry-home {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.tracker-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 28px;
+}
+
+.tracker-entry-card {
+  min-height: 260px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.tracker-entry-card > strong {
+  font-size: clamp(1.6rem, 3vw, 2.35rem);
+}
+
+.tracker-entry-open {
+  margin-top: 24px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.tracker-entry-status {
+  min-width: 250px;
+}
+
+/* The GitHub tracker has the exact same page UI, except Faculty tracking
+   is intentionally removed from the GitHub public/admin experience. */
+.github-mode #facultySectionCard,
+.github-mode #homeFacultyAnalyticsButton,
+.github-mode #facultyAnalyticsButton,
+.github-mode #facultyAnalyticsModal,
+.github-mode #facultyDirectoryModal,
+.github-mode #facultyProfileModal {
+  display: none !important;
+}
+
+@media (max-width: 760px) {
+  .tracker-entry-grid {
+    grid-template-columns: 1fr;
+  }
+}

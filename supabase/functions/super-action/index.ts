@@ -82,11 +82,34 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    let requestBody: Record<string, unknown> = {};
+
+    try {
+      requestBody = await req.json();
+    } catch {
+      requestBody = {};
+    }
+
+    const tracker =
+      requestBody?.tracker === "github"
+        ? "github"
+        : "leetcode";
+
     const githubToken = Deno.env.get("GITHUB_TOKEN");
     const githubOwner = Deno.env.get("GITHUB_OWNER");
     const githubRepo = Deno.env.get("GITHUB_REPO");
+
     const workflowFile =
-      Deno.env.get("GITHUB_WORKFLOW_FILE") ?? "update-leetcode.yml";
+      tracker === "github"
+        ? (
+            Deno.env.get("GITHUB_WORKFLOW_FILE_GITHUB")
+            ?? "github-tracker.yml"
+          )
+        : (
+            Deno.env.get("GITHUB_WORKFLOW_FILE")
+            ?? "update-leetcode.yml"
+          );
+
     const githubRef = Deno.env.get("GITHUB_REF") ?? "main";
 
     if (!githubToken || !githubOwner || !githubRepo) {
@@ -122,7 +145,11 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         ok: true,
-        message: "LeetCode tracker workflow started.",
+        tracker,
+        message:
+          tracker === "github"
+            ? "GitHub tracker workflow started."
+            : "LeetCode tracker workflow started.",
       }),
       {
         status: 200,

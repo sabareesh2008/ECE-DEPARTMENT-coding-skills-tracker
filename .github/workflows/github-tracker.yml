@@ -1,0 +1,65 @@
+name: Update GitHub Tracker
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    # Every hour. GitHub public activity APIs are not real-time, so hourly is
+    # intentionally used instead of the LeetCode 5-minute cadence.
+    - cron: "0 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: github-tracker
+  cancel-in-progress: false
+
+jobs:
+  update-github:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run GitHub tracker
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GITHUB_TRACKER_TOKEN: ${{ secrets.CODEMETRIX_GITHUB_TOKEN || github.token }}
+          GITHUB_TRACKER_WORKERS: "6"
+        run: python github_tracker.py
+
+      - name: Commit GitHub tracker data
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add \
+            github_students.csv \
+            GitHubLiveData.csv \
+            GitHubHistory.csv \
+            GitHubDailyActivity.csv
+
+          if git diff --cached --quiet; then
+            echo "No GitHub tracker data changes."
+            exit 0
+          fi
+
+          git commit -m "Update GitHub tracker data"
+          git pull --rebase origin main
+          git push origin main
