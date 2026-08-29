@@ -232,6 +232,11 @@ body {
     color: var(--muted);
     font-size: 22px;
 }
+.download-logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
 
 .search-field input {
     width: 100%;
