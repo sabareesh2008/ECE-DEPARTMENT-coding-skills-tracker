@@ -10,6 +10,8 @@ const corsHeaders = {
 
 const SUPABASE_URL = (Deno.env.get("SUPABASE_URL") ?? "").trim().replace(/\/$/, "");
 const SERVICE_ROLE_KEY = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "").trim();
+const GEMINI_API_KEY = (Deno.env.get("GEMINI_API_KEY") ?? "").trim();
+const GEMINI_MODEL = (Deno.env.get("GEMINI_MODEL") ?? "gemini-3.6-flash").trim();
 
 const MAX_EXPORT_ROWS = 500;
 
@@ -23,6 +25,8 @@ type AnalystData = {
   challengeResults: Json[];
   codingTests: Json[];
   codingAttempts: Json[];
+  githubCurrent: Json[];
+  githubHistory: Json[];
 };
 
 function jsonResponse(body: Json, status = 200) {
@@ -109,6 +113,8 @@ async function loadAnalystData(): Promise<AnalystData> {
     challengeResults,
     codingTests,
     codingAttempts,
+    githubCurrent,
+    githubHistory,
   ] = await Promise.all([
     restFetchAll("student_performance_current", { select: "*" }),
     restFetchAll("student_performance_history", { select: "*", "snapshot_date": `gte.${daysAgoIso(35)}` }),
@@ -117,6 +123,8 @@ async function loadAnalystData(): Promise<AnalystData> {
     restFetchAll("daily_challenge_results", { select: "*", "checked_at": `gte.${daysAgoIso(40)}T00:00:00Z` }),
     restFetchAll("coding_tests", { select: "*", order: "starts_at.desc" }),
     restFetchAll("coding_attempts", { select: "*", order: "started_at.desc" }),
+    restFetchAll("github_performance_current", { select: "*" }),
+    restFetchAll("github_performance_history", { select: "*", "snapshot_date": `gte.${daysAgoIso(35)}` }),
   ]);
 
   return {
@@ -127,6 +135,8 @@ async function loadAnalystData(): Promise<AnalystData> {
     challengeResults,
     codingTests,
     codingAttempts,
+    githubCurrent,
+    githubHistory,
   };
 }
 
@@ -232,9 +242,16 @@ function buildCodingStats(data: AnalystData) {
 function enrichStudents(data: AnalystData): Json[] {
   const challengeFor = buildChallengeStats(data);
   const codingFor = buildCodingStats(data);
+  const githubByRegister = new Map(
+    data.githubCurrent.map((row) => [normalize(row.register_number), row])
+  );
 
-  return data.students.map((student) => ({
-    register_number: normalize(student.register_number),
+  return data.students.map((student) => {
+    const register = normalize(student.register_number);
+    const github = githubByRegister.get(register) ?? {};
+
+    return ({
+    register_number: register,
     student_name: normalize(student.student_name),
     section: normalize(student.section),
     leetcode_username: normalize(student.leetcode_username),
@@ -251,9 +268,26 @@ function enrichStudents(data: AnalystData): Json[] {
     status: normalize(student.status),
     overall_rank: student.overall_rank,
     section_rank: student.section_rank,
-    ...challengeFor(normalize(student.register_number)),
-    ...codingFor(normalize(student.register_number)),
-  }));
+    ...challengeFor(register),
+    ...codingFor(register),
+    github_username: normalize(github.github_username),
+    github_contributions_today: number(github.contributions_today),
+    github_contributions_7_days: number(github.contributions_7_days),
+    github_contributions_14_days: number(github.contributions_14_days),
+    github_contributions_30_days: number(github.contributions_30_days),
+    github_commits_today: number(github.commits_today),
+    github_commits_7_days: number(github.commits_7_days),
+    github_commits_14_days: number(github.commits_14_days),
+    github_commits_30_days: number(github.commits_30_days),
+    github_repositories_total: number(github.repositories_total),
+    github_repositories_7_days: number(github.repositories_7_days),
+    github_repositories_30_days: number(github.repositories_30_days),
+    github_detected_deployments: number(github.detected_deployments),
+    github_latest_repository: normalize(github.latest_repository),
+    github_last_activity: normalize(github.last_activity),
+    github_status: normalize(github.status),
+  });
+  });
 }
 
 const metricMap: Record<string, string> = {
@@ -1143,6 +1177,180 @@ function buildAnswer(intent: ParsedIntent, data: AnalystData, students: Json[]):
   };
 }
 
+
+// ============================================================================
+// FREE-FORM AI LAYER
+// Keeps the existing UI and deterministic report engine, but removes the
+// "pre-planned prompts only" limitation. Any normal prompt can now be answered
+// by Gemini with the live LeetCode + GitHub + challenge + coding-test context.
+// ============================================================================
+
+function compactStudentForAi(row: Json): Json {
+  return {
+    reg: row.register_number,
+    name: row.student_name,
+    section: row.section,
+    leetcode: {
+      username: row.leetcode_username,
+      today: row.solved_today,
+      d7: row.last_7_days,
+      d30: row.last_30_days,
+      total: row.total_solved,
+      submissions: row.total_submissions,
+      easy: row.easy,
+      medium: row.medium,
+      hard: row.hard,
+      last_problem: row.last_problem,
+      last_solved: row.last_solved,
+      status: row.status,
+    },
+    github: {
+      username: row.github_username,
+      contributions_today: row.github_contributions_today,
+      contributions_7d: row.github_contributions_7_days,
+      contributions_14d: row.github_contributions_14_days,
+      contributions_30d: row.github_contributions_30_days,
+      commits_today: row.github_commits_today,
+      commits_7d: row.github_commits_7_days,
+      commits_14d: row.github_commits_14_days,
+      commits_30d: row.github_commits_30_days,
+      repositories_total: row.github_repositories_total,
+      repositories_7d: row.github_repositories_7_days,
+      repositories_30d: row.github_repositories_30_days,
+      deployments: row.github_detected_deployments,
+      latest_repository: row.github_latest_repository,
+      last_activity: row.github_last_activity,
+      status: row.github_status,
+    },
+    challenge: {
+      today_completed: row.challenge_today_completed,
+      completed_7d: row.challenge_7_completed,
+      total_7d: row.challenge_7_total,
+      rate_7d: row.challenge_7_rate,
+      current_streak: row.challenge_current_streak,
+    },
+    coding_test: {
+      attended: row.coding_tests_attended,
+      passed: row.coding_tests_passed,
+      pass_rate: row.coding_pass_rate,
+      average_score: row.coding_average_score,
+      best_score: row.coding_best_score,
+      violations: row.coding_violations,
+      latest_result: row.coding_latest_result,
+      latest_test: row.coding_latest_test,
+    },
+  };
+}
+
+function buildAiContext(data: AnalystData, students: Json[]): string {
+  const sectionRows = sectionSummary(students, []);
+  const payload = {
+    generated_at: new Date().toISOString(),
+    timezone: "Asia/Kolkata",
+    total_students: students.length,
+    sections: sectionRows,
+    latest_coding_tests: data.codingTests.slice(0, 8).map((row) => ({
+      id: row.id,
+      title: row.title,
+      starts_at: row.starts_at,
+      ends_at: row.ends_at,
+      total_marks: row.total_marks,
+      status: row.status,
+    })),
+    students: students.map(compactStudentForAi),
+  };
+
+  return JSON.stringify(payload);
+}
+
+function historyToGeminiContents(history: Json[], currentMessage: string): Json[] {
+  const contents: Json[] = [];
+  for (const item of history.slice(-8)) {
+    const role = item?.role === "assistant" ? "model" : "user";
+    const text = normalize(item?.content);
+    if (text) contents.push({ role, parts: [{ text }] });
+  }
+  contents.push({ role: "user", parts: [{ text: currentMessage }] });
+  return contents;
+}
+
+async function askGeminiFreeForm(
+  message: string,
+  history: Json[],
+  data: AnalystData,
+  students: Json[],
+  deterministicHint = ""
+): Promise<string> {
+  if (!GEMINI_API_KEY) {
+    throw new Error(
+      "GEMINI_API_KEY is not configured. Add it as a Supabase Edge Function secret to enable unrestricted AI prompts."
+    );
+  }
+
+  const liveContext = buildAiContext(data, students);
+  const systemInstruction = `You are CodeMetrix AI Analytics for an ECE department coding tracker.
+
+You can answer ANY normal user prompt conversationally. When a question is about students, sections, LeetCode, GitHub, Daily Challenge, coding tests, rankings, activity, strengths, weaknesses, comparisons, recommendations, or performance, ground every factual claim in LIVE_TRACKER_DATA below. Never invent a student's value. If the requested fact is not present, say that it is not available in the tracker data.
+
+For general knowledge questions that do not depend on tracker data, answer normally and clearly.
+
+Important data meanings:
+- LeetCode d7/d30 are problems solved in the last 7/30 days.
+- GitHub contributions and commits are separate metrics; do not call them the same thing.
+- GitHub d7/d14/d30 are rolling tracked windows.
+- Challenge rate is completion percentage for published challenges.
+- Coding-test pass rate and average are based on recorded attempts.
+- Use register number to disambiguate duplicate names.
+- Prefer concise, readable Markdown with headings/bullets when useful.
+- If asked "why", explain using the actual metrics.
+- If asked to compare, identify tradeoffs rather than using only one metric unless the user specifies one.
+- Do not claim to browse the internet or know live external data beyond this prompt.
+
+${deterministicHint ? `Existing deterministic calculation hint (you may use it, but answer the user's exact wording):\n${deterministicHint}\n` : ""}
+
+LIVE_TRACKER_DATA:
+${liveContext}`;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": GEMINI_API_KEY,
+      },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemInstruction }] },
+        contents: historyToGeminiContents(history, message),
+        generationConfig: {
+          temperature: 0.25,
+          topP: 0.9,
+          maxOutputTokens: 1800,
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Gemini request failed (${response.status}): ${detail.slice(0, 500)}`);
+  }
+
+  const result = await response.json();
+  const text = (result?.candidates?.[0]?.content?.parts ?? [])
+    .map((part: Json) => normalize(part?.text))
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+
+  if (!text) {
+    const reason = normalize(result?.promptFeedback?.blockReason) || "empty response";
+    throw new Error(`Gemini returned no answer (${reason}).`);
+  }
+
+  return text;
+}
+
 function inactiveExportRows(students: Json[], intent: ParsedIntent): Json[] {
   let rows = students.filter((row)=>number(row.last_7_days)===0);
   if (intent.section) rows = rows.filter((row)=>lower(row.section)===lower(intent.section));
@@ -1229,7 +1437,36 @@ Deno.serve(async (req: Request) => {
     }
 
     const intent = parseIntent(message, history);
-    const result = buildAnswer(intent, data, students);
+    const deterministic = buildAnswer(intent, data, students);
+
+    let answer = deterministic.answer;
+    let externalAi = false;
+    let aiWarning: string | null = null;
+
+    try {
+      answer = await askGeminiFreeForm(
+        message,
+        history,
+        data,
+        students,
+        intent.kind !== "help" ? deterministic.answer : ""
+      );
+      externalAi = true;
+    } catch (aiError) {
+      aiWarning = aiError instanceof Error ? aiError.message : String(aiError);
+      console.error("Gemini free-form AI request failed:", aiWarning);
+
+      // IMPORTANT: never silently fall back to the old pre-planned analyzer.
+      // If Gemini is not actually working, surface the real error so the admin
+      // can fix the API key/model/quota/deployment instead of seeing old answers.
+      return jsonResponse({
+        ok: false,
+        error: `Gemini AI is not active. ${aiWarning}`,
+        engine: `Gemini ${GEMINI_MODEL}`,
+        external_ai: false,
+        ai_warning: aiWarning,
+      }, 502);
+    }
 
     let download: any = null;
     if (intent.needsDownload) {
@@ -1238,11 +1475,12 @@ Deno.serve(async (req: Request) => {
 
     return jsonResponse({
       ok:true,
-      answer: result.answer,
+      answer,
       download,
-      engine: "ECE Smart Analyzer v1",
+      engine: externalAi ? `Gemini ${GEMINI_MODEL} + CodeMetrix live context` : "ECE Smart Analyzer deterministic fallback",
       intent: intent.kind,
-      external_ai: false,
+      external_ai: externalAi,
+      ai_warning: aiWarning,
     });
   } catch (error) {
     console.error("ECE Smart Analyzer error", error);

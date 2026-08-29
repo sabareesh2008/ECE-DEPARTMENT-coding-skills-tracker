@@ -9,11 +9,18 @@
   >
   <title>CodeMetrix · Coding Progress</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 
 <body class="tracker-entry-page">
   <div class="background-orb orb-one"></div>
   <div class="background-orb orb-two"></div>
+
+  <div class="home-quick-actions" aria-label="Quick actions">
+    <button id="homeBackButton" class="quick-circle-button" type="button" title="Back" aria-label="Back">←</button>
+    <button id="top50LeetCodeButton" class="quick-circle-button" type="button" title="Download Top 50 LeetCode" aria-label="Download Top 50 LeetCode">🏆</button>
+    <button id="top50GitHubButton" class="quick-circle-button" type="button" title="Download Top 50 GitHub" aria-label="Download Top 50 GitHub">🐙</button>
+  </div>
 
   <header class="hero tracker-entry-hero">
     <div class="hero-copy">
@@ -50,6 +57,35 @@
         </div>
       </div>
 
+      <section class="home-student-search" aria-label="Student search">
+        <div class="home-search-copy">
+          <span class="section-card-title">STUDENT SEARCH</span>
+          <strong>View LeetCode + GitHub together</strong>
+          <span>Enter a register number to open one combined student dashboard.</span>
+        </div>
+        <form id="studentSearchForm" class="home-search-form">
+          <input id="studentSearchInput" class="home-search-input" type="search" inputmode="numeric" autocomplete="off" placeholder="Enter register number" aria-label="Register number">
+          <button class="action-button primary home-search-button" type="submit">Search</button>
+        </form>
+      </section>
+
+      <div id="studentDashboardModal" class="student-dashboard-modal" hidden>
+        <div class="student-dashboard-backdrop" data-close-student-dashboard></div>
+        <section class="student-dashboard-panel" role="dialog" aria-modal="true" aria-labelledby="studentDashboardTitle">
+          <header class="student-dashboard-header">
+            <div>
+              <div class="eyebrow">STUDENT PERFORMANCE</div>
+              <h2 id="studentDashboardTitle">Student Dashboard</h2>
+              <p id="studentDashboardSubtitle">LeetCode + GitHub</p>
+            </div>
+            <button id="closeStudentDashboard" class="action-button secondary" type="button">Close</button>
+          </header>
+          <div id="studentDashboardContent" class="student-dashboard-content"></div>
+        </section>
+      </div>
+
+      <div id="homeActionMessage" class="home-action-message" role="status" aria-live="polite"></div>
+
       <div class="tracker-entry-grid">
         <a class="section-card tracker-entry-card" href="leetcode.html">
           <span class="section-card-title">LeetCode</span>
@@ -71,5 +107,9 @@
   <footer>
     ECE CodeMetrix · Public Coding Progress Platform
   </footer>
+
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="home-dashboard.js"></script>
 </body>
 </html>
