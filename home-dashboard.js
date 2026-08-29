@@ -1,5 +1,5 @@
 (() => {
-  const state = { leetcode: [], github: [] };
+  const state = { leetcode: [], github: [], merged: [] };
   const els = {
     leetTop: document.getElementById('top50LeetCodeButton'),
     gitTop: document.getElementById('top50GitHubButton'),
@@ -17,6 +17,7 @@
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const num = (v) => { const n = Number(String(v ?? '').replace(/,/g,'')); return Number.isFinite(n) ? n : 0; };
   const normalizeReg = (v) => String(v ?? '').trim().replace(/\.0$/, '');
+  const normalizeText = (v) => String(v ?? '').trim().toLowerCase();
 
   function parseCSV(text) {
     const rows=[]; let row=[], value='', quoted=false;
@@ -25,7 +26,7 @@
       if(c==='"' && quoted && n==='"'){ value+='"'; i++; }
       else if(c==='"') quoted=!quoted;
       else if(c===',' && !quoted){ row.push(value); value=''; }
-      else if((c==='\n'||c==='\r')&&!quoted){ if(c==='\r'&&n==='\n')i++; row.push(value); if(row.some(x=>x.trim()))rows.push(row); row=[]; value=''; }
+      else if((c==='\n'||c==='\r')&&!quoted){ if(c==='\r'&&n==='\n')i++; row.push(value); value=''; if(row.some(x=>x.trim()))rows.push(row); row=[]; }
       else value+=c;
     }
     if(value!==''||row.length){row.push(value);rows.push(row);}
@@ -49,6 +50,21 @@
 
   async function loadData(){
     [state.leetcode,state.github]=await Promise.all([loadFile('LiveData.csv'),loadFile('GitHubLiveData.csv')]);
+    buildMergedIndex();
+  }
+
+  function buildMergedIndex(){
+    const map = new Map();
+    const add = (row, source) => {
+      const reg = normalizeReg(row['Register Number']);
+      const key = reg || `${normalizeText(row['Student Name'])}|${normalizeText(source==='leetcode'?row['LeetCode Username']:row['GitHub Username'])}`;
+      if(!key) return;
+      if(!map.has(key)) map.set(key, { lc:null, gh:null });
+      map.get(key)[source === 'leetcode' ? 'lc' : 'gh'] = row;
+    };
+    state.leetcode.forEach(r=>add(r,'leetcode'));
+    state.github.forEach(r=>add(r,'github'));
+    state.merged = [...map.values()];
   }
 
   function leetcodeSort(rows){
@@ -71,25 +87,32 @@
     setMessage(`Top 50 ${type==='leetcode'?'LeetCode':'GitHub'} Excel downloaded.`);
   }
 
-  function findStudent(reg){
-    const r=normalizeReg(reg);
-    const lc=state.leetcode.find(s=>normalizeReg(s['Register Number'])===r);
-    const gh=state.github.find(s=>normalizeReg(s['Register Number'])===r);
-    if(!lc && !gh) return null;
-    return {lc,gh};
+  function getStudentName(item){ return item.lc?.['Student Name'] || item.gh?.['Student Name'] || 'Unknown Student'; }
+  function getRegister(item){ return normalizeReg(item.lc?.['Register Number'] || item.gh?.['Register Number']); }
+  function getSection(item){ return item.lc?.Section || item.gh?.Section || 'Section not available'; }
+
+  function searchStudents(query){
+    const q=normalizeText(query);
+    if(!q) return [];
+    return state.merged.filter(item=>{
+      const fields=[
+        getRegister(item), getStudentName(item), getSection(item),
+        item.lc?.['LeetCode Username'], item.lc?.['LeetCode Link'],
+        item.gh?.['GitHub Username'], item.gh?.['GitHub Link']
+      ].map(normalizeText);
+      return fields.some(v=>v && v.includes(q));
+    }).sort((a,b)=>getStudentName(a).localeCompare(getStudentName(b)));
   }
 
   function card(title, items){
     return `<article class="student-metric-card"><div class="student-metric-card-title">${title}</div>${items.map(([k,v])=>`<div class="student-metric-row"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join('')}</article>`;
   }
 
-  function openDashboard(reg){
-    const found=findStudent(reg);
-    if(!found){ setMessage(`No student found for register number ${reg}.`,true); return; }
-    const s=found.lc||found.gh, gh=found.gh, lc=found.lc;
-    els.title.textContent=s['Student Name']||'Student Dashboard';
-    els.subtitle.textContent=`Register Number: ${normalizeReg(s['Register Number'])} · ${s.Section||'Section not available'}`;
-    const lcItems=lc ? [['Problems Solved',num(lc['Problems Solved'])],['Solved Today',num(lc['Solved Today'])],['Last 7 Days',num(lc['Last 7 Days'])],['Last 30 Days',num(lc['Last 30 Days'])],['Total Submissions',num(lc['Total Submissions'])],['Easy / Medium / Hard',`${num(lc.Easy)} / ${num(lc.Medium)} / ${num(lc.Hard)}`],['Last Problem',lc['Last Problem']||'—'],['Last Solved',lc['Last Solved']||'—']] : [['Status','No LeetCode record']];
+  function openDashboard(item){
+    const s=item.lc||item.gh, gh=item.gh, lc=item.lc;
+    els.title.textContent=getStudentName(item);
+    els.subtitle.textContent=`Register Number: ${getRegister(item)||'—'} · ${getSection(item)}`;
+    const lcItems=lc ? [['Problems Solved',num(lc['Problems Solved'])],['Solved Today',num(lc['Solved Today'])],['Last 7 Days',num(lc['Last 7 Days'])],['Last 30 Days',num(lc['Last 30 Days'])],['Total Submissions',num(lc['Total Submissions'])],['Easy / Medium / Hard',`${num(lc.Easy)} / ${num(lc.Medium)} / ${num(lc.Hard)}`],['Current Streak',lc['Current Streak']||'—'],['Last Problem',lc['Last Problem']||'—'],['Last Solved',lc['Last Solved']||'—']] : [['Status','No LeetCode record']];
     const ghItems=gh ? [['Deployments',num(gh['Detected Deployments'])],['Repositories',num(gh['Repositories Total'])],['Contributions · 30 Days',num(gh['Contributions 30 Days'])],['Commits · 30 Days',num(gh['Commits 30 Days'])],['Repositories · 30 Days',num(gh['Repositories 30 Days'])],['Latest Repository',gh['Latest Repository']||'—'],['Last Activity',gh['Last Activity']||'—']] : [['Status','No GitHub record']];
     const links=[];
     if(lc?.['LeetCode Link']) links.push(`<a class="action-button secondary" href="${esc(lc['LeetCode Link'])}" target="_blank" rel="noopener">Open LeetCode ↗</a>`);
@@ -97,17 +120,38 @@
     els.content.innerHTML=`<div class="student-dashboard-grid">${card('💻 LeetCode',lcItems)}${card('🐙 GitHub',ghItems)}</div><div class="student-dashboard-links">${links.join('')}</div>`;
     els.modal.hidden=false; document.body.classList.add('modal-open');
   }
-  function closeDashboard(){els.modal.hidden=true;document.body.classList.remove('modal-open');}
 
-  async function ensureData(){ if(!state.leetcode.length||!state.github.length) await loadData(); }
+  function showSearchResults(results, query){
+    if(results.length===1){ openDashboard(results[0]); return; }
+    els.title.textContent=`Search Results (${results.length})`;
+    els.subtitle.textContent=`Matches for “${query}”`;
+    els.content.innerHTML=`<div class="universal-search-results">${results.map((item,i)=>{
+      const lc=item.lc, gh=item.gh;
+      return `<button type="button" class="universal-search-result" data-result-index="${i}"><span class="universal-search-result-main"><strong>${esc(getStudentName(item))}</strong><small>${esc(getRegister(item)||'No register number')} · ${esc(getSection(item))}</small></span><span class="universal-search-result-meta"><span>${lc?'💻 LeetCode':''}</span><span>${gh?'🐙 GitHub':''}</span></span></button>`;
+    }).join('')}</div>`;
+    els.content.querySelectorAll('[data-result-index]').forEach(btn=>btn.addEventListener('click',()=>openDashboard(results[Number(btn.dataset.resultIndex)])));
+    els.modal.hidden=false; document.body.classList.add('modal-open');
+  }
+
+  function closeDashboard(){els.modal.hidden=true;document.body.classList.remove('modal-open');}
+  async function ensureData(){ if(!state.leetcode.length && !state.github.length) await loadData(); }
 
   els.leetTop?.addEventListener('click',async()=>{try{await ensureData();downloadTop50(state.leetcode,'leetcode');}catch(e){setMessage(e.message,true);}});
   els.gitTop?.addEventListener('click',async()=>{try{await ensureData();downloadTop50(state.github,'github');}catch(e){setMessage(e.message,true);}});
-  els.form?.addEventListener('submit',async e=>{e.preventDefault();const reg=els.input.value.trim();if(!reg){setMessage('Enter a register number first.',true);return;}try{await ensureData();openDashboard(reg);}catch(err){setMessage(err.message,true);}});
+  els.form?.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const query=els.input.value.trim();
+    if(!query){setMessage('Enter a register number, name, LeetCode username or GitHub username.',true);return;}
+    try{
+      await ensureData();
+      const results=searchStudents(query);
+      if(!results.length){setMessage(`No student found for “${query}”.`,true);return;}
+      showSearchResults(results,query);
+    }catch(err){setMessage(err.message,true);}
+  });
   els.close?.addEventListener('click',closeDashboard);
   els.modal?.addEventListener('click',e=>{if(e.target.matches('[data-close-student-dashboard]'))closeDashboard();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!els.modal?.hidden)closeDashboard();});
   els.back?.addEventListener('click',()=>{if(history.length>1)history.back();else location.href='leetcode.html';});
-
   loadData().catch(()=>{});
 })();
