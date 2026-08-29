@@ -3,6 +3,7 @@
   const els = {
     leetTop: document.getElementById('top50LeetCodeButton'),
     gitTop: document.getElementById('top50GitHubButton'),
+    facultyLeetCode: document.getElementById('allFacultyLeetCodeButton'),
     back: document.getElementById('homeBackButton'),
     form: document.getElementById('studentSearchForm'),
     input: document.getElementById('studentSearchInput'),
@@ -87,6 +88,53 @@
     setMessage(`Top 50 ${type==='leetcode'?'LeetCode':'GitHub'} Excel downloaded.`);
   }
 
+
+
+  function supabaseClient(){
+    if(window.supabase && typeof window.supabase.createClient==='function' && window.APP_CONFIG?.SUPABASE_URL && window.APP_CONFIG?.SUPABASE_ANON_KEY){
+      return window.supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_ANON_KEY);
+    }
+    throw new Error('Supabase is not configured on this page.');
+  }
+
+  async function downloadAllFacultyLeetCodeReport(){
+    if(typeof XLSX==='undefined') throw new Error('Excel library is not available. Check your internet connection and reload the page.');
+    const client=supabaseClient();
+    const {data,error}=await client.from('faculties').select('*').order('faculty_name',{ascending:true});
+    if(error) throw new Error(`Faculty data could not be loaded: ${error.message}`);
+    const faculty=data||[];
+    if(!faculty.length) throw new Error('No faculty LeetCode records are available.');
+
+    const rows=faculty.map((f,i)=>({
+      Rank:i+1,
+      'Faculty ID':f.faculty_id||'',
+      'Faculty Name':f.faculty_name||'',
+      Designation:f.designation||'',
+      Department:f.department||'',
+      Email:f.email||'',
+      'LeetCode Username':f.leetcode_username||'',
+      'Problems Solved':num(f.total_solved),
+      'Solved Today':num(f.solved_today),
+      'Last 7 Days':num(f.last_7_days),
+      'Last 30 Days':num(f.last_30_days),
+      Easy:num(f.easy),
+      Medium:num(f.medium),
+      Hard:num(f.hard),
+      'Total Submissions':num(f.total_submissions),
+      'Last Problem':f.last_problem||'',
+      'Last Solved':f.last_solved||'',
+      Status:f.status||'',
+      'Updated At':f.updated_at||f.tracked_at||''
+    }));
+
+    const ws=XLSX.utils.json_to_sheet(rows);
+    ws['!cols']=Object.keys(rows[0]).map(k=>({wch:Math.min(34,Math.max(12,k.length+3))}));
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'All Faculty LeetCode');
+    XLSX.writeFile(wb,`CodeMetrix_All_Faculty_LeetCode_${new Date().toISOString().slice(0,10)}.xlsx`);
+    setMessage(`All faculty LeetCode report downloaded (${rows.length} faculty).`);
+  }
+
   function getStudentName(item){ return item.lc?.['Student Name'] || item.gh?.['Student Name'] || 'Unknown Student'; }
   function getRegister(item){ return normalizeReg(item.lc?.['Register Number'] || item.gh?.['Register Number']); }
   function getSection(item){ return item.lc?.Section || item.gh?.Section || 'Section not available'; }
@@ -138,6 +186,7 @@
 
   els.leetTop?.addEventListener('click',async()=>{try{await ensureData();downloadTop50(state.leetcode,'leetcode');}catch(e){setMessage(e.message,true);}});
   els.gitTop?.addEventListener('click',async()=>{try{await ensureData();downloadTop50(state.github,'github');}catch(e){setMessage(e.message,true);}});
+  els.facultyLeetCode?.addEventListener('click',async()=>{try{await downloadAllFacultyLeetCodeReport();}catch(e){setMessage(e.message,true);}});
   els.form?.addEventListener('submit',async e=>{
     e.preventDefault();
     const query=els.input.value.trim();
