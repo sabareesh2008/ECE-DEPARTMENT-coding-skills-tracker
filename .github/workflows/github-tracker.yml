@@ -1,18 +1,13 @@
-name: Update GitHub Tracker
+name: Update GitHub Tracker (manual)
 
 on:
   workflow_dispatch:
-
-  schedule:
-    # Every hour. GitHub public activity APIs are not real-time, so hourly is
-    # intentionally used instead of the LeetCode 5-minute cadence.
-    - cron: "0 * * * *"
 
 permissions:
   contents: write
 
 concurrency:
-  group: github-tracker
+  group: leetcode-dashboard-update
   cancel-in-progress: false
 
 jobs:

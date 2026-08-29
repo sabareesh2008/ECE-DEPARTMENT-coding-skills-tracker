@@ -62,9 +62,12 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GITHUB_TRACKER_TOKEN: ${{ secrets.CODEMETRIX_GITHUB_TOKEN || github.token }}
+          GITHUB_TRACKER_WORKERS: "6"
         run: |
           python tracker.py
           python faculty_tracker.py
+          python github_tracker.py
 
       # ------------------------------------------------------
       # 5. Commit generated files
@@ -74,14 +77,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add students.csv Students.xlsx LiveData.csv History.csv DailyActivity.csv
+          git add \
+            students.csv Students.xlsx LiveData.csv History.csv DailyActivity.csv \
+            github_students.csv GitHubLiveData.csv GitHubHistory.csv GitHubDailyActivity.csv
 
           if git diff --cached --quiet; then
             echo "No dashboard changes to commit."
             exit 0
           fi
 
-          git commit -m "Auto update LeetCode leaderboard"
+          git commit -m "Auto update LeetCode and GitHub leaderboards"
 
           git pull --rebase origin main
 
