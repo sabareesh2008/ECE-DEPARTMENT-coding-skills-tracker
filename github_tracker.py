@@ -43,7 +43,7 @@ GRAPHQL_URL = "https://api.github.com/graphql"
 REST_URL = "https://api.github.com"
 
 IST = ZoneInfo("Asia/Kolkata")
-MAX_WORKERS = max(1, min(10, int(os.getenv("GITHUB_TRACKER_WORKERS", "6"))))
+MAX_WORKERS = max(1, min(10, int(os.getenv("GITHUB_TRACKER_WORKERS", "20"))))
 
 ALLOWED_SECTIONS = (
     "ECE A",

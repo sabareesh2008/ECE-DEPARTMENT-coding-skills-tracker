@@ -35,7 +35,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GITHUB_TRACKER_TOKEN: ${{ secrets.CODEMETRIX_GITHUB_TOKEN || github.token }}
-          GITHUB_TRACKER_WORKERS: "6"
+          GITHUB_TRACKER_WORKERS: "20"
         run: python github_tracker.py
 
       - name: Commit GitHub tracker data
