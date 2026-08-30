@@ -15,6 +15,9 @@ on:
     paths:
       - "tracker.py"
       - "faculty_tracker.py"
+      - "github_tracker.py"
+      - ".github/workflows/update-leetcode.yml"
+      - ".github/workflows/github-tracker.yml"
       - "requirements.txt"
 
 permissions:
@@ -22,12 +25,13 @@ permissions:
 
 # Prevent multiple tracker jobs from running simultaneously
 concurrency:
-  group: leetcode-dashboard-update
+  group: codemetrix-tracker
   cancel-in-progress: false
 
 jobs:
   update-dashboard:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       # ------------------------------------------------------
@@ -56,14 +60,15 @@ jobs:
           pip install -r requirements.txt
 
       # ------------------------------------------------------
-      # 4. Run LeetCode tracker
+      # 4. Run all CodeMetrix trackers
       # ------------------------------------------------------
-      - name: Sync students and update LeetCode stats
+      - name: Update LeetCode, Faculty and GitHub trackers
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GITHUB_TRACKER_TOKEN: ${{ secrets.CODEMETRIX_GITHUB_TOKEN || github.token }}
-          GITHUB_TRACKER_WORKERS: "6"
+          LEETCODE_TRACKER_WORKERS: "20"
+          GITHUB_TRACKER_WORKERS: "20"
         run: |
           python tracker.py
           python faculty_tracker.py
@@ -77,16 +82,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add \
-            students.csv Students.xlsx LiveData.csv History.csv DailyActivity.csv \
-            github_students.csv GitHubLiveData.csv GitHubHistory.csv GitHubDailyActivity.csv
+          git add students.csv Students.xlsx LiveData.csv History.csv DailyActivity.csv LeetCodeErrors.csv github_students.csv GitHubLiveData.csv GitHubHistory.csv GitHubDailyActivity.csv GitHubErrors.csv
 
           if git diff --cached --quiet; then
             echo "No dashboard changes to commit."
             exit 0
           fi
 
-          git commit -m "Auto update LeetCode and GitHub leaderboards"
+          git commit -m "Auto update CodeMetrix trackers"
 
           git pull --rebase origin main
 

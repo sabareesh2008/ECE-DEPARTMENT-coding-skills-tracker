@@ -41,11 +41,11 @@ SUPABASE_SERVICE_ROLE_KEY = os.getenv(
 
 LEETCODE_URL = "https://leetcode.com/graphql"
 
-RECENT_SUBMISSION_LIMIT = 2000
+RECENT_SUBMISSION_LIMIT = max(2000, min(5000, int(os.getenv("LEETCODE_RECENT_SUBMISSION_LIMIT", "5000"))))
 IST = ZoneInfo("Asia/Kolkata")
 
-# Check up to 10 LeetCode profiles at the same time.
-MAX_WORKERS = 20
+# Default to 20 concurrent LeetCode profile checks; override with LEETCODE_TRACKER_WORKERS.
+MAX_WORKERS = max(1, min(30, int(os.getenv("LEETCODE_TRACKER_WORKERS", "20"))))
 
 ALLOWED_SECTIONS = (
     "ECE A",
@@ -55,6 +55,16 @@ ALLOWED_SECTIONS = (
     "ECE E",
     "ECE F",
 )
+
+LEETCODE_ERRORS_CSV = BASE_DIR / "LeetCodeErrors.csv"
+ERROR_COLUMNS = [
+    "Register Number",
+    "Student Name",
+    "LeetCode Username",
+    "Error Type",
+    "Error Message",
+    "Checked At",
+]
 
 
 LEETCODE_QUERY = """
@@ -377,7 +387,7 @@ def fetch_leetcode(username: str) -> dict[str, Any]:
     last_error = ""
 
     # Retry transient rate-limit/server/network failures.
-    for attempt in range(1, 4):
+    for attempt in range(1, 5):
         try:
             response = requests.post(
                 LEETCODE_URL,
@@ -389,9 +399,10 @@ def fetch_leetcode(username: str) -> dict[str, Any]:
             if response.status_code == 429:
                 last_error = "HTTP 429 rate limited"
 
-                if attempt < 3:
+                if attempt < 4:
                     import time
-                    time.sleep(attempt * 2)
+                    retry_after = safe_int(response.headers.get("Retry-After", 0))
+                    time.sleep(retry_after if retry_after > 0 else min(30, 2 ** attempt))
                     continue
 
                 return empty_profile(last_error)
@@ -399,9 +410,9 @@ def fetch_leetcode(username: str) -> dict[str, Any]:
             if response.status_code >= 500:
                 last_error = f"HTTP {response.status_code}"
 
-                if attempt < 3:
+                if attempt < 4:
                     import time
-                    time.sleep(attempt * 2)
+                    time.sleep(min(30, 2 ** attempt))
                     continue
 
                 return empty_profile(last_error)
@@ -2375,11 +2386,17 @@ def add_ranks(
     # OVERALL RANK
     # --------------------------------------------------------
 
+    live_data = live_data.copy()
+    live_data["_VerifiedNow"] = (
+        live_data["Status"].astype(str).str.strip().eq("Success").map({True: 0, False: 1})
+    )
+
     overall_sorted = (
         live_data
         .sort_values(
-            by=ranking_columns,
-            ascending=ranking_ascending,
+            by=["_VerifiedNow", *ranking_columns],
+            ascending=[True, *ranking_ascending],
+            kind="stable",
         )
         .reset_index(drop=True)
     )
@@ -2428,11 +2445,16 @@ def add_ranks(
         "Section",
         sort=False,
     ):
+        section_frame = section_frame.copy()
+        section_frame["_VerifiedNow"] = (
+            section_frame["Status"].astype(str).str.strip().eq("Success").map({True: 0, False: 1})
+        )
         section_sorted = (
             section_frame
             .sort_values(
-                by=ranking_columns,
-                ascending=ranking_ascending,
+                by=["_VerifiedNow", *ranking_columns],
+                ascending=[True, *ranking_ascending],
+                kind="stable",
             )
             .reset_index(drop=True)
         )
@@ -2841,6 +2863,9 @@ def sync_ai_performance_tables(live_data: pd.DataFrame) -> None:
         if not register_number:
             continue
 
+        if clean(row.get("Status", "")) != "Success":
+            continue
+
         current_rows.append({
             "register_number": register_number,
             "student_name": clean(row.get("Student Name", "")),
@@ -2903,6 +2928,82 @@ def sync_ai_performance_tables(live_data: pd.DataFrame) -> None:
     except Exception as error:
         # The normal CSV tracker must continue even when the optional AI mart is unavailable.
         print(f"[AI ANALYTICS SYNC WARNING] {error}")
+
+
+# ============================================================
+# ERROR REPORTING
+# ============================================================
+def _classify_leetcode_error(status: str) -> tuple[str, str]:
+    text = clean(status)
+    lower = text.lower()
+
+    if not text or lower == "success":
+        return "", ""
+    if "username missing" in lower:
+        return "NOT_ADDED", text
+    if "user not found" in lower:
+        return "PROFILE_NOT_FOUND", text
+    if "429" in lower or "rate limited" in lower:
+        return "RATE_LIMITED", text
+    if "timeout" in lower:
+        return "TIMEOUT", text
+    if "connection error" in lower or "network error" in lower:
+        return "NETWORK_ERROR", text
+    if "403" in lower or "401" in lower:
+        return "AUTH_OR_ACCESS", text
+    if "calendar" in lower:
+        return "CALENDAR_UNAVAILABLE", text
+    return "TRACKING_ERROR", text
+
+
+def write_leetcode_errors(rows: list[dict[str, Any]]) -> None:
+    errors = []
+    checked_at = ist_now().strftime("%Y-%m-%d %H:%M:%S %Z")
+    for row in rows:
+        error_type, message = _classify_leetcode_error(row.get("Status", ""))
+        if not error_type:
+            continue
+        errors.append({
+            "Register Number": clean(row.get("Register Number", "")),
+            "Student Name": clean(row.get("Student Name", "")),
+            "LeetCode Username": clean(row.get("LeetCode Username", "")),
+            "Error Type": error_type,
+            "Error Message": message,
+            "Checked At": checked_at,
+        })
+
+    atomic_csv_write(pd.DataFrame(errors, columns=ERROR_COLUMNS), LEETCODE_ERRORS_CSV)
+    print(f"LeetCode error report: {len(errors)} current error profile(s)")
+
+    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+        return
+
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/leetcode_errors"
+        headers = {
+            "apikey": SUPABASE_SERVICE_ROLE_KEY,
+            "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal",
+        }
+        clear = requests.delete(url, headers=headers, timeout=30)
+        clear.raise_for_status()
+        if errors:
+            payload = [
+                {
+                    "register_number": item["Register Number"],
+                    "student_name": item["Student Name"],
+                    "leetcode_username": item["LeetCode Username"] or None,
+                    "error_type": item["Error Type"],
+                    "error_message": item["Error Message"],
+                    "checked_at": datetime.now(IST).isoformat(),
+                }
+                for item in errors
+            ]
+            response = requests.post(url, headers=headers, json=payload, timeout=45)
+            response.raise_for_status()
+    except Exception as error:
+        print(f"[ERROR TABLE WARNING] Could not sync leetcode_errors: {error}")
 
 # ============================================================
 # MAIN UPDATE
@@ -3185,6 +3286,8 @@ def run_one_update() -> None:
     sync_ai_performance_tables(
         live_data,
     )
+
+    write_leetcode_errors(live_rows)
 
     print("=" * 64)
     print(

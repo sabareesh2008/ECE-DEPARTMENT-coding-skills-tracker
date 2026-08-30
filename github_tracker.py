@@ -43,7 +43,7 @@ GRAPHQL_URL = "https://api.github.com/graphql"
 REST_URL = "https://api.github.com"
 
 IST = ZoneInfo("Asia/Kolkata")
-MAX_WORKERS = max(1, min(10, int(os.getenv("GITHUB_TRACKER_WORKERS", "20"))))
+MAX_WORKERS = max(1, min(30, int(os.getenv("GITHUB_TRACKER_WORKERS", "20"))))
 
 ALLOWED_SECTIONS = (
     "ECE A",
@@ -140,6 +140,16 @@ ACTIVITY_COLUMNS = [
     "Status",
 ]
 
+GITHUB_ERRORS_CSV = BASE_DIR / "GitHubErrors.csv"
+ERROR_COLUMNS = [
+    "Register Number",
+    "Student Name",
+    "GitHub Username",
+    "Error Type",
+    "Error Message",
+    "Checked At",
+]
+
 
 # GitHub GraphQL schema note:
 # ContributionsCollection does NOT expose totalContributions directly.
@@ -153,38 +163,50 @@ query GitHubCodeMetrix(
   $d7: DateTime!,
   $d14: DateTime!,
   $d30: DateTime!,
-  $to: DateTime!
+  $to: DateTime!,
+  $reposCursor: String
 ) {
   user(login: $login) {
     login
     url
 
     today: contributionsCollection(from: $today, to: $to) {
-      contributionCalendar {
-        totalContributions
-      }
+      contributionCalendar { totalContributions }
       totalCommitContributions
     }
 
     d7: contributionsCollection(from: $d7, to: $to) {
-      contributionCalendar {
-        totalContributions
-      }
+      contributionCalendar { totalContributions }
       totalCommitContributions
     }
 
     d14: contributionsCollection(from: $d14, to: $to) {
-      contributionCalendar {
-        totalContributions
-      }
+      contributionCalendar { totalContributions }
       totalCommitContributions
     }
 
     d30: contributionsCollection(from: $d30, to: $to) {
-      contributionCalendar {
-        totalContributions
-      }
+      contributionCalendar { totalContributions }
       totalCommitContributions
+    }
+
+    repositories(
+      first: 100,
+      after: $reposCursor,
+      ownerAffiliations: OWNER,
+      privacy: PUBLIC,
+      orderBy: { field: CREATED_AT, direction: DESC }
+    ) {
+      totalCount
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        name
+        createdAt
+        pushedAt
+        updatedAt
+        homepageUrl
+        deployments(first: 1) { totalCount }
+      }
     }
   }
 }
@@ -349,9 +371,8 @@ def read_students() -> pd.DataFrame:
     return frame
 
 
-def graphql_metrics(username: str, now: datetime) -> dict[str, Any]:
+def fetch_graphql_page(username: str, now: datetime, cursor: str | None) -> dict[str, Any]:
     starts = window_starts(now)
-
     variables = {
         "login": username,
         "today": starts["today"].isoformat(),
@@ -359,227 +380,173 @@ def graphql_metrics(username: str, now: datetime) -> dict[str, Any]:
         "d14": starts["d14"].isoformat(),
         "d30": starts["d30"].isoformat(),
         "to": now.isoformat(),
+        "reposCursor": cursor,
     }
 
-    response = requests.post(
-        GRAPHQL_URL,
-        headers=github_headers(),
-        json={
-            "query": GRAPHQL_QUERY,
-            "variables": variables,
-        },
-        timeout=30,
-    )
+    last_error = ""
+    for attempt in range(1, 5):
+        try:
+            response = requests.post(
+                GRAPHQL_URL,
+                headers=github_headers(),
+                json={"query": GRAPHQL_QUERY, "variables": variables},
+                timeout=45,
+            )
 
-    if response.status_code == 401:
-        raise RuntimeError(
-            "GitHub authentication failed. Check GITHUB_TRACKER_TOKEN."
-        )
+            if response.status_code == 401:
+                raise RuntimeError("GitHub authentication failed. Check GITHUB_TRACKER_TOKEN.")
 
-    if response.status_code == 403:
-        remaining = response.headers.get("x-ratelimit-remaining", "?")
-        raise RuntimeError(
-            f"GitHub API forbidden/rate limited. Remaining={remaining}"
-        )
+            if response.status_code in (429, 502, 503, 504):
+                remaining = response.headers.get("x-ratelimit-remaining", "?")
+                reset = response.headers.get("x-ratelimit-reset", "?")
+                retry_after = safe_int(response.headers.get("retry-after", 0))
+                wait_seconds = retry_after if retry_after > 0 else min(30, 2 ** attempt)
+                last_error = (
+                    f"GitHub API temporary error HTTP {response.status_code}; "
+                    f"remaining={remaining} reset={reset}"
+                )
+                if attempt < 4:
+                    time.sleep(wait_seconds)
+                    continue
+                raise RuntimeError(last_error)
 
-    response.raise_for_status()
+            if response.status_code == 403:
+                remaining = response.headers.get("x-ratelimit-remaining", "?")
+                reset = response.headers.get("x-ratelimit-reset", "?")
+                raise RuntimeError(
+                    f"GitHub API forbidden/rate limited. Remaining={remaining} Reset={reset}"
+                )
 
-    payload = response.json()
-
+            response.raise_for_status()
+            payload = response.json()
+            break
+        except (requests.Timeout, requests.ConnectionError) as error:
+            last_error = f"GitHub network error: {error}"
+            if attempt < 4:
+                time.sleep(min(30, 2 ** attempt))
+                continue
+            raise RuntimeError(last_error) from error
+    else:
+        raise RuntimeError(last_error or "GitHub API request failed")
     errors = payload.get("errors") or []
+    if errors:
+        message = " | ".join(clean(item.get("message")) for item in errors)
+        # GraphQL can return partial data, but for a tracker accuracy guarantee
+        # we reject partial payloads rather than silently mixing missing fields.
+        raise RuntimeError(message or "GitHub GraphQL error")
 
     user = (payload.get("data") or {}).get("user")
-
     if user is None:
-        if errors:
-            message = " | ".join(
-                clean(item.get("message")) for item in errors
-            )
-            raise RuntimeError(message or "GitHub user not found")
         raise RuntimeError("GitHub user not found")
-
-    result = {
-        "profile_url": clean(user.get("url"))
-            or f"https://github.com/{username}",
-    }
-
-    for alias, label in [
-        ("today", "today"),
-        ("d7", "7"),
-        ("d14", "14"),
-        ("d30", "30"),
-    ]:
-        collection = user.get(alias) or {}
-
-        calendar = collection.get("contributionCalendar") or {}
-
-        result[f"contrib_{label}"] = safe_int(
-            calendar.get("totalContributions")
-        )
-        result[f"commits_{label}"] = safe_int(
-            collection.get("totalCommitContributions")
-        )
-
-    return result
-
-
-def list_public_repositories(username: str) -> list[dict[str, Any]]:
-    repos: list[dict[str, Any]] = []
-    page = 1
-
-    while page <= 10:
-        response = requests.get(
-            f"{REST_URL}/users/{username}/repos",
-            headers=github_headers(),
-            params={
-                "type": "owner",
-                "sort": "created",
-                "direction": "desc",
-                "per_page": 100,
-                "page": page,
-            },
-            timeout=30,
-        )
-
-        if response.status_code == 404:
-            raise RuntimeError("GitHub user not found")
-
-        if response.status_code == 403:
-            remaining = response.headers.get("x-ratelimit-remaining", "?")
-            raise RuntimeError(
-                f"GitHub API forbidden/rate limited. Remaining={remaining}"
-            )
-
-        response.raise_for_status()
-
-        batch = response.json()
-
-        if not isinstance(batch, list):
-            raise RuntimeError("Unexpected GitHub repository response")
-
-        repos.extend(batch)
-
-        if len(batch) < 100:
-            break
-
-        page += 1
-
-    return repos
-
-
-DEPLOYMENT_HOST_SUFFIXES = (
-    "github.io",
-    "vercel.app",
-    "netlify.app",
-    "onrender.com",
-    "web.app",
-    "firebaseapp.com",
-    "pages.dev",
-    "railway.app",
-    "up.railway.app",
-    "herokuapp.com",
-    "azurewebsites.net",
-    "fly.dev",
-    "surge.sh",
-)
-
-
-def deployed_repo(repo: dict[str, Any]) -> bool:
-    """
-    Conservative deployment detection.
-
-    Count a public repository when:
-    - GitHub reports Pages enabled, OR
-    - repository homepage points to a common deployment host.
-
-    The UI deliberately calls this "Detected Deployments" rather than claiming
-    every possible deployment can be discovered from a public GitHub profile.
-    """
-    if bool(repo.get("has_pages")):
-        return True
-
-    homepage = clean(repo.get("homepage"))
-
-    if not homepage:
-        return False
-
-    try:
-        host = (urlparse(homepage).hostname or "").lower()
-    except Exception:
-        return False
-
-    return any(
-        host == suffix or host.endswith("." + suffix)
-        for suffix in DEPLOYMENT_HOST_SUFFIXES
-    )
+    return user
 
 
 def parse_github_datetime(value: Any) -> datetime | None:
     text = clean(value)
-
     if not text:
         return None
-
     try:
-        return datetime.fromisoformat(
-            text.replace("Z", "+00:00")
-        )
+        return datetime.fromisoformat(text.replace("Z", "+00:00"))
     except ValueError:
         return None
 
 
-def repository_metrics(repos: list[dict[str, Any]], now: datetime) -> dict[str, Any]:
+def _repository_metrics_from_nodes(nodes: list[dict[str, Any]], now: datetime) -> dict[str, Any]:
     starts = window_starts(now)
-
-    created_dates = []
-
     latest_repo = ""
     latest_activity_dt: datetime | None = None
-
+    repo_total = 0
     deployments = 0
+    created_counts = {"today": 0, "7": 0, "14": 0, "30": 0}
 
-    for repo in repos:
-        created = parse_github_datetime(repo.get("created_at"))
-
+    for repo in nodes:
+        repo_total += 1
+        created = parse_github_datetime(repo.get("createdAt"))
         if created is not None:
-            created_dates.append(created.astimezone(IST))
+            created_ist = created.astimezone(IST)
+            if created_ist >= starts["today"].astimezone(IST):
+                created_counts["today"] += 1
+            if created_ist >= starts["d7"].astimezone(IST):
+                created_counts["7"] += 1
+            if created_ist >= starts["d14"].astimezone(IST):
+                created_counts["14"] += 1
+            if created_ist >= starts["d30"].astimezone(IST):
+                created_counts["30"] += 1
 
-        pushed = parse_github_datetime(repo.get("pushed_at"))
-        updated = parse_github_datetime(repo.get("updated_at"))
+        pushed = parse_github_datetime(repo.get("pushedAt"))
+        updated = parse_github_datetime(repo.get("updatedAt"))
+        activity_candidates = [item for item in (pushed, updated) if item is not None]
+        activity = max(activity_candidates) if activity_candidates else None
+        if activity is not None and (latest_activity_dt is None or activity > latest_activity_dt):
+            latest_activity_dt = activity
+            latest_repo = clean(repo.get("name"))
 
-        activity = pushed or updated
-
-        if activity is not None:
-            if latest_activity_dt is None or activity > latest_activity_dt:
-                latest_activity_dt = activity
-                latest_repo = clean(repo.get("name"))
-
-        if deployed_repo(repo):
-            deployments += 1
-
-    def created_since(start: datetime) -> int:
-        return sum(
-            1
-            for item in created_dates
-            if item >= start
-        )
+        # Exact count of GitHub Deployment records attached to this repository.
+        # This replaces heuristic homepage/hosting detection.
+        deployment_connection = repo.get("deployments") or {}
+        deployments += max(0, safe_int(deployment_connection.get("totalCount")))
 
     return {
-        "repos_total": len(repos),
-        "repos_today": created_since(starts["today"]),
-        "repos_7": created_since(starts["d7"]),
-        "repos_14": created_since(starts["d14"]),
-        "repos_30": created_since(starts["d30"]),
+        "repos_total_page": repo_total,
+        "repos_today": created_counts["today"],
+        "repos_7": created_counts["7"],
+        "repos_14": created_counts["14"],
+        "repos_30": created_counts["30"],
         "deployments": deployments,
         "latest_repository": latest_repo,
-        "last_activity": (
-            latest_activity_dt
-            .astimezone(IST)
-            .strftime("%Y-%m-%d %H:%M")
-            if latest_activity_dt
-            else ""
-        ),
+        "last_activity": latest_activity_dt.astimezone(IST).strftime("%Y-%m-%d %H:%M") if latest_activity_dt else "",
     }
+
+
+def fetch_github_profile(username: str) -> dict[str, Any]:
+    username = clean(username)
+    if not username:
+        return empty_metrics("GitHub Not Added")
+
+    now = now_ist()
+    all_nodes: list[dict[str, Any]] = []
+    first_page = None
+
+    for page_number in range(1, 101):
+        user = fetch_graphql_page(username, now, first_page)
+        if page_number == 1:
+            root = user
+            contribution_result = {
+                "profile_url": clean(user.get("url")) or f"https://github.com/{username}",
+            }
+            for alias, label in [("today", "today"), ("d7", "7"), ("d14", "14"), ("d30", "30")]:
+                collection = user.get(alias) or {}
+                calendar = collection.get("contributionCalendar") or {}
+                contribution_result[f"contrib_{label}"] = safe_int(calendar.get("totalContributions"))
+                contribution_result[f"commits_{label}"] = safe_int(collection.get("totalCommitContributions"))
+        else:
+            root = user
+
+        repos = root.get("repositories") or {}
+        nodes = repos.get("nodes") or []
+        all_nodes.extend(nodes)
+        page_info = repos.get("pageInfo") or {}
+        if not page_info.get("hasNextPage"):
+            break
+        first_page = page_info.get("endCursor")
+        if not first_page:
+            raise RuntimeError("GitHub repository pagination returned no cursor")
+    else:
+        raise RuntimeError("GitHub repository pagination exceeded 100 pages; refusing incomplete totals")
+
+    repo_data = _repository_metrics_from_nodes(all_nodes, now)
+    result = {**contribution_result, **repo_data, "repos_total": len(all_nodes), "status": "Success"}
+
+    for prefix in ("contrib", "commits"):
+        values = [safe_int(result[f"{prefix}_today"]), safe_int(result[f"{prefix}_7"]), safe_int(result[f"{prefix}_14"]), safe_int(result[f"{prefix}_30"])]
+        if not (0 <= values[0] <= values[1] <= values[2] <= values[3]):
+            raise RuntimeError(f"GitHub {prefix} window integrity failure: {values}")
+
+    repo_values = [safe_int(result["repos_today"]), safe_int(result["repos_7"]), safe_int(result["repos_14"]), safe_int(result["repos_30"]), safe_int(result["repos_total"])]
+    if not (0 <= repo_values[0] <= repo_values[1] <= repo_values[2] <= repo_values[3] <= repo_values[4]):
+        raise RuntimeError(f"GitHub repository window integrity failure: {repo_values}")
+
+    return result
 
 
 def empty_metrics(status: str) -> dict[str, Any]:
@@ -605,74 +572,54 @@ def empty_metrics(status: str) -> dict[str, Any]:
     }
 
 
-def fetch_github_profile(username: str) -> dict[str, Any]:
-    username = clean(username)
+def previous_good_github_row(previous_history: pd.DataFrame, register_number: str) -> dict[str, Any] | None:
+    if previous_history is None or previous_history.empty or "Register Number" not in previous_history.columns:
+        return None
+    rows = previous_history[previous_history["Register Number"].astype(str).str.strip() == str(register_number).strip()].copy()
+    if rows.empty:
+        return None
+    if "Status" in rows.columns:
+        good = rows[rows["Status"].astype(str).str.startswith("Success")]
+        if not good.empty:
+            rows = good
+    if "Date" in rows.columns:
+        rows["_date"] = pd.to_datetime(rows["Date"], errors="coerce")
+        rows = rows.dropna(subset=["_date"]).sort_values("_date")
+    return rows.iloc[-1].to_dict() if not rows.empty else None
 
-    if not username:
-        return empty_metrics("GitHub Not Added")
 
-    now = now_ist()
-
-    try:
-        contribution_data = graphql_metrics(username, now)
-        repos = list_public_repositories(username)
-        repo_data = repository_metrics(repos, now)
-
-        result = {
-            **contribution_data,
-            **repo_data,
-            "status": "Success",
-        }
-
-        # Hard nested-window integrity guards.
-        for prefix in ("contrib", "commits"):
-            values = [
-                safe_int(result[f"{prefix}_today"]),
-                safe_int(result[f"{prefix}_7"]),
-                safe_int(result[f"{prefix}_14"]),
-                safe_int(result[f"{prefix}_30"]),
-            ]
-
-            if not (
-                0 <= values[0] <= values[1] <= values[2] <= values[3]
-            ):
-                raise RuntimeError(
-                    f"GitHub {prefix} window integrity failure: {values}"
-                )
-
-        repo_values = [
-            safe_int(result["repos_today"]),
-            safe_int(result["repos_7"]),
-            safe_int(result["repos_14"]),
-            safe_int(result["repos_30"]),
-            safe_int(result["repos_total"]),
-        ]
-
-        if not (
-            0
-            <= repo_values[0]
-            <= repo_values[1]
-            <= repo_values[2]
-            <= repo_values[3]
-            <= repo_values[4]
-        ):
-            raise RuntimeError(
-                f"GitHub repository window integrity failure: {repo_values}"
-            )
-
-        return result
-
-    except Exception as error:
-        return empty_metrics(
-            f"Error: {clean(error)}"
-        )
-
+def stale_github_metrics(previous_history: pd.DataFrame, register_number: str, error_status: str) -> dict[str, Any]:
+    old = previous_good_github_row(previous_history, register_number)
+    if old is None:
+        return empty_metrics(error_status)
+    def n(key: str) -> int: return safe_int(old.get(key, 0))
+    return {
+        "profile_url": f"https://github.com/{clean(old.get('GitHub Username',''))}" if clean(old.get("GitHub Username", "")) else "",
+        "contrib_today": n("Contributions Today"),
+        "contrib_7": n("Contributions 7 Days"),
+        "contrib_14": n("Contributions 14 Days"),
+        "contrib_30": n("Contributions 30 Days"),
+        "commits_today": n("Commits Today"),
+        "commits_7": n("Commits 7 Days"),
+        "commits_14": n("Commits 14 Days"),
+        "commits_30": n("Commits 30 Days"),
+        "repos_total": n("Repositories Total"),
+        "repos_today": n("Repositories Today"),
+        "repos_7": n("Repositories 7 Days"),
+        "repos_14": n("Repositories 14 Days"),
+        "repos_30": n("Repositories 30 Days"),
+        "deployments": n("Detected Deployments"),
+        "latest_repository": clean(old.get("Latest Repository", "")),
+        "last_activity": clean(old.get("Last Activity", "")),
+        "status": f"STALE | {error_status} | Previous data kept",
+    }
 
 def process_student(
     position: int,
     total: int,
     student: pd.Series,
     updated_at: str,
+    previous_history: pd.DataFrame,
 ) -> dict[str, Any]:
     register = clean(student.get("Register Number"))
     name = clean(student.get("Student Name"))
@@ -684,7 +631,14 @@ def process_student(
         f"{section} | {name} | @{username or 'not-added'}"
     )
 
-    data = fetch_github_profile(username)
+    try:
+        data = fetch_github_profile(username)
+    except Exception as error:
+        data = empty_metrics(f"Worker error: {clean(error)}")
+
+    if clean(data.get("status", "")) != "Success":
+        error_status = clean(data.get("status", "GitHub tracking failed"))
+        data = stale_github_metrics(previous_history, register, error_status)
 
     row = {
         "Overall Rank": "",
@@ -761,17 +715,21 @@ def add_ranks(frame: pd.DataFrame) -> pd.DataFrame:
 
     frame = frame.copy()
 
-    # Ranking rule:
-    # 30D contributions -> 30D commits -> total repos -> deployments -> reg no
+    # CodeMetrix GitHub ranking rule:
+    # Verified-now rows first, then 1) actual GitHub deployment records,
+    # 2) total public repositories, 3) 30-day contributions,
+    # 4) 30-day commits, 5) register number.
+    frame["_VerifiedNow"] = frame["Status"].astype(str).str.strip().eq("Success").map({True: 0, False: 1})
     sortable = frame.sort_values(
         by=[
+            "_VerifiedNow",
+            "Detected Deployments",
+            "Repositories Total",
             "Contributions 30 Days",
             "Commits 30 Days",
-            "Repositories Total",
-            "Detected Deployments",
             "Register Number",
         ],
-        ascending=[False, False, False, False, True],
+        ascending=[True, False, False, False, False, True],
         kind="stable",
     ).copy()
 
@@ -789,15 +747,18 @@ def add_ranks(frame: pd.DataFrame) -> pd.DataFrame:
     for section in ALLOWED_SECTIONS:
         section_rows = frame[
             frame["Section"] == section
-        ].sort_values(
+        ].copy()
+        section_rows["_VerifiedNow"] = section_rows["Status"].astype(str).str.strip().eq("Success").map({True: 0, False: 1})
+        section_rows = section_rows.sort_values(
             by=[
+                "_VerifiedNow",
+                "Detected Deployments",
+                "Repositories Total",
                 "Contributions 30 Days",
                 "Commits 30 Days",
-                "Repositories Total",
-                "Detected Deployments",
                 "Register Number",
             ],
-            ascending=[False, False, False, False, True],
+            ascending=[True, False, False, False, False, True],
             kind="stable",
         )
 
@@ -1023,6 +984,58 @@ def sync_performance_to_supabase(live: pd.DataFrame) -> None:
     )
 
 
+
+def _classify_github_error(status: str) -> tuple[str, str]:
+    text = clean(status)
+    lower = text.lower()
+    if not text or lower == "success":
+        return "", ""
+    if "github not added" in lower:
+        return "NOT_ADDED", text
+    if "not found" in lower:
+        return "PROFILE_NOT_FOUND", text
+    if "rate limited" in lower or "429" in lower:
+        return "RATE_LIMITED", text
+    if "forbidden" in lower or "403" in lower:
+        return "API_FORBIDDEN", text
+    if "authentication failed" in lower or "401" in lower:
+        return "AUTHENTICATION", text
+    if "timeout" in lower:
+        return "TIMEOUT", text
+    if "network" in lower or "connection" in lower:
+        return "NETWORK_ERROR", text
+    return "TRACKING_ERROR", text
+
+
+def write_github_errors(rows: list[dict[str, Any]]) -> None:
+    errors=[]
+    checked_at=now_ist().strftime("%Y-%m-%d %H:%M:%S %Z")
+    for row in rows:
+        error_type, message = _classify_github_error(row.get("Status", ""))
+        if not error_type:
+            continue
+        errors.append({
+            "Register Number": clean(row.get("Register Number", "")),
+            "Student Name": clean(row.get("Student Name", "")),
+            "GitHub Username": clean(row.get("GitHub Username", "")),
+            "Error Type": error_type,
+            "Error Message": message,
+            "Checked At": checked_at,
+        })
+    atomic_csv_write(pd.DataFrame(errors, columns=ERROR_COLUMNS), GITHUB_ERRORS_CSV)
+    print(f"GitHub error report: {len(errors)} current error profile(s)")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+        return
+    try:
+        url=f"{SUPABASE_URL}/rest/v1/github_errors"
+        headers={"apikey":SUPABASE_SERVICE_ROLE_KEY,"Authorization":f"Bearer {SUPABASE_SERVICE_ROLE_KEY}","Content-Type":"application/json","Prefer":"return=minimal"}
+        clear=requests.delete(url,headers=headers,timeout=30); clear.raise_for_status()
+        if errors:
+            payload=[{"register_number":i["Register Number"],"student_name":i["Student Name"],"github_username":i["GitHub Username"] or None,"error_type":i["Error Type"],"error_message":i["Error Message"],"checked_at":datetime.now(IST).isoformat()} for i in errors]
+            response=requests.post(url,headers=headers,json=payload,timeout=45); response.raise_for_status()
+    except Exception as error:
+        print(f"[ERROR TABLE WARNING] Could not sync github_errors: {error}")
+
 def run() -> None:
     print("=" * 72)
     print("CodeMetrix GitHub Tracker")
@@ -1054,6 +1067,12 @@ def run() -> None:
         return
 
     updated_at = now_ist().strftime("%Y-%m-%d %H:%M:%S %Z")
+    previous_history = pd.DataFrame(columns=HISTORY_COLUMNS)
+    if HISTORY_CSV.exists():
+        try:
+            previous_history = pd.read_csv(HISTORY_CSV, dtype=str, keep_default_na=False)
+        except Exception:
+            previous_history = pd.DataFrame(columns=HISTORY_COLUMNS)
 
     rows: list[dict[str, Any]] = []
 
@@ -1070,6 +1089,7 @@ def run() -> None:
                 len(students),
                 student,
                 updated_at,
+                previous_history,
             )
             futures[future] = position
 
@@ -1092,14 +1112,23 @@ def run() -> None:
 
     live = live[LIVE_COLUMNS]
 
-    history = update_history(live)
-    activity = update_daily_activity(live)
+    # Never write stale/error values into historical snapshots. They remain in
+    # GitHubLiveData with an explicit status, while the last known-good history
+    # stays intact.
+    fresh_live = live[
+        live["Status"].astype(str).str.strip().eq("Success")
+    ].copy()
+
+    history = update_history(fresh_live)
+    activity = update_daily_activity(fresh_live)
 
     atomic_csv_write(live, LIVE_CSV)
     atomic_csv_write(history, HISTORY_CSV)
     atomic_csv_write(activity, DAILY_ACTIVITY_CSV)
 
-    sync_performance_to_supabase(live)
+    # Do not overwrite Supabase current facts with stale/error placeholders.
+    sync_performance_to_supabase(fresh_live)
+    write_github_errors(live.to_dict("records"))
 
     successes = int((live["Status"] == "Success").sum())
     not_added = int((live["Status"] == "GitHub Not Added").sum())
