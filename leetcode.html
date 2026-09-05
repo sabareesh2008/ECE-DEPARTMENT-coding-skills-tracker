@@ -90,7 +90,35 @@
 
 
 
-      <div class="section-grid">
+      <section class="year-selector" aria-label="Select academic year">
+        <button class="section-card year-card" data-year="YEAR I" type="button">
+          <span class="section-card-title">YEAR I</span>
+          <strong>Year I</strong>
+          <span>Academic Year I</span>
+        </button>
+
+        <button class="section-card year-card year-card-active" data-year="YEAR II" type="button">
+          <span class="section-card-title">YEAR II</span>
+          <strong>Year II</strong>
+          <span>Current Data</span>
+        </button>
+
+        <button class="section-card year-card" data-year="YEAR III" type="button">
+          <span class="section-card-title">YEAR III</span>
+          <strong>Year III</strong>
+          <span>Academic Year III</span>
+        </button>
+      </section>
+
+      <div id="yearEmptyState" class="year-empty-state" hidden aria-live="polite">
+        <div class="year-empty-icon">📚</div>
+        <div>
+          <strong id="yearEmptyTitle">Year I data is not added yet.</strong>
+          <span>Year II contains the current tracker data. Add students for this year when ready.</span>
+        </div>
+      </div>
+
+      <div id="yearIIContent">
         <button class="section-card" data-section="ECE A" type="button">
           <span class="section-card-title">ECE A</span>
           <strong id="countECEA">0</strong>
@@ -238,6 +266,7 @@
         <button id="homeAdminLogoutButton" class="action-button secondary" type="button">
           Logout
         </button>
+      </div>
       </div>
     </section>
 

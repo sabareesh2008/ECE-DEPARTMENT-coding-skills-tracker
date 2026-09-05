@@ -1103,6 +1103,69 @@ footer {
     gap: 16px;
 }
 
+.year-selector {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.year-card {
+    min-height: 126px;
+}
+
+.year-card strong {
+    font-size: 28px;
+}
+
+.year-card-active {
+    border-color: rgba(94, 234, 212, 0.52);
+    background:
+        linear-gradient(145deg, rgba(94, 234, 212, 0.12), rgba(255,255,255,0.02)),
+        var(--panel);
+    box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.12), var(--shadow);
+}
+
+.year-card-active:hover {
+    border-color: rgba(94, 234, 212, 0.72);
+}
+
+.year-empty-state {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding: 22px;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--panel-soft);
+    box-shadow: var(--shadow);
+}
+
+.year-empty-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 auto;
+    border-radius: 14px;
+    background: rgba(96, 165, 250, 0.10);
+    border: 1px solid rgba(96, 165, 250, 0.18);
+    font-size: 24px;
+}
+
+.year-empty-state strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 18px;
+}
+
+.year-empty-state span {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
 .section-card {
     min-height: 150px;
     padding: 20px;
@@ -1211,6 +1274,10 @@ footer {
 }
 
 @media (max-width: 900px) {
+    .year-selector {
+        grid-template-columns: 1fr;
+    }
+
     .section-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }

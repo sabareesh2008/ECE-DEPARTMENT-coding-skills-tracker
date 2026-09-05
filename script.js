@@ -23,6 +23,7 @@ let aiChatHistory = [];
 let aiChatBusy = false;
 
 let selectedSection = null;
+let selectedYear = "YEAR II";
 let pendingDeleteId = null;
 
 const cfg = window.APP_CONFIG || {};
@@ -30,6 +31,11 @@ const cfg = window.APP_CONFIG || {};
 const sectionHome = document.getElementById("sectionHome");
 const leaderboardView = document.getElementById("leaderboardView");
 const backToSectionsButton = document.getElementById("backToSectionsButton");
+
+const yearIIContent = document.getElementById("yearIIContent");
+const yearEmptyState = document.getElementById("yearEmptyState");
+const yearEmptyTitle = document.getElementById("yearEmptyTitle");
+const yearButtons = document.querySelectorAll(".year-card");
 
 const currentViewLabel = document.getElementById("currentViewLabel");
 const currentViewTitle = document.getElementById("currentViewTitle");
@@ -685,7 +691,43 @@ function applySearch() {
 }
 
 
+function setSelectedYear(year) {
+  selectedYear = year;
+
+  yearButtons.forEach((button) => {
+    const active = button.dataset.year === year;
+    button.classList.toggle("year-card-active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+
+  selectedSection = null;
+  searchInput.value = "";
+  leaderboardView.hidden = true;
+  sectionHome.hidden = false;
+
+  if (yearIIContent) {
+    yearIIContent.hidden = year !== "YEAR II";
+  }
+
+  if (yearEmptyState) {
+    yearEmptyState.hidden = year === "YEAR II";
+  }
+
+  if (yearEmptyTitle) {
+    yearEmptyTitle.textContent = `${year} data is not added yet.`;
+  }
+}
+
+function showYearMessage(year) {
+  setSelectedYear(year);
+}
+
 function openSection(section) {
+  if (selectedYear !== "YEAR II") {
+    showYearMessage(selectedYear);
+    return;
+  }
+
   selectedSection = section;
   searchInput.value = "";
 
@@ -4167,6 +4209,12 @@ async function initialize() {
 }
 
 
+yearButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setSelectedYear(button.dataset.year || "YEAR II");
+  });
+});
+
 document.querySelectorAll("[data-section]").forEach((button) => {
   button.addEventListener("click", () => {
     openSection(button.dataset.section);
@@ -4324,6 +4372,8 @@ aiChatInput?.addEventListener("keydown", (event) => {
     aiChatForm?.requestSubmit();
   }
 });
+
+setSelectedYear("YEAR II");
 
 initialize();
 
