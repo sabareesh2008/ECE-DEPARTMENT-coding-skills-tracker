@@ -69,60 +69,205 @@
     <!-- =====================================================
          SECTION HOME
          ===================================================== -->
-    <section id="sectionHome" class="section-home year-selection-home">
-      <div class="section-home-head year-selection-head">
+    <section id="sectionHome" class="section-home">
+      <div class="section-home-head">
         <div>
-          <div class="eyebrow">SELECT YEAR</div>
-          <h2>ECE Department</h2>
-          <p>Select an academic year to view its students.</p>
+          <div class="eyebrow">SELECT SECTION</div>
+          <h2>ECE Department Leaderboards</h2>
+          <p>
+            Each section has its own rank. Overall compares all ECE sections together.
+          </p>
         </div>
 
-        <button id="adminLoginButton" class="action-button primary" type="button">
+        <button
+          id="adminLoginButton"
+          class="action-button primary"
+          type="button"
+        >
           Admin Login
         </button>
       </div>
 
-      <div class="section-grid year-grid" aria-label="Academic year selection">
-        <button class="section-card year-card" data-year="1" type="button">
-          <span class="section-card-title">YEAR I</span>
+
+
+
+      <div id="yearSelectionPanel" class="year-selection-panel">
+        <button class="year-card" type="button" data-year="1">
+          <span class="year-card-kicker">YEAR I</span>
           <strong>Year I</strong>
           <span>Academic Year I</span>
         </button>
-
-        <button class="section-card year-card" data-year="2" type="button">
-          <span class="section-card-title">YEAR II</span>
+        <button class="year-card" type="button" data-year="2">
+          <span class="year-card-kicker">YEAR II</span>
           <strong>Year II</strong>
           <span>Current Data</span>
         </button>
-
-        <button class="section-card year-card" data-year="3" type="button">
-          <span class="section-card-title">YEAR III</span>
+        <button class="year-card" type="button" data-year="3">
+          <span class="year-card-kicker">YEAR III</span>
           <strong>Year III</strong>
           <span>Academic Year III</span>
         </button>
       </div>
 
-      <!-- Existing home controls stay in the DOM for the current application logic,
-           but are hidden on the year selection screen so only the three year cards show. -->
-      <div class="year-legacy-controls" aria-hidden="true">
-        <section class="coding-test-home-card">
+      <div id="yearSectionPanel" class="year-section-panel" hidden>
+        <div class="year-section-head">
           <div>
-            <span class="section-card-title">💻 Daily Coding Test</span>
-            <p id="codingTestHomeStatus">Timed Java assessment with compiler, test cases and automatic scoring.</p>
+            <div class="eyebrow" id="selectedYearKicker">YEAR II</div>
+            <h2 id="selectedYearTitle">Year II Sections</h2>
           </div>
-          <button id="openCodingTestButton" class="action-button primary" type="button">Open Coding Test</button>
-        </section>
-
-        <div class="home-admin-actions admin-only" hidden>
-          <button id="homeAddProfileButton" class="action-button primary" type="button">+ Add Profile</button>
-          <button id="homeSyncNowButton" class="action-button secondary" type="button">↻ Sync Now</button>
-          <button id="homeManageStudentsButton" class="action-button secondary" type="button">Manage Students</button>
-          <button id="manageCodingTestsButton" class="action-button secondary" type="button">Manage Coding Tests</button>
-          <button id="homeFacultyAnalyticsButton" class="action-button secondary" type="button">Faculty Analytics</button>
-          <button id="homeAiAnalystButton" class="action-button ai-analyst-button admin-only" type="button" hidden>🤖 Smart Performance Analyzer</button>
-          <button id="homePostChallengeButton" class="action-button secondary" type="button">+ Post Daily Challenge</button>
-          <button id="homeAdminLogoutButton" class="action-button secondary" type="button">Logout</button>
+          <button id="backToYearsButton" class="action-button secondary" type="button">← Years</button>
         </div>
+        <div id="yearSectionGrid" class="section-grid year-section-grid"></div>
+      </div>
+
+      <div class="section-grid legacy-home-grid">
+        <button class="section-card legacy-section-choice" data-section="ECE A" type="button">
+          <span class="section-card-title">ECE A</span>
+          <strong id="countECEA">0</strong>
+          <span>Students</span>
+          <div class="section-challenge-mini">
+            <span>🎯 Today <strong id="challengeCompletedECEA">0</strong></span>
+            <span>🔥 On Streak <strong id="challengeBestStreakECEA">0</strong></span>
+            <span>💻 Test Passed <strong id="codingPassedECEA">0/0</strong></span>
+          </div>
+        </button>
+
+        <button class="section-card legacy-section-choice" data-section="ECE B" type="button">
+          <span class="section-card-title">ECE B</span>
+          <strong id="countECEB">0</strong>
+          <span>Students</span>
+          <div class="section-challenge-mini">
+            <span>🎯 Today <strong id="challengeCompletedECEB">0</strong></span>
+            <span>🔥 On Streak <strong id="challengeBestStreakECEB">0</strong></span>
+            <span>💻 Test Passed <strong id="codingPassedECEB">0/0</strong></span>
+          </div>
+        </button>
+
+        <button class="section-card legacy-section-choice" data-section="ECE C" type="button">
+          <span class="section-card-title">ECE C</span>
+          <strong id="countECEC">0</strong>
+          <span>Students</span>
+          <div class="section-challenge-mini">
+            <span>🎯 Today <strong id="challengeCompletedECEC">0</strong></span>
+            <span>🔥 On Streak <strong id="challengeBestStreakECEC">0</strong></span>
+            <span>💻 Test Passed <strong id="codingPassedECEC">0/0</strong></span>
+          </div>
+        </button>
+
+        <button class="section-card legacy-section-choice" data-section="ECE D" type="button">
+          <span class="section-card-title">ECE D</span>
+          <strong id="countECED">0</strong>
+          <span>Students</span>
+          <div class="section-challenge-mini">
+            <span>🎯 Today <strong id="challengeCompletedECED">0</strong></span>
+            <span>🔥 On Streak <strong id="challengeBestStreakECED">0</strong></span>
+            <span>💻 Test Passed <strong id="codingPassedECED">0/0</strong></span>
+          </div>
+        </button>
+
+        <button class="section-card legacy-section-choice" data-section="ECE E" type="button">
+          <span class="section-card-title">ECE E</span>
+          <strong id="countECEE">0</strong>
+          <span>Students</span>
+          <div class="section-challenge-mini">
+            <span>🎯 Today <strong id="challengeCompletedECEE">0</strong></span>
+            <span>🔥 On Streak <strong id="challengeBestStreakECEE">0</strong></span>
+            <span>💻 Test Passed <strong id="codingPassedECEE">0/0</strong></span>
+          </div>
+        </button>
+
+        <button class="section-card legacy-section-choice" data-section="ECE F" type="button">
+          <span class="section-card-title">ECE F</span>
+          <strong id="countECEF">0</strong>
+          <span>Students</span>
+          <div class="section-challenge-mini">
+            <span>🎯 Today <strong id="challengeCompletedECEF">0</strong></span>
+            <span>🔥 On Streak <strong id="challengeBestStreakECEF">0</strong></span>
+            <span>💻 Test Passed <strong id="codingPassedECEF">0/0</strong></span>
+          </div>
+        </button>
+
+        <button class="section-card overall-card" data-section="OVERALL" type="button">
+          <span class="section-card-title">Overall</span>
+          <strong id="countOverall">0</strong>
+          <span>Total Students</span>
+          <div class="section-challenge-mini">
+            <span>💻 Latest Test Passed <strong id="codingPassedOverall">0/0</strong></span>
+          </div>
+        </button>
+        <button class="section-card faculty-card legacy-extra-card" id="facultySectionCard" type="button">
+          <span class="section-card-title">👨‍🏫 Faculty</span>
+          <strong id="countFaculty">0</strong>
+          <span>Faculty Members</span>
+          <div class="section-challenge-mini">
+            <span>✅ Active Today <strong id="facultyActiveToday">0</strong></span>
+            <span>🔥 7 Days <strong id="facultySolved7Days">0</strong></span>
+          </div>
+        </button>
+
+        <button
+          id="championsCardButton"
+          class="section-card champions-home-card legacy-extra-card"
+          type="button"
+        >
+          <span class="section-card-title">🏆 Champions</span>
+          <strong>Top Performance</strong>
+          <span>Section Championship + Section Champions + Overall Top 5</span>
+        </button>
+
+        <button
+          id="dailyChallengeCardButton"
+          class="section-card daily-challenge-home-card legacy-extra-card"
+          type="button"
+        >
+          <span class="section-card-title">🎯 Daily Challenge</span>
+          <strong id="dailyChallengeHomeTitle">Loading...</strong>
+          <span id="dailyChallengeHomeProgress">Checking today's challenge</span>
+        </button>
+      </div>
+
+      
+      <section class="coding-test-home-card legacy-extra-card">
+        <div>
+          <span class="section-card-title">💻 Daily Coding Test</span>
+          <p id="codingTestHomeStatus">Timed Java assessment with compiler, test cases and automatic scoring.</p>
+        </div>
+        <button id="openCodingTestButton" class="action-button primary" type="button">
+          Open Coding Test
+        </button>
+      </section>
+
+      <div class="home-admin-actions admin-only" hidden>
+        <button id="homeAddProfileButton" class="action-button primary" type="button">
+          + Add Profile
+        </button>
+
+        <button id="homeSyncNowButton" class="action-button secondary" type="button">
+          ↻ Sync Now
+        </button>
+
+        <button id="homeManageStudentsButton" class="action-button secondary" type="button">
+          Manage Students
+        </button>
+
+        <button id="manageCodingTestsButton" class="action-button secondary" type="button">
+          Manage Coding Tests
+        </button>
+        <button id="homeFacultyAnalyticsButton" class="action-button secondary" type="button">
+          Faculty Analytics
+        </button>
+
+        <button id="homeAiAnalystButton" class="action-button ai-analyst-button admin-only" type="button" hidden>
+          🤖 Smart Performance Analyzer
+        </button>
+
+        <button id="homePostChallengeButton" class="action-button secondary" type="button">
+          + Post Daily Challenge
+        </button>
+
+        <button id="homeAdminLogoutButton" class="action-button secondary" type="button">
+          Logout
+        </button>
       </div>
     </section>
 

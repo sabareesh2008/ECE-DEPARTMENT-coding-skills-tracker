@@ -4136,43 +4136,38 @@ body.modal-open {
 .page-quick-actions{position:fixed;top:18px;right:20px;z-index:50;display:flex;gap:10px}.page-quick-actions a{ text-decoration:none }
 @media(max-width:760px){.page-quick-actions{top:12px;right:12px}}
 
-/* ==========================================================
-   YEAR I / YEAR II / YEAR III SELECTOR
-   Only the three year cards are visible on tracker entry.
-   Existing tracker styling is reused; no legacy home card
-   is shown until a year is selected.
-   ========================================================== */
-.section-home.year-selection-home {
-    gap: 18px;
-}
 
-.year-selection-home .year-selection-head,
-.year-selection-home .year-legacy-controls {
-    display: none !important;
+/* YEAR-FIRST TRACKER UI */
+.year-selection-panel {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:22px;
+  width:100%;
+  margin-top:18px;
 }
-
-.year-selection-home .year-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
+.year-card {
+  appearance:none;
+  border:1px solid var(--border);
+  border-radius:24px;
+  min-height:220px;
+  padding:30px;
+  background:rgba(255,255,255,.035);
+  color:var(--text);
+  text-align:left;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  box-shadow:var(--shadow);
+  transition:transform .16s ease,border-color .16s ease,background .16s ease;
 }
-
-.year-selection-home .year-card {
-    min-height: 184px;
-    padding: 28px;
-}
-
-.year-selection-home .year-card strong {
-    font-size: 42px;
-    margin-bottom: 8px;
-}
-
-.year-selection-home .year-card > span:last-child {
-    font-size: 13px;
-}
-
-@media (max-width: 900px) {
-    .year-selection-home .year-grid {
-        grid-template-columns: 1fr;
-    }
-}
+.year-card:hover { transform:translateY(-3px); border-color:rgba(96,165,250,.42); background:rgba(96,165,250,.06); }
+.year-card-kicker { color:#60a5fa; font-size:15px; font-weight:900; letter-spacing:.1em; }
+.year-card strong { display:block; margin-top:8px; font-size:42px; line-height:1; letter-spacing:-.03em; }
+.year-card > span:last-child { color:var(--muted); font-size:15px; }
+.year-section-panel { width:100%; margin-top:18px; }
+.year-section-head { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; margin-bottom:18px; }
+.year-section-grid { margin-top:0; }
+.year-section-card { min-height:185px; }
+.legacy-home-grid, .coding-test-home-card.legacy-extra-card { display:none !important; }
+@media (max-width:900px) { .year-selection-panel { grid-template-columns:1fr; } .year-card { min-height:170px; } }
