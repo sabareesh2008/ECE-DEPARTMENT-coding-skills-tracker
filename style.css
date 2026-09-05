@@ -1103,62 +1103,6 @@ footer {
     gap: 16px;
 }
 
-.year-switcher {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-    margin: 4px 0 10px;
-}
-
-.year-card {
-    min-height: 168px;
-    padding: 26px 30px;
-    border: 1px solid var(--border);
-    border-radius: 26px;
-    color: var(--text);
-    background: linear-gradient(145deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025));
-    display: grid;
-    align-content: center;
-    gap: 8px;
-    text-align: left;
-    cursor: pointer;
-    transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
-}
-
-.year-card:hover {
-    transform: translateY(-3px);
-    border-color: rgba(96,165,250,.45);
-    background: linear-gradient(145deg, rgba(96,165,250,.09), rgba(255,255,255,.035));
-}
-
-.year-card.active {
-    border-color: rgba(96,165,250,.60);
-    background: linear-gradient(145deg, rgba(96,165,250,.12), rgba(255,255,255,.035));
-    box-shadow: 0 16px 38px rgba(15,23,42,.25);
-}
-
-.year-card-title {
-    color: var(--accent-2);
-    font-size: .92rem;
-    font-weight: 900;
-    letter-spacing: .08em;
-}
-
-.year-card strong {
-    font-size: 2.15rem;
-    line-height: 1;
-}
-
-.year-card > span:last-child {
-    color: var(--muted);
-}
-
-.active-year-status {
-    margin: 0 0 14px;
-    color: var(--muted);
-    font-size: .92rem;
-}
-
 .section-card {
     min-height: 150px;
     padding: 20px;
@@ -1271,10 +1215,6 @@ footer {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .year-switcher {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .section-home-head {
         flex-direction: column;
     }
@@ -1286,10 +1226,6 @@ footer {
 
 @media (max-width: 600px) {
     .section-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .year-switcher {
         grid-template-columns: 1fr;
     }
 
@@ -4199,3 +4135,44 @@ body.modal-open {
 @media(max-width:760px){.home-quick-actions{top:12px;right:12px}.quick-circle-button{width:38px;height:38px}.home-student-search{flex-direction:column;align-items:stretch}.home-search-form{min-width:0}.student-dashboard-grid{grid-template-columns:1fr}.student-dashboard-panel{padding:18px}.student-dashboard-header{align-items:center}.student-dashboard-header .action-button{padding:9px 12px}}
 .page-quick-actions{position:fixed;top:18px;right:20px;z-index:50;display:flex;gap:10px}.page-quick-actions a{ text-decoration:none }
 @media(max-width:760px){.page-quick-actions{top:12px;right:12px}}
+
+/* ==========================================================
+   YEAR I / YEAR II / YEAR III SELECTOR
+   Only the three year cards are visible on tracker entry.
+   Existing tracker styling is reused; no legacy home card
+   is shown until a year is selected.
+   ========================================================== */
+.section-home.year-selection-home {
+    gap: 18px;
+}
+
+.year-selection-home .year-selection-head,
+.year-selection-home .year-legacy-controls {
+    display: none !important;
+}
+
+.year-selection-home .year-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.year-selection-home .year-card {
+    min-height: 184px;
+    padding: 28px;
+}
+
+.year-selection-home .year-card strong {
+    font-size: 42px;
+    margin-bottom: 8px;
+}
+
+.year-selection-home .year-card > span:last-child {
+    font-size: 13px;
+}
+
+@media (max-width: 900px) {
+    .year-selection-home .year-grid {
+        grid-template-columns: 1fr;
+    }
+}

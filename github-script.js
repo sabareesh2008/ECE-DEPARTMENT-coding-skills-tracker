@@ -23,7 +23,17 @@ let aiChatHistory = [];
 let aiChatBusy = false;
 
 let selectedSection = null;
-let selectedYear = 2;
+let selectedYear = null;
+
+// Year II is the current dataset. Year I / Year III can be added later as
+// LiveData_Year1.csv / LiveData_Year3.csv (or GitHubLiveData_Year1.csv /
+// GitHubLiveData_Year3.csv). The current dataset is treated as Year II.
+const YEAR_DATA_FILES = {
+  1: "GitHubLiveData_Year1.csv",
+  2: "GitHubLiveData.csv",
+  3: "GitHubLiveData_Year3.csv"
+};
+const yearDataCache = {};
 let pendingDeleteId = null;
 
 const cfg = window.APP_CONFIG || {};
@@ -109,65 +119,6 @@ const SECTION_NAMES = [
   "ECE E",
   "ECE F"
 ];
-
-const YEAR_LABELS = {
-  1: "Year I",
-  2: "Year II",
-  3: "Year III"
-};
-
-function normalizeYear(value) {
-  const text = String(value ?? "").trim().toLowerCase();
-  if (!text) return 2;
-  if (["1", "i", "year i", "year 1", "first", "first year"].includes(text)) return 1;
-  if (["2", "ii", "year ii", "year 2", "second", "second year"].includes(text)) return 2;
-  if (["3", "iii", "year iii", "year 3", "third", "third year"].includes(text)) return 3;
-  const match = text.match(/(?:year\s*)?(1|2|3)/);
-  return match ? Number(match[1]) : 2;
-}
-
-function getStudentYear(student) {
-  return normalizeYear(
-    student.Year
-    ?? student["Academic Year"]
-    ?? student["Year Name"]
-    ?? student["year"]
-    ?? "2"
-  );
-}
-
-function getCurrentYearStudents() {
-  return allStudents.filter((student) => getStudentYear(student) === selectedYear);
-}
-
-function updateYearUI() {
-  document.querySelectorAll("[data-year]").forEach((button) => {
-    const active = Number(button.dataset.year) === selectedYear;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-pressed", active ? "true" : "false");
-  });
-
-  const status = document.getElementById("activeYearStatus");
-  if (status) {
-    status.textContent = `Showing ${YEAR_LABELS[selectedYear]} data`;
-  }
-}
-
-function selectYear(year) {
-  const nextYear = Number(year);
-  if (![1, 2, 3].includes(nextYear)) return;
-
-  selectedYear = nextYear;
-  selectedSection = null;
-  searchInput.value = "";
-  updateYearUI();
-  updateSectionCounts();
-  updateLastUpdated();
-
-  if (!leaderboardView.hidden) {
-    showSectionHome();
-  }
-}
 
 const exportColumns = [
   "Overall Rank",
@@ -357,9 +308,8 @@ function rankClass(rank) {
 
 
 function calculateSectionChampionship() {
-  const yearStudents = getCurrentYearStudents();
   const results = SECTION_NAMES.map((section) => {
-    const students = yearStudents.filter(
+    const students = allStudents.filter(
       (student) =>
         String(student.Section || "").trim().toUpperCase()
         === section.toUpperCase()
@@ -497,9 +447,8 @@ function renderSectionChampionship() {
 
 
 function updateCurrentChampionBadge() {
-  const yearStudents = getCurrentYearStudents();
   const sectionRanking = SECTION_NAMES.map((section) => {
-    const students = yearStudents.filter(
+    const students = allStudents.filter(
       (student) =>
         normalizeSection(student.Section) === normalizeSection(section)
     );
@@ -577,31 +526,28 @@ function updateSectionCounts() {
     "ECE F": 0
   };
 
-  const yearStudents = getCurrentYearStudents();
-
-  yearStudents.forEach((student) => {
+  allStudents.forEach((student) => {
     if (counts[student.Section] !== undefined) {
       counts[student.Section] += 1;
     }
   });
 
-  document.getElementById("countECEA").textContent = counts["ECE A"];
-  document.getElementById("countECEB").textContent = counts["ECE B"];
-  document.getElementById("countECEC").textContent = counts["ECE C"];
-  document.getElementById("countECED").textContent = counts["ECE D"];
-  document.getElementById("countECEE").textContent = counts["ECE E"];
-  document.getElementById("countECEF").textContent = counts["ECE F"];
-  document.getElementById("countOverall").textContent = yearStudents.length;
+  const setTextIfPresent = (id, value) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+  };
+
+  setTextIfPresent("countECEA", counts["ECE A"]);
+  setTextIfPresent("countECEB", counts["ECE B"]);
+  setTextIfPresent("countECEC", counts["ECE C"]);
+  setTextIfPresent("countECED", counts["ECE D"]);
+  setTextIfPresent("countECEE", counts["ECE E"]);
+  setTextIfPresent("countECEF", counts["ECE F"]);
+  setTextIfPresent("countOverall", allStudents.length);
 
   updateCurrentChampionBadge();
-
-  if (typeof renderSectionChallengeMiniStats === "function") {
-    renderSectionChallengeMiniStats();
-  }
-  if (typeof renderCodingTestHomeStatus === "function") {
-    renderCodingTestHomeStatus();
-  }
 }
+
 
 function updateLastUpdated() {
   const updatedAt =
@@ -614,20 +560,55 @@ function updateLastUpdated() {
 }
 
 
-function getCurrentViewStudents() {
-  const yearStudents = getCurrentYearStudents();
+function getStudentYear(student) {
+  const raw =
+    student?.Year ??
+    student?.year ??
+    student?.["Academic Year"] ??
+    student?.["Study Year"] ??
+    student?.["Year of Study"] ??
+    "";
 
-  if (selectedSection === "OVERALL") {
-    return [...yearStudents];
+  const text = String(raw).trim().toUpperCase();
+  if (!text) return 2; // Existing current dataset is Year II.
+  if (text === "1" || text === "I" || text.includes("YEAR I")) return 1;
+  if (text === "2" || text === "II" || text.includes("YEAR II")) return 2;
+  if (text === "3" || text === "III" || text.includes("YEAR III")) return 3;
+  return 2;
+}
+
+function getCurrentViewStudents() {
+  let students = [...allStudents];
+
+  if (selectedYear !== null) {
+    const hasExplicitYear = students.some((student) =>
+      Object.prototype.hasOwnProperty.call(student, "Year") ||
+      Object.prototype.hasOwnProperty.call(student, "year") ||
+      Object.prototype.hasOwnProperty.call(student, "Academic Year") ||
+      Object.prototype.hasOwnProperty.call(student, "Study Year") ||
+      Object.prototype.hasOwnProperty.call(student, "Year of Study")
+    );
+
+    if (hasExplicitYear) {
+      students = students.filter((student) => getStudentYear(student) === selectedYear);
+    }
   }
 
-  return yearStudents.filter(
+  if (selectedSection === "OVERALL") {
+    return students;
+  }
+
+  return students.filter(
     (student) => student.Section === selectedSection
   );
 }
 
 
 function getDisplayRank(student) {
+  if (selectedYear !== null) {
+    return student["Overall Rank"] || student["Section Rank"] || "–";
+  }
+
   if (selectedSection === "OVERALL") {
     return student["Overall Rank"];
   }
@@ -770,28 +751,106 @@ function openSection(section) {
   leaderboardView.hidden = false;
 
   if (section === "OVERALL") {
-    currentViewLabel.textContent = "DEPARTMENT";
-    currentViewTitle.textContent = `${YEAR_LABELS[selectedYear]} · Overall ECE GitHub Leaderboard`;
-    printTitle.textContent = `${YEAR_LABELS[selectedYear]} · Overall ECE GitHub Leaderboard`;
-    rankLegendText.textContent = "Overall Rank";
+    currentViewLabel.textContent = selectedYear !== null ? `YEAR ${selectedYear} · DEPARTMENT` : "DEPARTMENT";
+    currentViewTitle.textContent = selectedYear !== null
+      ? `Year ${selectedYear} ECE Students`
+      : "Overall ECE Leaderboard";
+    printTitle.textContent = selectedYear !== null
+      ? `Year ${selectedYear} ECE Leaderboard`
+      : `Overall ECE GitHub Leaderboard`;
+    rankLegendText.textContent = selectedYear !== null ? "Year Rank" : "Overall Rank";
   } else {
-    currentViewLabel.textContent = "SECTION";
-    currentViewTitle.textContent = `${YEAR_LABELS[selectedYear]} · ${section} GitHub Leaderboard`;
-    printTitle.textContent = `${YEAR_LABELS[selectedYear]} · ${section} GitHub Leaderboard`;
+    currentViewLabel.textContent = selectedYear !== null ? `YEAR ${selectedYear} · SECTION` : "SECTION";
+    currentViewTitle.textContent = selectedYear !== null
+      ? `Year ${selectedYear} · ${section} Leaderboard`
+      : `${section} Leaderboard`;
+    printTitle.textContent = selectedYear !== null
+      ? `Year ${selectedYear} · ${section} Leaderboard`
+      : `${section} GitHub Leaderboard`;
     rankLegendText.textContent = "Section Rank";
   }
 
   applySearch();
 }
 
+async function selectYear(year) {
+  const numericYear = Number(year);
+  if (![1, 2, 3].includes(numericYear)) return;
+
+  selectedYear = numericYear;
+  selectedSection = "OVERALL";
+  searchInput.value = "";
+
+  try {
+    if (!yearDataCache[numericYear]) {
+      if (numericYear === 2 && allStudents.length) {
+        yearDataCache[2] = [...allStudents];
+      } else {
+        const response = await fetch(`${YEAR_DATA_FILES[numericYear]}?time=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) {
+          if (numericYear === 2) throw new Error(`${YEAR_DATA_FILES[numericYear]} HTTP ${response.status}`);
+
+          // If future year-specific files do not exist yet, but the main
+          // dataset already contains an explicit Year field, use that data.
+          const baseRows = yearDataCache[2] || [];
+          const hasExplicitYear = baseRows.some((student) =>
+            Object.prototype.hasOwnProperty.call(student, "Year") ||
+            Object.prototype.hasOwnProperty.call(student, "year") ||
+            Object.prototype.hasOwnProperty.call(student, "Academic Year") ||
+            Object.prototype.hasOwnProperty.call(student, "Study Year") ||
+            Object.prototype.hasOwnProperty.call(student, "Year of Study")
+          );
+
+          yearDataCache[numericYear] = hasExplicitYear
+            ? baseRows.filter((student) => getStudentYear(student) === numericYear)
+            : [];
+        } else {
+          yearDataCache[numericYear] = parseCSV(await response.text());
+        }
+      }
+    }
+
+    allStudents = [...(yearDataCache[numericYear] || [])];
+    profileDataLoaded = false;
+    updateSectionCounts();
+    updateLastUpdated();
+
+    sectionHome.hidden = true;
+    leaderboardView.hidden = false;
+    currentViewLabel.textContent = `YEAR ${numericYear}`;
+    currentViewTitle.textContent = `Year ${numericYear} Students`;
+    printTitle.textContent = `Year ${numericYear} ECE Leaderboard`;
+    rankLegendText.textContent = "Year Rank";
+    applySearch();
+
+    if (!allStudents.length && numericYear !== 2) {
+      messageElement.textContent = `No Year ${numericYear} student data has been added yet.`;
+    }
+  } catch (error) {
+    sectionHome.hidden = true;
+    leaderboardView.hidden = false;
+    currentViewLabel.textContent = `YEAR ${numericYear}`;
+    currentViewTitle.textContent = `Year ${numericYear} Students`;
+    printTitle.textContent = `Year ${numericYear} ECE Leaderboard`;
+    rankLegendText.textContent = "Year Rank";
+    tableBody.innerHTML = `<tr><td colspan="12" class="loading-row">Unable to load Year ${numericYear} data.</td></tr>`;
+    messageElement.textContent = error.message;
+  }
+}
 
 function showSectionHome() {
   selectedSection = null;
+  selectedYear = null;
   leaderboardView.hidden = true;
   sectionHome.hidden = false;
   searchInput.value = "";
-  updateYearUI();
-  updateSectionCounts();
+
+  // Restore the current Year II dataset as the default background source.
+  if (yearDataCache[2]) {
+    allStudents = [...yearDataCache[2]];
+    updateSectionCounts();
+    updateLastUpdated();
+  }
 }
 
 
@@ -806,6 +865,9 @@ async function loadData() {
   }
 
   allStudents = parseCSV(await response.text());
+  yearDataCache[2] = [...allStudents];
+  selectedYear = null;
+  selectedSection = null;
 
   profileDataLoaded = false;
 
@@ -4217,7 +4279,6 @@ async function askAiPerformanceAnalyst(message) {
 async function initialize() {
   createClient();
   await loadData();
-  updateYearUI();
   await restoreAdminSession();
   await loadDailyChallengeData();
   await loadCodingAnalyticsData();
