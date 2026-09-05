@@ -23,7 +23,7 @@ let aiChatHistory = [];
 let aiChatBusy = false;
 
 let selectedSection = null;
-let selectedYear = "YEAR II";
+let selectedYear = 2;
 let pendingDeleteId = null;
 
 const cfg = window.APP_CONFIG || {};
@@ -31,11 +31,6 @@ const cfg = window.APP_CONFIG || {};
 const sectionHome = document.getElementById("sectionHome");
 const leaderboardView = document.getElementById("leaderboardView");
 const backToSectionsButton = document.getElementById("backToSectionsButton");
-
-const yearIIContent = document.getElementById("yearIIContent");
-const yearEmptyState = document.getElementById("yearEmptyState");
-const yearEmptyTitle = document.getElementById("yearEmptyTitle");
-const yearButtons = document.querySelectorAll(".year-card");
 
 const currentViewLabel = document.getElementById("currentViewLabel");
 const currentViewTitle = document.getElementById("currentViewTitle");
@@ -114,6 +109,65 @@ const SECTION_NAMES = [
   "ECE E",
   "ECE F"
 ];
+
+const YEAR_LABELS = {
+  1: "Year I",
+  2: "Year II",
+  3: "Year III"
+};
+
+function normalizeYear(value) {
+  const text = String(value ?? "").trim().toLowerCase();
+  if (!text) return 2;
+  if (["1", "i", "year i", "year 1", "first", "first year"].includes(text)) return 1;
+  if (["2", "ii", "year ii", "year 2", "second", "second year"].includes(text)) return 2;
+  if (["3", "iii", "year iii", "year 3", "third", "third year"].includes(text)) return 3;
+  const match = text.match(/(?:year\s*)?(1|2|3)/);
+  return match ? Number(match[1]) : 2;
+}
+
+function getStudentYear(student) {
+  return normalizeYear(
+    student.Year
+    ?? student["Academic Year"]
+    ?? student["Year Name"]
+    ?? student["year"]
+    ?? "2"
+  );
+}
+
+function getCurrentYearStudents() {
+  return allStudents.filter((student) => getStudentYear(student) === selectedYear);
+}
+
+function updateYearUI() {
+  document.querySelectorAll("[data-year]").forEach((button) => {
+    const active = Number(button.dataset.year) === selectedYear;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+
+  const status = document.getElementById("activeYearStatus");
+  if (status) {
+    status.textContent = `Showing ${YEAR_LABELS[selectedYear]} data`;
+  }
+}
+
+function selectYear(year) {
+  const nextYear = Number(year);
+  if (![1, 2, 3].includes(nextYear)) return;
+
+  selectedYear = nextYear;
+  selectedSection = null;
+  searchInput.value = "";
+  updateYearUI();
+  updateSectionCounts();
+  updateLastUpdated();
+
+  if (!leaderboardView.hidden) {
+    showSectionHome();
+  }
+}
 
 const exportColumns = [
   "Overall Rank",
@@ -303,8 +357,9 @@ function rankClass(rank) {
 
 
 function calculateSectionChampionship() {
+  const yearStudents = getCurrentYearStudents();
   const results = SECTION_NAMES.map((section) => {
-    const students = allStudents.filter(
+    const students = yearStudents.filter(
       (student) =>
         String(student.Section || "").trim().toUpperCase()
         === section.toUpperCase()
@@ -442,8 +497,9 @@ function renderSectionChampionship() {
 
 
 function updateCurrentChampionBadge() {
+  const yearStudents = getCurrentYearStudents();
   const sectionRanking = SECTION_NAMES.map((section) => {
-    const students = allStudents.filter(
+    const students = yearStudents.filter(
       (student) =>
         normalizeSection(student.Section) === normalizeSection(section)
     );
@@ -521,7 +577,9 @@ function updateSectionCounts() {
     "ECE F": 0
   };
 
-  allStudents.forEach((student) => {
+  const yearStudents = getCurrentYearStudents();
+
+  yearStudents.forEach((student) => {
     if (counts[student.Section] !== undefined) {
       counts[student.Section] += 1;
     }
@@ -533,13 +591,17 @@ function updateSectionCounts() {
   document.getElementById("countECED").textContent = counts["ECE D"];
   document.getElementById("countECEE").textContent = counts["ECE E"];
   document.getElementById("countECEF").textContent = counts["ECE F"];
-  document.getElementById("countOverall").textContent = allStudents.length;
-
-
+  document.getElementById("countOverall").textContent = yearStudents.length;
 
   updateCurrentChampionBadge();
-}
 
+  if (typeof renderSectionChallengeMiniStats === "function") {
+    renderSectionChallengeMiniStats();
+  }
+  if (typeof renderCodingTestHomeStatus === "function") {
+    renderCodingTestHomeStatus();
+  }
+}
 
 function updateLastUpdated() {
   const updatedAt =
@@ -553,11 +615,13 @@ function updateLastUpdated() {
 
 
 function getCurrentViewStudents() {
+  const yearStudents = getCurrentYearStudents();
+
   if (selectedSection === "OVERALL") {
-    return [...allStudents];
+    return [...yearStudents];
   }
 
-  return allStudents.filter(
+  return yearStudents.filter(
     (student) => student.Section === selectedSection
   );
 }
@@ -698,43 +762,7 @@ function applySearch() {
 }
 
 
-function setSelectedYear(year) {
-  selectedYear = year;
-
-  yearButtons.forEach((button) => {
-    const active = button.dataset.year === year;
-    button.classList.toggle("year-card-active", active);
-    button.setAttribute("aria-pressed", active ? "true" : "false");
-  });
-
-  selectedSection = null;
-  searchInput.value = "";
-  leaderboardView.hidden = true;
-  sectionHome.hidden = false;
-
-  if (yearIIContent) {
-    yearIIContent.hidden = year !== "YEAR II";
-  }
-
-  if (yearEmptyState) {
-    yearEmptyState.hidden = year === "YEAR II";
-  }
-
-  if (yearEmptyTitle) {
-    yearEmptyTitle.textContent = `${year} data is not added yet.`;
-  }
-}
-
-function showYearMessage(year) {
-  setSelectedYear(year);
-}
-
 function openSection(section) {
-  if (selectedYear !== "YEAR II") {
-    showYearMessage(selectedYear);
-    return;
-  }
-
   selectedSection = section;
   searchInput.value = "";
 
@@ -743,13 +771,13 @@ function openSection(section) {
 
   if (section === "OVERALL") {
     currentViewLabel.textContent = "DEPARTMENT";
-    currentViewTitle.textContent = "Overall ECE Leaderboard";
-    printTitle.textContent = "Overall ECE LeetCode Leaderboard";
+    currentViewTitle.textContent = `${YEAR_LABELS[selectedYear]} · Overall ECE GitHub Leaderboard`;
+    printTitle.textContent = `${YEAR_LABELS[selectedYear]} · Overall ECE GitHub Leaderboard`;
     rankLegendText.textContent = "Overall Rank";
   } else {
     currentViewLabel.textContent = "SECTION";
-    currentViewTitle.textContent = `${section} Leaderboard`;
-    printTitle.textContent = `${section} LeetCode Leaderboard`;
+    currentViewTitle.textContent = `${YEAR_LABELS[selectedYear]} · ${section} GitHub Leaderboard`;
+    printTitle.textContent = `${YEAR_LABELS[selectedYear]} · ${section} GitHub Leaderboard`;
     rankLegendText.textContent = "Section Rank";
   }
 
@@ -762,6 +790,8 @@ function showSectionHome() {
   leaderboardView.hidden = true;
   sectionHome.hidden = false;
   searchInput.value = "";
+  updateYearUI();
+  updateSectionCounts();
 }
 
 
@@ -4187,6 +4217,7 @@ async function askAiPerformanceAnalyst(message) {
 async function initialize() {
   createClient();
   await loadData();
+  updateYearUI();
   await restoreAdminSession();
   await loadDailyChallengeData();
   await loadCodingAnalyticsData();
@@ -4195,9 +4226,9 @@ async function initialize() {
 }
 
 
-yearButtons.forEach((button) => {
+document.querySelectorAll("[data-year]").forEach((button) => {
   button.addEventListener("click", () => {
-    setSelectedYear(button.dataset.year || "YEAR II");
+    selectYear(button.dataset.year);
   });
 });
 
@@ -4358,8 +4389,6 @@ aiChatInput?.addEventListener("keydown", (event) => {
     aiChatForm?.requestSubmit();
   }
 });
-
-setSelectedYear("YEAR II");
 
 initialize();
 

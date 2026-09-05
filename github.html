@@ -90,33 +90,25 @@
 
 
 
-      <section class="year-selector" aria-label="Select academic year">
-        <button class="section-card year-card" data-year-switch="YEAR I" type="button" aria-pressed="false">
-          <span class="section-card-title">YEAR I</span>
+      <div class="year-switcher" aria-label="Select academic year">
+        <button class="year-card" type="button" data-year="1" aria-pressed="false">
+          <span class="year-card-title">YEAR I</span>
           <strong>Year I</strong>
           <span>Academic Year I</span>
         </button>
-
-        <button class="section-card year-card year-card-active" data-year-switch="YEAR II" type="button" aria-pressed="true">
-          <span class="section-card-title">YEAR II</span>
+        <button class="year-card active" type="button" data-year="2" aria-pressed="true">
+          <span class="year-card-title">YEAR II</span>
           <strong>Year II</strong>
           <span>Current Data</span>
         </button>
-
-        <button class="section-card year-card" data-year-switch="YEAR III" type="button" aria-pressed="false">
-          <span class="section-card-title">YEAR III</span>
+        <button class="year-card" type="button" data-year="3" aria-pressed="false">
+          <span class="year-card-title">YEAR III</span>
           <strong>Year III</strong>
           <span>Academic Year III</span>
         </button>
-      </section>
-
-      <div id="yearDataNotice" class="year-empty-state" hidden aria-live="polite">
-        <div class="year-empty-icon">📚</div>
-        <div>
-          <strong id="yearDataNoticeTitle">Year I data is not added yet.</strong>
-          <span>Year II contains the current tracker data. Add students for this year when ready.</span>
-        </div>
       </div>
+
+      <div id="activeYearStatus" class="active-year-status" aria-live="polite">Showing Year II data</div>
 
       <div class="section-grid">
         <button class="section-card" data-section="ECE A" type="button">
@@ -2064,50 +2056,6 @@ public class Main {
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="github-script.js"></script>
-  <script>
-    (() => {
-      const yearButtons = Array.from(document.querySelectorAll("[data-year-switch]"));
-      const sectionGrid = document.querySelector("#sectionHome .section-grid");
-      const yearNotice = document.getElementById("yearDataNotice");
-      const yearNoticeTitle = document.getElementById("yearDataNoticeTitle");
-      const codingTestHome = document.querySelector("#sectionHome .coding-test-home-card");
-      const homeAdminActions = document.querySelector("#sectionHome .home-admin-actions");
-      let selectedYear = "YEAR II";
-
-      function applyYear(year) {
-        selectedYear = year;
-        const hasCurrentData = year === "YEAR II";
-
-        yearButtons.forEach((button) => {
-          const active = button.dataset.yearSwitch === year;
-          button.classList.toggle("year-card-active", active);
-          button.setAttribute("aria-pressed", active ? "true" : "false");
-        });
-
-        if (sectionGrid) sectionGrid.hidden = !hasCurrentData;
-        if (codingTestHome) codingTestHome.hidden = !hasCurrentData;
-        if (homeAdminActions) homeAdminActions.hidden = !hasCurrentData;
-        if (yearNotice) yearNotice.hidden = hasCurrentData;
-        if (yearNoticeTitle) yearNoticeTitle.textContent = `${year} data is not added yet.`;
-      }
-
-      yearButtons.forEach((button) => {
-        button.addEventListener("click", () => applyYear(button.dataset.yearSwitch || "YEAR II"));
-      });
-
-      // The existing tracker binds section-card clicks in script.js. Capture-phase interception
-      // prevents opening a Year-II section while Year I/III have no data yet.
-      document.addEventListener("click", (event) => {
-        const sectionButton = event.target.closest("#sectionHome .section-grid [data-section]");
-        if (sectionButton && selectedYear !== "YEAR II") {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-        }
-      }, true);
-
-      applyYear("YEAR II");
-    })();
-  </script>
 
 </body>
 </html>
