@@ -1122,14 +1122,19 @@ async function saveProfile(event) {
 
     if (result.error) throw result.error;
 
-    formMessage.textContent =
-      id ? "Profile updated successfully." : "Profile added successfully.";
+formMessage.textContent =
+  id
+    ? "Profile updated successfully. Starting LeetCode sync..."
+    : "Profile added successfully. Starting LeetCode sync...";
 
-    formMessage.className = "form-message success";
+formMessage.className = "form-message success";
 
-    await loadData();
+await loadData();
 
-    setTimeout(closeProfile, 700);
+// Automatically start the LeetCode GitHub Actions workflow
+await triggerLeetCodeSync();
+
+setTimeout(closeProfile, 700);
   } catch (error) {
     formMessage.textContent = error.message;
     formMessage.className = "form-message error";
