@@ -22,3 +22,7 @@ reports/*.xlsx
 
 # Temporary local files
 *.log
+.temp/
+
+# External / Untracked subprojects
+vision verge/

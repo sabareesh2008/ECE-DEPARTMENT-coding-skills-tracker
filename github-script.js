@@ -1109,6 +1109,23 @@ function closeProfile() {
 }
 
 
+function showToastNotification(text, isError = false) {
+  if (messageElement) {
+    messageElement.textContent = text;
+    messageElement.className = `message ${isError ? "error" : "success"}`;
+  }
+  const homeMsg = document.getElementById("homeActionMessage");
+  if (homeMsg) {
+    homeMsg.textContent = text;
+    homeMsg.className = `home-action-message ${isError ? "error" : ""}`;
+    clearTimeout(showToastNotification._timer);
+    showToastNotification._timer = setTimeout(() => {
+      homeMsg.textContent = "";
+    }, 6000);
+  }
+}
+
+
 async function saveProfile(event) {
   event.preventDefault();
 
@@ -1117,7 +1134,13 @@ async function saveProfile(event) {
   const id = editingStudentId.value.trim();
 
   const registerNumber = registerNumberInput.value.trim();
-  const githubUsername = usernameInput.value.trim();
+  const githubUsername = usernameInput.value.trim().replace(/\s+/g, "");
+
+  if (!registerNumber || !studentNameInput.value.trim() || !githubUsername) {
+    formMessage.textContent = "Please fill in all fields (spaces are not allowed in usernames).";
+    formMessage.className = "form-message error";
+    return;
+  }
 
   const payload = {
     register_number: registerNumber,
@@ -1127,6 +1150,7 @@ async function saveProfile(event) {
   };
 
   saveProfileButton.disabled = true;
+  saveProfileButton.textContent = "Saving...";
 
   try {
     let targetId = id;
@@ -1163,12 +1187,25 @@ async function saveProfile(event) {
 
     formMessage.className = "form-message success";
 
-    await loadRegisteredStudents();
-    renderManageStudents();
+    await loadRegisteredStudents().catch(() => {});
+    if (typeof renderManageStudents === "function") {
+      renderManageStudents();
+    }
 
-    setTimeout(closeProfile, 700);
+    showToastNotification(
+      id
+        ? "GitHub profile updated successfully."
+        : "GitHub profile added successfully. Starting background sync...",
+      false
+    );
+
+    triggerLeetCodeSync().catch((err) => {
+      console.warn("Background sync dispatch notice:", err);
+    });
+
+    setTimeout(closeProfile, 800);
   } catch (error) {
-    formMessage.textContent = error.message;
+    formMessage.textContent = error.message || "Failed to save profile.";
     formMessage.className = "form-message error";
   } finally {
     saveProfileButton.disabled = false;
@@ -1233,7 +1270,10 @@ async function confirmDelete() {
 
 
 async function triggerLeetCodeSync() {
-  if (!isAdmin()) return;
+  if (!isAdmin()) {
+    showToastNotification("Please sign in as Admin to run Sync Now.", true);
+    return;
+  }
 
   const buttons = [syncNowButton, homeSyncNowButton].filter(Boolean);
 
@@ -1256,17 +1296,15 @@ async function triggerLeetCodeSync() {
 
     if (error) throw error;
 
-    if (messageElement) {
-      messageElement.textContent =
-        "GitHub sync started. GitHub Actions is checking all profiles.";
-    }
+    showToastNotification(
+      data?.message || "GitHub sync started. GitHub Actions is checking all profiles.",
+      false
+    );
 
     console.log(data);
   } catch (error) {
-    if (messageElement) {
-      messageElement.textContent =
-        `Unable to start sync: ${error.message}`;
-    }
+    const msg = error?.message || String(error);
+    showToastNotification(`Unable to start sync: ${msg}`, true);
   } finally {
     setTimeout(() => {
       buttons.forEach((button) => {

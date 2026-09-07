@@ -593,21 +593,38 @@ def stale_github_metrics(previous_history: pd.DataFrame, register_number: str, e
     if old is None:
         return empty_metrics(error_status)
     def n(key: str) -> int: return safe_int(old.get(key, 0))
+
+    ct = n("Contributions Today")
+    c7 = max(ct, n("Contributions 7 Days"))
+    c14 = max(c7, n("Contributions 14 Days"))
+    c30 = max(c14, n("Contributions 30 Days"))
+
+    mt = n("Commits Today")
+    m7 = max(mt, n("Commits 7 Days"))
+    m14 = max(m7, n("Commits 14 Days"))
+    m30 = max(m14, n("Commits 30 Days"))
+
+    rt = n("Repositories Total")
+    r_today = min(rt, n("Repositories Today"))
+    r7 = min(rt, max(r_today, n("Repositories 7 Days")))
+    r14 = min(rt, max(r7, n("Repositories 14 Days")))
+    r30 = min(rt, max(r14, n("Repositories 30 Days")))
+
     return {
         "profile_url": f"https://github.com/{clean(old.get('GitHub Username',''))}" if clean(old.get("GitHub Username", "")) else "",
-        "contrib_today": n("Contributions Today"),
-        "contrib_7": n("Contributions 7 Days"),
-        "contrib_14": n("Contributions 14 Days"),
-        "contrib_30": n("Contributions 30 Days"),
-        "commits_today": n("Commits Today"),
-        "commits_7": n("Commits 7 Days"),
-        "commits_14": n("Commits 14 Days"),
-        "commits_30": n("Commits 30 Days"),
-        "repos_total": n("Repositories Total"),
-        "repos_today": n("Repositories Today"),
-        "repos_7": n("Repositories 7 Days"),
-        "repos_14": n("Repositories 14 Days"),
-        "repos_30": n("Repositories 30 Days"),
+        "contrib_today": ct,
+        "contrib_7": c7,
+        "contrib_14": c14,
+        "contrib_30": c30,
+        "commits_today": mt,
+        "commits_7": m7,
+        "commits_14": m14,
+        "commits_30": m30,
+        "repos_total": rt,
+        "repos_today": r_today,
+        "repos_7": r7,
+        "repos_14": r14,
+        "repos_30": r30,
         "deployments": n("Detected Deployments"),
         "latest_repository": clean(old.get("Latest Repository", "")),
         "last_activity": clean(old.get("Last Activity", "")),

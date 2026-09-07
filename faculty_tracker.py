@@ -329,9 +329,8 @@ def update_faculty(
 
 def main() -> None:
     if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
-        raise RuntimeError(
-            "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required."
-        )
+        print("Supabase credentials not set; skipping faculty tracking.")
+        return
 
     faculties = load_faculties()
 

@@ -1003,25 +1003,17 @@ def read_students() -> pd.DataFrame:
             .apply(clean)
         )
 
-    students.loc[
-        students["Section"] == "",
-        "Section",
-    ] = "ECE E"
-
-    invalid_sections = sorted(
-        set(students["Section"])
-        .difference(
-            ALLOWED_SECTIONS
-        )
+    students["Section"] = (
+        students["Section"]
+        .astype(str)
+        .str.strip()
+        .str.upper()
     )
 
-    if invalid_sections:
-        raise ValueError(
-            "Invalid section value(s): "
-            + ", ".join(
-                invalid_sections
-            )
-        )
+    students.loc[
+        ~students["Section"].isin(ALLOWED_SECTIONS),
+        "Section",
+    ] = "ECE E"
 
     students = students[
         (
@@ -2029,33 +2021,32 @@ def stale_profile_from_history(
     def number(name: str) -> int:
         return safe_int(old.get(name, 0))
 
+    total = number("Problems Solved")
+    today = min(total, number("Solved Today"))
+    seven = min(total, max(today, number("Last 7 Days")))
+    fourteen = min(total, max(seven, number("Last 14 Days")))
+    thirty = min(total, max(fourteen, number("Last 30 Days")))
+
+    easy = number("Easy")
+    medium = number("Medium")
+    hard = number("Hard")
+    if total > 0 and (easy + medium + hard) != total:
+        easy, medium, hard = total, 0, 0
+
     return {
-        "total_solved":
-            number("Problems Solved"),
-        "easy":
-            number("Easy"),
-        "medium":
-            number("Medium"),
-        "hard":
-            number("Hard"),
-        "submissions":
-            number("Total Submissions"),
-        "solved_today":
-            number("Solved Today"),
-        "last_7_days":
-            number("Last 7 Days"),
-        "last_14_days":
-            number("Last 14 Days"),
-        "last_30_days":
-            number("Last 30 Days"),
-        "last_7_days_submissions":
-            number("Last 7 Days Submissions"),
-        "last_problem":
-            clean(old.get("Last Problem", "")),
-        "last_solved":
-            clean(old.get("Last Solved", "")),
-        "status":
-            f"{error_status} | Previous data kept",
+        "total_solved": total,
+        "easy": easy,
+        "medium": medium,
+        "hard": hard,
+        "submissions": max(total, number("Total Submissions")),
+        "solved_today": today,
+        "last_7_days": seven,
+        "last_14_days": fourteen,
+        "last_30_days": thirty,
+        "last_7_days_submissions": number("Last 7 Days Submissions"),
+        "last_problem": clean(old.get("Last Problem", "")),
+        "last_solved": clean(old.get("Last Solved", "")),
+        "status": f"{error_status} | Previous data kept",
         "recent_submissions": [],
         "window_coverage": {
             "today": False,
@@ -2212,11 +2203,16 @@ def process_student(
             profile,
         )
     else:
+        profile_total = safe_int(profile.get("total_solved", 0))
+        today = min(profile_total, safe_int(profile.get("solved_today", 0)))
+        seven = min(profile_total, max(today, safe_int(profile.get("last_7_days", 0))))
+        fourteen = min(profile_total, max(seven, safe_int(profile.get("last_14_days", 0))))
+        thirty = min(profile_total, max(fourteen, safe_int(profile.get("last_30_days", 0))))
         rolling = {
-            "today": safe_int(profile.get("solved_today")),
-            "7d": safe_int(profile.get("last_7_days")),
-            "14d": safe_int(profile.get("last_14_days")),
-            "30d": safe_int(profile.get("last_30_days")),
+            "today": today,
+            "7d": seven,
+            "14d": fourteen,
+            "30d": thirty,
             "today_source": "STALE",
             "7d_source": "STALE",
             "14d_source": "STALE",

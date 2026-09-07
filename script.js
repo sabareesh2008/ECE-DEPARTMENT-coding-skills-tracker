@@ -1086,6 +1086,23 @@ function closeProfile() {
 }
 
 
+function showToastNotification(text, isError = false) {
+  if (messageElement) {
+    messageElement.textContent = text;
+    messageElement.className = `message ${isError ? "error" : "success"}`;
+  }
+  const homeMsg = document.getElementById("homeActionMessage");
+  if (homeMsg) {
+    homeMsg.textContent = text;
+    homeMsg.className = `home-action-message ${isError ? "error" : ""}`;
+    clearTimeout(showToastNotification._timer);
+    showToastNotification._timer = setTimeout(() => {
+      homeMsg.textContent = "";
+    }, 6000);
+  }
+}
+
+
 async function saveProfile(event) {
   event.preventDefault();
 
@@ -1093,14 +1110,25 @@ async function saveProfile(event) {
 
   const id = editingStudentId.value.trim();
 
+  const regNumber = registerNumberInput.value.trim();
+  const studentName = studentNameInput.value.trim();
+  const leetcodeUser = usernameInput.value.trim().replace(/\s+/g, "");
+
+  if (!regNumber || !studentName || !leetcodeUser) {
+    formMessage.textContent = "Please fill in all fields (spaces are not allowed in usernames).";
+    formMessage.className = "form-message error";
+    return;
+  }
+
   const payload = {
-    register_number: registerNumberInput.value.trim(),
-    student_name: studentNameInput.value.trim(),
-    leetcode_username: usernameInput.value.trim(),
+    register_number: regNumber,
+    student_name: studentName,
+    leetcode_username: leetcodeUser,
     section: studentSectionInput.value
   };
 
   saveProfileButton.disabled = true;
+  saveProfileButton.textContent = "Saving...";
 
   try {
     let result;
@@ -1122,21 +1150,33 @@ async function saveProfile(event) {
 
     if (result.error) throw result.error;
 
-formMessage.textContent =
-  id
-    ? "Profile updated successfully. Starting LeetCode sync..."
-    : "Profile added successfully. Starting LeetCode sync...";
+    formMessage.textContent =
+      id
+        ? "Profile updated successfully."
+        : "Profile added successfully.";
 
-formMessage.className = "form-message success";
+    formMessage.className = "form-message success";
 
-await loadData();
+    await loadRegisteredStudents().catch(() => {});
+    if (typeof renderManageStudents === "function") {
+      renderManageStudents();
+    }
 
-// Automatically start the LeetCode GitHub Actions workflow
-await triggerLeetCodeSync();
+    showToastNotification(
+      id
+        ? `Student ${studentName} updated successfully.`
+        : `Student ${studentName} added successfully. Starting background sync...`,
+      false
+    );
 
-setTimeout(closeProfile, 700);
+    // Trigger sync non-blockingly in background
+    triggerLeetCodeSync().catch((err) => {
+      console.warn("Background sync dispatch notice:", err);
+    });
+
+    setTimeout(closeProfile, 800);
   } catch (error) {
-    formMessage.textContent = error.message;
+    formMessage.textContent = error.message || "Failed to save profile.";
     formMessage.className = "form-message error";
   } finally {
     saveProfileButton.disabled = false;
@@ -1158,17 +1198,20 @@ function openDeleteModal(studentId) {
     `Delete ${student.student_name} (${student.section})?`;
 
   deleteModal.hidden = false;
+  document.body.classList.add("modal-open");
 }
 
 
 function closeDelete() {
-  deleteModal.hidden = true;
   pendingDeleteId = null;
+  deleteModal.hidden = true;
+  document.body.classList.remove("modal-open");
 }
+const closeDeleteModal = closeDelete;
 
 
 async function confirmDelete() {
-  if (!isAdmin() || pendingDeleteId === null) return;
+  if (!isAdmin() || !pendingDeleteId) return;
 
   confirmDeleteButton.disabled = true;
 
@@ -1180,14 +1223,17 @@ async function confirmDelete() {
 
     if (error) throw error;
 
-    closeDelete();
-
+    closeDeleteModal();
     await loadRegisteredStudents();
     renderManageStudents();
-    await loadData();
+
+    if (messageElement) {
+      messageElement.textContent = "Profile deleted successfully.";
+    }
+
+    await triggerLeetCodeSync();
   } catch (error) {
-    deleteMessage.textContent = error.message;
-    deleteMessage.className = "form-message error";
+    alert(`Delete failed: ${error.message}`);
   } finally {
     confirmDeleteButton.disabled = false;
   }
@@ -1195,7 +1241,10 @@ async function confirmDelete() {
 
 
 async function triggerLeetCodeSync() {
-  if (!isAdmin()) return;
+  if (!isAdmin()) {
+    showToastNotification("Please sign in as Admin to run Sync Now.", true);
+    return;
+  }
 
   const buttons = [syncNowButton, homeSyncNowButton].filter(Boolean);
 
@@ -1215,17 +1264,15 @@ async function triggerLeetCodeSync() {
 
     if (error) throw error;
 
-    if (messageElement) {
-      messageElement.textContent =
-        "LeetCode sync started. GitHub Actions is checking all profiles.";
-    }
+    showToastNotification(
+      data?.message || "LeetCode sync started. GitHub Actions is checking all profiles.",
+      false
+    );
 
     console.log(data);
   } catch (error) {
-    if (messageElement) {
-      messageElement.textContent =
-        `Unable to start sync: ${error.message}`;
-    }
+    const msg = error?.message || String(error);
+    showToastNotification(`Unable to start sync: ${msg}`, true);
   } finally {
     setTimeout(() => {
       buttons.forEach((button) => {

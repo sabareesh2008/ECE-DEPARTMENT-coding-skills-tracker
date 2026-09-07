@@ -195,7 +195,7 @@
             <span>💻 Latest Test Passed <strong id="codingPassedOverall">0/0</strong></span>
           </div>
         </button>
-        <button class="section-card faculty-card legacy-extra-card" id="facultySectionCard" type="button">
+        <button class="section-card faculty-card legacy-extra-card" id="facultySectionCard" type="button" hidden style="display: none;">
           <span class="section-card-title">👨‍🏫 Faculty</span>
           <strong id="countFaculty">0</strong>
           <span>Faculty Members</span>
@@ -237,6 +237,8 @@
         </button>
       </section>
 
+      <div id="homeActionMessage" class="home-action-message" role="status" aria-live="polite"></div>
+
       <div class="home-admin-actions admin-only" hidden>
         <button id="homeAddProfileButton" class="action-button primary" type="button">
           + Add Profile
@@ -253,7 +255,7 @@
         <button id="manageCodingTestsButton" class="action-button secondary" type="button">
           Manage Coding Tests
         </button>
-        <button id="homeFacultyAnalyticsButton" class="action-button secondary" type="button">
+        <button id="homeFacultyAnalyticsButton" class="action-button secondary" type="button" hidden style="display: none;">
           Faculty Analytics
         </button>
 

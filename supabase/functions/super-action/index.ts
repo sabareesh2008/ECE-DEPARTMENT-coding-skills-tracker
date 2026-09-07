@@ -94,15 +94,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    const githubToken = Deno.env.get("GITHUB_TOKEN");
-    const githubOwner = Deno.env.get("GITHUB_OWNER");
-    const githubRepo = Deno.env.get("GITHUB_REPO");
+    const githubToken = (
+      Deno.env.get("GITHUB_TOKEN") ||
+      Deno.env.get("GH_TOKEN") ||
+      Deno.env.get("GITHUB_PAT") ||
+      ""
+    ).trim();
+    const githubOwner = (
+      Deno.env.get("GITHUB_OWNER") ||
+      "sabareesh2008"
+    ).trim();
+    const githubRepo = (
+      Deno.env.get("GITHUB_REPO") ||
+      "ECE-DEPARTMENT-coding-skills-tracker"
+    ).trim();
 
-    if (!githubToken || !githubOwner || !githubRepo) {
+    if (!githubToken) {
       return new Response(
         JSON.stringify({
-          error: "GitHub secrets are missing",
-          hasToken: !!githubToken,
+          error: "GitHub token is missing in Supabase Edge Function secrets. Please set GITHUB_TOKEN in Supabase Secrets.",
+          hasToken: false,
           owner: githubOwner,
           repo: githubRepo,
         }),
