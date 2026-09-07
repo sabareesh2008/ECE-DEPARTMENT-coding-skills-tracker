@@ -4,171 +4,180 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-Deno.serve(async (req: Request) => {
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+);
+
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", {
+      headers: corsHeaders,
+    });
   }
 
   try {
-    const authHeader = req.headers.get("Authorization") ?? "";
+    const authHeader = req.headers.get("Authorization");
 
-    if (!authHeader.startsWith("Bearer ")) {
+    if (!authHeader) {
       return new Response(
         JSON.stringify({ error: "Missing authorization" }),
         {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error("Supabase service configuration is missing.");
-    }
-
-    const adminClient = createClient(
-      supabaseUrl,
-      serviceRoleKey,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      },
-    );
-
-    const jwt = authHeader.replace("Bearer ", "").trim();
+    const token = authHeader.replace("Bearer ", "");
 
     const {
       data: { user },
       error: userError,
-    } = await adminClient.auth.getUser(jwt);
+    } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
       return new Response(
         JSON.stringify({
-          error: "Invalid user session",
-          details: userError?.message ?? "No user found",
+          error: "Invalid login session",
+          details: userError?.message,
         }),
         {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
       );
     }
 
-    const { data: roleRow, error: roleError } = await adminClient
+    const { data: role, error: roleError } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
       .maybeSingle();
 
     if (roleError) {
-      throw new Error(`Role lookup failed: ${roleError.message}`);
-    }
-
-    if (roleRow?.role !== "admin") {
       return new Response(
         JSON.stringify({
-          error: "Administrator access required",
-          role: roleRow?.role ?? null,
+          error: "Could not check admin role",
+          details: roleError.message,
         }),
         {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
       );
     }
 
-    let body: Record<string, unknown> = {};
-
-    try {
-      body = await req.json();
-    } catch {
-      body = {};
+    if (role?.role !== "admin") {
+      return new Response(
+        JSON.stringify({
+          error: "Admin access required",
+        }),
+        {
+          status: 403,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
     }
-
-    const tracker = body.tracker === "github" ? "github" : "leetcode";
 
     const githubToken = Deno.env.get("GITHUB_TOKEN");
     const githubOwner = Deno.env.get("GITHUB_OWNER");
     const githubRepo = Deno.env.get("GITHUB_REPO");
 
-    const workflowFile =
-      tracker === "github"
-        ? Deno.env.get("GITHUB_WORKFLOW_FILE_GITHUB") ??
-          "github-tracker.yml"
-        : Deno.env.get("GITHUB_WORKFLOW_FILE") ??
-          "update-leetcode.yml";
-
-    const githubRef = Deno.env.get("GITHUB_REF") ?? "main";
-
-    if (!githubToken) {
-      throw new Error("GITHUB_TOKEN secret is missing.");
+    if (!githubToken || !githubOwner || !githubRepo) {
+      return new Response(
+        JSON.stringify({
+          error: "GitHub secrets are missing",
+          hasToken: !!githubToken,
+          owner: githubOwner,
+          repo: githubRepo,
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
     }
 
-    if (!githubOwner) {
-      throw new Error("GITHUB_OWNER secret is missing.");
-    }
+    const workflow =
+      Deno.env.get("GITHUB_WORKFLOW_FILE") ||
+      "update-leetcode.yml";
 
-    if (!githubRepo) {
-      throw new Error("GITHUB_REPO secret is missing.");
-    }
+    const ref =
+      Deno.env.get("GITHUB_REF") ||
+      "main";
 
-    const endpoint =
+    const githubUrl =
       `https://api.github.com/repos/${githubOwner}/${githubRepo}` +
-      `/actions/workflows/${workflowFile}/dispatches`;
+      `/actions/workflows/${workflow}/dispatches`;
 
-    console.log("Dispatching GitHub workflow:", {
-      owner: githubOwner,
-      repo: githubRepo,
-      workflow: workflowFile,
-      ref: githubRef,
-      tracker,
-      tokenPresent: true,
-    });
+    console.log("Dispatching:", githubUrl);
+    console.log("Ref:", ref);
 
-    const response = await fetch(endpoint, {
+    const response = await fetch(githubUrl, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${githubToken}`,
         Accept: "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
         "Content-Type": "application/json",
+        "User-Agent": "CodeMetrix",
       },
       body: JSON.stringify({
-        ref: githubRef,
+        ref: ref,
       }),
     });
 
-    const responseBody = await response.text();
+    const responseText = await response.text();
 
-    console.log("GitHub response:", {
-      status: response.status,
-      body: responseBody,
-    });
+    console.log(
+      "GitHub status:",
+      response.status
+    );
+
+    console.log(
+      "GitHub response:",
+      responseText
+    );
 
     if (!response.ok) {
-      throw new Error(
-        `GitHub dispatch failed. HTTP ${response.status}: ${responseBody}`,
+      return new Response(
+        JSON.stringify({
+          error: "GitHub workflow dispatch failed",
+          status: response.status,
+          response: responseText,
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
       );
     }
 
     return new Response(
       JSON.stringify({
-        ok: true,
-        tracker,
-        workflow: workflowFile,
-        message:
-          tracker === "github"
-            ? "GitHub tracker workflow started."
-            : "LeetCode tracker workflow started.",
+        success: true,
+        message: "LeetCode tracker started successfully",
       }),
       {
         status: 200,
@@ -176,15 +185,16 @@ Deno.serve(async (req: Request) => {
           ...corsHeaders,
           "Content-Type": "application/json",
         },
-      },
+      }
     );
+
   } catch (error) {
-    console.error("SUPER-ACTION ERROR:", error);
+    console.error("SUPER ACTION ERROR:", error);
 
     return new Response(
       JSON.stringify({
-        ok: false,
-        error: error instanceof Error
+        error: "super-action failed",
+        details: error instanceof Error
           ? error.message
           : String(error),
       }),
@@ -194,10 +204,7 @@ Deno.serve(async (req: Request) => {
           ...corsHeaders,
           "Content-Type": "application/json",
         },
-      },
+      }
     );
   }
-});git add .
-git commit -m "sync now bug fix"
-git pull --rebase origin main
-git push origin main
+});
