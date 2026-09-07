@@ -13,16 +13,6 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    if (req.method !== "POST") {
-      return new Response(
-        JSON.stringify({ error: "Method not allowed" }),
-        {
-          status: 405,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
-    }
-
     const authHeader = req.headers.get("Authorization") ?? "";
 
     if (!authHeader.startsWith("Bearer ")) {
@@ -35,8 +25,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error("Supabase service configuration is missing.");
+    }
 
     const adminClient = createClient(
       supabaseUrl,
@@ -58,7 +52,10 @@ Deno.serve(async (req: Request) => {
 
     if (userError || !user) {
       return new Response(
-        JSON.stringify({ error: "Invalid user session" }),
+        JSON.stringify({
+          error: "Invalid user session",
+          details: userError?.message ?? "No user found",
+        }),
         {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -72,9 +69,16 @@ Deno.serve(async (req: Request) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (roleError || roleRow?.role !== "admin") {
+    if (roleError) {
+      throw new Error(`Role lookup failed: ${roleError.message}`);
+    }
+
+    if (roleRow?.role !== "admin") {
       return new Response(
-        JSON.stringify({ error: "Administrator access required" }),
+        JSON.stringify({
+          error: "Administrator access required",
+          role: roleRow?.role ?? null,
+        }),
         {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -82,18 +86,15 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    let requestBody: Record<string, unknown> = {};
+    let body: Record<string, unknown> = {};
 
     try {
-      requestBody = await req.json();
+      body = await req.json();
     } catch {
-      requestBody = {};
+      body = {};
     }
 
-    const tracker =
-      requestBody?.tracker === "github"
-        ? "github"
-        : "leetcode";
+    const tracker = body.tracker === "github" ? "github" : "leetcode";
 
     const githubToken = Deno.env.get("GITHUB_TOKEN");
     const githubOwner = Deno.env.get("GITHUB_OWNER");
@@ -101,32 +102,43 @@ Deno.serve(async (req: Request) => {
 
     const workflowFile =
       tracker === "github"
-        ? (
-            Deno.env.get("GITHUB_WORKFLOW_FILE_GITHUB")
-            ?? "github-tracker.yml"
-          )
-        : (
-            Deno.env.get("GITHUB_WORKFLOW_FILE")
-            ?? "update-leetcode.yml"
-          );
+        ? Deno.env.get("GITHUB_WORKFLOW_FILE_GITHUB") ??
+          "github-tracker.yml"
+        : Deno.env.get("GITHUB_WORKFLOW_FILE") ??
+          "update-leetcode.yml";
 
     const githubRef = Deno.env.get("GITHUB_REF") ?? "main";
 
-    if (!githubToken || !githubOwner || !githubRepo) {
-      throw new Error(
-        "Missing GITHUB_TOKEN, GITHUB_OWNER or GITHUB_REPO Edge Function secret.",
-      );
+    if (!githubToken) {
+      throw new Error("GITHUB_TOKEN secret is missing.");
+    }
+
+    if (!githubOwner) {
+      throw new Error("GITHUB_OWNER secret is missing.");
+    }
+
+    if (!githubRepo) {
+      throw new Error("GITHUB_REPO secret is missing.");
     }
 
     const endpoint =
       `https://api.github.com/repos/${githubOwner}/${githubRepo}` +
       `/actions/workflows/${workflowFile}/dispatches`;
 
+    console.log("Dispatching GitHub workflow:", {
+      owner: githubOwner,
+      repo: githubRepo,
+      workflow: workflowFile,
+      ref: githubRef,
+      tracker,
+      tokenPresent: true,
+    });
+
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${githubToken}`,
-        "Accept": "application/vnd.github+json",
+        Authorization: `Bearer ${githubToken}`,
+        Accept: "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
         "Content-Type": "application/json",
       },
@@ -135,10 +147,16 @@ Deno.serve(async (req: Request) => {
       }),
     });
 
+    const responseBody = await response.text();
+
+    console.log("GitHub response:", {
+      status: response.status,
+      body: responseBody,
+    });
+
     if (!response.ok) {
-      const body = await response.text();
       throw new Error(
-        `GitHub workflow dispatch failed (${response.status}): ${body}`,
+        `GitHub dispatch failed. HTTP ${response.status}: ${responseBody}`,
       );
     }
 
@@ -146,6 +164,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({
         ok: true,
         tracker,
+        workflow: workflowFile,
         message:
           tracker === "github"
             ? "GitHub tracker workflow started."
@@ -153,18 +172,32 @@ Deno.serve(async (req: Request) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
       },
     );
   } catch (error) {
+    console.error("SUPER-ACTION ERROR:", error);
+
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : String(error),
+        ok: false,
+        error: error instanceof Error
+          ? error.message
+          : String(error),
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
       },
     );
   }
-});
+});git add .
+git commit -m "sync now bug fix"
+git pull --rebase origin main
+git push origin main
