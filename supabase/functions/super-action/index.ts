@@ -96,6 +96,7 @@ Deno.serve(async (req) => {
 
     const githubToken = (
       Deno.env.get("GITHUB_TOKEN") ||
+      Deno.env.get("GUTHUB_TOKEN") ||
       Deno.env.get("GH_TOKEN") ||
       Deno.env.get("GITHUB_PAT") ||
       ""
