@@ -1240,6 +1240,28 @@ async function confirmDelete() {
 }
 
 
+async function extractErrorMessage(error) {
+  if (!error) return "Unknown error";
+  if (error.context && typeof error.context.json === "function") {
+    try {
+      const body = await error.context.json();
+      if (body) {
+        if (body.error && body.details) return `${body.error}: ${body.details}`;
+        if (body.error && body.response) return `${body.error}: ${body.response}`;
+        if (body.error) return body.error;
+        if (body.message) return body.message;
+      }
+    } catch (_) {
+      try {
+        const text = await error.context.text();
+        if (text) return text;
+      } catch (_) {}
+    }
+  }
+  return error.message || String(error);
+}
+
+
 async function triggerLeetCodeSync() {
   if (!isAdmin()) {
     showToastNotification("Please sign in as Admin to run Sync Now.", true);
@@ -1271,7 +1293,7 @@ async function triggerLeetCodeSync() {
 
     console.log(data);
   } catch (error) {
-    const msg = error?.message || String(error);
+    const msg = await extractErrorMessage(error);
     showToastNotification(`Unable to start sync: ${msg}`, true);
   } finally {
     setTimeout(() => {

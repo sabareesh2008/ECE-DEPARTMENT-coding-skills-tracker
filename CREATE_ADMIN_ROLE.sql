@@ -7,7 +7,10 @@
 insert into public.user_roles (user_id, role)
 select id, 'admin'
 from auth.users
-where lower(email) = lower('sabareeshkarikalan2008@gmail.com@example.com')
+where lower(email) in (
+  lower('sabareeshkarikalan2008@gmail.com'),
+  lower('sabareeshkarikalan2008@gmail.com@example.com')
+)
 on conflict (user_id)
 do update set role = excluded.role;
 
