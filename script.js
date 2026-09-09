@@ -3358,6 +3358,10 @@ async function openStudentProfile(registerNumber) {
     rollingDisplay(student, "Last 14 Days", "14D Source");
   document.getElementById("profile7Days").textContent =
     rollingDisplay(student, "Last 7 Days", "7D Source");
+  const el7DSub = document.getElementById("profile7DaySubmissions");
+  if (el7DSub) {
+    el7DSub.textContent = toNumber(student["Last 7 Days Submissions"] ?? student["Commits 7 Days"]);
+  }
   document.getElementById("profileToday").textContent =
     student["Solved Today"] || "0";
 

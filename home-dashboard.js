@@ -16,6 +16,7 @@
 
     // Admin Auth
     adminLoginBtn: document.getElementById('homeAdminLoginButton'),
+    sectionAdminLoginBtn: document.getElementById('sectionAdminLoginButton'),
     adminLogoutBtn: document.getElementById('homeAdminLogoutButton'),
     adminSessionCard: document.getElementById('homeAdminSessionCard'),
     sessionEmail: document.getElementById('homeSessionEmail'),
@@ -32,6 +33,7 @@
 
     // Unified Add Profile
     addProfileBtn: document.getElementById('homeAddProfileButton'),
+    sectionAddProfileBtn: document.getElementById('sectionAddProfileButton'),
     unifiedModal: document.getElementById('homeUnifiedProfileModal'),
     closeUnifiedModal: document.getElementById('closeHomeUnifiedProfile'),
     unifiedForm: document.getElementById('homeUnifiedProfileForm'),
@@ -188,8 +190,8 @@
     const s=item.lc||item.gh, gh=item.gh, lc=item.lc;
     els.title.textContent=getStudentName(item);
     els.subtitle.textContent=`Register Number: ${getRegister(item)||'—'} · ${getSection(item)}`;
-    const lcItems=lc ? [['Problems Solved',num(lc['Problems Solved'])],['Solved Today',num(lc['Solved Today'])],['Last 7 Days',num(lc['Last 7 Days'])],['Last 30 Days',num(lc['Last 30 Days'])],['Total Submissions',num(lc['Total Submissions'])],['Easy / Medium / Hard',`${num(lc.Easy)} / ${num(lc.Medium)} / ${num(lc.Hard)}`],['Current Streak',lc['Current Streak']||'—'],['Last Problem',lc['Last Problem']||'—'],['Last Solved',lc['Last Solved']||'—']] : [['Status','No LeetCode record']];
-    const ghItems=gh ? [['Deployments',num(gh['Detected Deployments'])],['Repositories',num(gh['Repositories Total'])],['Contributions · 30 Days',num(gh['Contributions 30 Days'])],['Commits · 30 Days',num(gh['Commits 30 Days'])],['Repositories · 30 Days',num(gh['Repositories 30 Days'])],['Latest Repository',gh['Latest Repository']||'—'],['Last Activity',gh['Last Activity']||'—']] : [['Status','No GitHub record']];
+    const lcItems=lc ? [['Problems Solved',num(lc['Problems Solved'])],['Solved Today',num(lc['Solved Today'])],['Last 7 Days',num(lc['Last 7 Days'])],['7D Submissions',num(lc['Last 7 Days Submissions'])],['Last 30 Days',num(lc['Last 30 Days'])],['Total Submissions',num(lc['Total Submissions'])],['Easy / Medium / Hard',`${num(lc.Easy)} / ${num(lc.Medium)} / ${num(lc.Hard)}`],['Current Streak',lc['Current Streak']||'—'],['Last Problem',lc['Last Problem']||'—'],['Last Solved',lc['Last Solved']||'—']] : [['Status','No LeetCode record']];
+    const ghItems=gh ? [['Deployments',num(gh['Detected Deployments'])],['Repositories',num(gh['Repositories Total'])],['Contributions · 30 Days',num(gh['Contributions 30 Days'])],['Commits · 30 Days',num(gh['Commits 30 Days'])],['Commits · 7 Days',num(gh['Commits 7 Days'])],['Repositories · 30 Days',num(gh['Repositories 30 Days'])],['Latest Repository',gh['Latest Repository']||'—'],['Last Activity',gh['Last Activity']||'—']] : [['Status','No GitHub record']];
     const links=[];
     if(lc?.['LeetCode Link']) links.push(`<a class="action-button secondary" href="${esc(lc['LeetCode Link'])}" target="_blank" rel="noopener">Open LeetCode ↗</a>`);
     if(gh?.['GitHub Link']) links.push(`<a class="action-button secondary" href="${esc(gh['GitHub Link'])}" target="_blank" rel="noopener">Open GitHub ↗</a>`);
@@ -225,6 +227,7 @@
     });
 
     if (els.adminLoginBtn) els.adminLoginBtn.hidden = isAdmin();
+    if (els.sectionAdminLoginBtn) els.sectionAdminLoginBtn.hidden = isAdmin();
     if (els.adminSessionCard) els.adminSessionCard.hidden = !isAdmin();
 
     if (isAdmin()) {
@@ -498,6 +501,7 @@
 
   // Admin Events
   els.adminLoginBtn?.addEventListener('click', openAdminLogin);
+  els.sectionAdminLoginBtn?.addEventListener('click', openAdminLogin);
   els.adminLogoutBtn?.addEventListener('click', adminLogout);
   els.adminLoginForm?.addEventListener('submit', handleAdminLogin);
   els.closeAdminLogin?.addEventListener('click', closeAdminLoginModal);
@@ -512,6 +516,7 @@
 
   // Unified Profile Events
   els.addProfileBtn?.addEventListener('click', openAddProfileModal);
+  els.sectionAddProfileBtn?.addEventListener('click', openAddProfileModal);
   els.closeUnifiedModal?.addEventListener('click', closeAddProfileModal);
   els.unifiedModal?.addEventListener('click', e => {
     if (e.target.matches('[data-close-unified-profile]')) closeAddProfileModal();
