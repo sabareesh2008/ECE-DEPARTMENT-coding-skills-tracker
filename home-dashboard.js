@@ -449,6 +449,25 @@
           .single();
       }
 
+      if (result.error && String(result.error.message || "").toLowerCase().includes("year")) {
+        const fallbackPayload = { ...payload };
+        delete fallbackPayload.year;
+        if (existing?.id) {
+          result = await client
+            .from('students')
+            .update(fallbackPayload)
+            .eq('id', existing.id)
+            .select()
+            .single();
+        } else {
+          result = await client
+            .from('students')
+            .insert(fallbackPayload)
+            .select()
+            .single();
+        }
+      }
+
       if (result.error) throw result.error;
 
       if (els.profileMsg) {

@@ -914,13 +914,28 @@ async function loadRegisteredStudents() {
     throw new Error("Administrator access required.");
   }
 
-  const { data, error } = await supabaseClient
+  let { data, error } = await supabaseClient
     .from("students")
     .select(
       "id,register_number,student_name,leetcode_username,github_username,section,created_at,year"
     )
     .order("section", { ascending: true })
     .order("register_number", { ascending: true });
+
+  if (error && String(error.message || "").toLowerCase().includes("year")) {
+    const retry = await supabaseClient
+      .from("students")
+      .select(
+        "id,register_number,student_name,leetcode_username,github_username,section,created_at"
+      )
+      .order("section", { ascending: true })
+      .order("register_number", { ascending: true });
+
+    if (!retry.error) {
+      data = retry.data;
+      error = null;
+    }
+  }
 
   if (error) throw error;
 
@@ -1201,6 +1216,25 @@ async function saveProfile(event) {
         .insert(payload)
         .select()
         .single();
+    }
+
+    if (result.error && String(result.error.message || "").toLowerCase().includes("year")) {
+      const fallbackPayload = { ...payload };
+      delete fallbackPayload.year;
+      if (targetId) {
+        result = await supabaseClient
+          .from("students")
+          .update(fallbackPayload)
+          .eq("id", targetId)
+          .select()
+          .single();
+      } else {
+        result = await supabaseClient
+          .from("students")
+          .insert(fallbackPayload)
+          .select()
+          .single();
+      }
     }
 
     if (result.error) throw result.error;
