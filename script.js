@@ -119,12 +119,13 @@ const SECTION_NAMES = [
 ];
 
 const YEAR_SECTIONS = {
-  1: Array.from({ length: 9 }, (_, i) => `ECE ${String.fromCharCode(65 + i)}`),
-  2: ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F"],
-  3: ["ECE A", "ECE B", "ECE C", "ECE D"]
+  1: ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"],
+  2: ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"],
+  3: ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"],
+  4: ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"]
 };
 
-const YEAR_LABELS = { 1: "YEAR I", 2: "YEAR II", 3: "YEAR III" };
+const YEAR_LABELS = { 1: "YEAR I", 2: "YEAR II", 3: "YEAR III", 4: "YEAR IV" };
 
 const exportColumns = [
   "Overall Rank",
@@ -909,7 +910,7 @@ async function loadRegisteredStudents() {
   const { data, error } = await supabaseClient
     .from("students")
     .select(
-      "id,register_number,student_name,leetcode_username,section,created_at"
+      "id,register_number,student_name,leetcode_username,github_username,section,created_at,year"
     )
     .order("section", { ascending: true })
     .order("register_number", { ascending: true });
@@ -922,10 +923,14 @@ async function loadRegisteredStudents() {
 
 
 function getFilteredManagedStudents() {
-  const section = manageSectionFilter.value;
+  const yearFilter = document.getElementById("manageYearFilter")?.value || "ALL";
+  const section = manageSectionFilter ? manageSectionFilter.value : "ALL";
   const query = manageSearch.value.trim().toLowerCase();
 
   return directoryStudents.filter((student) => {
+    const yearMatches =
+      yearFilter === "ALL" || String(student.year || 2) === String(yearFilter);
+
     const sectionMatches =
       section === "ALL" || student.section === section;
 
@@ -941,7 +946,7 @@ function getFilteredManagedStudents() {
         .toLowerCase()
         .includes(query);
 
-    return sectionMatches && textMatches;
+    return yearMatches && sectionMatches && textMatches;
   });
 }
 
@@ -955,7 +960,7 @@ function renderManageStudents() {
   if (!students.length) {
     manageStudentsBody.innerHTML = `
       <tr>
-        <td colspan="5" class="loading-row">No students found.</td>
+        <td colspan="6" class="loading-row">No students found.</td>
       </tr>
     `;
     return;
@@ -963,6 +968,8 @@ function renderManageStudents() {
 
   manageStudentsBody.innerHTML = students.map((student) => `
     <tr>
+      <td><span class="section-pill">Year ${escapeHTML(student.year || 2)}</span></td>
+
       <td><span class="section-pill">${escapeHTML(student.section)}</span></td>
 
       <td>${escapeHTML(student.register_number)}</td>
@@ -972,11 +979,11 @@ function renderManageStudents() {
       <td>
         <a
           class="profile-link"
-          href="https://leetcode.com/u/${encodeURIComponent(student.leetcode_username)}/"
+          href="https://leetcode.com/u/${encodeURIComponent(student.leetcode_username || '')}/"
           target="_blank"
           rel="noopener noreferrer"
         >
-          ${escapeHTML(student.leetcode_username)}
+          ${escapeHTML(student.leetcode_username || '—')}
         </a>
       </td>
 
@@ -1015,6 +1022,11 @@ async function openManageStudents() {
     manageSectionFilter.value = "ALL";
   }
 
+  const yearFilterEl = document.getElementById("manageYearFilter");
+  if (yearFilterEl) {
+    yearFilterEl.value = selectedYear ? String(selectedYear) : "ALL";
+  }
+
   manageSearch.value = "";
   renderManageStudents();
 }
@@ -1029,6 +1041,8 @@ function resetProfileForm() {
   profileForm.reset();
   editingStudentId.value = "";
   formMessage.textContent = "";
+  const yearInput = document.getElementById("studentYear");
+  if (yearInput) yearInput.value = selectedYear ? String(selectedYear) : "2";
   generatedLink.textContent = "https://leetcode.com/u/username/";
 }
 
@@ -1063,11 +1077,16 @@ function openEditModal(studentId) {
   editingStudentId.value = student.id;
   registerNumberInput.value = student.register_number;
   studentNameInput.value = student.student_name;
-  usernameInput.value = student.leetcode_username;
+  usernameInput.value = student.leetcode_username || "";
   studentSectionInput.value = student.section;
 
+  const yearInput = document.getElementById("studentYear");
+  if (yearInput) {
+    yearInput.value = String(student.year || 2);
+  }
+
   generatedLink.textContent =
-    `https://leetcode.com/u/${student.leetcode_username}/`;
+    `https://leetcode.com/u/${student.leetcode_username || ''}/`;
 
   document.getElementById("profileModalTitle").textContent =
     "Edit LeetCode Profile";
@@ -1113,6 +1132,8 @@ async function saveProfile(event) {
   const regNumber = registerNumberInput.value.trim();
   const studentName = studentNameInput.value.trim();
   const leetcodeUser = usernameInput.value.trim().replace(/\s+/g, "");
+  const yearInput = document.getElementById("studentYear");
+  const yearVal = yearInput ? (Number(yearInput.value) || 2) : 2;
 
   if (!regNumber || !studentName || !leetcodeUser) {
     formMessage.textContent = "Please fill in all fields (spaces are not allowed in usernames).";
@@ -1124,7 +1145,8 @@ async function saveProfile(event) {
     register_number: regNumber,
     student_name: studentName,
     leetcode_username: leetcodeUser,
-    section: studentSectionInput.value
+    section: studentSectionInput.value,
+    year: yearVal
   };
 
   saveProfileButton.disabled = true;
@@ -4305,8 +4327,27 @@ function yearSectionMetric(section) {
 
 function renderYearSections() {
   if (!yearSectionGrid || !selectedYear) return;
-  const sections = YEAR_SECTIONS[selectedYear] || [];
+  const sections = YEAR_SECTIONS[selectedYear] || ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"];
+  const allRows = currentYearRows();
+
   yearSectionGrid.innerHTML = sections.map(section => {
+    if (section === "OVERALL") {
+      const totalCount = allRows.length;
+      const todayCount = allRows.filter(s => Number(s["Solved Today"] ?? 0) > 0).length;
+      const streakCount = allRows.filter(s => Number(s["Current Streak"] ?? 0) > 0).length;
+      return `
+        <button class="section-card year-section-card overall-card" data-year-section="OVERALL" type="button">
+          <span class="section-card-title">OVERALL</span>
+          <strong id="countOverall">${totalCount}</strong>
+          <span>Department Total</span>
+          <div class="section-challenge-mini">
+            <span>🎯 Today <strong>${todayCount}/${totalCount}</strong></span>
+            <span>🔥 On Streak <strong>${streakCount}</strong></span>
+          </div>
+        </button>
+      `;
+    }
+
     const stats = yearSectionMetric(section);
     return `
       <button class="section-card year-section-card" data-year-section="${escapeHTML(section)}" type="button">
@@ -4314,35 +4355,41 @@ function renderYearSections() {
         <strong>${stats.students}</strong>
         <span>${stats.students === 1 ? "Student" : "Students"}</span>
         <div class="section-challenge-mini">
-          <span>🎯 Today <strong>${stats.today}/${stats.students}</strong></span>
+          <span>🎯 Today <strong>${stats.today}/${stats.students || 0}</strong></span>
           <span>🔥 On Streak <strong>${stats.streak}</strong></span>
         </div>
       </button>
     `;
   }).join("");
+
+  document.querySelectorAll(".year-tab-btn").forEach((btn) => {
+    btn.classList.toggle("active", String(btn.dataset.year) === String(selectedYear));
+  });
 }
 
 function showYearSelection() {
-  if (yearSelectionPanel) yearSelectionPanel.hidden = false;
-  if (yearSectionPanel) yearSectionPanel.hidden = true;
+  if (yearSectionPanel) yearSectionPanel.hidden = false;
+  renderYearSections();
 }
 
 function showYearSections() {
-  if (!selectedYear) return showYearSelection();
-  if (yearSelectionPanel) yearSelectionPanel.hidden = true;
+  if (!selectedYear) selectedYear = 2;
   if (yearSectionPanel) yearSectionPanel.hidden = false;
-  if (selectedYearKicker) selectedYearKicker.textContent = YEAR_LABELS[selectedYear];
-  if (selectedYearTitle) selectedYearTitle.textContent = `${YEAR_LABELS[selectedYear]} Sections`;
+  if (selectedYearKicker) selectedYearKicker.textContent = YEAR_LABELS[selectedYear] || `YEAR ${selectedYear}`;
+  if (selectedYearTitle) selectedYearTitle.textContent = `${YEAR_LABELS[selectedYear] || 'Year ' + selectedYear} Sections`;
   renderYearSections();
 }
 
 async function selectYear(year) {
-  selectedYear = Number(year);
+  selectedYear = Number(year) || 2;
   selectedSection = null;
   leaderboardView.hidden = true;
   sectionHome.hidden = false;
   searchInput.value = "";
-  showYearSections();
+
+  document.querySelectorAll(".year-tab-btn").forEach((btn) => {
+    btn.classList.toggle("active", String(btn.dataset.year) === String(selectedYear));
+  });
 
   try {
     if (!yearCache[selectedYear]) await loadData(selectedYear);
@@ -4350,7 +4397,7 @@ async function selectYear(year) {
   } catch (error) {
     yearCache[selectedYear] = [];
     allStudents = [];
-    messageElement.textContent = `${YEAR_LABELS[selectedYear]} data is not available yet.`;
+    if (messageElement) messageElement.textContent = `${YEAR_LABELS[selectedYear] || 'Year ' + selectedYear} data is not available yet.`;
   }
 
   updateLastUpdated();
@@ -4359,13 +4406,11 @@ async function selectYear(year) {
 
 async function initialize() {
   createClient();
-  await loadData(2);
-  selectedYear = null;
-  showYearSelection();
+  await selectYear(2);
   await restoreAdminSession();
-  await loadDailyChallengeData();
-  await loadCodingAnalyticsData();
-  await loadFacultyData();
+  await loadDailyChallengeData().catch(() => {});
+  await loadCodingAnalyticsData().catch(() => {});
+  await loadFacultyData().catch(() => {});
   updateAdminUI();
 }
 
@@ -4383,11 +4428,12 @@ yearSectionGrid?.addEventListener("click", (event) => {
 });
 
 backToYearsButton?.addEventListener("click", () => {
-  selectedYear = null;
   selectedSection = null;
   searchInput.value = "";
-  showYearSelection();
+  showYearSections();
 });
+
+document.getElementById("manageYearFilter")?.addEventListener("change", renderManageStudents);
 
 backToSectionsButton.addEventListener("click", showSectionHome);
 

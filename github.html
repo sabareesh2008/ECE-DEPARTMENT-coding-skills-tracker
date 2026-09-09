@@ -91,32 +91,15 @@
 
 
 
-      <div id="yearSelectionPanel" class="year-selection-panel">
-        <button class="year-card" type="button" data-year="1">
-          <span class="year-card-kicker">YEAR I</span>
-          <strong>Year I</strong>
-          <span>Academic Year I</span>
-        </button>
-        <button class="year-card" type="button" data-year="2">
-          <span class="year-card-kicker">YEAR II</span>
-          <strong>Year II</strong>
-          <span>Current Data</span>
-        </button>
-        <button class="year-card" type="button" data-year="3">
-          <span class="year-card-kicker">YEAR III</span>
-          <strong>Year III</strong>
-          <span>Academic Year III</span>
-        </button>
+      <!-- Academic Year Selector Menu Bar -->
+      <div class="year-nav-bar" id="yearTabBar" role="tablist" aria-label="Academic Year Selection">
+        <button class="year-tab-btn" data-year="1" role="tab" type="button">Year I</button>
+        <button class="year-tab-btn active" data-year="2" role="tab" type="button">Year II</button>
+        <button class="year-tab-btn" data-year="3" role="tab" type="button">Year III</button>
+        <button class="year-tab-btn" data-year="4" role="tab" type="button">Year IV</button>
       </div>
 
-      <div id="yearSectionPanel" class="year-section-panel" hidden>
-        <div class="year-section-head">
-          <div>
-            <div class="eyebrow" id="selectedYearKicker">YEAR II</div>
-            <h2 id="selectedYearTitle">Year II Sections</h2>
-          </div>
-          <button id="backToYearsButton" class="action-button secondary" type="button">← Years</button>
-        </div>
+      <div id="yearSectionPanel" class="year-section-panel">
         <div id="yearSectionGrid" class="section-grid year-section-grid"></div>
       </div>
 
@@ -590,6 +573,30 @@
         <label class="form-label" for="studentName">Student Name</label>
         <input id="studentName" class="form-input" required>
 
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label class="form-label" for="studentYear">Academic Year</label>
+            <select id="studentYear" class="form-input" required>
+              <option value="1">Year I</option>
+              <option value="2" selected>Year II</option>
+              <option value="3">Year III</option>
+              <option value="4">Year IV</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="studentSection">Section</label>
+            <select id="studentSection" class="form-input" required>
+              <option value="">Select Section</option>
+              <option value="ECE A">ECE A</option>
+              <option value="ECE B">ECE B</option>
+              <option value="ECE C">ECE C</option>
+              <option value="ECE D">ECE D</option>
+              <option value="ECE E">ECE E</option>
+              <option value="ECE F">ECE F</option>
+            </select>
+          </div>
+        </div>
+
         <label class="form-label" for="leetcodeUsername">GitHub Username</label>
         <input
           id="leetcodeUsername"
@@ -597,17 +604,6 @@
           required
           pattern="[A-Za-z0-9_-]+"
         >
-
-        <label class="form-label" for="studentSection">Section</label>
-        <select id="studentSection" class="form-input" required>
-          <option value="">Select Section</option>
-          <option value="ECE A">ECE A</option>
-          <option value="ECE B">ECE B</option>
-          <option value="ECE C">ECE C</option>
-          <option value="ECE D">ECE D</option>
-          <option value="ECE E">ECE E</option>
-          <option value="ECE F">ECE F</option>
-        </select>
 
         <div class="generated-link" id="generatedLink">
           https://github.com/username
@@ -645,6 +641,14 @@
       </div>
 
       <div class="manage-toolbar section-manage-toolbar">
+        <select id="manageYearFilter" class="form-input">
+          <option value="ALL">All Years</option>
+          <option value="1">Year I</option>
+          <option value="2">Year II</option>
+          <option value="3">Year III</option>
+          <option value="4">Year IV</option>
+        </select>
+
         <select id="manageSectionFilter" class="form-input">
           <option value="ALL">All Sections</option>
           <option value="ECE A">ECE A</option>
@@ -669,20 +673,13 @@
         <table class="manage-table">
           <thead>
             <tr>
-                <th>Rank</th>
-                <th>Section Rank</th>
-                <th>Register Number</th>
-                <th>Student</th>
-                <th>GitHub</th>
-                <th>30D Contributions</th>
-                <th>7D Contributions</th>
-                <th>Today Contributions</th>
-                <th>Repositories</th>
-                <th>Easy</th>
-                <th>Medium</th>
-                <th>Hard</th>
-                <th>Status</th>
-</tr>
+              <th>Year</th>
+              <th>Section</th>
+              <th>Register Number</th>
+              <th>Student Name</th>
+              <th>GitHub Username</th>
+              <th>Actions</th>
+            </tr>
           </thead>
 
           <tbody id="manageStudentsBody"></tbody>

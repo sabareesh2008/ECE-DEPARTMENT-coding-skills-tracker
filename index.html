@@ -36,11 +36,25 @@
     </div>
 
     <div class="hero-side">
+      <div id="homeAdminSessionCard" class="session-card" hidden>
+        <div>
+          <span>Administrator</span>
+          <strong id="homeSessionEmail">—</strong>
+        </div>
+        <span class="role-badge role-admin">Admin Mode</span>
+        <button id="homeAdminLogoutButton" class="action-button secondary compact" type="button">Logout</button>
+      </div>
+
+      <div class="home-admin-badge-wrap">
+        <button id="homeAdminLoginButton" class="action-button primary" type="button">Admin Login</button>
+        <button id="homeAddProfileButton" class="action-button primary admin-only" type="button" hidden>+ Add Profile</button>
+      </div>
+
       <div class="status-card tracker-entry-status">
         <div class="live-dot"></div>
         <div>
-          <span>Public Access</span>
-          <strong>No login required</strong>
+          <span id="homeAccessLabel">Public Access</span>
+          <strong id="homeAccessNote">No login required</strong>
         </div>
       </div>
     </div>
@@ -104,6 +118,137 @@
       </div>
     </section>
   </main>
+
+  <!-- =======================================================
+       HOME ADMIN LOGIN MODAL
+       ======================================================= -->
+  <div id="homeAdminLoginModal" class="profile-modal" hidden>
+    <div class="profile-modal-backdrop" data-close-home-admin-login></div>
+
+    <section class="profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="homeAdminLoginTitle">
+      <div class="profile-modal-head">
+        <div>
+          <div class="eyebrow">ADMIN AUTHENTICATION</div>
+          <h2 id="homeAdminLoginTitle">Admin Login</h2>
+        </div>
+
+        <button id="closeHomeAdminLogin" class="modal-close" type="button">×</button>
+      </div>
+
+      <form id="homeAdminLoginForm">
+        <label class="form-label" for="homeAdminEmail">Admin Email</label>
+        <input
+          id="homeAdminEmail"
+          class="form-input"
+          type="email"
+          autocomplete="username"
+          required
+          placeholder="admin@example.com"
+        >
+
+        <label class="form-label" for="homeAdminPassword">Password</label>
+        <div class="password-field">
+          <input
+            id="homeAdminPassword"
+            class="form-input"
+            type="password"
+            autocomplete="current-password"
+            required
+            placeholder="••••••••"
+          >
+
+          <button
+            id="toggleHomeAdminPassword"
+            class="password-toggle"
+            type="button"
+          >
+            Show
+          </button>
+        </div>
+
+        <p id="homeAdminLoginMessage" class="form-message" role="status" aria-live="polite"></p>
+
+        <div class="modal-actions">
+          <button class="action-button secondary" type="button" data-close-home-admin-login>
+            Cancel
+          </button>
+
+          <button id="homeAdminSignInButton" class="action-button primary" type="submit">
+            Login
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- =======================================================
+       UNIFIED ADD PROFILE MODAL (LEETCODE + GITHUB)
+       ======================================================= -->
+  <div id="homeUnifiedProfileModal" class="profile-modal" hidden>
+    <div class="profile-modal-backdrop" data-close-unified-profile></div>
+
+    <section class="profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="homeUnifiedProfileTitle">
+      <div class="profile-modal-head">
+        <div>
+          <div class="eyebrow">STUDENT REGISTRATION</div>
+          <h2 id="homeUnifiedProfileTitle">Add Student Profile</h2>
+          <p style="color:var(--muted);font-size:13px;margin-top:4px;">Register student with both LeetCode and GitHub usernames</p>
+        </div>
+
+        <button id="closeHomeUnifiedProfile" class="modal-close" type="button">×</button>
+      </div>
+
+      <form id="homeUnifiedProfileForm">
+        <label class="form-label" for="homeRegNumber">Register Number</label>
+        <input id="homeRegNumber" class="form-input" required placeholder="e.g. 7376221EC101">
+
+        <label class="form-label" for="homeStudentName">Student Name</label>
+        <input id="homeStudentName" class="form-input" required placeholder="e.g. John Doe">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label class="form-label" for="homeStudentYear">Academic Year</label>
+            <select id="homeStudentYear" class="form-input" required>
+              <option value="1">Year I</option>
+              <option value="2" selected>Year II</option>
+              <option value="3">Year III</option>
+              <option value="4">Year IV</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="homeStudentSection">Section</label>
+            <select id="homeStudentSection" class="form-input" required>
+              <option value="">Select Section</option>
+              <option value="ECE A">ECE A</option>
+              <option value="ECE B">ECE B</option>
+              <option value="ECE C">ECE C</option>
+              <option value="ECE D">ECE D</option>
+              <option value="ECE E">ECE E</option>
+              <option value="ECE F">ECE F</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="form-label" for="homeLeetcodeUser">LeetCode Username</label>
+        <input id="homeLeetcodeUser" class="form-input" placeholder="e.g. leetcode_user">
+
+        <label class="form-label" for="homeGithubUser">GitHub Username</label>
+        <input id="homeGithubUser" class="form-input" placeholder="e.g. github_user">
+
+        <p id="homeProfileFormMessage" class="form-message" role="status" aria-live="polite"></p>
+
+        <div class="modal-actions">
+          <button class="action-button secondary" type="button" data-close-unified-profile>
+            Cancel
+          </button>
+
+          <button id="homeSaveProfileButton" class="action-button primary" type="submit">
+            Save Student
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
 
   <footer>
     ECE CodeMetrix · Public Coding Progress Platform

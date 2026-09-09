@@ -1,5 +1,5 @@
 (() => {
-  const state = { leetcode: [], github: [], merged: [] };
+  const state = { leetcode: [], github: [], merged: [], currentUser: null, currentRole: null };
   const els = {
     leetTop: document.getElementById('top50LeetCodeButton'),
     gitTop: document.getElementById('top50GitHubButton'),
@@ -12,7 +12,37 @@
     content: document.getElementById('studentDashboardContent'),
     title: document.getElementById('studentDashboardTitle'),
     subtitle: document.getElementById('studentDashboardSubtitle'),
-    message: document.getElementById('homeActionMessage')
+    message: document.getElementById('homeActionMessage'),
+
+    // Admin Auth
+    adminLoginBtn: document.getElementById('homeAdminLoginButton'),
+    adminLogoutBtn: document.getElementById('homeAdminLogoutButton'),
+    adminSessionCard: document.getElementById('homeAdminSessionCard'),
+    sessionEmail: document.getElementById('homeSessionEmail'),
+    accessLabel: document.getElementById('homeAccessLabel'),
+    accessNote: document.getElementById('homeAccessNote'),
+    adminLoginModal: document.getElementById('homeAdminLoginModal'),
+    adminLoginForm: document.getElementById('homeAdminLoginForm'),
+    adminEmail: document.getElementById('homeAdminEmail'),
+    adminPassword: document.getElementById('homeAdminPassword'),
+    adminSignInBtn: document.getElementById('homeAdminSignInButton'),
+    adminLoginMsg: document.getElementById('homeAdminLoginMessage'),
+    closeAdminLogin: document.getElementById('closeHomeAdminLogin'),
+    toggleAdminPassword: document.getElementById('toggleHomeAdminPassword'),
+
+    // Unified Add Profile
+    addProfileBtn: document.getElementById('homeAddProfileButton'),
+    unifiedModal: document.getElementById('homeUnifiedProfileModal'),
+    closeUnifiedModal: document.getElementById('closeHomeUnifiedProfile'),
+    unifiedForm: document.getElementById('homeUnifiedProfileForm'),
+    regInput: document.getElementById('homeRegNumber'),
+    nameInput: document.getElementById('homeStudentName'),
+    yearInput: document.getElementById('homeStudentYear'),
+    sectionInput: document.getElementById('homeStudentSection'),
+    leetcodeInput: document.getElementById('homeLeetcodeUser'),
+    githubInput: document.getElementById('homeGithubUser'),
+    saveProfileBtn: document.getElementById('homeSaveProfileButton'),
+    profileMsg: document.getElementById('homeProfileFormMessage')
   };
 
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -87,8 +117,6 @@
     XLSX.writeFile(wb,type==='leetcode'?'CodeMetrix_Top_50_LeetCode.xlsx':'CodeMetrix_Top_50_GitHub.xlsx');
     setMessage(`Top 50 ${type==='leetcode'?'LeetCode':'GitHub'} Excel downloaded.`);
   }
-
-
 
   function supabaseClient(){
     if(window.supabase && typeof window.supabase.createClient==='function' && window.APP_CONFIG?.SUPABASE_URL && window.APP_CONFIG?.SUPABASE_ANON_KEY){
@@ -184,6 +212,265 @@
   function closeDashboard(){els.modal.hidden=true;document.body.classList.remove('modal-open');}
   async function ensureData(){ if(!state.leetcode.length && !state.github.length) await loadData(); }
 
+  // ============================================================
+  // ADMIN AUTHENTICATION
+  // ============================================================
+  function isAdmin() {
+    return state.currentRole === 'admin';
+  }
+
+  function updateAdminUI() {
+    document.querySelectorAll('.admin-only').forEach((element) => {
+      element.hidden = !isAdmin();
+    });
+
+    if (els.adminLoginBtn) els.adminLoginBtn.hidden = isAdmin();
+    if (els.adminSessionCard) els.adminSessionCard.hidden = !isAdmin();
+
+    if (isAdmin()) {
+      if (els.sessionEmail) els.sessionEmail.textContent = state.currentUser?.email || 'Administrator';
+      if (els.accessLabel) els.accessLabel.textContent = 'Admin Access';
+      if (els.accessNote) els.accessNote.textContent = 'Add Profile enabled';
+    } else {
+      if (els.accessLabel) els.accessLabel.textContent = 'Public Access';
+      if (els.accessNote) els.accessNote.textContent = 'No login required';
+    }
+  }
+
+  async function fetchAdminRole(user) {
+    const client = supabaseClient();
+    const { data, error } = await client
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    if (error || data?.role !== 'admin') {
+      throw new Error('This account is not authorized as an administrator.');
+    }
+    return 'admin';
+  }
+
+  function openAdminLogin() {
+    if (els.adminLoginMsg) els.adminLoginMsg.textContent = '';
+    if (els.adminLoginModal) {
+      els.adminLoginModal.hidden = false;
+      document.body.classList.add('modal-open');
+    }
+  }
+
+  function closeAdminLoginModal() {
+    if (els.adminLoginModal) {
+      els.adminLoginModal.hidden = true;
+      document.body.classList.remove('modal-open');
+    }
+  }
+
+  async function handleAdminLogin(event) {
+    event.preventDefault();
+    if (!els.adminSignInBtn) return;
+
+    els.adminSignInBtn.disabled = true;
+    els.adminSignInBtn.textContent = 'Checking...';
+
+    try {
+      const client = supabaseClient();
+      const { data, error } = await client.auth.signInWithPassword({
+        email: els.adminEmail.value.trim(),
+        password: els.adminPassword.value
+      });
+
+      if (error) throw error;
+
+      const role = await fetchAdminRole(data.user);
+      state.currentUser = data.user;
+      state.currentRole = role;
+
+      els.adminPassword.value = '';
+      closeAdminLoginModal();
+      updateAdminUI();
+      setMessage('Logged in as Administrator.');
+    } catch (error) {
+      const client = supabaseClient();
+      await client.auth.signOut().catch(() => {});
+      state.currentUser = null;
+      state.currentRole = null;
+      updateAdminUI();
+
+      if (els.adminLoginMsg) {
+        els.adminLoginMsg.textContent = error.message;
+        els.adminLoginMsg.className = 'form-message error';
+      }
+    } finally {
+      els.adminSignInBtn.disabled = false;
+      els.adminSignInBtn.textContent = 'Login';
+    }
+  }
+
+  async function restoreAdminSession() {
+    try {
+      const client = supabaseClient();
+      const { data: { session } } = await client.auth.getSession();
+      if (!session?.user) {
+        updateAdminUI();
+        return;
+      }
+      state.currentRole = await fetchAdminRole(session.user);
+      state.currentUser = session.user;
+    } catch {
+      state.currentUser = null;
+      state.currentRole = null;
+    }
+    updateAdminUI();
+  }
+
+  async function adminLogout() {
+    try {
+      const client = supabaseClient();
+      await client.auth.signOut();
+    } catch {}
+    state.currentUser = null;
+    state.currentRole = null;
+    updateAdminUI();
+    setMessage('Logged out.');
+  }
+
+  // ============================================================
+  // UNIFIED ADD PROFILE (LEETCODE + GITHUB)
+  // ============================================================
+  function openAddProfileModal() {
+    if (!isAdmin()) {
+      openAdminLogin();
+      return;
+    }
+    if (els.unifiedForm) els.unifiedForm.reset();
+    if (els.yearInput) els.yearInput.value = '2';
+    if (els.profileMsg) els.profileMsg.textContent = '';
+    if (els.unifiedModal) {
+      els.unifiedModal.hidden = false;
+      document.body.classList.add('modal-open');
+    }
+  }
+
+  function closeAddProfileModal() {
+    if (els.unifiedModal) {
+      els.unifiedModal.hidden = true;
+      document.body.classList.remove('modal-open');
+    }
+  }
+
+  async function triggerBackgroundSync() {
+    try {
+      const client = supabaseClient();
+      const { data: { session } } = await client.auth.getSession();
+      if (!session?.access_token) return;
+
+      const endpoint = `${window.APP_CONFIG?.SUPABASE_URL || ''}/functions/v1/super-action`;
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ action: 'sync_all' })
+      });
+    } catch (err) {
+      console.warn('Background sync trigger notice:', err);
+    }
+  }
+
+  async function handleSaveUnifiedProfile(event) {
+    event.preventDefault();
+    if (!isAdmin()) return;
+
+    const regNumber = els.regInput?.value.trim() || '';
+    const studentName = els.nameInput?.value.trim() || '';
+    const yearVal = Number(els.yearInput?.value) || 2;
+    const sectionVal = els.sectionInput?.value || '';
+    const leetcodeUser = els.leetcodeInput?.value.trim().replace(/\s+/g, '') || null;
+    const githubUser = els.githubInput?.value.trim().replace(/\s+/g, '') || null;
+
+    if (!regNumber || !studentName || !sectionVal) {
+      if (els.profileMsg) {
+        els.profileMsg.textContent = 'Please provide Register Number, Student Name, and Section.';
+        els.profileMsg.className = 'form-message error';
+      }
+      return;
+    }
+
+    if (!leetcodeUser && !githubUser) {
+      if (els.profileMsg) {
+        els.profileMsg.textContent = 'Please provide at least one username (LeetCode or GitHub).';
+        els.profileMsg.className = 'form-message error';
+      }
+      return;
+    }
+
+    els.saveProfileBtn.disabled = true;
+    els.saveProfileBtn.textContent = 'Saving...';
+
+    try {
+      const client = supabaseClient();
+
+      // Check if student with register_number already exists
+      const { data: existing, error: lookupErr } = await client
+        .from('students')
+        .select('id, register_number, leetcode_username, github_username')
+        .eq('register_number', regNumber)
+        .maybeSingle();
+
+      if (lookupErr) throw lookupErr;
+
+      const payload = {
+        register_number: regNumber,
+        student_name: studentName,
+        year: yearVal,
+        section: sectionVal,
+        leetcode_username: leetcodeUser || existing?.leetcode_username || null,
+        github_username: githubUser || existing?.github_username || null
+      };
+
+      let result;
+      if (existing?.id) {
+        result = await client
+          .from('students')
+          .update(payload)
+          .eq('id', existing.id)
+          .select()
+          .single();
+      } else {
+        result = await client
+          .from('students')
+          .insert(payload)
+          .select()
+          .single();
+      }
+
+      if (result.error) throw result.error;
+
+      if (els.profileMsg) {
+        els.profileMsg.textContent = 'Student profile saved successfully!';
+        els.profileMsg.className = 'form-message success';
+      }
+
+      setMessage(`Student ${studentName} saved. Starting sync...`);
+      triggerBackgroundSync().catch(() => {});
+
+      setTimeout(closeAddProfileModal, 900);
+    } catch (err) {
+      if (els.profileMsg) {
+        els.profileMsg.textContent = err.message || 'Failed to save student.';
+        els.profileMsg.className = 'form-message error';
+      }
+    } finally {
+      els.saveProfileBtn.disabled = false;
+      els.saveProfileBtn.textContent = 'Save Student';
+    }
+  }
+
+  // ============================================================
+  // EVENT LISTENERS
+  // ============================================================
   els.leetTop?.addEventListener('click',async()=>{try{await ensureData();downloadTop50(state.leetcode,'leetcode');}catch(e){setMessage(e.message,true);}});
   els.gitTop?.addEventListener('click',async()=>{try{await ensureData();downloadTop50(state.github,'github');}catch(e){setMessage(e.message,true);}});
   els.facultyLeetCode?.addEventListener('click',async()=>{try{await downloadAllFacultyLeetCodeReport();}catch(e){setMessage(e.message,true);}});
@@ -200,7 +487,38 @@
   });
   els.close?.addEventListener('click',closeDashboard);
   els.modal?.addEventListener('click',e=>{if(e.target.matches('[data-close-student-dashboard]'))closeDashboard();});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!els.modal?.hidden)closeDashboard();});
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      if(!els.modal?.hidden) closeDashboard();
+      if(!els.adminLoginModal?.hidden) closeAdminLoginModal();
+      if(!els.unifiedModal?.hidden) closeAddProfileModal();
+    }
+  });
   els.back?.addEventListener('click',()=>{if(history.length>1)history.back();else location.href='leetcode.html';});
+
+  // Admin Events
+  els.adminLoginBtn?.addEventListener('click', openAdminLogin);
+  els.adminLogoutBtn?.addEventListener('click', adminLogout);
+  els.adminLoginForm?.addEventListener('submit', handleAdminLogin);
+  els.closeAdminLogin?.addEventListener('click', closeAdminLoginModal);
+  els.adminLoginModal?.addEventListener('click', e => {
+    if (e.target.matches('[data-close-home-admin-login]')) closeAdminLoginModal();
+  });
+  els.toggleAdminPassword?.addEventListener('click', () => {
+    const showing = els.adminPassword.type === 'text';
+    els.adminPassword.type = showing ? 'password' : 'text';
+    els.toggleAdminPassword.textContent = showing ? 'Show' : 'Hide';
+  });
+
+  // Unified Profile Events
+  els.addProfileBtn?.addEventListener('click', openAddProfileModal);
+  els.closeUnifiedModal?.addEventListener('click', closeAddProfileModal);
+  els.unifiedModal?.addEventListener('click', e => {
+    if (e.target.matches('[data-close-unified-profile]')) closeAddProfileModal();
+  });
+  els.unifiedForm?.addEventListener('submit', handleSaveUnifiedProfile);
+
+  // Initialize
   loadData().catch(()=>{});
+  restoreAdminSession().catch(()=>{});
 })();
