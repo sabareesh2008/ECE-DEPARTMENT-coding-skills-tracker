@@ -475,8 +475,12 @@
         els.profileMsg.className = 'form-message success';
       }
 
-      setMessage(`Student ${studentName} saved. Starting sync...`);
-      triggerBackgroundSync().catch(() => {});
+      let syncAction = 'sync_all';
+      if (leetcodeUser && !githubUser) syncAction = 'trigger_leetcode_sync';
+      if (githubUser && !leetcodeUser) syncAction = 'trigger_github_sync';
+
+      setMessage(`Student ${studentName} saved. Starting automated tracker sync...`);
+      triggerBackgroundSync(syncAction).catch(() => {});
 
       setTimeout(closeAddProfileModal, 900);
     } catch (err) {

@@ -128,53 +128,71 @@ Deno.serve(async (req) => {
       );
     }
 
-    const workflow =
-      Deno.env.get("GITHUB_WORKFLOW_FILE") ||
-      "update-leetcode.yml";
+    let reqBody: Record<string, unknown> = {};
+    try {
+      reqBody = await req.json();
+    } catch {
+      reqBody = {};
+    }
 
-    const ref =
-      Deno.env.get("GITHUB_REF") ||
-      "main";
+    const action = String(reqBody.action || reqBody.tracker || "").toLowerCase();
+    console.log("Requested action:", action, "Body:", reqBody);
 
-    const githubUrl =
-      `https://api.github.com/repos/${githubOwner}/${githubRepo}` +
-      `/actions/workflows/${workflow}/dispatches`;
+    const workflowsToDispatch: string[] = [];
+    if (action === "trigger_github_sync" || action === "github") {
+      workflowsToDispatch.push("github-tracker.yml");
+    } else if (action === "trigger_leetcode_sync" || action === "leetcode") {
+      workflowsToDispatch.push("update-leetcode.yml");
+    } else if (action === "sync_all" || action === "all") {
+      workflowsToDispatch.push("update-leetcode.yml");
+      workflowsToDispatch.push("github-tracker.yml");
+    } else {
+      const defaultWorkflow = Deno.env.get("GITHUB_WORKFLOW_FILE") || "update-leetcode.yml";
+      workflowsToDispatch.push(defaultWorkflow);
+    }
 
-    console.log("Dispatching:", githubUrl);
-    console.log("Ref:", ref);
+    const ref = Deno.env.get("GITHUB_REF") || "main";
+    const dispatchResults = [];
+    let hasError = false;
+    let lastErrorResponse = "";
 
-    const response = await fetch(githubUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${githubToken}`,
-        Accept: "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Content-Type": "application/json",
-        "User-Agent": "CodeMetrix",
-      },
-      body: JSON.stringify({
-        ref: ref,
-      }),
-    });
+    for (const workflow of workflowsToDispatch) {
+      const githubUrl =
+        `https://api.github.com/repos/${githubOwner}/${githubRepo}` +
+        `/actions/workflows/${workflow}/dispatches`;
 
-    const responseText = await response.text();
+      console.log("Dispatching:", workflow, "to", githubUrl);
 
-    console.log(
-      "GitHub status:",
-      response.status
-    );
+      const response = await fetch(githubUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${githubToken}`,
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+          "Content-Type": "application/json",
+          "User-Agent": "CodeMetrix",
+        },
+        body: JSON.stringify({
+          ref: ref,
+        }),
+      });
 
-    console.log(
-      "GitHub response:",
-      responseText
-    );
+      const responseText = await response.text();
+      console.log(`GitHub response for ${workflow} (status ${response.status}):`, responseText);
 
-    if (!response.ok) {
+      if (!response.ok) {
+        hasError = true;
+        lastErrorResponse = `Workflow ${workflow} failed: HTTP ${response.status} ${responseText}`;
+      } else {
+        dispatchResults.push(workflow);
+      }
+    }
+
+    if (hasError && dispatchResults.length === 0) {
       return new Response(
         JSON.stringify({
           error: "GitHub workflow dispatch failed",
-          status: response.status,
-          response: responseText,
+          details: lastErrorResponse,
         }),
         {
           status: 500,
@@ -186,10 +204,15 @@ Deno.serve(async (req) => {
       );
     }
 
+    const trackerNames = dispatchResults
+      .map((w) => (w.includes("github") ? "GitHub Tracker" : "LeetCode Tracker"))
+      .join(" & ");
+
     return new Response(
       JSON.stringify({
         success: true,
-        message: "LeetCode tracker started successfully",
+        message: `${trackerNames || "Tracker"} started successfully in GitHub Actions`,
+        dispatched: dispatchResults,
       }),
       {
         status: 200,
