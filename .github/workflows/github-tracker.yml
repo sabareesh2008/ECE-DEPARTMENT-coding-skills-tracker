@@ -1,7 +1,18 @@
 name: Update GitHub Tracker
 
 on:
+  schedule:
+    - cron: "*/5 * * * *"
+    # Daily IST boundary snapshot: 00:00 IST = 18:30 UTC
+    - cron: "30 18 * * *"
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "github_tracker.py"
+      - ".github/workflows/github-tracker.yml"
+      - "requirements.txt"
 
 permissions:
   contents: write
@@ -57,5 +68,5 @@ jobs:
           fi
 
           git commit -m "Update GitHub tracker data"
-          git pull --rebase origin main
-          git push origin main
+          git pull --rebase -X theirs origin main || git pull --rebase --autostash origin main
+          git push origin main || (git pull --rebase -X theirs origin main && git push origin main)
