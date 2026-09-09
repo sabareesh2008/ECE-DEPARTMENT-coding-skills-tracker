@@ -481,10 +481,14 @@ def _repository_metrics_from_nodes(nodes: list[dict[str, Any]], now: datetime) -
             latest_activity_dt = activity
             latest_repo = clean(repo.get("name"))
 
-        # Exact count of GitHub Deployment records attached to this repository.
-        # This replaces heuristic homepage/hosting detection.
+        # Deployed repositories count:
+        # If a repository has deployment records or a live homepage URL, count 1 for this repository.
+        # Repetitive automated deployment runs on the same repository do NOT increase this count.
         deployment_connection = repo.get("deployments") or {}
-        deployments += max(0, safe_int(deployment_connection.get("totalCount")))
+        dep_count = max(0, safe_int(deployment_connection.get("totalCount")))
+        homepage = clean(repo.get("homepageUrl"))
+        if dep_count > 0 or bool(homepage):
+            deployments += 1
 
     return {
         "repos_total_page": repo_total,
@@ -732,21 +736,62 @@ def add_ranks(frame: pd.DataFrame) -> pd.DataFrame:
 
     frame = frame.copy()
 
+    # Normalize register numbers
+    frame["Register Number"] = (
+        frame["Register Number"]
+        .astype(str)
+        .str.strip()
+        .str.replace(r"\.0$", "", regex=True)
+    )
+
+    numeric_cols = [
+        "Commits 30 Days",
+        "Contributions 30 Days",
+        "Repositories Total",
+        "Commits 7 Days",
+        "Contributions 7 Days",
+        "Commits Today",
+        "Contributions Today",
+    ]
+    for col in numeric_cols:
+        if col in frame.columns:
+            frame[col] = pd.to_numeric(frame[col], errors="coerce").fillna(0).astype(int)
+
     # CodeMetrix GitHub ranking rule:
-    # Verified-now rows first, then 1) actual GitHub deployment records,
-    # 2) total public repositories, 3) 30-day contributions,
-    # 4) 30-day commits, 5) register number.
+    # Verified-now rows first, then:
+    # 1) High Commits (Commits 30 Days -> Commits 7 Days -> Commits Today)
+    # 2) High Contributions (Contributions 30 Days -> Contributions 7 Days -> Contributions Today)
+    # 3) High Repositories (Repositories Total)
+    # 4) Register Number (stable order)
+    # Note: Deployments are intentionally NOT used to judge rankings.
     frame["_VerifiedNow"] = frame["Status"].astype(str).str.strip().eq("Success").map({True: 0, False: 1})
+
+    sort_by_columns = [
+        "_VerifiedNow",
+        "Commits 30 Days",
+        "Contributions 30 Days",
+        "Repositories Total",
+        "Commits 7 Days",
+        "Contributions 7 Days",
+        "Commits Today",
+        "Contributions Today",
+        "Register Number",
+    ]
+    sort_ascending = [
+        True,   # _VerifiedNow (0 before 1)
+        False,  # Commits 30 Days (highest first)
+        False,  # Contributions 30 Days (highest first)
+        False,  # Repositories Total (highest first)
+        False,  # Commits 7 Days (highest first)
+        False,  # Contributions 7 Days (highest first)
+        False,  # Commits Today (highest first)
+        False,  # Contributions Today (highest first)
+        True,   # Register Number (stable alphabetical)
+    ]
+
     sortable = frame.sort_values(
-        by=[
-            "_VerifiedNow",
-            "Detected Deployments",
-            "Repositories Total",
-            "Contributions 30 Days",
-            "Commits 30 Days",
-            "Register Number",
-        ],
-        ascending=[True, False, False, False, False, True],
+        by=sort_by_columns,
+        ascending=sort_ascending,
         kind="stable",
     ).copy()
 
@@ -767,15 +812,8 @@ def add_ranks(frame: pd.DataFrame) -> pd.DataFrame:
         ].copy()
         section_rows["_VerifiedNow"] = section_rows["Status"].astype(str).str.strip().eq("Success").map({True: 0, False: 1})
         section_rows = section_rows.sort_values(
-            by=[
-                "_VerifiedNow",
-                "Detected Deployments",
-                "Repositories Total",
-                "Contributions 30 Days",
-                "Commits 30 Days",
-                "Register Number",
-            ],
-            ascending=[True, False, False, False, False, True],
+            by=sort_by_columns,
+            ascending=sort_ascending,
             kind="stable",
         )
 
@@ -788,6 +826,9 @@ def add_ranks(frame: pd.DataFrame) -> pd.DataFrame:
             ] = rank
 
     frame["Section Rank"] = frame["Register Number"].map(section_rank_map)
+
+    if "_VerifiedNow" in frame.columns:
+        frame = frame.drop(columns=["_VerifiedNow"])
 
     return frame
 

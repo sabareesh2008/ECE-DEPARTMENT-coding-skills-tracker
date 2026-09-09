@@ -322,33 +322,52 @@ function calculateSectionChampionship() {
         === section.toUpperCase()
     );
 
-    const last30 = students.reduce(
-      (sum, student) =>
-        sum + toNumber(student["Last 30 Days"]),
+    const commits30 = students.reduce(
+      (sum, student) => sum + toNumber(student["Commits 30 Days"] || student["Total Submissions"]),
       0
     );
 
-    const last7 = students.reduce(
-      (sum, student) =>
-        sum + toNumber(student["Last 7 Days"]),
+    const contrib30 = students.reduce(
+      (sum, student) => sum + toNumber(student["Contributions 30 Days"] || student["Last 30 Days"]),
+      0
+    );
+
+    const repos = students.reduce(
+      (sum, student) => sum + toNumber(student["Repositories Total"] || student["Problems Solved"]),
+      0
+    );
+
+    const commits7 = students.reduce(
+      (sum, student) => sum + toNumber(student["Commits 7 Days"] || student["Last 7 Days Submissions"]),
+      0
+    );
+
+    const contrib7 = students.reduce(
+      (sum, student) => sum + toNumber(student["Contributions 7 Days"] || student["Last 7 Days"]),
       0
     );
 
     const activeStudents = students.filter(
       (student) =>
-        toNumber(student["Last 30 Days"]) > 0
+        (toNumber(student["Commits 30 Days"] || student["Total Submissions"]) > 0
+          || toNumber(student["Contributions 30 Days"] || student["Last 30 Days"]) > 0)
     ).length;
 
     const average =
       students.length > 0
-        ? last30 / students.length
+        ? contrib30 / students.length
         : 0;
 
     return {
       section,
       studentCount: students.length,
-      last30,
-      last7,
+      commits30,
+      contrib30,
+      repos,
+      commits7,
+      contrib7,
+      last30: contrib30,
+      last7: contrib7,
       activeStudents,
       average
     };
@@ -356,10 +375,12 @@ function calculateSectionChampionship() {
 
   return results.sort((a, b) => {
     return (
-      b.last30 - a.last30
-      || b.last7 - a.last7
+      b.commits30 - a.commits30
+      || b.contrib30 - a.contrib30
+      || b.repos - a.repos
+      || b.commits7 - a.commits7
+      || b.contrib7 - a.contrib7
       || b.activeStudents - a.activeStudents
-      || b.average - a.average
       || a.section.localeCompare(b.section)
     );
   });
@@ -460,41 +481,62 @@ function updateCurrentChampionBadge() {
         normalizeSection(student.Section) === normalizeSection(section)
     );
 
-    const last30 = students.reduce(
-      (sum, student) =>
-        sum + toNumber(student["Last 30 Days"]),
+    const commits30 = students.reduce(
+      (sum, student) => sum + toNumber(student["Commits 30 Days"] || student["Total Submissions"]),
       0
     );
 
-    const last7 = students.reduce(
-      (sum, student) =>
-        sum + toNumber(student["Last 7 Days"]),
+    const contrib30 = students.reduce(
+      (sum, student) => sum + toNumber(student["Contributions 30 Days"] || student["Last 30 Days"]),
+      0
+    );
+
+    const repos = students.reduce(
+      (sum, student) => sum + toNumber(student["Repositories Total"] || student["Problems Solved"]),
+      0
+    );
+
+    const commits7 = students.reduce(
+      (sum, student) => sum + toNumber(student["Commits 7 Days"] || student["Last 7 Days Submissions"]),
+      0
+    );
+
+    const contrib7 = students.reduce(
+      (sum, student) => sum + toNumber(student["Contributions 7 Days"] || student["Last 7 Days"]),
       0
     );
 
     const active = students.filter(
       (student) =>
-        toNumber(student["Last 30 Days"]) > 0
+        (toNumber(student["Commits 30 Days"] || student["Total Submissions"]) > 0
+          || toNumber(student["Contributions 30 Days"] || student["Last 30 Days"]) > 0)
     ).length;
 
     const average =
       students.length > 0
-        ? last30 / students.length
+        ? contrib30 / students.length
         : 0;
 
     return {
       section,
       students: students.length,
-      last30,
-      last7,
+      commits30,
+      contrib30,
+      repos,
+      commits7,
+      contrib7,
+      last30: contrib30,
+      last7: contrib7,
       active,
       average
     };
   }).sort((a, b) =>
-    b.last30 - a.last30
-    || b.last7 - a.last7
+    b.commits30 - a.commits30
+    || b.contrib30 - a.contrib30
+    || b.repos - a.repos
+    || b.commits7 - a.commits7
+    || b.contrib7 - a.contrib7
     || b.active - a.active
-    || b.average - a.average
     || a.section.localeCompare(b.section)
   );
 
@@ -1873,10 +1915,24 @@ document.getElementById("challengeSectionFilter")
 // ============================================================
 
 function compareChampionStudents(a, b) {
+  const commitsA = toNumber(a["Commits 30 Days"] || a["Total Submissions"]);
+  const commitsB = toNumber(b["Commits 30 Days"] || b["Total Submissions"]);
+  const contribA = toNumber(a["Contributions 30 Days"] || a["Last 30 Days"]);
+  const contribB = toNumber(b["Contributions 30 Days"] || b["Last 30 Days"]);
+  const reposA = toNumber(a["Repositories Total"] || a["Problems Solved"]);
+  const reposB = toNumber(b["Repositories Total"] || b["Problems Solved"]);
+
+  const commits7A = toNumber(a["Commits 7 Days"] || a["Last 7 Days Submissions"]);
+  const commits7B = toNumber(b["Commits 7 Days"] || b["Last 7 Days Submissions"]);
+  const contrib7A = toNumber(a["Contributions 7 Days"] || a["Last 7 Days"]);
+  const contrib7B = toNumber(b["Contributions 7 Days"] || b["Last 7 Days"]);
+
   return (
-    toNumber(b["Last 30 Days"]) - toNumber(a["Last 30 Days"])
-    || toNumber(b["Last 7 Days"]) - toNumber(a["Last 7 Days"])
-    || toNumber(b["Problems Solved"]) - toNumber(a["Problems Solved"])
+    commitsB - commitsA
+    || contribB - contribA
+    || reposB - reposA
+    || commits7B - commits7A
+    || contrib7B - contrib7A
     || String(a["Student Name"] || "").localeCompare(
       String(b["Student Name"] || "")
     )
@@ -1890,36 +1946,60 @@ function calculateChampionsSectionRanking() {
         normalizeSection(student.Section) === normalizeSection(section)
     );
 
-    const last30 = students.reduce(
-      (sum, student) => sum + toNumber(student["Last 30 Days"]),
+    const commits30 = students.reduce(
+      (sum, student) => sum + toNumber(student["Commits 30 Days"] || student["Total Submissions"]),
       0
     );
 
-    const last7 = students.reduce(
-      (sum, student) => sum + toNumber(student["Last 7 Days"]),
+    const contrib30 = students.reduce(
+      (sum, student) => sum + toNumber(student["Contributions 30 Days"] || student["Last 30 Days"]),
+      0
+    );
+
+    const repos = students.reduce(
+      (sum, student) => sum + toNumber(student["Repositories Total"] || student["Problems Solved"]),
+      0
+    );
+
+    const commits7 = students.reduce(
+      (sum, student) => sum + toNumber(student["Commits 7 Days"] || student["Last 7 Days Submissions"]),
+      0
+    );
+
+    const contrib7 = students.reduce(
+      (sum, student) => sum + toNumber(student["Contributions 7 Days"] || student["Last 7 Days"]),
       0
     );
 
     const active = students.filter(
-      (student) => toNumber(student["Last 30 Days"]) > 0
+      (student) =>
+        (toNumber(student["Commits 30 Days"] || student["Total Submissions"]) > 0
+          || toNumber(student["Contributions 30 Days"] || student["Last 30 Days"]) > 0)
     ).length;
 
     const average =
-      students.length > 0 ? last30 / students.length : 0;
+      students.length > 0 ? contrib30 / students.length : 0;
 
     return {
       section,
       students: students.length,
-      last30,
-      last7,
+      commits30,
+      contrib30,
+      repos,
+      commits7,
+      contrib7,
+      last30: contrib30,
+      last7: contrib7,
       active,
       average
     };
   }).sort((a, b) =>
-    b.last30 - a.last30
-    || b.last7 - a.last7
+    b.commits30 - a.commits30
+    || b.contrib30 - a.contrib30
+    || b.repos - a.repos
+    || b.commits7 - a.commits7
+    || b.contrib7 - a.contrib7
     || b.active - a.active
-    || b.average - a.average
     || a.section.localeCompare(b.section)
   );
 }
@@ -1955,18 +2035,18 @@ function renderChampionsSectionRanking() {
 
       <div class="champions-rank-stats">
         <span>
-          <small>30 Days</small>
-          <strong>${item.last30}</strong>
+          <small>30D Commits</small>
+          <strong>${item.commits30}</strong>
         </span>
 
         <span>
-          <small>7 Days</small>
-          <strong>${item.last7}</strong>
+          <small>30D Contrib</small>
+          <strong>${item.contrib30}</strong>
         </span>
 
         <span>
-          <small>Active</small>
-          <strong>${item.active}</strong>
+          <small>Repos</small>
+          <strong>${item.repos}</strong>
         </span>
 
         <span>
@@ -2030,18 +2110,18 @@ function renderSectionChampions() {
 
         <div class="section-champion-metrics">
           <span>
-            <small>30 Days</small>
-            <strong>${toNumber(champion["Last 30 Days"])}</strong>
+            <small>30D Commits</small>
+            <strong>${toNumber(champion["Commits 30 Days"] || champion["Total Submissions"])}</strong>
           </span>
 
           <span>
-            <small>7 Days</small>
-            <strong>${toNumber(champion["Last 7 Days"])}</strong>
+            <small>30D Contrib</small>
+            <strong>${toNumber(champion["Contributions 30 Days"] || champion["Last 30 Days"])}</strong>
           </span>
 
           <span>
-            <small>Total</small>
-            <strong>${toNumber(champion["Problems Solved"])}</strong>
+            <small>Repos</small>
+            <strong>${toNumber(champion["Repositories Total"] || champion["Problems Solved"])}</strong>
           </span>
         </div>
 
@@ -2093,18 +2173,18 @@ function renderOverallTopFive() {
 
         <div class="overall-top-metrics">
           <span>
-            <small>30 Days</small>
-            <strong>${toNumber(student["Last 30 Days"])}</strong>
+            <small>30D Commits</small>
+            <strong>${toNumber(student["Commits 30 Days"] || student["Total Submissions"])}</strong>
           </span>
 
           <span>
-            <small>7 Days</small>
-            <strong>${toNumber(student["Last 7 Days"])}</strong>
+            <small>30D Contrib</small>
+            <strong>${toNumber(student["Contributions 30 Days"] || student["Last 30 Days"])}</strong>
           </span>
 
           <span>
-            <small>Total</small>
-            <strong>${toNumber(student["Problems Solved"])}</strong>
+            <small>Repos</small>
+            <strong>${toNumber(student["Repositories Total"] || student["Problems Solved"])}</strong>
           </span>
         </div>
       </button>
