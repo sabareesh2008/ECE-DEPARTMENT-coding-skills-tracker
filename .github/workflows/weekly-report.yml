@@ -48,6 +48,19 @@ jobs:
           REPORT_HOD_EMAILS: ${{ secrets.REPORT_HOD_EMAILS }}
           REPORT_TO_EMAILS: ${{ secrets.REPORT_TO_EMAILS }}
           REPORT_REPLY_TO: ${{ secrets.REPORT_REPLY_TO }}
+          WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+          WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          WHATSAPP_API_VERSION: ${{ secrets.WHATSAPP_API_VERSION }}
+          WHATSAPP_TEMPLATE_LANGUAGE: ${{ secrets.WHATSAPP_TEMPLATE_LANGUAGE }}
+          WHATSAPP_DAILY_TEMPLATE: ${{ secrets.WHATSAPP_DAILY_TEMPLATE }}
+          WHATSAPP_WEEKLY_TEMPLATE: ${{ secrets.WHATSAPP_WEEKLY_TEMPLATE }}
+          WHATSAPP_ECE_A_NUMBER: ${{ secrets.WHATSAPP_ECE_A_NUMBER }}
+          WHATSAPP_ECE_B_NUMBER: ${{ secrets.WHATSAPP_ECE_B_NUMBER }}
+          WHATSAPP_ECE_C_NUMBER: ${{ secrets.WHATSAPP_ECE_C_NUMBER }}
+          WHATSAPP_ECE_D_NUMBER: ${{ secrets.WHATSAPP_ECE_D_NUMBER }}
+          WHATSAPP_ECE_E_NUMBER: ${{ secrets.WHATSAPP_ECE_E_NUMBER }}
+          WHATSAPP_ECE_F_NUMBER: ${{ secrets.WHATSAPP_ECE_F_NUMBER }}
+          WHATSAPP_HOD_NUMBER: ${{ secrets.WHATSAPP_HOD_NUMBER }}
         run: python report_generator.py --mode weekly
 
       - name: Upload generated reports

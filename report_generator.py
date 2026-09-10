@@ -37,6 +37,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone, time as dt_time
 from pathlib import Path
 from typing import Any, Iterable
+
+from whatsapp_sender import WhatsAppConfig, send_whatsapp_report
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -94,6 +96,7 @@ class Config:
     section_recipients: dict[str, list[str]]
     hod_recipients: list[str]
     reply_to: str | None
+    whatsapp: WhatsAppConfig
 
 
 def env(name: str, default: str = "") -> str:
@@ -129,7 +132,7 @@ def section_secret_name(section: str) -> str:
     return f"REPORT_{section.replace(' ', '_')}_EMAILS"
 
 
-def load_config(require_email: bool = True) -> Config:
+def load_config(require_email: bool = True, require_whatsapp: bool = True) -> Config:
     legacy_recipients = parse_recipients(env("REPORT_TO_EMAILS"))
     section_recipients = {
         section: parse_recipients(env(section_secret_name(section)))
@@ -138,6 +141,21 @@ def load_config(require_email: bool = True) -> Config:
     hod_recipients = parse_recipients(env("REPORT_HOD_EMAILS"))
     if not hod_recipients:
         hod_recipients = list(legacy_recipients)
+    whatsapp_numbers = {
+        section: env(f"WHATSAPP_{section.replace(' ', '_')}_NUMBER")
+        for section in SECTIONS
+    }
+    whatsapp_hod_number = env("WHATSAPP_HOD_NUMBER")
+    whatsapp = WhatsAppConfig(
+        access_token=env("WHATSAPP_ACCESS_TOKEN"),
+        phone_number_id=env("WHATSAPP_PHONE_NUMBER_ID"),
+        api_version=env("WHATSAPP_API_VERSION", "v23.0"),
+        template_language=env("WHATSAPP_TEMPLATE_LANGUAGE", "en_US"),
+        daily_template=env("WHATSAPP_DAILY_TEMPLATE", "codemetrix_daily_report"),
+        weekly_template=env("WHATSAPP_WEEKLY_TEMPLATE", "codemetrix_weekly_report"),
+        section_numbers=whatsapp_numbers,
+        hod_number=whatsapp_hod_number,
+    )
     config = Config(
         supabase_url=env("SUPABASE_URL").rstrip("/"),
         supabase_key=env("SUPABASE_SERVICE_ROLE_KEY"),
@@ -147,6 +165,7 @@ def load_config(require_email: bool = True) -> Config:
         section_recipients=section_recipients,
         hod_recipients=hod_recipients,
         reply_to=env("REPORT_REPLY_TO") or None,
+        whatsapp=whatsapp,
     )
     missing = []
     if require_email:
@@ -156,6 +175,19 @@ def load_config(require_email: bool = True) -> Config:
             missing.append("GMAIL_APP_PASSWORD")
         if not config.hod_recipients and not any(config.section_recipients.values()):
             missing.append("REPORT_HOD_EMAILS or at least one REPORT_ECE_*_EMAILS secret")
+    if require_whatsapp:
+        whatsapp_missing = []
+        if not config.whatsapp.access_token:
+            whatsapp_missing.append("WHATSAPP_ACCESS_TOKEN")
+        if not config.whatsapp.phone_number_id:
+            whatsapp_missing.append("WHATSAPP_PHONE_NUMBER_ID")
+        if not config.whatsapp.daily_template:
+            whatsapp_missing.append("WHATSAPP_DAILY_TEMPLATE")
+        if not config.whatsapp.weekly_template:
+            whatsapp_missing.append("WHATSAPP_WEEKLY_TEMPLATE")
+        if not config.whatsapp.hod_number and not any(config.whatsapp.section_numbers.values()):
+            whatsapp_missing.append("WHATSAPP_HOD_NUMBER or at least one WHATSAPP_ECE_*_NUMBER")
+        missing.extend(whatsapp_missing)
     if missing:
         raise RuntimeError("Missing required environment variable(s): " + ", ".join(missing))
     return config
@@ -1246,7 +1278,7 @@ def filtered_scope_data(
 
 
 
-def build_report(mode:str,config:Config,offline:bool=False,section:str|None=None) -> tuple[str,str,list[Path]]:
+def build_report(mode:str,config:Config,offline:bool=False,section:str|None=None) -> tuple[str,str,list[Path],pd.DataFrame]:
     all_live=load_live_data()
     if section is None: live=all_live.copy()
     else:
@@ -1256,10 +1288,10 @@ def build_report(mode:str,config:Config,offline:bool=False,section:str|None=None
         report_start=report_end-timedelta(days=1); live=refresh_report_window_activity(live,report_start,report_end,config,offline)
         if not offline: supabase_report_snapshot_upsert(config,live,report_end)
         display=report_start.strftime("%d %b %Y"); file_date=report_start.date().isoformat(); window=format_window(report_start,report_end); print(f"Daily report window: {report_start.isoformat()} -> {report_end.isoformat()}")
-        subject,body=build_daily_report(live,display,window,scope_label); return subject,body,[generate_daily_excel(live,file_date,window,scope_label),generate_daily_pdf(live,file_date,window,scope_label)]
+        subject,body=build_daily_report(live,display,window,scope_label); return subject,body,[generate_daily_excel(live,file_date,window,scope_label),generate_daily_pdf(live,file_date,window,scope_label)],live
     if mode=="weekly":
         report_start=report_end-timedelta(days=7); live=refresh_report_window_activity(live,report_start,report_end,config,offline); start_iso=report_start.date().isoformat(); end_iso=report_end.date().isoformat(); window=format_window(report_start,report_end); print(f"Weekly report window: {report_start.isoformat()} -> {report_end.isoformat()}")
-        subject,body=build_weekly_report(live,report_start.strftime("%d %b %Y"),report_end.strftime("%d %b %Y"),window,scope_label); return subject,body,[generate_weekly_excel(live,start_iso,end_iso,window,scope_label),generate_weekly_pdf(live,start_iso,end_iso,window,scope_label)]
+        subject,body=build_weekly_report(live,report_start.strftime("%d %b %Y"),report_end.strftime("%d %b %Y"),window,scope_label); return subject,body,[generate_weekly_excel(live,start_iso,end_iso,window,scope_label),generate_weekly_pdf(live,start_iso,end_iso,window,scope_label)],live
     raise ValueError(f"Unknown report mode: {mode}")
 
 
@@ -1325,7 +1357,8 @@ def main() -> int:
     args = parser.parse_args()
 
     config = load_config(
-        require_email=not args.dry_run
+        require_email=not args.dry_run,
+        require_whatsapp=not args.dry_run,
     )
 
     if args.scope:
@@ -1359,7 +1392,7 @@ def main() -> int:
         print("=" * 72)
         print(f"Building {args.mode} report for {route_label}")
 
-        subject, html_body, attachment_paths = build_report(
+        subject, html_body, attachment_paths, report_live = build_report(
             args.mode,
             config,
             offline=args.offline,
@@ -1402,6 +1435,65 @@ def main() -> int:
             f"{route_label}: sent to {len(recipients)} recipient(s) "
             f"in {len(ids)} Gmail send(s)."
         )
+
+        whatsapp_number = (
+            config.whatsapp.hod_number
+            if route_label == "OVERALL"
+            else config.whatsapp.section_numbers.get(route_label, "")
+        )
+        whatsapp_pdf = next(
+            (path for path in attachment_paths if path.suffix.lower() == ".pdf"),
+            None,
+        )
+        if whatsapp_number and whatsapp_pdf:
+            report_end = latest_7am_boundary()
+            report_start = report_end - (
+                timedelta(days=1) if args.mode == "daily" else timedelta(days=7)
+            )
+            if args.mode == "daily":
+                period_label = (
+                    f"{report_start.strftime('%d %b %Y')} "
+                    f"({format_window(report_start, report_end)})"
+                )
+            else:
+                period_label = (
+                    f"{report_start.strftime('%d %b %Y')} to "
+                    f"{report_end.strftime('%d %b %Y')} "
+                    f"({format_window(report_start, report_end)})"
+                )
+
+            active, inactive, _unknown = report_window_masks(report_live)
+            inactive_rows = inactive_students(report_live)
+            scope_for_whatsapp = (
+                "ECE Overall" if route_label == "OVERALL" else route_label
+            )
+
+            try:
+                message_id = send_whatsapp_report(
+                    config.whatsapp,
+                    whatsapp_number,
+                    mode=args.mode,
+                    scope_label=scope_for_whatsapp,
+                    period_label=period_label,
+                    total_students=len(report_live),
+                    active_students=int(active.sum()),
+                    inactive_students_count=int(inactive.sum()),
+                    inactive_rows=inactive_rows,
+                    pdf_path=whatsapp_pdf,
+                )
+                print(
+                    f"{route_label}: WhatsApp report sent to faculty "
+                    f"number {whatsapp_number}. Message ID: {message_id}"
+                )
+            except Exception as exc:
+                raise RuntimeError(
+                    f"{route_label}: WhatsApp report failed: {exc}"
+                ) from exc
+        else:
+            print(
+                f"{route_label}: WhatsApp skipped "
+                f"(no phone number or PDF)."
+            )
 
     if args.dry_run:
         print("DRY RUN COMPLETE.")
