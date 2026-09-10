@@ -60,7 +60,9 @@ def _format_meta_error(status_code: int, response_text: str) -> str:
         elif code == 131030:
             hint = "Recipient phone number is not in the allowed test list. In Meta Developer Console (WhatsApp > API Setup), add this phone number under 'To' recipients, or publish app to Live mode."
         elif code == 132000:
-            hint = "WhatsApp template name or template variables do not match the approved template in Meta WhatsApp Manager."
+            hint = "WhatsApp template parameter mismatch. Ensure variable count and structure match the approved template in Meta WhatsApp Manager."
+        elif code == 132001:
+            hint = "Template name does not exist in translation. Verify the exact template name in Meta WhatsApp Manager and ensure language code (e.g. 'en' vs 'en_US') matches."
         elif code == 131026:
             hint = "Message undeliverable. Ensure the recipient number is a valid active WhatsApp user."
 
@@ -214,11 +216,19 @@ def send_template_with_pdf(
     Send an approved WhatsApp template with the generated PDF
     as the document header.
 
-    The template uses NAMED variables rather than numbered
-    variables.
+    Supports named template variables with automatic fallback to positional
+    variables, and automatic language code fallback if Code 132001 is returned.
     """
 
-    body_parameters = [
+    cleaned_template = template_name.strip()
+    primary_lang = (config.template_language or "").strip() or "en_US"
+
+    candidate_languages: list[str] = [primary_lang]
+    for fallback in ("en", "en_US", "en_GB", "en_IN", "en_UK"):
+        if fallback not in candidate_languages:
+            candidate_languages.append(fallback)
+
+    named_params = [
         _named_text_parameter(
             parameter_name,
             value,
@@ -226,67 +236,98 @@ def send_template_with_pdf(
         for parameter_name, value in template_variables.items()
     ]
 
-    payload: dict[str, Any] = {
-        "messaging_product": "whatsapp",
-        "to": normalize_phone(recipient),
-        "type": "template",
-        "template": {
-            "name": template_name,
-            "language": {
-                "code": config.template_language,
-            },
-            "components": [
-                {
-                    "type": "header",
-                    "parameters": [
+    positional_params = [
+        {
+            "type": "text",
+            "text": str(value),
+        }
+        for value in template_variables.values()
+    ]
+
+    param_variations = [named_params, positional_params]
+    phone_number = normalize_phone(recipient)
+    last_response: requests.Response | None = None
+
+    for lang in candidate_languages:
+        for body_parameters in param_variations:
+            payload: dict[str, Any] = {
+                "messaging_product": "whatsapp",
+                "to": phone_number,
+                "type": "template",
+                "template": {
+                    "name": cleaned_template,
+                    "language": {
+                        "code": lang,
+                    },
+                    "components": [
                         {
-                            "type": "document",
-                            "document": {
-                                "id": pdf_media_id,
-                            },
-                        }
+                            "type": "header",
+                            "parameters": [
+                                {
+                                    "type": "document",
+                                    "document": {
+                                        "id": pdf_media_id,
+                                    },
+                                }
+                            ],
+                        },
+                        {
+                            "type": "body",
+                            "parameters": body_parameters,
+                        },
                     ],
                 },
-                {
-                    "type": "body",
-                    "parameters": body_parameters,
+            }
+
+            response = requests.post(
+                _graph_url(config, "messages"),
+                headers={
+                    **_headers(config),
+                    "Content-Type": "application/json",
                 },
-            ],
-        },
-    }
+                json=payload,
+                timeout=REQUEST_TIMEOUT,
+            )
 
-    response = requests.post(
-        _graph_url(config, "messages"),
-        headers={
-            **_headers(config),
-            "Content-Type": "application/json",
-        },
-        json=payload,
-        timeout=REQUEST_TIMEOUT,
-    )
+            last_response = response
 
-    if not response.ok:
-        err_detail = _format_meta_error(response.status_code, response.text)
+            if response.ok:
+                data = response.json()
+                messages = data.get("messages") or []
+                message_id = (
+                    str(messages[0].get("id"))
+                    if messages
+                    else ""
+                )
+                if message_id:
+                    return message_id
+
+            try:
+                err_json = response.json().get("error", {})
+                code = err_json.get("code")
+            except Exception:
+                code = None
+
+            # For fatal account/recipient errors, avoid redundant language loops
+            if code in (131030, 190, 131026):
+                break
+
+        if last_response is not None:
+            try:
+                err_json = last_response.json().get("error", {})
+                code = err_json.get("code")
+                if code in (131030, 190, 131026):
+                    break
+            except Exception:
+                pass
+
+    if last_response is not None and not last_response.ok:
+        err_detail = _format_meta_error(last_response.status_code, last_response.text)
         raise RuntimeError(
             f"WhatsApp template send failed: {err_detail}"
         )
 
-    data = response.json()
-
-    messages = data.get("messages") or []
-
-    message_id = (
-        str(messages[0].get("id"))
-        if messages
-        else ""
-    )
-
-    if not message_id:
-        raise RuntimeError(
-            f"WhatsApp API returned no message ID: {data}"
-        )
-
-    return message_id
+    raise RuntimeError("WhatsApp API returned no message ID")
 
 
 def send_whatsapp_report(
