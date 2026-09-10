@@ -141,8 +141,10 @@ class Config:
     whatsapp: WhatsAppConfig
 
 
-def parse_recipients(raw: str) -> list[str]:
+def parse_recipients(raw: str, strict: bool = True) -> list[str]:
     """Parse comma/semicolon/newline-separated emails and remove duplicates."""
+    if not raw:
+        return []
 
     normalized = raw.replace(";", ",").replace("\n", ",")
 
@@ -150,9 +152,13 @@ def parse_recipients(raw: str) -> list[str]:
     result: list[str] = []
 
     for item in normalized.split(","):
-        address = item.strip()
+        address = item.strip().strip("'\"")
 
         if not address:
+            continue
+
+        # Ignore placeholder values (e.g., ***, NONE, YOUR_EMAIL, PASTE_...)
+        if address in {"***", "NONE", "null", "undefined"} or address.startswith(("***", "PASTE_", "YOUR_")):
             continue
 
         lower = address.lower()
@@ -165,9 +171,11 @@ def parse_recipients(raw: str) -> list[str]:
             or address.startswith("@")
             or address.endswith("@")
         ):
-            raise ValueError(
-                f"Invalid report recipient email: {address}"
-            )
+            if strict:
+                raise ValueError(
+                    f"Invalid report recipient email: {address}"
+                )
+            continue
 
         seen.add(lower)
         result.append(address)
@@ -184,23 +192,39 @@ def load_config(
     require_whatsapp: bool = True,
 ) -> Config:
 
-    legacy_recipients = parse_recipients(
-        env("REPORT_TO_EMAILS")
-    )
+    legacy_recipients: list[str] = []
+    section_recipients: dict[str, list[str]] = {section: [] for section in SECTIONS}
+    hod_recipients: list[str] = []
+    gmail_address = ""
+    gmail_app_password = ""
+    reply_to = None
 
-    section_recipients = {
-        section: parse_recipients(
-            env(section_secret_name(section))
+    # Only parse and validate email configuration if email is enabled
+    if require_email:
+        legacy_recipients = parse_recipients(
+            env("REPORT_TO_EMAILS"),
+            strict=False,
         )
-        for section in SECTIONS
-    }
 
-    hod_recipients = parse_recipients(
-        env("REPORT_HOD_EMAILS")
-    )
+        section_recipients = {
+            section: parse_recipients(
+                env(section_secret_name(section)),
+                strict=False,
+            )
+            for section in SECTIONS
+        }
 
-    if not hod_recipients:
-        hod_recipients = list(legacy_recipients)
+        hod_recipients = parse_recipients(
+            env("REPORT_HOD_EMAILS"),
+            strict=False,
+        )
+
+        if not hod_recipients:
+            hod_recipients = list(legacy_recipients)
+
+        gmail_address = env("GMAIL_ADDRESS")
+        gmail_app_password = env("GMAIL_APP_PASSWORD")
+        reply_to = env("REPORT_REPLY_TO") or None
 
     whatsapp_numbers = {
         section: env(
@@ -249,36 +273,21 @@ def load_config(
             "SUPABASE_SERVICE_ROLE_KEY"
         ),
 
-        gmail_address=env(
-            "GMAIL_ADDRESS"
-        ),
-
-        gmail_app_password=env(
-            "GMAIL_APP_PASSWORD"
-        ),
-
+        gmail_address=gmail_address,
+        gmail_app_password=gmail_app_password,
         recipients=legacy_recipients,
-
         section_recipients=section_recipients,
-
         hod_recipients=hod_recipients,
-
-        reply_to=(
-            env("REPORT_REPLY_TO")
-            or None
-        ),
-
+        reply_to=reply_to,
         whatsapp=whatsapp,
     )
 
     missing = []
 
     # --------------------------------------------------------
-    # EMAIL REQUIREMENTS
+    # EMAIL REQUIREMENTS (Only enforced when email is active)
     # --------------------------------------------------------
-
     if require_email:
-
         if not config.gmail_address:
             missing.append(
                 "GMAIL_ADDRESS"
@@ -301,11 +310,9 @@ def load_config(
             )
 
     # --------------------------------------------------------
-    # WHATSAPP REQUIREMENTS
+    # WHATSAPP REQUIREMENTS (Only enforced when WhatsApp is active)
     # --------------------------------------------------------
-
     if require_whatsapp:
-
         whatsapp_missing = []
 
         if not config.whatsapp.access_token:
@@ -5282,21 +5289,19 @@ def build_report(
 
 def configured_report_routes(
     config: Config,
-):
+    send_email: bool = True,
+    send_whatsapp: bool = True,
+    dry_run: bool = False,
+) -> list[tuple[str, str | None, list[str]]]:
 
     routes = []
 
     for section in SECTIONS:
+        recipients = config.section_recipients.get(section, [])
+        has_email = bool(send_email and recipients)
+        has_whatsapp = bool(send_whatsapp and config.whatsapp.section_numbers.get(section))
 
-        recipients = (
-            config.section_recipients.get(
-                section,
-                [],
-            )
-        )
-
-        if recipients:
-
+        if has_email or has_whatsapp or dry_run:
             routes.append(
                 (
                     section,
@@ -5305,8 +5310,10 @@ def configured_report_routes(
                 )
             )
 
-    if config.hod_recipients:
+    has_hod_email = bool(send_email and config.hod_recipients)
+    has_hod_whatsapp = bool(send_whatsapp and config.whatsapp.hod_number)
 
+    if has_hod_email or has_hod_whatsapp or dry_run:
         routes.append(
             (
                 "OVERALL",
@@ -5392,30 +5399,29 @@ def main() -> int:
     args = parser.parse_args()
 
     # --------------------------------------------------------
+    # Delivery switches (environment variables)
+    # --------------------------------------------------------
+    send_email = env("SEND_EMAIL", "true").lower() in {"true", "1", "yes"}
+    send_whatsapp = env("SEND_WHATSAPP", "true").lower() in {"true", "1", "yes"}
+
+    # --------------------------------------------------------
     # Load configuration according to active delivery modes.
     # --------------------------------------------------------
 
     config = load_config(
         require_email=(
             not args.dry_run
-            and SEND_EMAIL
+            and send_email
         ),
 
         require_whatsapp=(
             not args.dry_run
-            and SEND_WHATSAPP
+            and send_whatsapp
         ),
     )
 
     # --------------------------------------------------------
     # Select routes.
-    #
-    # IMPORTANT:
-    # Routes are still based on the email section mapping,
-    # because those secrets currently define which sections
-    # exist in the report system.
-    #
-    # WhatsApp can operate even when email is disabled.
     # --------------------------------------------------------
 
     if args.scope:
@@ -5443,54 +5449,12 @@ def main() -> int:
 
     else:
 
-        selected_routes = (
-            configured_report_routes(
-                config
-            )
+        selected_routes = configured_report_routes(
+            config,
+            send_email=send_email,
+            send_whatsapp=send_whatsapp,
+            dry_run=args.dry_run,
         )
-
-    # --------------------------------------------------------
-    # If email is OFF and there are no email recipients,
-    # build routes directly from WhatsApp recipients.
-    # This allows WhatsApp-only testing.
-    # --------------------------------------------------------
-
-    if (
-        not selected_routes
-        and SEND_WHATSAPP
-        and not SEND_EMAIL
-    ):
-
-        selected_routes = []
-
-        for section in SECTIONS:
-
-            whatsapp_number = (
-                config.whatsapp.section_numbers.get(
-                    section,
-                    "",
-                )
-            )
-
-            if whatsapp_number:
-
-                selected_routes.append(
-                    (
-                        section,
-                        section,
-                        [],
-                    )
-                )
-
-        if config.whatsapp.hod_number:
-
-            selected_routes.append(
-                (
-                    "OVERALL",
-                    None,
-                    [],
-                )
-            )
 
     if not selected_routes:
 
@@ -5508,8 +5472,8 @@ def main() -> int:
 
             raise RuntimeError(
                 "No report routes configured. "
-                "Configure email recipients and/or "
-                "WhatsApp recipient numbers."
+                "Configure email recipients (when SEND_EMAIL=true) and/or "
+                "WhatsApp recipient numbers (when SEND_WHATSAPP=true)."
             )
 
     sent_reports = 0
@@ -5583,7 +5547,7 @@ def main() -> int:
         # EMAIL
         # ====================================================
 
-        if SEND_EMAIL:
+        if send_email:
 
             if not recipients:
 
@@ -5620,7 +5584,7 @@ def main() -> int:
 
             print(
                 f"{route_label}: "
-                "EMAIL DISABLED - "
+                "EMAIL DISABLED (SEND_EMAIL=false) - "
                 "no email sent."
             )
 
@@ -5628,11 +5592,11 @@ def main() -> int:
         # WHATSAPP
         # ====================================================
 
-        if not SEND_WHATSAPP:
+        if not send_whatsapp:
 
             print(
                 f"{route_label}: "
-                "WHATSAPP DISABLED - "
+                "WHATSAPP DISABLED (SEND_WHATSAPP=false) - "
                 "no WhatsApp sent."
             )
 
@@ -5797,9 +5761,9 @@ def main() -> int:
         print(
             "REPORT COMPLETE: "
             f"Email="
-            f"{'ON' if SEND_EMAIL else 'OFF'}, "
+            f"{'ON' if send_email else 'OFF'}, "
             f"WhatsApp="
-            f"{'ON' if SEND_WHATSAPP else 'OFF'}."
+            f"{'ON' if send_whatsapp else 'OFF'}."
         )
 
         print(

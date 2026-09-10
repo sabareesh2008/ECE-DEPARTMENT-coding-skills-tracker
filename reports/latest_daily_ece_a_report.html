@@ -4,77 +4,243 @@
 <meta charset="utf-8">
 <style>
   body {
-    margin: 0; padding: 0; background: #f3f6fa;
-    font-family: Arial, Helvetica, sans-serif; color: #172033;
+    margin: 0;
+    padding: 0;
+    background: #f3f6fa;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #172033;
   }
-  .wrap { max-width: 920px; margin: 0 auto; padding: 24px; }
+
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
   .hero {
-    background: #101b31; color: white; border-radius: 18px;
-    padding: 28px; margin-bottom: 18px;
+    background: #101b31;
+    color: white;
+    border-radius: 18px;
+    padding: 28px;
+    margin-bottom: 18px;
   }
-  .hero h1 { margin: 0 0 7px; font-size: 25px; }
-  .hero p { margin: 0; color: #bdc9dd; }
+
+  .hero h1 {
+    margin: 0 0 7px;
+    font-size: 25px;
+  }
+
+  .hero p {
+    margin: 0;
+    color: #bdc9dd;
+  }
+
   .card {
-    background: white; border-radius: 16px; padding: 20px;
-    margin-bottom: 16px; border: 1px solid #e5eaf1;
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid #e5eaf1;
   }
-  .card h2 { margin: 0 0 14px; font-size: 18px; }
+
+  .card h2 {
+    margin: 0 0 14px;
+    font-size: 18px;
+  }
+
   .kpis {
-    display: grid; grid-template-columns: repeat(3, 1fr);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px;
   }
+
   .kpi {
-    border: 1px solid #e7ebf1; border-radius: 12px;
-    padding: 14px; background: #fafbfd;
+    border: 1px solid #e7ebf1;
+    border-radius: 12px;
+    padding: 14px;
+    background: #fafbfd;
   }
-  .kpi span { display: block; color: #657189; font-size: 12px; }
-  .kpi strong { display: block; margin-top: 7px; font-size: 23px; }
-  table { border-collapse: collapse; width: 100%; font-size: 13px; }
-  th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e7ebf1; }
-  th { background: #f7f9fc; color: #4c5870; }
-  .table-wrap { overflow-x: auto; }
-  .muted { color: #6e788a; }
-  .footer { text-align: center; color: #818b9c; font-size: 11px; padding: 10px; }
+
+  .kpi span {
+    display: block;
+    color: #657189;
+    font-size: 12px;
+  }
+
+  .kpi strong {
+    display: block;
+    margin-top: 7px;
+    font-size: 23px;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 10px;
+    border-bottom: 1px solid #e7ebf1;
+  }
+
+  th {
+    background: #f7f9fc;
+    color: #4c5870;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  .muted {
+    color: #6e788a;
+  }
+
+  .footer {
+    text-align: center;
+    color: #818b9c;
+    font-size: 11px;
+    padding: 10px;
+  }
+
   @media (max-width: 680px) {
-    .kpis { grid-template-columns: 1fr 1fr; }
-    .wrap { padding: 12px; }
+    .kpis {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .wrap {
+      padding: 12px;
+    }
   }
 </style>
 </head>
+
 <body>
+
   <div class="wrap">
+
     <div class="hero">
+
       <h1>ECE A LeetCode Daily Report</h1>
-      <p>Reporting Date: 24 Aug 2026 | 24 Aug 2026 07:00 AM to 25 Aug 2026 07:00 AM IST</p>
+
+      <p>Reporting Date: 09 Sep 2026 | 09 Sep 2026 07:00 AM to 10 Sep 2026 07:00 AM IST</p>
+
     </div>
-    <div class="card"><h2>LeetCode Daily Summary</h2><p class="muted"><strong>Report Window:</strong> 24 Aug 2026 07:00 AM to 25 Aug 2026 07:00 AM IST</p><div class="kpis"><div class="kpi"><span>Total Students</span><strong>20</strong></div><div class="kpi"><span>Active Today</span><strong>3</strong></div><div class="kpi"><span>0 Solved / 0 Submission</span><strong>14</strong></div><div class="kpi"><span>Problems Solved Today</span><strong>6</strong></div><div class="kpi"><span>Today Submissions</span><strong>6</strong></div><div class="kpi"><span>Unverified Profiles</span><strong>3</strong></div></div></div>
-    <div class="card"><h2>Top 10 Students - Today</h2>
+
+    
+    <div class="card">
+
+      <h2>
+        LeetCode Daily Summary
+      </h2>
+
+      <p class="muted">
+        <strong>Report Window:</strong>
+        09 Sep 2026 07:00 AM to 10 Sep 2026 07:00 AM IST
+      </p>
+
+      <div class="kpis">
+
+        <div class="kpi">
+          <span>Total Students</span>
+          <strong>63</strong>
+        </div>
+
+        <div class="kpi">
+          <span>Active Today</span>
+          <strong>23</strong>
+        </div>
+
+        <div class="kpi">
+          <span>0 Solved / 0 Submission</span>
+          <strong>40</strong>
+        </div>
+
+        <div class="kpi">
+          <span>Problems Solved Today</span>
+          <strong>2</strong>
+        </div>
+
+        <div class="kpi">
+          <span>Today Submissions</span>
+          <strong>102</strong>
+        </div>
+
+        <div class="kpi">
+          <span>Unverified Profiles</span>
+          <strong>0</strong>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <h2>
+        Top 10 Students - Today
+      </h2>
+
+      
     <div class="table-wrap">
       <table>
         <thead><tr><th>#</th><th>Student</th><th>Register No.</th><th>Section</th><th>Today Solved</th><th>Today Submissions</th><th>7 Days</th><th>14 Days</th><th>30 Days</th><th>Total Solved</th></tr></thead>
-        <tbody><tr><td>1</td><td>BOSVIYA P</td><td>922525106047</td><td>ECE A</td><td>2</td><td>2</td><td>6</td><td>11</td><td>17</td><td>137</td></tr><tr><td>2</td><td>AKASH R</td><td>922525106014</td><td>ECE A</td><td>2</td><td>2</td><td>2</td><td>4</td><td>20</td><td>92</td></tr><tr><td>3</td><td>Abirami R</td><td>922525106004</td><td>ECE A</td><td>2</td><td>2</td><td>12</td><td>12</td><td>19</td><td>66</td></tr><tr><td>4</td><td>ANUJA S</td><td>922525106022</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>192</td></tr><tr><td>5</td><td>DHANASRI R</td><td>922525106063</td><td>ECE A</td><td>0</td><td>0</td><td>6</td><td>0</td><td>7</td><td>168</td></tr><tr><td>6</td><td>AISHWARYA G</td><td>922525106009</td><td>ECE A</td><td>0</td><td>0</td><td>4</td><td>11</td><td>13</td><td>149</td></tr><tr><td>7</td><td>DESMA SHALINI K</td><td>922525106060</td><td>ECE A</td><td>0</td><td>0</td><td>1</td><td>1</td><td>6</td><td>105</td></tr><tr><td>8</td><td>DEJASRI M</td><td>922525106059</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td><td>101</td></tr><tr><td>9</td><td>ANUSRI R</td><td>922525106023</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td><td>75</td></tr><tr><td>10</td><td>AASHIFA SAHANAJ M</td><td>922525106001</td><td>ECE A</td><td>0</td><td>0</td><td>10</td><td>0</td><td>20</td><td>60</td></tr></tbody>
+        <tbody><tr><td>1</td><td>AASHIFA SAHANAJ M</td><td>922525106001</td><td>ECE A</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>62</td></tr><tr><td>2</td><td>DHANASRI R</td><td>922525106063</td><td>ECE A</td><td>0</td><td>12</td><td>10</td><td>10</td><td>10</td><td>178</td></tr><tr><td>3</td><td>Amirdavarsini K S</td><td>922525106018</td><td>ECE A</td><td>0</td><td>11</td><td>10</td><td>10</td><td>26</td><td>67</td></tr><tr><td>4</td><td>Abirami R</td><td>922525106004</td><td>ECE A</td><td>0</td><td>7</td><td>6</td><td>9</td><td>26</td><td>80</td></tr><tr><td>5</td><td>BOSVIYA P</td><td>922525106047</td><td>ECE A</td><td>0</td><td>6</td><td>6</td><td>11</td><td>25</td><td>151</td></tr><tr><td>6</td><td>DESMA SHALINI K</td><td>922525106060</td><td>ECE A</td><td>0</td><td>6</td><td>5</td><td>5</td><td>6</td><td>110</td></tr><tr><td>7</td><td>AAZHIGA N</td><td>922525106002</td><td>ECE A</td><td>0</td><td>6</td><td>4</td><td>4</td><td>4</td><td>25</td></tr><tr><td>8</td><td>CHARUNETHRA S</td><td>922525106051</td><td>ECE A</td><td>0</td><td>5</td><td>3</td><td>3</td><td>5</td><td>258</td></tr><tr><td>9</td><td>ABINAYA N</td><td>922525106003</td><td>ECE A</td><td>0</td><td>5</td><td>4</td><td>11</td><td>11</td><td>178</td></tr><tr><td>10</td><td>AISHWARYA G</td><td>922525106009</td><td>ECE A</td><td>0</td><td>5</td><td>5</td><td>8</td><td>19</td><td>157</td></tr></tbody>
       </table>
     </div>
+    
+
     </div>
-    <div class="card"><h2>0 Solved Today Students</h2><p class="muted">Only students with 0 solved AND 0 submissions in the complete 07:00 AM to 07:00 AM window are listed. Students who submitted code today are excluded.</p>
+
+    <div class="card">
+
+      <h2>
+        0 Solved Today Students
+      </h2>
+
+      <p class="muted">
+        Only students with 0 solved AND 0 submissions
+        in the complete 07:00 AM to 07:00 AM window
+        are listed. Students who submitted code today
+        are excluded.
+      </p>
+
+      
     <div class="table-wrap">
       <table>
         <thead><tr><th>#</th><th>Student</th><th>Register No.</th><th>Section</th><th>Today Solved</th><th>Today Submissions</th><th>7 Days</th><th>14 Days</th><th>30 Days</th><th>Total Solved</th></tr></thead>
-        <tbody><tr><td>1</td><td>AASHIFA SAHANAJ M</td><td>922525106001</td><td>ECE A</td><td>0</td><td>0</td><td>10</td><td>0</td><td>20</td><td>60</td></tr><tr><td>2</td><td>AAZHIGA N</td><td>922525106002</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>16</td><td>21</td></tr><tr><td>3</td><td>AISHWARYA G</td><td>922525106009</td><td>ECE A</td><td>0</td><td>0</td><td>4</td><td>11</td><td>13</td><td>149</td></tr><tr><td>4</td><td>AMIRDAVARSINI K S</td><td>922525106018</td><td>ECE A</td><td>0</td><td>0</td><td>8</td><td>16</td><td>19</td><td>57</td></tr><tr><td>5</td><td>ANUJA S</td><td>922525106022</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>192</td></tr><tr><td>6</td><td>ANUSRI R</td><td>922525106023</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td><td>75</td></tr><tr><td>7</td><td>ANUSYA B</td><td>922525106024</td><td>ECE A</td><td>0</td><td>0</td><td>9</td><td>9</td><td>20</td><td>60</td></tr><tr><td>8</td><td>BHARGAVI K</td><td>922525106043</td><td>ECE A</td><td>0</td><td>0</td><td>2</td><td>6</td><td>20</td><td>22</td></tr><tr><td>9</td><td>BOOBASE R</td><td>922525106045</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>10</td><td>58</td></tr><tr><td>10</td><td>BOOMIKA T</td><td>922525106046</td><td>ECE A</td><td>0</td><td>0</td><td>4</td><td>0</td><td>18</td><td>36</td></tr><tr><td>11</td><td>DAKSHINYA R</td><td>922525106054</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>2</td><td>25</td></tr><tr><td>12</td><td>DEJASRI M</td><td>922525106059</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td><td>101</td></tr><tr><td>13</td><td>DESMA SHALINI K</td><td>922525106060</td><td>ECE A</td><td>0</td><td>0</td><td>1</td><td>1</td><td>6</td><td>105</td></tr><tr><td>14</td><td>DHANASRI R</td><td>922525106063</td><td>ECE A</td><td>0</td><td>0</td><td>6</td><td>0</td><td>7</td><td>168</td></tr></tbody>
+        <tbody><tr><td>1</td><td>ADHITHMITHRAN P</td><td>922525106005</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>35</td></tr><tr><td>2</td><td>AFTON AJ</td><td>922525106006</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>78</td></tr><tr><td>3</td><td>AGATHEESWARAN K</td><td>922525106007</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>87</td></tr><tr><td>4</td><td>AHELESH G S</td><td>922525106008</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td></tr><tr><td>5</td><td>AJAYKRISHNA R</td><td>922525106011</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>7</td><td>110</td></tr><tr><td>6</td><td>AJAYKUMAR A L</td><td>922525106012</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>91</td></tr><tr><td>7</td><td>AKSHAYA S</td><td>922525106016</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>8</td><td>ANBARASU S</td><td>922525106019</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>9</td><td>ANJITHAA N</td><td>922525106020</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>10</td><td>ANOOP C</td><td>922525106021</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>84</td></tr><tr><td>11</td><td>ANUJA S</td><td>922525106022</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>192</td></tr><tr><td>12</td><td>ARSATHA BEGAM M S</td><td>922525106025</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>13</td><td>ARUL S.T.</td><td>922525106026</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>101</td></tr><tr><td>14</td><td>Arulesh K</td><td>922525106027</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>44</td></tr><tr><td>15</td><td>R ARUN PRASATH</td><td>922525106029</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>122</td></tr><tr><td>16</td><td>ARUNKUMAR K</td><td>922525106030</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>2</td><td>112</td></tr><tr><td>17</td><td>ARVIN SHANKARA</td><td>922525106032</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>137</td></tr><tr><td>18</td><td>ASHOK KUMAR P</td><td>922525106033</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>109</td></tr><tr><td>19</td><td>Asmitha E</td><td>922525106034</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>2</td></tr><tr><td>20</td><td>BALAJI C</td><td>922525106035</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>8</td></tr><tr><td>21</td><td>BALARITHISH S</td><td>922525106036</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>137</td></tr><tr><td>22</td><td>BARANITHARAN V</td><td>922525106037</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>4</td></tr><tr><td>23</td><td>BAVITHA T</td><td>922525106038</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>3</td></tr><tr><td>24</td><td>BHARANIDHARAN S</td><td>922525106040</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>25</td><td>BHARATH KUMAR E</td><td>922525106041</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>26</td><td>BHARGAVI K</td><td>922525106043</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>14</td></tr><tr><td>27</td><td>Bhavan bala N</td><td>922525106044</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>9</td></tr><tr><td>28</td><td>BOOBASE R</td><td>922525106045</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td><td>59</td></tr><tr><td>29</td><td>BOOMIKA T</td><td>922525106046</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>18</td><td>36</td></tr><tr><td>30</td><td>BRINDHA S</td><td>922525106048</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>31</td><td>BUVNESH N</td><td>922525106049</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>103</td></tr><tr><td>32</td><td>CHARUDESNA S</td><td>922525106050</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>33</td><td>CHINMAYASRI K</td><td>922525106052</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>63</td></tr><tr><td>34</td><td>CHINNAPPAN S</td><td>922525106053</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>122</td></tr><tr><td>35</td><td>DAKSHINYA R</td><td>922525106054</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>14</td><td>39</td></tr><tr><td>36</td><td>DARSHAN MANISH A</td><td>922525106056</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>57</td></tr><tr><td>37</td><td>DARSHAN V V</td><td>922525106057</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>38</td><td>DEEKSHA K</td><td>922525106058</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td></tr><tr><td>39</td><td>DEVA V</td><td>922525106061</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>96</td></tr><tr><td>40</td><td>DHAKSESH PRANAV P</td><td>922525106062</td><td>ECE A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>2</td><td>107</td></tr></tbody>
       </table>
     </div>
+    
+
     </div>
-    <div class="card"><h2>Section Summary</h2>
+
+    <div class="card">
+
+      <h2>
+        Section Summary
+      </h2>
+
+      
     <div class="table-wrap">
       <table>
         <thead><tr><th>Section</th><th>Students</th><th>Active</th><th>0 Solved / 0 Submission</th><th>Today Solved</th><th>Today Submissions</th><th>7 Days</th><th>14 Days</th><th>30 Days</th></tr></thead>
-        <tbody><tr><td>ECE A</td><td>20</td><td>3</td><td>14</td><td>6</td><td>6</td><td>64</td><td>70</td><td>256</td></tr></tbody>
+        <tbody><tr><td>ECE A</td><td>63</td><td>23</td><td>40</td><td>2</td><td>102</td><td>82</td><td>104</td><td>231</td></tr></tbody>
       </table>
     </div>
+    
+
     </div>
+    
+
     <div class="footer">
       Generated automatically by the ECE LeetCode Leaderboard platform.
     </div>
+
   </div>
+
 </body>
 </html>
