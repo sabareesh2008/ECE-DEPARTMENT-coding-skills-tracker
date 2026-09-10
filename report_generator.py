@@ -5421,26 +5421,30 @@ def main() -> int:
     )
 
     # --------------------------------------------------------
-    # Select routes.
+    # Select routes (support CLI flag or SCOPE env var)
     # --------------------------------------------------------
 
-    if args.scope:
+    scope_filter = (args.scope or env("SCOPE", "")).strip()
+    if scope_filter.upper() in {"ALL", ""}:
+        scope_filter = None
+
+    if scope_filter:
 
         selected_routes = [
             (
-                args.scope,
+                scope_filter,
 
                 (
                     None
-                    if args.scope == "OVERALL"
-                    else args.scope
+                    if scope_filter == "OVERALL"
+                    else scope_filter
                 ),
 
                 (
                     config.hod_recipients
-                    if args.scope == "OVERALL"
+                    if scope_filter == "OVERALL"
                     else config.section_recipients.get(
-                        args.scope,
+                        scope_filter,
                         [],
                     )
                 ),

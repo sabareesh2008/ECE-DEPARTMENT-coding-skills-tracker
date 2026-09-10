@@ -2,6 +2,21 @@ name: Weekly ECE Section-wise Performance Reports
 
 on:
   workflow_dispatch:
+    inputs:
+      scope:
+        description: "Section / Scope to generate (Select one section or ALL)"
+        required: false
+        default: "ECE A"
+        type: choice
+        options:
+          - "ECE A"
+          - "ECE B"
+          - "ECE C"
+          - "ECE D"
+          - "ECE E"
+          - "ECE F"
+          - "OVERALL"
+          - "ALL"
   schedule:
     - cron: "30 1 * * 0"
 
@@ -35,6 +50,7 @@ jobs:
 
       - name: Generate and send section-wise weekly reports
         env:
+          SCOPE: ${{ github.event.inputs.scope || 'ALL' }}
           SEND_EMAIL: "false"
           SEND_WHATSAPP: "true"
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
