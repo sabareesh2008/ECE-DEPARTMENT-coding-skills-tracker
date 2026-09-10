@@ -5626,12 +5626,14 @@ def main() -> int:
             None,
         )
 
-        if not whatsapp_number:
+        has_valid_digits = any(ch.isdigit() for ch in str(whatsapp_number or ""))
+
+        if not has_valid_digits:
 
             print(
                 f"{route_label}: "
                 "WhatsApp skipped - "
-                "no phone number configured."
+                f"no valid phone number configured in secrets (value: '{whatsapp_number}')."
             )
 
             continue
