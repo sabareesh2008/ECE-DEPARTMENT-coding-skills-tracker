@@ -24,14 +24,54 @@ class WhatsAppConfig:
     hod_number: str
 
 
-def normalize_phone(value: str) -> str:
+def normalize_phone(value: str, default_country_code: str = "91") -> str:
     """Return an E.164-style digits-only recipient number for Meta."""
     digits = "".join(ch for ch in str(value or "") if ch.isdigit())
 
     if not digits:
         raise ValueError("WhatsApp recipient number is empty.")
 
+    # Strip leading 0 if 11 digits (e.g. 09876543210 -> 9876543210)
+    if len(digits) == 11 and digits.startswith("0"):
+        digits = digits[1:]
+
+    # Prepend default country code for standard 10-digit mobile numbers
+    if len(digits) == 10:
+        digits = f"{default_country_code}{digits}"
+
     return digits
+
+
+def _format_meta_error(status_code: int, response_text: str) -> str:
+    """Parse and format Meta Graph API error with actionable diagnostic hints."""
+    try:
+        import json
+        payload = json.loads(response_text)
+        error = payload.get("error", {})
+        msg = error.get("message", response_text)
+        code = error.get("code")
+        subcode = error.get("error_subcode")
+        err_type = error.get("type")
+        details = error.get("error_data", {}).get("details", "")
+
+        hint = ""
+        if code == 190:
+            hint = "Access Token is invalid or expired. Generate a fresh access token in Meta Developer Portal and update repository secret WHATSAPP_ACCESS_TOKEN."
+        elif code == 131030:
+            hint = "Recipient phone number is not in the allowed test list. In Meta Developer Console (WhatsApp > API Setup), add this phone number under 'To' recipients, or publish app to Live mode."
+        elif code == 132000:
+            hint = "WhatsApp template name or template variables do not match the approved template in Meta WhatsApp Manager."
+        elif code == 131026:
+            hint = "Message undeliverable. Ensure the recipient number is a valid active WhatsApp user."
+
+        info = f"HTTP {status_code} ({err_type or 'Error'} Code {code}{f' Subcode {subcode}' if subcode else ''}): {msg}"
+        if details:
+            info += f" | Details: {details}"
+        if hint:
+            info += f"\n -> [RESOLUTION]: {hint}"
+        return info
+    except Exception:
+        return f"HTTP {status_code}: {response_text}"
 
 
 def _graph_url(config: WhatsAppConfig, path: str) -> str:
@@ -78,9 +118,9 @@ def upload_pdf(config: WhatsAppConfig, pdf_path: Path) -> str:
         )
 
     if not response.ok:
+        err_detail = _format_meta_error(response.status_code, response.text)
         raise RuntimeError(
-            f"WhatsApp media upload failed ({response.status_code}): "
-            f"{response.text}"
+            f"WhatsApp media upload failed: {err_detail}"
         )
 
     payload = response.json()
@@ -226,9 +266,9 @@ def send_template_with_pdf(
     )
 
     if not response.ok:
+        err_detail = _format_meta_error(response.status_code, response.text)
         raise RuntimeError(
-            f"WhatsApp template send failed ({response.status_code}): "
-            f"{response.text}"
+            f"WhatsApp template send failed: {err_detail}"
         )
 
     data = response.json()

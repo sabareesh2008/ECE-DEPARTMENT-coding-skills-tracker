@@ -5479,6 +5479,7 @@ def main() -> int:
     sent_reports = 0
     sent_recipients = 0
     whatsapp_sent = 0
+    whatsapp_errors: list[str] = []
 
     # ========================================================
     # PROCESS EACH SECTION / OVERALL REPORT
@@ -5737,10 +5738,12 @@ def main() -> int:
 
         except Exception as exc:
 
-            raise RuntimeError(
-                f"{route_label}: "
-                f"WhatsApp report failed: {exc}"
-            ) from exc
+            err_msg = f"{route_label} (Recipient: {whatsapp_number}): {exc}"
+            print(
+                f"\n[!] WHATSAPP ERROR for {err_msg}\n",
+                file=sys.stderr,
+            )
+            whatsapp_errors.append(err_msg)
 
     # ========================================================
     # FINAL STATUS
@@ -5780,6 +5783,19 @@ def main() -> int:
             f"WhatsApp reports sent: "
             f"{whatsapp_sent}"
         )
+
+        if whatsapp_errors:
+            print("\n" + "=" * 72, file=sys.stderr)
+            print("WHATSAPP DISPATCH SUMMARY - ENCOUNTERED ERRORS:", file=sys.stderr)
+            for err in whatsapp_errors:
+                print(f"  * {err}", file=sys.stderr)
+            print("=" * 72 + "\n", file=sys.stderr)
+
+            if whatsapp_sent == 0 and send_whatsapp and not args.dry_run:
+                raise RuntimeError(
+                    f"All configured WhatsApp report dispatches failed ({len(whatsapp_errors)} error(s)). "
+                    "Please check the error details and resolution hints above."
+                )
 
     return 0
 
