@@ -21,6 +21,7 @@
     <button id="top50LeetCodeButton" class="quick-circle-button" type="button" title="Download Top 50 LeetCode" aria-label="Download Top 50 LeetCode">🏆</button>
     <button id="top50GitHubButton" class="quick-circle-button" type="button" title="Download Top 50 GitHub" aria-label="Download Top 50 GitHub">🐙</button>
     <button id="allFacultyLeetCodeButton" class="quick-circle-button" type="button" title="Download All Faculty LeetCode Report" aria-label="Download All Faculty LeetCode Report">👨‍🏫</button>
+    <button id="homeOpenDateReportButton" class="quick-circle-button admin-only" type="button" hidden title="Download Date Report" aria-label="Download Date Report">📅</button>
   </div>
 
   <header class="hero tracker-entry-hero">
@@ -110,32 +111,6 @@
 
       <div id="homeActionMessage" class="home-action-message" role="status" aria-live="polite"></div>
 
-      <!-- Quick Download Reports Hub -->
-      <section class="home-downloads-bar" aria-label="Download Reports">
-        <div class="home-downloads-copy">
-          <span class="section-card-title">📥 DOWNLOAD REPORTS</span>
-          <strong>Department Reports &amp; Exports</strong>
-          <span>Export Excel reports for LeetCode, GitHub and Faculty performance.</span>
-        </div>
-        <div class="home-downloads-actions">
-          <button id="bannerTop50LeetCode" class="action-button secondary" type="button">
-            🏆 Top 50 LeetCode
-          </button>
-          <button id="bannerTop50GitHub" class="action-button secondary" type="button">
-            🐙 Top 50 GitHub
-          </button>
-          <button id="bannerAllFacultyLeetCode" class="action-button secondary" type="button">
-            👨‍🏫 Faculty Report
-          </button>
-          <button id="bannerAllStudentsReport" class="action-button primary" type="button">
-            📊 All Students Report
-          </button>
-          <button id="homeDateReportButton" class="action-button primary admin-only" type="button" hidden>
-            📅 Date Report
-          </button>
-        </div>
-      </section>
-
       <div class="tracker-entry-grid">
         <a class="section-card tracker-entry-card" href="leetcode.html">
           <span class="section-card-title">LeetCode</span>
@@ -155,17 +130,11 @@
   </main>
 
   <!-- =======================================================
-       ADMIN DATE-RANGE REPORT
+       HOME ADMIN DATE REPORT MODAL
        ======================================================= -->
   <div id="homeDateReportModal" class="profile-modal date-report-modal" hidden>
     <div class="profile-modal-backdrop" data-close-home-date-report></div>
-
-    <section
-      class="profile-modal-card date-report-card"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="homeDateReportTitle"
-    >
+    <section class="profile-modal-card date-report-card" role="dialog" aria-modal="true" aria-labelledby="homeDateReportTitle">
       <div class="profile-modal-head">
         <div>
           <div class="eyebrow">ADMIN REPORT</div>
@@ -179,18 +148,27 @@
         <label class="form-label" for="homeDateReportFrom">From date
           <input id="homeDateReportFrom" class="form-input" type="date" required>
         </label>
-
         <label class="form-label" for="homeDateReportTo">To date
           <input id="homeDateReportTo" class="form-input" type="date" required>
         </label>
       </div>
 
-      <label class="form-label date-report-section-label" for="homeDateReportSection">
-        Section
-        <select id="homeDateReportSection" class="form-input" required>
+      <label class="form-label" for="homeDateReportSection">Section
+        <select id="homeDateReportSection" class="form-input">
           <option value="OVERALL">ECE Overall</option>
+          <option value="ECE A">ECE A</option>
+          <option value="ECE B">ECE B</option>
+          <option value="ECE C">ECE C</option>
+          <option value="ECE D">ECE D</option>
+          <option value="ECE E">ECE E</option>
+          <option value="ECE F">ECE F</option>
         </select>
       </label>
+
+      <div class="date-report-scope">
+        <span>Report scope</span>
+        <strong id="homeDateReportScope">ECE Overall</strong>
+      </div>
 
       <p id="homeDateReportMessage" class="form-message" role="status" aria-live="polite"></p>
 
