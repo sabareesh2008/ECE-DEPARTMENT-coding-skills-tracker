@@ -9,6 +9,7 @@
   >
   <title>ECE LeetCode Leaderboard</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -333,14 +334,13 @@
                 <th>Today</th>
                 <th>Total</th>
                 <th>E / M / H</th>
-                <th class="suspicious-col-header" title="Suspicious Solving Score (Medium & Hard only)">Suspicious Score</th>
                 <th>Status</th>
-              </tr>
+</tr>
             </thead>
 
             <tbody id="studentTableBody">
               <tr>
-                <td colspan="13" class="loading-row">
+                <td colspan="12" class="loading-row">
                   Loading leaderboard...
                 </td>
               </tr>
@@ -408,6 +408,19 @@
             <span class="admin-action-copy">
               <strong>Download PDF</strong>
               <small>Generate printable report</small>
+            </span>
+          </button>
+
+          <button
+            id="openDateReportButton"
+            class="admin-action-tile export-tile admin-only"
+            type="button"
+            hidden
+          >
+            <span class="admin-action-icon">📅</span>
+            <span class="admin-action-copy">
+              <strong>Download Date Report</strong>
+              <small>Select a date or custom date range</small>
             </span>
           </button>
         </div>
@@ -496,6 +509,63 @@
           </button>
         </div>
       </div>
+    </section>
+  </div>
+
+  <!-- =======================================================
+       ADMIN DATE-RANGE REPORT
+       ======================================================= -->
+  <div id="dateReportModal" class="profile-modal date-report-modal" hidden>
+    <div class="profile-modal-backdrop" data-close-date-report></div>
+
+    <section
+      class="profile-modal-card date-report-card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="dateReportTitle"
+    >
+      <div class="profile-modal-head">
+        <div>
+          <div class="eyebrow">ADMIN REPORT</div>
+          <h2 id="dateReportTitle">Download Date Report</h2>
+          <p class="modal-help">Generate a report for one day or any custom date range.</p>
+        </div>
+        <button id="closeDateReport" class="modal-close" type="button" aria-label="Close">×</button>
+      </div>
+
+      <div class="date-report-grid">
+        <label class="form-label" for="dateReportFrom">From date
+          <input id="dateReportFrom" class="form-input" type="date" required>
+        </label>
+
+        <label class="form-label" for="dateReportTo">To date
+          <input id="dateReportTo" class="form-input" type="date" required>
+        </label>
+      </div>
+
+      <div class="date-report-scope">
+        <span>Report scope</span>
+        <strong id="dateReportScope">Current view</strong>
+      </div>
+
+      <p id="dateReportMessage" class="form-message" role="status" aria-live="polite"></p>
+
+      <div class="modal-actions date-report-actions">
+        <button id="downloadDateReportCsv" class="action-button secondary" type="button">
+          Download CSV
+        </button>
+        <button id="downloadDateReportExcel" class="action-button primary" type="button">
+          Download Excel
+        </button>
+        <button id="downloadDateReportPdf" class="action-button secondary" type="button">
+          Download PDF
+        </button>
+        <button id="cancelDateReport" class="action-button secondary" type="button">
+          Cancel
+        </button>
+      </div>
+
+      <div id="dateReportPrintContent" class="date-report-print-content" hidden></div>
     </section>
   </div>
 
@@ -1306,18 +1376,6 @@
             <span>Overall Rank</span>
             <strong id="profileOverallRank">#–</strong>
           </div>
-
-          <div class="profile-rank-card profile-suspicious-card" id="profileSuspiciousContainer">
-            <span>Suspicious Score</span>
-            <button
-              id="profileSuspiciousBadge"
-              class="suspicious-badge"
-              type="button"
-              title="Click to view detailed Medium/Hard suspicious analysis"
-            >
-              🟢 0% Normal
-            </button>
-          </div>
         </div>
       </div>
 
@@ -1458,111 +1516,6 @@
           <strong id="profileLastSolved">–</strong>
         </div>
       </article>
-    </section>
-  </div>
-
-  <!-- =======================================================
-       ADMIN ONLY: SUSPICIOUS SOLVING ANALYSIS MODAL
-       ======================================================= -->
-  <div id="suspiciousAnalysisModal" class="student-profile-modal suspicious-analysis-modal" hidden>
-    <div class="student-profile-backdrop" data-close-suspicious-analysis></div>
-
-    <section
-      class="student-profile-panel suspicious-analysis-panel"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="suspiciousModalTitle"
-    >
-      <div class="student-profile-toolbar">
-        <button
-          id="closeSuspiciousAnalysisModal"
-          class="profile-back-button"
-          type="button"
-        >
-          ← Close Analysis
-        </button>
-
-        <div class="suspicious-admin-badge-container">
-          <span class="role-badge role-admin">🔒 Admin Only Analysis</span>
-        </div>
-      </div>
-
-      <div class="suspicious-hero">
-        <div class="suspicious-hero-header">
-          <div class="eyebrow">MEDIUM &amp; HARD BEHAVIORAL ANALYSIS</div>
-          <h2 id="suspiciousModalTitle">Suspicious Solving Analysis</h2>
-          <p id="suspiciousStudentSub" class="suspicious-sub">Student Name · Register Number</p>
-        </div>
-
-        <div class="suspicious-score-display-card">
-          <div class="suspicious-score-circle" id="suspiciousScoreCircle">
-            <span class="suspicious-score-value" id="suspiciousScoreValue">0%</span>
-            <span class="suspicious-score-label" id="suspiciousScoreBadge">🟢 Normal</span>
-          </div>
-          <div class="suspicious-score-desc-block">
-            <p id="suspiciousScoreSummary" class="suspicious-summary-text">Evaluating solve patterns strictly on LeetCode Medium &amp; Hard problems.</p>
-            <div class="suspicious-scope-tag">
-              <span>⚠️ Scope: <strong>Medium &amp; Hard ONLY</strong> (Easy problems are strictly ignored)</span>
-              <span>🔒 Zero Peer Comparison: <strong>Individual metrics &amp; history only</strong></span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Metrics Summary -->
-      <div class="suspicious-quick-metrics">
-        <div class="suspicious-metric-box">
-          <span>Medium Solved</span>
-          <strong id="suspiciousMedSolved">0</strong>
-        </div>
-        <div class="suspicious-metric-box">
-          <span>Hard Solved</span>
-          <strong id="suspiciousHardSolved">0</strong>
-        </div>
-        <div class="suspicious-metric-box">
-          <span>Med+Hard Solved</span>
-          <strong id="suspiciousTotalMedHard">0</strong>
-        </div>
-        <div class="suspicious-metric-box">
-          <span>Med+Hard Attempts</span>
-          <strong id="suspiciousMedHardSubs">0</strong>
-        </div>
-        <div class="suspicious-metric-box">
-          <span>Med+Hard AC Rate</span>
-          <strong id="suspiciousMedHardRate">0%</strong>
-        </div>
-        <div class="suspicious-metric-box ignored-metric">
-          <span>Easy Solved (Ignored)</span>
-          <strong id="suspiciousEasySolved">0</strong>
-        </div>
-      </div>
-
-      <!-- 7 Factors Detailed Calculation Breakdown -->
-      <div class="suspicious-factors-container">
-        <div class="suspicious-factors-head">
-          <h3>Detailed 7-Factor Calculation Breakdown</h3>
-          <p>Every individual factor percentage and weighted contribution towards the final score:</p>
-        </div>
-
-        <div class="suspicious-factors-grid" id="suspiciousFactorsGrid">
-          <!-- Rendered dynamically -->
-        </div>
-      </div>
-
-      <!-- Formula and Transparency Notice -->
-      <div class="suspicious-formula-card">
-        <h4>📐 How the Final Score is Calculated</h4>
-        <div class="suspicious-formula-text">
-          <code>Final Score = (F1 × 20%) + (F2 × 15%) + (F3 × 15%) + (F4 × 15%) + (F5 × 15%) + (F6 × 10%) + (F7 × 10%)</code>
-        </div>
-        <ul class="suspicious-scale-legend">
-          <li>🟢 <strong>Normal (0% - 20%)</strong>: Standard human learning and trial-and-error patterns.</li>
-          <li>🟡 <strong>Low (21% - 40%)</strong>: Slight velocity or above-average consistency.</li>
-          <li>🟠 <strong>Suspicious (41% - 60%)</strong>: Notable streaks, low wrong submissions, or rapid intervals.</li>
-          <li>🔴 <strong>High (61% - 80%)</strong>: Highly anomalous solve speeds and negligible error rates on complex tasks.</li>
-          <li>🚨 <strong>Very High (81% - 100%)</strong>: Severe indicators of automated scripts, direct copy-paste, or external solution injection.</li>
-        </ul>
-      </div>
     </section>
   </div>
 

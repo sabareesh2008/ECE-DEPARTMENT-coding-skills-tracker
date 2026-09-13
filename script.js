@@ -68,6 +68,18 @@ const toggleAdminPassword = document.getElementById("toggleAdminPassword");
 const addProfileButton = document.getElementById("addProfileButton");
 const syncNowButton = document.getElementById("syncNowButton");
 const manageStudentsButton = document.getElementById("manageStudentsButton");
+const openDateReportButton = document.getElementById("openDateReportButton");
+const dateReportModal = document.getElementById("dateReportModal");
+const closeDateReportButton = document.getElementById("closeDateReport");
+const cancelDateReportButton = document.getElementById("cancelDateReport");
+const dateReportFrom = document.getElementById("dateReportFrom");
+const dateReportTo = document.getElementById("dateReportTo");
+const dateReportScope = document.getElementById("dateReportScope");
+const dateReportMessage = document.getElementById("dateReportMessage");
+const downloadDateReportCsvButton = document.getElementById("downloadDateReportCsv");
+const downloadDateReportExcelButton = document.getElementById("downloadDateReportExcel");
+const downloadDateReportPdfButton = document.getElementById("downloadDateReportPdf");
+const dateReportPrintContent = document.getElementById("dateReportPrintContent");
 
 const homeAddProfileButton = document.getElementById("homeAddProfileButton");
 const homeSyncNowButton = document.getElementById("homeSyncNowButton");
@@ -585,141 +597,6 @@ function getDisplayRank(student) {
 }
 
 
-function getSuspiciousMeta(score) {
-  const s = Math.max(0, Math.min(100, Math.round(Number(score) || 0)));
-  if (s <= 20) return { class: "normal", label: "Normal", emoji: "🟢" };
-  if (s <= 40) return { class: "low", label: "Low", emoji: "🟡" };
-  if (s <= 60) return { class: "suspicious", label: "Suspicious", emoji: "🟠" };
-  if (s <= 80) return { class: "high", label: "High", emoji: "🔴" };
-  return { class: "very-high", label: "Very High", emoji: "🚨" };
-}
-
-function getStudentSuspiciousData(student) {
-  if (!student) {
-    return {
-      score: 0,
-      label: "Normal",
-      emoji: "🟢",
-      class: "normal",
-      factors: {
-        f1_short_solving_time: { percent: 0, weight: 20, desc: "No Medium/Hard problems solved yet." },
-        f2_continuous_solving: { percent: 0, weight: 15, desc: "No consecutive Medium/Hard solving activity." },
-        f3_first_attempt_pattern: { percent: 0, weight: 15, desc: "No Medium/Hard attempts recorded." },
-        f4_acceptance_rate: { percent: 0, weight: 15, desc: "No Medium/Hard submissions recorded." },
-        f5_speed_bursts: { percent: 0, weight: 15, desc: "No rapid solve bursts detected." },
-        f6_sudden_skill_jump: { percent: 0, weight: 10, desc: "No sudden velocity spike vs personal baseline." },
-        f7_difficulty_jump: { percent: 0, weight: 10, desc: "Normal distribution." }
-      },
-      summary: "No Medium or Hard problem activity recorded."
-    };
-  }
-
-  // 1. If LiveData already contains parsed Suspicious Details JSON
-  if (student["Suspicious Details"]) {
-    try {
-      const parsed = typeof student["Suspicious Details"] === "string"
-        ? JSON.parse(student["Suspicious Details"])
-        : student["Suspicious Details"];
-      if (parsed && typeof parsed.score === "number") {
-        const meta = getSuspiciousMeta(parsed.score);
-        return {
-          score: parsed.score,
-          label: parsed.label || meta.label,
-          emoji: parsed.emoji || meta.emoji,
-          class: meta.class,
-          factors: parsed.factors || {},
-          summary: parsed.summary || `${meta.emoji} ${meta.label} (${parsed.score}%) — Medium & Hard behavioral analysis.`
-        };
-      }
-    } catch (e) {}
-  }
-
-  // 2. If Suspicious Score column exists
-  if (student["Suspicious Score"] !== undefined && student["Suspicious Score"] !== "") {
-    const score = Math.round(Number(student["Suspicious Score"]) || 0);
-    const meta = getSuspiciousMeta(score);
-    return {
-      score,
-      label: student["Suspicious Label"] || meta.label,
-      emoji: meta.emoji,
-      class: meta.class,
-      factors: {
-        f1_short_solving_time: { percent: score, weight: 20, desc: "Timestamp delta factor evaluated on Medium/Hard solves." },
-        f2_continuous_solving: { percent: score, weight: 15, desc: "Continuous Medium/Hard solving streak factor." },
-        f3_first_attempt_pattern: { percent: score, weight: 15, desc: "First-attempt acceptance pattern evaluated." },
-        f4_acceptance_rate: { percent: score, weight: 15, desc: "Medium/Hard acceptance rate factor." },
-        f5_speed_bursts: { percent: score, weight: 15, desc: "Speed burst factor evaluated in rolling 1-hour window." },
-        f6_sudden_skill_jump: { percent: score, weight: 10, desc: "Sudden personal velocity surge vs historical baseline." },
-        f7_difficulty_jump: { percent: score, weight: 10, desc: "Difficulty jump pattern (ratio of Med/Hard vs Easy)." }
-      },
-      summary: `${meta.emoji} ${meta.label} (${score}%) — Evaluated strictly on Medium & Hard problems.`
-    };
-  }
-
-  // 3. Fallback client-side calculation from raw student values
-  const easy = toNumber(student.Easy);
-  const med = toNumber(student.Medium);
-  const hard = toNumber(student.Hard);
-  const totalMedHard = med + hard;
-  const totalAll = easy + med + hard;
-  const totalSubs = toNumber(student["Total Submissions"]) || totalAll;
-
-  if (totalMedHard === 0) {
-    return {
-      score: 0,
-      label: "Normal",
-      emoji: "🟢",
-      class: "normal",
-      factors: {
-        f1_short_solving_time: { percent: 0, weight: 20, desc: "No Medium/Hard problems solved yet." },
-        f2_continuous_solving: { percent: 0, weight: 15, desc: "No consecutive Medium/Hard solving activity." },
-        f3_first_attempt_pattern: { percent: 0, weight: 15, desc: "No Medium/Hard attempts recorded." },
-        f4_acceptance_rate: { percent: 0, weight: 15, desc: "No Medium/Hard submissions recorded." },
-        f5_speed_bursts: { percent: 0, weight: 15, desc: "No rapid solve bursts detected." },
-        f6_sudden_skill_jump: { percent: 0, weight: 10, desc: "Steady, consistent personal progression." },
-        f7_difficulty_jump: { percent: 0, weight: 10, desc: "Normal distribution." }
-      },
-      summary: "🟢 Normal (0%) — No Medium/Hard problem activity recorded."
-    };
-  }
-
-  let f4_score = 0;
-  let f4_desc = "Standard trial-and-error cycle on complex problems.";
-  const estimatedMedHardSubs = Math.max(totalMedHard, Math.round(totalSubs * 0.65));
-  const rate = estimatedMedHardSubs > 0 ? (totalMedHard / estimatedMedHardSubs) * 100 : 0;
-  if (totalMedHard >= 5 && rate >= 85) {
-    f4_score = 70;
-    f4_desc = `High acceptance rate (~${rate.toFixed(0)}%) on complex problems.`;
-  }
-
-  let f7_score = 0;
-  let f7_desc = "Balanced difficulty progression.";
-  if (totalAll >= 10 && (totalMedHard / totalAll) >= 0.85 && hard >= 3) {
-    f7_score = 75;
-    f7_desc = `${((totalMedHard / totalAll) * 100).toFixed(0)}% of solved problems are Medium/Hard with only ${easy} Easy problems.`;
-  }
-
-  const score = Math.round(f4_score * 0.15 + f7_score * 0.10);
-  const meta = getSuspiciousMeta(score);
-
-  return {
-    score,
-    label: meta.label,
-    emoji: meta.emoji,
-    class: meta.class,
-    factors: {
-      f1_short_solving_time: { percent: 0, weight: 20, desc: "Solving intervals within natural human range." },
-      f2_continuous_solving: { percent: 0, weight: 15, desc: "Solve pacing displays natural human pauses." },
-      f3_first_attempt_pattern: { percent: 0, weight: 15, desc: "Expected test failure cycles on complex problems." },
-      f4_acceptance_rate: { percent: f4_score, weight: 15, desc: f4_desc },
-      f5_speed_bursts: { percent: 0, weight: 15, desc: "No rapid bursts detected." },
-      f6_sudden_skill_jump: { percent: 0, weight: 10, desc: "Progression aligned with personal baseline." },
-      f7_difficulty_jump: { percent: f7_score, weight: 10, desc: f7_desc }
-    },
-    summary: `${meta.emoji} ${meta.label} (${score}%) — Evaluated strictly on Medium & Hard problem behaviors.`
-  };
-}
-
 function sortForDisplay(students) {
   return [...students].sort((a, b) =>
     String(a["Register Number"] || "").localeCompare(
@@ -737,9 +614,9 @@ function renderStudents(students) {
 
   const overall = selectedSection === "OVERALL";
 
-  // 13 columns in Overall view (Section visible)
-  // 12 columns in an individual section (Section hidden)
-  const columnCount = overall ? 13 : 12;
+  // 12 columns in Overall view (Section visible)
+  // 11 columns in an individual section (Section hidden)
+  const columnCount = overall ? 12 : 11;
 
   document.querySelectorAll(".overall-only").forEach((element) => {
     element.hidden = !overall;
@@ -771,8 +648,6 @@ function renderStudents(students) {
         : status === "Pending"
           ? "status-pending"
           : "status-error";
-
-    const suspicious = getStudentSuspiciousData(student);
 
     return `
       <tr>
@@ -812,17 +687,6 @@ function renderStudents(students) {
           <span class="emh-m" title="Medium">${toNumber(student.Medium)}</span>
           <span class="emh-separator">/</span>
           <span class="emh-h" title="Hard">${toNumber(student.Hard)}</span>
-        </td>
-
-        <td class="suspicious-cell">
-          <button
-            type="button"
-            class="suspicious-badge suspicious-${suspicious.class}"
-            data-suspicious-register="${escapeHTML(student["Register Number"])}"
-            title="Click to view detailed Medium & Hard suspicious analysis (Admin Only)"
-          >
-            ${suspicious.emoji} ${suspicious.score}% ${escapeHTML(suspicious.label)}
-          </button>
         </td>
 
         <td>
@@ -1553,6 +1417,390 @@ function downloadCSV() {
 
 function downloadPDF() {
   window.print();
+}
+
+// ============================================================
+// ADMIN DATE-RANGE REPORT
+// ============================================================
+
+function reportLocalISODate() {
+  const now = new Date();
+  const offset = now.getTimezoneOffset();
+  return new Date(now.getTime() - offset * 60000)
+    .toISOString()
+    .slice(0, 10);
+}
+
+function reportDateOffsetISO(days) {
+  const base = new Date(`${reportLocalISODate()}T00:00:00`);
+  base.setDate(base.getDate() + days);
+  return base.toISOString().slice(0, 10);
+}
+
+function reportScopeLabel() {
+  if (selectedSection && selectedSection !== "OVERALL") {
+    return selectedSection;
+  }
+  return "ECE Overall";
+}
+
+function openDateReportModal() {
+  if (!isAdmin()) {
+    return;
+  }
+
+  const today = reportLocalISODate();
+  if (!dateReportFrom.value) {
+    dateReportFrom.value = reportDateOffsetISO(-7);
+  }
+  if (!dateReportTo.value) {
+    dateReportTo.value = today;
+  }
+
+  dateReportFrom.max = today;
+  dateReportTo.max = today;
+  dateReportScope.textContent = reportScopeLabel();
+  dateReportMessage.textContent = "";
+  dateReportMessage.className = "form-message";
+
+  dateReportModal.hidden = false;
+  document.body.classList.add("modal-open");
+}
+
+function closeDateReportModal() {
+  if (!dateReportModal) return;
+  dateReportModal.hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
+function validateDateReportRange() {
+  if (!dateReportFrom.value || !dateReportTo.value) {
+    throw new Error("Please select both From and To dates.");
+  }
+
+  if (dateReportFrom.value > dateReportTo.value) {
+    throw new Error("From date cannot be after To date.");
+  }
+
+  if (dateReportTo.value > reportLocalISODate()) {
+    throw new Error("To date cannot be in the future.");
+  }
+}
+
+async function prepareDateReport() {
+  if (!isAdmin()) {
+    throw new Error("Administrator access required.");
+  }
+
+  validateDateReportRange();
+  await loadProfileData();
+
+  const from = dateReportFrom.value;
+  const to = dateReportTo.value;
+  const scope = reportScopeLabel();
+
+  const sourceStudents = selectedSection && selectedSection !== "OVERALL"
+    ? allStudents.filter((student) => String(student.Section || "").trim() === selectedSection)
+    : allStudents.slice();
+
+  const students = sourceStudents
+    .map((student) => {
+      const register = String(student["Register Number"] || "").trim();
+
+      const activity = dailyActivityRows
+        .filter((row) =>
+          String(row["Register Number"] || "").trim() === register
+          && String(row["Date"] || "").slice(0, 10) >= from
+          && String(row["Date"] || "").slice(0, 10) <= to
+          && String(row["Exact"] || "").toLowerCase() === "true"
+        )
+        .reduce((acc, row) => {
+          const date = String(row["Date"] || "").slice(0, 10);
+          const solved = Math.max(0, profileNumber(row["Solved That Day"]));
+          if (!acc.byDate.has(date)) {
+            acc.byDate.set(date, solved);
+          } else {
+            acc.byDate.set(date, acc.byDate.get(date) + solved);
+          }
+          return acc;
+        }, { byDate: new Map() });
+
+      const periodSolved = [...activity.byDate.values()]
+        .reduce((sum, value) => sum + value, 0);
+
+      const activeDays = [...activity.byDate.values()]
+        .filter((value) => value > 0).length;
+
+      const history = historyRows
+        .filter((row) =>
+          String(row["Register Number"] || "").trim() === register
+          && String(row["Date"] || "").slice(0, 10) <= to
+        )
+        .sort((a, b) =>
+          String(a["Date"] || "").localeCompare(String(b["Date"] || ""))
+        );
+
+      const snapshot = history.length
+        ? history[history.length - 1]
+        : student;
+
+      return {
+        "Register Number": register,
+        "Student Name": student["Student Name"] || snapshot["Student Name"] || "",
+        "Section": student["Section"] || snapshot["Section"] || "",
+        "LeetCode Username": student["LeetCode Username"] || snapshot["LeetCode Username"] || "",
+        "Problems Solved in Period": periodSolved,
+        "Active Days": activeDays,
+        "Problems Solved (Cumulative)": profileNumber(snapshot["Problems Solved"]),
+        "Medium (Cumulative)": profileNumber(snapshot["Medium"]),
+        "Hard (Cumulative)": profileNumber(snapshot["Hard"]),
+        "Total Submissions (Cumulative)": profileNumber(snapshot["Total Submissions"]),
+        "Solved on Last Snapshot": profileNumber(snapshot["Solved Today"]),
+        "Last Problem": snapshot["Last Problem"] || "",
+        "Last Solved": snapshot["Last Solved"] || "",
+        "Status": snapshot["Status"] || student["Status"] || ""
+      };
+    })
+    .sort((a, b) =>
+      String(a["Section"]).localeCompare(String(b["Section"]))
+      || String(a["Register Number"]).localeCompare(String(b["Register Number"]))
+    );
+
+  const dailyRows = [];
+  students.forEach((student) => {
+    dailyActivityRows
+      .filter((row) =>
+        String(row["Register Number"] || "").trim() === student["Register Number"]
+        && String(row["Date"] || "").slice(0, 10) >= from
+        && String(row["Date"] || "").slice(0, 10) <= to
+        && String(row["Exact"] || "").toLowerCase() === "true"
+      )
+      .forEach((row) => {
+        dailyRows.push({
+          "Date": String(row["Date"] || "").slice(0, 10),
+          "Register Number": student["Register Number"],
+          "Student Name": student["Student Name"],
+          "Section": student["Section"],
+          "Solved That Day": profileNumber(row["Solved That Day"]),
+          "Source": row["Source"] || "HISTORY_EXACT"
+        });
+      });
+  });
+
+  return { from, to, scope, students, dailyRows };
+}
+
+function reportDownload(filename, content, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function downloadDateReportCsv() {
+  prepareDateReport()
+    .then((report) => {
+      const columns = [
+        "Register Number",
+        "Student Name",
+        "Section",
+        "LeetCode Username",
+        "Problems Solved in Period",
+        "Active Days",
+        "Problems Solved (Cumulative)",
+        "Medium (Cumulative)",
+        "Hard (Cumulative)",
+        "Total Submissions (Cumulative)",
+        "Solved on Last Snapshot",
+        "Last Problem",
+        "Last Solved",
+        "Status"
+      ];
+
+      const rows = [
+        ["Report Scope", report.scope],
+        ["From", report.from],
+        ["To", report.to],
+        [],
+        columns,
+        ...report.students.map((student) =>
+          columns.map((column) => student[column] ?? "")
+        )
+      ];
+
+      const csv = "\uFEFF" + rows
+        .map((row) => row.map(csvEscape).join(","))
+        .join("\r\n");
+
+      reportDownload(
+        `ECE_LeetCode_Report_${report.from}_to_${report.to}.csv`,
+        csv,
+        "text/csv;charset=utf-8"
+      );
+
+      closeDateReportModal();
+    })
+    .catch((error) => {
+      dateReportMessage.textContent = error.message || "Unable to generate report.";
+      dateReportMessage.className = "form-message error";
+    });
+}
+
+function downloadDateReportExcel() {
+  prepareDateReport()
+    .then((report) => {
+      if (!window.XLSX) {
+        throw new Error("Excel export library is unavailable. Please refresh the page.");
+      }
+
+      const workbook = XLSX.utils.book_new();
+
+      const summary = [
+        ["ECE LeetCode Date Report"],
+        ["Report Scope", report.scope],
+        ["From", report.from],
+        ["To", report.to],
+        [],
+        [
+          "Register Number",
+          "Student Name",
+          "Section",
+          "LeetCode Username",
+          "Problems Solved in Period",
+          "Active Days",
+          "Problems Solved (Cumulative)",
+          "Medium (Cumulative)",
+          "Hard (Cumulative)",
+          "Total Submissions (Cumulative)",
+          "Solved on Last Snapshot",
+          "Last Problem",
+          "Last Solved",
+          "Status"
+        ],
+        ...report.students.map((student) => [
+          student["Register Number"],
+          student["Student Name"],
+          student["Section"],
+          student["LeetCode Username"],
+          student["Problems Solved in Period"],
+          student["Active Days"],
+          student["Problems Solved (Cumulative)"],
+          student["Medium (Cumulative)"],
+          student["Hard (Cumulative)"],
+          student["Total Submissions (Cumulative)"],
+          student["Solved on Last Snapshot"],
+          student["Last Problem"],
+          student["Last Solved"],
+          student["Status"]
+        ])
+      ];
+
+      const daily = [
+        ["Date", "Register Number", "Student Name", "Section", "Solved That Day", "Source"],
+        ...report.dailyRows.map((row) => [
+          row["Date"],
+          row["Register Number"],
+          row["Student Name"],
+          row["Section"],
+          row["Solved That Day"],
+          row["Source"]
+        ])
+      ];
+
+      const summarySheet = XLSX.utils.aoa_to_sheet(summary);
+      const dailySheet = XLSX.utils.aoa_to_sheet(daily);
+
+      summarySheet["!cols"] = [
+        { wch: 18 }, { wch: 28 }, { wch: 12 }, { wch: 22 },
+        { wch: 24 }, { wch: 12 }, { wch: 25 }, { wch: 20 },
+        { wch: 18 }, { wch: 28 }, { wch: 22 }, { wch: 45 },
+        { wch: 24 }, { wch: 14 }
+      ];
+      dailySheet["!cols"] = [
+        { wch: 14 }, { wch: 18 }, { wch: 28 }, { wch: 12 },
+        { wch: 18 }, { wch: 18 }
+      ];
+
+      XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
+      XLSX.utils.book_append_sheet(workbook, dailySheet, "Daily Activity");
+
+      XLSX.writeFile(
+        workbook,
+        `ECE_LeetCode_Report_${report.from}_to_${report.to}.xlsx`
+      );
+
+      closeDateReportModal();
+    })
+    .catch((error) => {
+      dateReportMessage.textContent = error.message || "Unable to generate Excel report.";
+      dateReportMessage.className = "form-message error";
+    });
+}
+
+function renderDateReportForPrint(report) {
+  if (!dateReportPrintContent) return;
+
+  const rows = report.students.map((student) => `
+    <tr>
+      <td>${escapeHTML(student["Register Number"])}</td>
+      <td>${escapeHTML(student["Student Name"])}</td>
+      <td>${escapeHTML(student["Section"])}</td>
+      <td>${student["Problems Solved in Period"]}</td>
+      <td>${student["Active Days"]}</td>
+      <td>${student["Medium (Cumulative)"]}</td>
+      <td>${student["Hard (Cumulative)"]}</td>
+      <td>${escapeHTML(student["Status"])}</td>
+    </tr>
+  `).join("");
+
+  dateReportPrintContent.innerHTML = `
+    <div class="date-report-print-heading">
+      <div class="eyebrow">ECE CODEMETRIX</div>
+      <h2>LeetCode Date Report</h2>
+      <p><strong>${escapeHTML(report.scope)}</strong> · ${escapeHTML(report.from)} to ${escapeHTML(report.to)}</p>
+    </div>
+    <div class="date-report-print-summary">
+      <div><span>Students</span><strong>${report.students.length}</strong></div>
+      <div><span>Problems Solved</span><strong>${report.students.reduce((sum, s) => sum + s["Problems Solved in Period"], 0)}</strong></div>
+      <div><span>Active Student-Days</span><strong>${report.students.reduce((sum, s) => sum + s["Active Days"], 0)}</strong></div>
+    </div>
+    <div class="date-report-print-table-wrap">
+      <table class="date-report-print-table">
+        <thead>
+          <tr>
+            <th>Register</th><th>Student</th><th>Section</th>
+            <th>Period Solved</th><th>Active Days</th>
+            <th>Medium</th><th>Hard</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>${rows || '<tr><td colspan="8">No students found.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+
+  dateReportPrintContent.hidden = false;
+  document.body.classList.add("printing-date-report");
+  window.print();
+
+  setTimeout(() => {
+    document.body.classList.remove("printing-date-report");
+    dateReportPrintContent.hidden = true;
+    dateReportPrintContent.innerHTML = "";
+  }, 500);
+}
+
+function downloadDateReportPdf() {
+  prepareDateReport()
+    .then(renderDateReportForPrint)
+    .catch((error) => {
+      dateReportMessage.textContent = error.message || "Unable to generate PDF report.";
+      dateReportMessage.className = "form-message error";
+    });
 }
 
 
@@ -3602,14 +3850,6 @@ async function openStudentProfile(registerNumber) {
         )
       : "Today: No Challenge";
 
-  const suspicious = getStudentSuspiciousData(student);
-  const profileSuspiciousBadge = document.getElementById("profileSuspiciousBadge");
-  if (profileSuspiciousBadge) {
-    profileSuspiciousBadge.className = `suspicious-badge suspicious-${suspicious.class}`;
-    profileSuspiciousBadge.innerHTML = `${suspicious.emoji} ${suspicious.score}% ${escapeHTML(suspicious.label)}`;
-    profileSuspiciousBadge.dataset.suspiciousRegister = String(student["Register Number"]);
-  }
-
   renderStudentCodingProfile(
     student["Register Number"]
   );
@@ -3642,155 +3882,6 @@ async function openStudentProfile(registerNumber) {
   }
 }
 
-const suspiciousAnalysisModal = document.getElementById("suspiciousAnalysisModal");
-const closeSuspiciousAnalysisButton = document.getElementById("closeSuspiciousAnalysisModal");
-
-function closeSuspiciousAnalysis() {
-  if (suspiciousAnalysisModal) {
-    suspiciousAnalysisModal.hidden = true;
-  }
-
-  const anotherModalOpen = [
-    adminLoginModal,
-    profileModal,
-    manageStudentsModal,
-    deleteModal,
-    studentProfileModal
-  ].some((modal) => modal && !modal.hidden);
-
-  if (!anotherModalOpen) {
-    document.body.classList.remove("modal-open");
-  }
-}
-
-function openSuspiciousAnalysis(registerNumber) {
-  if (!isAdmin()) {
-    alert("🔒 Admin Access Required\n\nThe detailed Suspicious Solving Analysis is restricted to administrators only. Please log in as an Admin.");
-    openAdminLogin();
-    return;
-  }
-
-  const student = allStudents.find(
-    (item) => String(item["Register Number"]) === String(registerNumber)
-  );
-
-  if (!student || !suspiciousAnalysisModal) return;
-
-  const suspicious = getStudentSuspiciousData(student);
-  const easy = toNumber(student.Easy);
-  const med = toNumber(student.Medium);
-  const hard = toNumber(student.Hard);
-  const totalMedHard = med + hard;
-  const totalSubs = toNumber(student["Total Submissions"]);
-  const medHardSubs = Math.max(totalMedHard, Math.round(totalSubs * 0.65));
-  const medHardRate = medHardSubs > 0 ? ((totalMedHard / medHardSubs) * 100).toFixed(1) : "0.0";
-
-  document.getElementById("suspiciousStudentSub").textContent =
-    `${student["Student Name"] || "Student"} (${student["Register Number"] || "—"}) · ${student.Section || "ECE"}`;
-
-  document.getElementById("suspiciousScoreValue").textContent = `${suspicious.score}%`;
-  const badgeEl = document.getElementById("suspiciousScoreBadge");
-  if (badgeEl) {
-    badgeEl.textContent = `${suspicious.emoji} ${suspicious.label}`;
-    badgeEl.className = `suspicious-score-label suspicious-${suspicious.class}`;
-  }
-
-  document.getElementById("suspiciousScoreSummary").textContent = suspicious.summary || "";
-
-  document.getElementById("suspiciousMedSolved").textContent = med;
-  document.getElementById("suspiciousHardSolved").textContent = hard;
-  document.getElementById("suspiciousTotalMedHard").textContent = totalMedHard;
-  document.getElementById("suspiciousMedHardSubs").textContent = medHardSubs;
-  document.getElementById("suspiciousMedHardRate").textContent = `${medHardRate}%`;
-  document.getElementById("suspiciousEasySolved").textContent = easy;
-
-  // 7 Factor Definitions with explanations
-  const factorDefinitions = [
-    {
-      key: "f1_short_solving_time",
-      num: "Factor 1",
-      name: "Very Short Solving Time",
-      defaultWeight: 20,
-      defaultDesc: "Analyzes timestamp intervals between consecutive Medium and Hard submissions. Solves completed under 4 minutes indicate potential copy-paste or pre-written script execution."
-    },
-    {
-      key: "f2_continuous_solving",
-      num: "Factor 2",
-      name: "Continuous Medium/Hard Solving",
-      defaultWeight: 15,
-      defaultDesc: "Evaluates unbroken streaks of Medium and Hard problems solved without natural human rest breaks (> 15 mins)."
-    },
-    {
-      key: "f3_first_attempt_pattern",
-      num: "Factor 3",
-      name: "First-Attempt Acceptance Pattern",
-      defaultWeight: 15,
-      defaultDesc: "Analyzes 1-shot problem acceptance on complex algorithms. Humans typically require multiple test run debugging iterations."
-    },
-    {
-      key: "f4_acceptance_rate",
-      num: "Factor 4",
-      name: "Medium/Hard Acceptance Rate",
-      defaultWeight: 15,
-      defaultDesc: "Compares accepted Medium & Hard problems vs total attempts. An acceptance rate > 85% on complex problems is statistically anomalous."
-    },
-    {
-      key: "f5_speed_bursts",
-      num: "Factor 5",
-      name: "Suspicious Speed Bursts",
-      defaultWeight: 15,
-      defaultDesc: "Measures maximum problem solve velocity in rolling 1-hour windows. Unnaturally high bursts (> 5 complex problems/hr) trigger high risk."
-    },
-    {
-      key: "f6_sudden_skill_jump",
-      num: "Factor 6",
-      name: "Sudden Personal Skill Jump",
-      defaultWeight: 10,
-      defaultDesc: "Compares current solve velocity strictly against the student's own historical baseline in History.csv to spot sudden steep spikes."
-    },
-    {
-      key: "f7_difficulty_jump",
-      num: "Factor 7",
-      name: "Difficulty Jump Pattern",
-      defaultWeight: 10,
-      defaultDesc: "Assesses progression balance. High Medium/Hard volume with zero or minimal Easy foundation indicates unnatural difficulty skipping."
-    },
-  ];
-
-  const factorsGrid = document.getElementById("suspiciousFactorsGrid");
-  if (factorsGrid) {
-    factorsGrid.innerHTML = factorDefinitions.map((f) => {
-      const factorData = (suspicious.factors && suspicious.factors[f.key]) || {};
-      const percent = Math.max(0, Math.min(100, Math.round(Number(factorData.percent) || 0)));
-      const weight = factorData.weight || f.defaultWeight;
-      const desc = factorData.desc || f.defaultDesc;
-      const meta = getSuspiciousMeta(percent);
-      const colorClass = meta.class;
-      const fillColor = percent <= 20 ? "#34d399" : (percent <= 40 ? "#facc15" : (percent <= 60 ? "#fb923c" : (percent <= 80 ? "#f87171" : "#fda4af")));
-
-      return `
-        <div class="suspicious-factor-card">
-          <div class="factor-card-top">
-            <div class="factor-title-group">
-              <span class="factor-num-badge">${f.num}</span>
-              <span class="factor-name">${f.name}</span>
-              <span class="factor-weight-tag">Weight: ${weight}%</span>
-            </div>
-            <span class="factor-score-pill suspicious-${colorClass}">${meta.emoji} ${percent}% (${meta.label})</span>
-          </div>
-          <div class="factor-progress-track">
-            <div class="factor-progress-fill" style="width: ${percent}%; background: ${fillColor};"></div>
-          </div>
-          <p class="factor-desc-text">${escapeHTML(desc)}</p>
-        </div>
-      `;
-    }).join("");
-  }
-
-  suspiciousAnalysisModal.hidden = false;
-  document.body.classList.add("modal-open");
-}
-
 function closeStudentProfile() {
   studentProfileModal.hidden = true;
 
@@ -3799,8 +3890,7 @@ function closeStudentProfile() {
     adminLoginModal,
     profileModal,
     manageStudentsModal,
-    deleteModal,
-    suspiciousAnalysisModal
+    deleteModal
   ].some((modal) => modal && !modal.hidden);
 
   if (!anotherModalOpen) {
@@ -3809,39 +3899,12 @@ function closeStudentProfile() {
 }
 
 tableBody.addEventListener("click", (event) => {
-  const suspiciousBtn = event.target.closest("[data-suspicious-register]");
-  if (suspiciousBtn) {
-    event.stopPropagation();
-    openSuspiciousAnalysis(suspiciousBtn.dataset.suspiciousRegister);
-    return;
-  }
-
   const profileButton = event.target.closest("[data-profile-register]");
+
   if (!profileButton) return;
 
   openStudentProfile(profileButton.dataset.profileRegister);
 });
-
-const profileSuspiciousBtn = document.getElementById("profileSuspiciousBadge");
-if (profileSuspiciousBtn) {
-  profileSuspiciousBtn.addEventListener("click", () => {
-    if (profileSuspiciousBtn.dataset.suspiciousRegister) {
-      openSuspiciousAnalysis(profileSuspiciousBtn.dataset.suspiciousRegister);
-    }
-  });
-}
-
-if (closeSuspiciousAnalysisButton) {
-  closeSuspiciousAnalysisButton.addEventListener("click", closeSuspiciousAnalysis);
-}
-
-if (suspiciousAnalysisModal) {
-  suspiciousAnalysisModal
-    .querySelectorAll("[data-close-suspicious-analysis]")
-    .forEach((element) =>
-      element.addEventListener("click", closeSuspiciousAnalysis)
-    );
-}
 
 closeStudentProfileButton.addEventListener("click", closeStudentProfile);
 
@@ -4817,6 +4880,32 @@ document
 document
   .getElementById("downloadPdfButton")
   .addEventListener("click", downloadPDF);
+
+openDateReportButton?.addEventListener("click", openDateReportModal);
+closeDateReportButton?.addEventListener("click", closeDateReportModal);
+cancelDateReportButton?.addEventListener("click", closeDateReportModal);
+
+dateReportModal
+  ?.querySelectorAll("[data-close-date-report]")
+  .forEach((element) =>
+    element.addEventListener("click", closeDateReportModal)
+  );
+
+downloadDateReportCsvButton?.addEventListener("click", downloadDateReportCsv);
+downloadDateReportExcelButton?.addEventListener("click", downloadDateReportExcel);
+downloadDateReportPdfButton?.addEventListener("click", downloadDateReportPdf);
+
+dateReportFrom?.addEventListener("change", () => {
+  if (dateReportTo && dateReportFrom.value && !dateReportTo.value) {
+    dateReportTo.value = dateReportFrom.value;
+  }
+});
+
+dateReportTo?.addEventListener("change", () => {
+  if (dateReportFrom && dateReportTo.value && !dateReportFrom.value) {
+    dateReportFrom.value = dateReportTo.value;
+  }
+});
 
 adminLoginButton.addEventListener("click", openAdminLogin);
 adminLoginForm.addEventListener("submit", handleAdminLogin);

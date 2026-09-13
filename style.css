@@ -4224,6 +4224,187 @@ body.modal-open {
   .year-section-grid { grid-template-columns: 1fr; }
 }
 
+/* ==========================================================
+   ADMIN DATE-RANGE REPORT
+   ========================================================== */
+
+.date-report-card {
+    width: min(760px, 100%);
+}
+
+.date-report-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.date-report-grid .form-label {
+    margin-top: 0;
+}
+
+.date-report-scope {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 18px 0 8px;
+    padding: 13px 15px;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    background: rgba(255,255,255,.035);
+}
+
+.date-report-scope span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.date-report-scope strong {
+    color: var(--text);
+}
+
+.date-report-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.date-report-print-content,
+.date-report-print-heading,
+.date-report-print-summary,
+.date-report-print-table-wrap {
+    display: none;
+}
+
+@media (max-width: 680px) {
+    .date-report-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .date-report-actions {
+        flex-direction: column;
+    }
+
+    .date-report-actions .action-button {
+        width: 100%;
+    }
+}
+
+@media print {
+    body.printing-date-report > * {
+        display: none !important;
+    }
+
+    body.printing-date-report #dateReportModal {
+        display: block !important;
+        position: static !important;
+        inset: auto !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        background: white !important;
+        color: black !important;
+    }
+
+    body.printing-date-report #dateReportModal .profile-modal-backdrop,
+    body.printing-date-report #dateReportModal .profile-modal-head,
+    body.printing-date-report #dateReportModal .date-report-grid,
+    body.printing-date-report #dateReportModal .date-report-scope,
+    body.printing-date-report #dateReportModal .date-report-actions,
+    body.printing-date-report #dateReportModal .form-message {
+        display: none !important;
+    }
+
+    body.printing-date-report #dateReportModal .date-report-card {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background: white !important;
+        color: black !important;
+    }
+
+    body.printing-date-report .date-report-print-content,
+    body.printing-date-report .date-report-print-heading,
+    body.printing-date-report .date-report-print-summary,
+    body.printing-date-report .date-report-print-table-wrap {
+        display: block !important;
+    }
+
+    body.printing-date-report #dateReportPrintContent[hidden] {
+        display: block !important;
+    }
+
+    body.printing-date-report .date-report-print-heading {
+        margin-bottom: 16px;
+    }
+
+    body.printing-date-report .date-report-print-heading h2 {
+        margin: 4px 0;
+        color: black !important;
+        font-size: 24px;
+    }
+
+    body.printing-date-report .date-report-print-heading p,
+    body.printing-date-report .date-report-print-heading .eyebrow {
+        color: black !important;
+    }
+
+    body.printing-date-report .date-report-print-summary {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+
+    body.printing-date-report .date-report-print-summary > div {
+        padding: 10px;
+        border: 1px solid #999;
+        color: black !important;
+    }
+
+    body.printing-date-report .date-report-print-summary span,
+    body.printing-date-report .date-report-print-summary strong {
+        display: block;
+        color: black !important;
+    }
+
+    body.printing-date-report .date-report-print-summary span {
+        font-size: 9px;
+        text-transform: uppercase;
+    }
+
+    body.printing-date-report .date-report-print-summary strong {
+        margin-top: 4px;
+        font-size: 16px;
+    }
+
+    body.printing-date-report .date-report-print-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: black !important;
+        font-size: 8px;
+    }
+
+    body.printing-date-report .date-report-print-table th,
+    body.printing-date-report .date-report-print-table td {
+        padding: 5px;
+        border: 1px solid #555;
+        color: black !important;
+        background: white !important;
+        text-align: left;
+    }
+
+    body.printing-date-report .date-report-print-table th {
+        background: #e5e7eb !important;
+        font-weight: 800;
+    }
+}
+
 /* ============================================================
    SUSPICIOUS SOLVING SCORE (MEDIUM & HARD ONLY)
    ============================================================ */
@@ -4582,5 +4763,4 @@ body.modal-open {
     grid-template-columns: repeat(2, 1fr);
   }
 }
-
 

@@ -190,40 +190,8 @@
     const s=item.lc||item.gh, gh=item.gh, lc=item.lc;
     els.title.textContent=getStudentName(item);
     els.subtitle.textContent=`Register Number: ${getRegister(item)||'—'} · ${getSection(item)}`;
-
-    let suspiciousText = '🟢 0% Normal';
-    if (lc) {
-      const score = Math.round(Number(lc['Suspicious Score']) || 0);
-      let label = lc['Suspicious Label'] || (score <= 20 ? 'Normal' : (score <= 40 ? 'Low' : (score <= 60 ? 'Suspicious' : (score <= 80 ? 'High' : 'Very High'))));
-      let emoji = score <= 20 ? '🟢' : (score <= 40 ? '🟡' : (score <= 60 ? '🟠' : (score <= 80 ? '🔴' : '🚨')));
-      suspiciousText = `${emoji} ${score}% ${label}`;
-    }
-
-    const lcItems=lc ? [
-      ['Problems Solved',num(lc['Problems Solved'])],
-      ['Suspicious Score', suspiciousText],
-      ['Solved Today',num(lc['Solved Today'])],
-      ['Last 7 Days',num(lc['Last 7 Days'])],
-      ['7D Submissions',num(lc['Last 7 Days Submissions'])],
-      ['Last 30 Days',num(lc['Last 30 Days'])],
-      ['Total Submissions',num(lc['Total Submissions'])],
-      ['Easy / Medium / Hard',`${num(lc.Easy)} / ${num(lc.Medium)} / ${num(lc.Hard)}`],
-      ['Current Streak',lc['Current Streak']||'—'],
-      ['Last Problem',lc['Last Problem']||'—'],
-      ['Last Solved',lc['Last Solved']||'—']
-    ] : [['Status','No LeetCode record']];
-
-    const ghItems=gh ? [
-      ['Deployments',num(gh['Detected Deployments'])],
-      ['Repositories',num(gh['Repositories Total'])],
-      ['Contributions · 30 Days',num(gh['Contributions 30 Days'])],
-      ['Commits · 30 Days',num(gh['Commits 30 Days'])],
-      ['Commits · 7 Days',num(gh['Commits 7 Days'])],
-      ['Repositories · 30 Days',num(gh['Repositories 30 Days'])],
-      ['Latest Repository',gh['Latest Repository']||'—'],
-      ['Last Activity',gh['Last Activity']||'—']
-    ] : [['Status','No GitHub record']];
-
+    const lcItems=lc ? [['Problems Solved',num(lc['Problems Solved'])],['Solved Today',num(lc['Solved Today'])],['Last 7 Days',num(lc['Last 7 Days'])],['7D Submissions',num(lc['Last 7 Days Submissions'])],['Last 30 Days',num(lc['Last 30 Days'])],['Total Submissions',num(lc['Total Submissions'])],['Easy / Medium / Hard',`${num(lc.Easy)} / ${num(lc.Medium)} / ${num(lc.Hard)}`],['Current Streak',lc['Current Streak']||'—'],['Last Problem',lc['Last Problem']||'—'],['Last Solved',lc['Last Solved']||'—']] : [['Status','No LeetCode record']];
+    const ghItems=gh ? [['Deployments',num(gh['Detected Deployments'])],['Repositories',num(gh['Repositories Total'])],['Contributions · 30 Days',num(gh['Contributions 30 Days'])],['Commits · 30 Days',num(gh['Commits 30 Days'])],['Commits · 7 Days',num(gh['Commits 7 Days'])],['Repositories · 30 Days',num(gh['Repositories 30 Days'])],['Latest Repository',gh['Latest Repository']||'—'],['Last Activity',gh['Last Activity']||'—']] : [['Status','No GitHub record']];
     const links=[];
     if(lc?.['LeetCode Link']) links.push(`<a class="action-button secondary" href="${esc(lc['LeetCode Link'])}" target="_blank" rel="noopener">Open LeetCode ↗</a>`);
     if(gh?.['GitHub Link']) links.push(`<a class="action-button secondary" href="${esc(gh['GitHub Link'])}" target="_blank" rel="noopener">Open GitHub ↗</a>`);
