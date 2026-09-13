@@ -165,6 +165,78 @@
     setMessage(`All faculty LeetCode report downloaded (${rows.length} faculty).`);
   }
 
+  function downloadAllStudentsMerged(){
+    if(typeof XLSX==='undefined') throw new Error('Excel library is not available. Check your internet connection and reload the page.');
+    const rows = state.merged.map((item, i) => {
+      const lc = item.lc || {};
+      const gh = item.gh || {};
+      return {
+        '#': i + 1,
+        'Register Number': getRegister(item),
+        'Student Name': getStudentName(item),
+        'Section': getSection(item),
+        'LeetCode Username': lc['LeetCode Username'] || '',
+        'LeetCode Solved': num(lc['Problems Solved']),
+        'LeetCode Solved Today': num(lc['Solved Today']),
+        'LeetCode 7 Days': num(lc['Last 7 Days']),
+        'LeetCode 14 Days': num(lc['Last 14 Days']),
+        'LeetCode 30 Days': num(lc['Last 30 Days']),
+        'LeetCode 7D Submissions': num(lc['Last 7 Days Submissions']),
+        'LeetCode Total Submissions': num(lc['Total Submissions']),
+        'LeetCode Easy': num(lc['Easy']),
+        'LeetCode Medium': num(lc['Medium']),
+        'LeetCode Hard': num(lc['Hard']),
+        'LeetCode Suspicious Score': lc['Suspicious Score'] !== undefined ? `${lc['Suspicious Score']}%` : '0%',
+        'LeetCode Status': lc['Status'] || '',
+        'GitHub Username': gh['GitHub Username'] || '',
+        'GitHub Repos Total': num(gh['Repositories Total']),
+        'GitHub Deployments': num(gh['Detected Deployments']),
+        'GitHub Contributions 30D': num(gh['Contributions 30 Days']),
+        'GitHub Commits 30D': num(gh['Commits 30 Days']),
+        'GitHub Commits 7D': num(gh['Commits 7 Days']),
+        'GitHub Status': gh['Status'] || ''
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = Object.keys(rows[0] || {}).map(k => ({ wch: Math.min(32, Math.max(12, k.length + 3)) }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'All Students');
+    XLSX.writeFile(wb, `CodeMetrix_All_Students_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    setMessage(`All students report downloaded (${rows.length} students).`);
+  }
+
+  function downloadSingleStudentReport(item){
+    if(typeof XLSX==='undefined') throw new Error('Excel library is not available.');
+    const lc = item.lc || {};
+    const gh = item.gh || {};
+    const studentName = getStudentName(item);
+    const reg = getRegister(item);
+    const summary = [
+      ['CodeMetrix Student Performance Report'],
+      ['Student Name', studentName],
+      ['Register Number', reg],
+      ['Section', getSection(item)],
+      ['Generated On', new Date().toLocaleString()],
+      [],
+      ['Metric', 'LeetCode Performance', 'Metric', 'GitHub Performance'],
+      ['LeetCode Username', lc['LeetCode Username'] || '—', 'GitHub Username', gh['GitHub Username'] || '—'],
+      ['Problems Solved', num(lc['Problems Solved']), 'Repositories', num(gh['Repositories Total'])],
+      ['Solved Today', num(lc['Solved Today']), 'Deployments', num(gh['Detected Deployments'])],
+      ['Last 7 Days', num(lc['Last 7 Days']), 'Contributions (30D)', num(gh['Contributions 30 Days'])],
+      ['Last 14 Days', num(lc['Last 14 Days']), 'Commits (30D)', num(gh['Commits 30 Days'])],
+      ['Last 30 Days', num(lc['Last 30 Days']), 'Commits (7D)', num(gh['Commits 7 Days'])],
+      ['Easy / Medium / Hard', `${num(lc.Easy)} / ${num(lc.Medium)} / ${num(lc.Hard)}`, 'Repositories (30D)', num(gh['Repositories 30 Days'])],
+      ['Suspicious Score', lc['Suspicious Score'] !== undefined ? `${lc['Suspicious Score']}% (${lc['Suspicious Label']||'Normal'})` : '0% (Normal)', 'Latest Repository', gh['Latest Repository'] || '—'],
+      ['Status', lc.Status || '—', 'Status', gh.Status || '—']
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(summary);
+    ws['!cols'] = [{ wch: 24 }, { wch: 30 }, { wch: 24 }, { wch: 30 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Student Report');
+    XLSX.writeFile(wb, `Student_${reg || studentName.replace(/\s+/g,'_')}_Report.xlsx`);
+    setMessage(`Student report downloaded for ${studentName}.`);
+  }
+
   function getStudentName(item){ return item.lc?.['Student Name'] || item.gh?.['Student Name'] || 'Unknown Student'; }
   function getRegister(item){ return normalizeReg(item.lc?.['Register Number'] || item.gh?.['Register Number']); }
   function getSection(item){ return item.lc?.Section || item.gh?.Section || 'Section not available'; }
@@ -190,12 +262,51 @@
     const s=item.lc||item.gh, gh=item.gh, lc=item.lc;
     els.title.textContent=getStudentName(item);
     els.subtitle.textContent=`Register Number: ${getRegister(item)||'—'} · ${getSection(item)}`;
-    const lcItems=lc ? [['Problems Solved',num(lc['Problems Solved'])],['Solved Today',num(lc['Solved Today'])],['Last 7 Days',num(lc['Last 7 Days'])],['7D Submissions',num(lc['Last 7 Days Submissions'])],['Last 30 Days',num(lc['Last 30 Days'])],['Total Submissions',num(lc['Total Submissions'])],['Easy / Medium / Hard',`${num(lc.Easy)} / ${num(lc.Medium)} / ${num(lc.Hard)}`],['Current Streak',lc['Current Streak']||'—'],['Last Problem',lc['Last Problem']||'—'],['Last Solved',lc['Last Solved']||'—']] : [['Status','No LeetCode record']];
-    const ghItems=gh ? [['Deployments',num(gh['Detected Deployments'])],['Repositories',num(gh['Repositories Total'])],['Contributions · 30 Days',num(gh['Contributions 30 Days'])],['Commits · 30 Days',num(gh['Commits 30 Days'])],['Commits · 7 Days',num(gh['Commits 7 Days'])],['Repositories · 30 Days',num(gh['Repositories 30 Days'])],['Latest Repository',gh['Latest Repository']||'—'],['Last Activity',gh['Last Activity']||'—']] : [['Status','No GitHub record']];
+
+    let suspiciousText = '🟢 0% Normal';
+    if (lc) {
+      const score = Math.round(Number(lc['Suspicious Score']) || 0);
+      let label = lc['Suspicious Label'] || (score <= 20 ? 'Normal' : (score <= 40 ? 'Low' : (score <= 60 ? 'Suspicious' : (score <= 80 ? 'High' : 'Very High'))));
+      let emoji = score <= 20 ? '🟢' : (score <= 40 ? '🟡' : (score <= 60 ? '🟠' : (score <= 80 ? '🔴' : '🚨')));
+      suspiciousText = `${emoji} ${score}% ${label}`;
+    }
+
+    const lcItems=lc ? [
+      ['Problems Solved',num(lc['Problems Solved'])],
+      ['Suspicious Score', suspiciousText],
+      ['Solved Today',num(lc['Solved Today'])],
+      ['Last 7 Days',num(lc['Last 7 Days'])],
+      ['7D Submissions',num(lc['Last 7 Days Submissions'])],
+      ['Last 30 Days',num(lc['Last 30 Days'])],
+      ['Total Submissions',num(lc['Total Submissions'])],
+      ['Easy / Medium / Hard',`${num(lc.Easy)} / ${num(lc.Medium)} / ${num(lc.Hard)}`],
+      ['Current Streak',lc['Current Streak']||'—'],
+      ['Last Problem',lc['Last Problem']||'—'],
+      ['Last Solved',lc['Last Solved']||'—']
+    ] : [['Status','No LeetCode record']];
+
+    const ghItems=gh ? [
+      ['Deployments',num(gh['Detected Deployments'])],
+      ['Repositories',num(gh['Repositories Total'])],
+      ['Contributions · 30 Days',num(gh['Contributions 30 Days'])],
+      ['Commits · 30 Days',num(gh['Commits 30 Days'])],
+      ['Commits · 7 Days',num(gh['Commits 7 Days'])],
+      ['Repositories · 30 Days',num(gh['Repositories 30 Days'])],
+      ['Latest Repository',gh['Latest Repository']||'—'],
+      ['Last Activity',gh['Last Activity']||'—']
+    ] : [['Status','No GitHub record']];
+
     const links=[];
     if(lc?.['LeetCode Link']) links.push(`<a class="action-button secondary" href="${esc(lc['LeetCode Link'])}" target="_blank" rel="noopener">Open LeetCode ↗</a>`);
     if(gh?.['GitHub Link']) links.push(`<a class="action-button secondary" href="${esc(gh['GitHub Link'])}" target="_blank" rel="noopener">Open GitHub ↗</a>`);
+    links.push(`<button class="action-button primary" id="downloadStudentReportBtn" type="button">📥 Download Report (Excel)</button>`);
+
     els.content.innerHTML=`<div class="student-dashboard-grid">${card('💻 LeetCode',lcItems)}${card('🐙 GitHub',ghItems)}</div><div class="student-dashboard-links">${links.join('')}</div>`;
+
+    document.getElementById('downloadStudentReportBtn')?.addEventListener('click', () => {
+      try { downloadSingleStudentReport(item); } catch(e){ setMessage(e.message, true); }
+    });
+
     els.modal.hidden=false; document.body.classList.add('modal-open');
   }
 
@@ -497,9 +608,21 @@
   // ============================================================
   // EVENT LISTENERS
   // ============================================================
+  const attachDownload = (id, fn) => {
+    document.getElementById(id)?.addEventListener('click', async () => {
+      try { await ensureData(); fn(); } catch(e) { setMessage(e.message, true); }
+    });
+  };
+
   els.leetTop?.addEventListener('click',async()=>{try{await ensureData();downloadTop50(state.leetcode,'leetcode');}catch(e){setMessage(e.message,true);}});
   els.gitTop?.addEventListener('click',async()=>{try{await ensureData();downloadTop50(state.github,'github');}catch(e){setMessage(e.message,true);}});
   els.facultyLeetCode?.addEventListener('click',async()=>{try{await downloadAllFacultyLeetCodeReport();}catch(e){setMessage(e.message,true);}});
+
+  attachDownload('bannerTop50LeetCode', () => downloadTop50(state.leetcode, 'leetcode'));
+  attachDownload('bannerTop50GitHub', () => downloadTop50(state.github, 'github'));
+  attachDownload('bannerAllFacultyLeetCode', () => downloadAllFacultyLeetCodeReport());
+  attachDownload('bannerAllStudentsReport', () => downloadAllStudentsMerged());
+
   els.form?.addEventListener('submit',async e=>{
     e.preventDefault();
     const query=els.input.value.trim();
