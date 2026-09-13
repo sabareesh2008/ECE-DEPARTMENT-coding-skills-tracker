@@ -1,10 +1,9 @@
 (() => {
-  const state = { leetcode: [], github: [], merged: [], dailyActivity: [], history: [], currentUser: null, currentRole: null };
+  const state = { leetcode: [], github: [], merged: [], currentUser: null, currentRole: null };
   const els = {
     leetTop: document.getElementById('top50LeetCodeButton'),
     gitTop: document.getElementById('top50GitHubButton'),
     facultyLeetCode: document.getElementById('allFacultyLeetCodeButton'),
-    dateReportBtn: document.getElementById('homeDateReportQuickButton'),
     back: document.getElementById('homeBackButton'),
     form: document.getElementById('studentSearchForm'),
     input: document.getElementById('studentSearchInput'),
@@ -14,19 +13,6 @@
     title: document.getElementById('studentDashboardTitle'),
     subtitle: document.getElementById('studentDashboardSubtitle'),
     message: document.getElementById('homeActionMessage'),
-
-    // Date Report Modal
-    dateReportModal: document.getElementById('dateReportModal'),
-    closeDateReport: document.getElementById('closeDateReport'),
-    cancelDateReport: document.getElementById('cancelDateReport'),
-    dateReportFrom: document.getElementById('dateReportFrom'),
-    dateReportTo: document.getElementById('dateReportTo'),
-    dateReportScope: document.getElementById('dateReportScope'),
-    dateReportMessage: document.getElementById('dateReportMessage'),
-    downloadDateReportCsv: document.getElementById('downloadDateReportCsv'),
-    downloadDateReportExcel: document.getElementById('downloadDateReportExcel'),
-    downloadDateReportPdf: document.getElementById('downloadDateReportPdf'),
-    dateReportPrintContent: document.getElementById('dateReportPrintContent'),
 
     // Admin Auth
     adminLoginBtn: document.getElementById('homeAdminLoginButton'),
@@ -98,23 +84,6 @@
   async function loadData(){
     [state.leetcode,state.github]=await Promise.all([loadFile('LiveData.csv'),loadFile('GitHubLiveData.csv')]);
     buildMergedIndex();
-  }
-
-  async function ensureData(){
-    if(!state.leetcode.length || !state.github.length){
-      await loadData();
-    }
-  }
-
-  async function loadDailyAndHistory(){
-    if(!state.dailyActivity.length || !state.history.length){
-      const [daily, hist] = await Promise.all([
-        loadFile('DailyActivity.csv').catch(() => []),
-        loadFile('History.csv').catch(() => [])
-      ]);
-      state.dailyActivity = daily;
-      state.history = hist;
-    }
   }
 
   function buildMergedIndex(){
@@ -266,387 +235,6 @@
     XLSX.utils.book_append_sheet(wb, ws, 'Student Report');
     XLSX.writeFile(wb, `Student_${reg || studentName.replace(/\s+/g,'_')}_Report.xlsx`);
     setMessage(`Student report downloaded for ${studentName}.`);
-  }
-
-  // ============================================================
-  // DATE REPORT
-  // ============================================================
-  function reportLocalISODate(d = new Date()) {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
-  function reportDaysAgoISODate(days) {
-    const d = new Date();
-    d.setDate(d.getDate() - days);
-    return reportLocalISODate(d);
-  }
-
-  function openDateReportModal() {
-    if (!els.dateReportModal) return;
-    const today = reportLocalISODate();
-    const defaultFrom = reportDaysAgoISODate(6);
-
-    if (els.dateReportFrom && !els.dateReportFrom.value) {
-      els.dateReportFrom.value = defaultFrom;
-    }
-    if (els.dateReportTo && !els.dateReportTo.value) {
-      els.dateReportTo.value = today;
-    }
-
-    if (els.dateReportFrom) els.dateReportFrom.max = today;
-    if (els.dateReportTo) els.dateReportTo.max = today;
-    if (els.dateReportScope) els.dateReportScope.textContent = "All Students (ECE Department)";
-    if (els.dateReportMessage) {
-      els.dateReportMessage.textContent = "";
-      els.dateReportMessage.className = "form-message";
-    }
-
-    els.dateReportModal.hidden = false;
-    document.body.classList.add("modal-open");
-  }
-
-  function closeDateReportModal() {
-    if (!els.dateReportModal) return;
-    els.dateReportModal.hidden = true;
-    document.body.classList.remove("modal-open");
-  }
-
-  function validateDateReportRange() {
-    if (!els.dateReportFrom?.value || !els.dateReportTo?.value) {
-      throw new Error("Please select both From and To dates.");
-    }
-    if (els.dateReportFrom.value > els.dateReportTo.value) {
-      throw new Error("From date cannot be after To date.");
-    }
-    if (els.dateReportTo.value > reportLocalISODate()) {
-      throw new Error("To date cannot be in the future.");
-    }
-  }
-
-  async function prepareDateReport() {
-    validateDateReportRange();
-    await ensureData();
-    await loadDailyAndHistory();
-
-    const from = els.dateReportFrom.value;
-    const to = els.dateReportTo.value;
-    const scope = "All Students (ECE Department)";
-
-    const students = (state.leetcode || [])
-      .map((student) => {
-        const register = String(student["Register Number"] || "").trim();
-
-        const activity = state.dailyActivity
-          .filter((row) =>
-            String(row["Register Number"] || "").trim() === register
-            && String(row["Date"] || "").slice(0, 10) >= from
-            && String(row["Date"] || "").slice(0, 10) <= to
-            && String(row["Exact"] || "").toLowerCase() === "true"
-          )
-          .reduce((acc, row) => {
-            const date = String(row["Date"] || "").slice(0, 10);
-            const solved = Math.max(0, num(row["Solved That Day"]));
-            if (!acc.byDate.has(date)) {
-              acc.byDate.set(date, solved);
-            } else {
-              acc.byDate.set(date, acc.byDate.get(date) + solved);
-            }
-            return acc;
-          }, { byDate: new Map() });
-
-        const periodSolved = [...activity.byDate.values()]
-          .reduce((sum, value) => sum + value, 0);
-
-        const activeDays = [...activity.byDate.values()]
-          .filter((value) => value > 0).length;
-
-        const history = state.history
-          .filter((row) =>
-            String(row["Register Number"] || "").trim() === register
-            && String(row["Date"] || "").slice(0, 10) <= to
-          )
-          .sort((a, b) =>
-            String(a["Date"] || "").localeCompare(String(b["Date"] || ""))
-          );
-
-        const snapshot = history.length
-          ? history[history.length - 1]
-          : student;
-
-        return {
-          "Register Number": register,
-          "Student Name": student["Student Name"] || snapshot["Student Name"] || "",
-          "Section": student["Section"] || snapshot["Section"] || "",
-          "LeetCode Username": student["LeetCode Username"] || snapshot["LeetCode Username"] || "",
-          "Problems Solved in Period": periodSolved,
-          "Active Days": activeDays,
-          "Problems Solved (Cumulative)": num(snapshot["Problems Solved"]),
-          "Medium (Cumulative)": num(snapshot["Medium"]),
-          "Hard (Cumulative)": num(snapshot["Hard"]),
-          "Total Submissions (Cumulative)": num(snapshot["Total Submissions"]),
-          "Solved on Last Snapshot": num(snapshot["Solved Today"]),
-          "Last Problem": snapshot["Last Problem"] || "",
-          "Last Solved": snapshot["Last Solved"] || "",
-          "Status": snapshot["Status"] || student["Status"] || ""
-        };
-      })
-      .sort((a, b) =>
-        String(a["Section"]).localeCompare(String(b["Section"]))
-        || String(a["Register Number"]).localeCompare(String(b["Register Number"]))
-      );
-
-    const dailyRows = [];
-    students.forEach((student) => {
-      state.dailyActivity
-        .filter((row) =>
-          String(row["Register Number"] || "").trim() === student["Register Number"]
-          && String(row["Date"] || "").slice(0, 10) >= from
-          && String(row["Date"] || "").slice(0, 10) <= to
-          && String(row["Exact"] || "").toLowerCase() === "true"
-        )
-        .forEach((row) => {
-          dailyRows.push({
-            "Date": String(row["Date"] || "").slice(0, 10),
-            "Register Number": student["Register Number"],
-            "Student Name": student["Student Name"],
-            "Section": student["Section"],
-            "Solved That Day": num(row["Solved That Day"]),
-            "Source": row["Source"] || "HISTORY_EXACT"
-          });
-        });
-    });
-
-    return { from, to, scope, students, dailyRows };
-  }
-
-  function reportDownload(filename, content, type) {
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
-  function csvEscape(value) {
-    const stringValue = String(value ?? "");
-    if (/[",\n\r]/.test(stringValue)) {
-      return `"${stringValue.replace(/"/g, '""')}"`;
-    }
-    return stringValue;
-  }
-
-  function downloadDateReportCsv() {
-    prepareDateReport()
-      .then((report) => {
-        const columns = [
-          "Register Number",
-          "Student Name",
-          "Section",
-          "LeetCode Username",
-          "Problems Solved in Period",
-          "Active Days",
-          "Problems Solved (Cumulative)",
-          "Medium (Cumulative)",
-          "Hard (Cumulative)",
-          "Total Submissions (Cumulative)",
-          "Solved on Last Snapshot",
-          "Last Problem",
-          "Last Solved",
-          "Status"
-        ];
-
-        const rows = [
-          ["Report Scope", report.scope],
-          ["From", report.from],
-          ["To", report.to],
-          [],
-          columns,
-          ...report.students.map((student) =>
-            columns.map((column) => student[column] ?? "")
-          )
-        ];
-
-        const csv = "\uFEFF" + rows
-          .map((row) => row.map(csvEscape).join(","))
-          .join("\r\n");
-
-        reportDownload(
-          `ECE_LeetCode_Report_${report.from}_to_${report.to}.csv`,
-          csv,
-          "text/csv;charset=utf-8"
-        );
-
-        closeDateReportModal();
-        setMessage(`Date Report CSV (${report.from} to ${report.to}) downloaded.`);
-      })
-      .catch((error) => {
-        if (els.dateReportMessage) {
-          els.dateReportMessage.textContent = error.message || "Unable to generate report.";
-          els.dateReportMessage.className = "form-message error";
-        }
-      });
-  }
-
-  function downloadDateReportExcel() {
-    prepareDateReport()
-      .then((report) => {
-        if (typeof XLSX === 'undefined') {
-          throw new Error("Excel export library is unavailable. Please refresh the page.");
-        }
-
-        const workbook = XLSX.utils.book_new();
-
-        const summary = [
-          ["ECE LeetCode Date Report"],
-          ["Report Scope", report.scope],
-          ["From", report.from],
-          ["To", report.to],
-          [],
-          [
-            "Register Number",
-            "Student Name",
-            "Section",
-            "LeetCode Username",
-            "Problems Solved in Period",
-            "Active Days",
-            "Problems Solved (Cumulative)",
-            "Medium (Cumulative)",
-            "Hard (Cumulative)",
-            "Total Submissions (Cumulative)",
-            "Solved on Last Snapshot",
-            "Last Problem",
-            "Last Solved",
-            "Status"
-          ],
-          ...report.students.map((student) => [
-            student["Register Number"],
-            student["Student Name"],
-            student["Section"],
-            student["LeetCode Username"],
-            student["Problems Solved in Period"],
-            student["Active Days"],
-            student["Problems Solved (Cumulative)"],
-            student["Medium (Cumulative)"],
-            student["Hard (Cumulative)"],
-            student["Total Submissions (Cumulative)"],
-            student["Solved on Last Snapshot"],
-            student["Last Problem"],
-            student["Last Solved"],
-            student["Status"]
-          ])
-        ];
-
-        const daily = [
-          ["Date", "Register Number", "Student Name", "Section", "Solved That Day", "Source"],
-          ...report.dailyRows.map((row) => [
-            row["Date"],
-            row["Register Number"],
-            row["Student Name"],
-            row["Section"],
-            row["Solved That Day"],
-            row["Source"]
-          ])
-        ];
-
-        const summarySheet = XLSX.utils.aoa_to_sheet(summary);
-        const dailySheet = XLSX.utils.aoa_to_sheet(daily);
-
-        summarySheet["!cols"] = [
-          { wch: 18 }, { wch: 28 }, { wch: 12 }, { wch: 22 },
-          { wch: 24 }, { wch: 12 }, { wch: 25 }, { wch: 20 },
-          { wch: 18 }, { wch: 28 }, { wch: 22 }, { wch: 45 },
-          { wch: 24 }, { wch: 14 }
-        ];
-        dailySheet["!cols"] = [
-          { wch: 14 }, { wch: 18 }, { wch: 28 }, { wch: 12 },
-          { wch: 18 }, { wch: 18 }
-        ];
-
-        XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
-        XLSX.utils.book_append_sheet(workbook, dailySheet, "Daily Activity");
-
-        XLSX.writeFile(
-          workbook,
-          `ECE_LeetCode_Report_${report.from}_to_${report.to}.xlsx`
-        );
-
-        closeDateReportModal();
-        setMessage(`Date Report Excel (${report.from} to ${report.to}) downloaded.`);
-      })
-      .catch((error) => {
-        if (els.dateReportMessage) {
-          els.dateReportMessage.textContent = error.message || "Unable to generate Excel report.";
-          els.dateReportMessage.className = "form-message error";
-        }
-      });
-  }
-
-  function downloadDateReportPdf() {
-    prepareDateReport()
-      .then((report) => {
-        if (!els.dateReportPrintContent) return;
-
-        const rows = report.students.map((student) => `
-          <tr>
-            <td>${esc(student["Register Number"])}</td>
-            <td>${esc(student["Student Name"])}</td>
-            <td>${esc(student["Section"])}</td>
-            <td>${student["Problems Solved in Period"]}</td>
-            <td>${student["Active Days"]}</td>
-            <td>${student["Medium (Cumulative)"]}</td>
-            <td>${student["Hard (Cumulative)"]}</td>
-            <td>${esc(student["Status"])}</td>
-          </tr>
-        `).join("");
-
-        els.dateReportPrintContent.innerHTML = `
-          <div class="date-report-print-heading">
-            <div class="eyebrow">ECE CODEMETRIX</div>
-            <h2>LeetCode Date Report</h2>
-            <p><strong>${esc(report.scope)}</strong> · ${esc(report.from)} to ${esc(report.to)}</p>
-          </div>
-          <div class="date-report-print-summary">
-            <div><span>Students</span><strong>${report.students.length}</strong></div>
-            <div><span>Problems Solved</span><strong>${report.students.reduce((sum, s) => sum + s["Problems Solved in Period"], 0)}</strong></div>
-            <div><span>Active Student-Days</span><strong>${report.students.reduce((sum, s) => sum + s["Active Days"], 0)}</strong></div>
-          </div>
-          <div class="date-report-print-table-wrap">
-            <table class="date-report-print-table">
-              <thead>
-                <tr>
-                  <th>Register</th><th>Student</th><th>Section</th>
-                  <th>Period Solved</th><th>Active Days</th>
-                  <th>Medium</th><th>Hard</th><th>Status</th>
-                </tr>
-              </thead>
-              <tbody>${rows || '<tr><td colspan="8">No students found.</td></tr>'}</tbody>
-            </table>
-          </div>
-        `;
-
-        els.dateReportPrintContent.hidden = false;
-        document.body.classList.add("printing-date-report");
-        window.print();
-
-        setTimeout(() => {
-          document.body.classList.remove("printing-date-report");
-          els.dateReportPrintContent.hidden = true;
-          els.dateReportPrintContent.innerHTML = "";
-        }, 1000);
-      })
-      .catch((error) => {
-        if (els.dateReportMessage) {
-          els.dateReportMessage.textContent = error.message || "Unable to generate PDF report.";
-          els.dateReportMessage.className = "form-message error";
-        }
-      });
   }
 
   function getStudentName(item){ return item.lc?.['Student Name'] || item.gh?.['Student Name'] || 'Unknown Student'; }
@@ -1017,49 +605,45 @@
     }
   }
 
-  els.leetTop?.addEventListener('click', async () => {
-    try { await ensureData(); downloadTop50(state.leetcode, 'leetcode'); } catch (e) { setMessage(e.message, true); }
-  });
-  els.gitTop?.addEventListener('click', async () => {
-    try { await ensureData(); downloadTop50(state.github, 'github'); } catch (e) { setMessage(e.message, true); }
-  });
-  els.facultyLeetCode?.addEventListener('click', async () => {
-    try { await downloadAllFacultyLeetCodeReport(); } catch (e) { setMessage(e.message, true); }
-  });
-  els.dateReportBtn?.addEventListener('click', openDateReportModal);
+  // ============================================================
+  // EVENT LISTENERS
+  // ============================================================
+  const attachDownload = (id, fn) => {
+    document.getElementById(id)?.addEventListener('click', async () => {
+      try { await ensureData(); fn(); } catch(e) { setMessage(e.message, true); }
+    });
+  };
 
-  // Date Report Modal Events
-  els.closeDateReport?.addEventListener('click', closeDateReportModal);
-  els.cancelDateReport?.addEventListener('click', closeDateReportModal);
-  els.dateReportModal?.addEventListener('click', (e) => {
-    if (e.target.matches('[data-close-date-report]')) closeDateReportModal();
-  });
-  els.downloadDateReportCsv?.addEventListener('click', downloadDateReportCsv);
-  els.downloadDateReportExcel?.addEventListener('click', downloadDateReportExcel);
-  els.downloadDateReportPdf?.addEventListener('click', downloadDateReportPdf);
+  els.leetTop?.addEventListener('click',async()=>{try{await ensureData();downloadTop50(state.leetcode,'leetcode');}catch(e){setMessage(e.message,true);}});
+  els.gitTop?.addEventListener('click',async()=>{try{await ensureData();downloadTop50(state.github,'github');}catch(e){setMessage(e.message,true);}});
+  els.facultyLeetCode?.addEventListener('click',async()=>{try{await downloadAllFacultyLeetCodeReport();}catch(e){setMessage(e.message,true);}});
 
-  els.form?.addEventListener('submit', async (e) => {
+  attachDownload('bannerTop50LeetCode', () => downloadTop50(state.leetcode, 'leetcode'));
+  attachDownload('bannerTop50GitHub', () => downloadTop50(state.github, 'github'));
+  attachDownload('bannerAllFacultyLeetCode', () => downloadAllFacultyLeetCodeReport());
+  attachDownload('bannerAllStudentsReport', () => downloadAllStudentsMerged());
+
+  els.form?.addEventListener('submit',async e=>{
     e.preventDefault();
-    const query = els.input.value.trim();
-    if (!query) { setMessage('Enter a register number, name, LeetCode username or GitHub username.', true); return; }
-    try {
+    const query=els.input.value.trim();
+    if(!query){setMessage('Enter a register number, name, LeetCode username or GitHub username.',true);return;}
+    try{
       await ensureData();
-      const results = searchStudents(query);
-      if (!results.length) { setMessage(`No student found for “${query}”.`, true); return; }
-      showSearchResults(results, query);
-    } catch (err) { setMessage(err.message, true); }
+      const results=searchStudents(query);
+      if(!results.length){setMessage(`No student found for “${query}”.`,true);return;}
+      showSearchResults(results,query);
+    }catch(err){setMessage(err.message,true);}
   });
-  els.close?.addEventListener('click', closeDashboard);
-  els.modal?.addEventListener('click', (e) => { if (e.target.matches('[data-close-student-dashboard]')) closeDashboard(); });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      if (!els.modal?.hidden) closeDashboard();
-      if (!els.adminLoginModal?.hidden) closeAdminLoginModal();
-      if (!els.unifiedModal?.hidden) closeAddProfileModal();
-      if (!els.dateReportModal?.hidden) closeDateReportModal();
+  els.close?.addEventListener('click',closeDashboard);
+  els.modal?.addEventListener('click',e=>{if(e.target.matches('[data-close-student-dashboard]'))closeDashboard();});
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      if(!els.modal?.hidden) closeDashboard();
+      if(!els.adminLoginModal?.hidden) closeAdminLoginModal();
+      if(!els.unifiedModal?.hidden) closeAddProfileModal();
     }
   });
-  els.back?.addEventListener('click', () => { if (history.length > 1) history.back(); else location.href = 'leetcode.html'; });
+  els.back?.addEventListener('click',()=>{if(history.length>1)history.back();else location.href='leetcode.html';});
 
   // Admin Events
   els.adminLoginBtn?.addEventListener('click', openAdminLogin);
