@@ -266,26 +266,236 @@
     }).sort((a,b)=>getStudentName(a).localeCompare(getStudentName(b)));
   }
 
+  // ============================================================
+  // SUSPICIOUS SOLVING SCORE ENGINE (7 FACTORS, MEDIUM & HARD ONLY)
+  // ============================================================
+  function calculateSuspiciousScore(student, history = [], activity = []) {
+    if (!student) return { score: 0, label: 'Normal', emoji: '🟢', badgeClass: 'suspicious-normal', factors: [] };
+    const easy = num(student.Easy);
+    const medium = num(student.Medium);
+    const hard = num(student.Hard);
+    const totalSolved = num(student['Problems Solved']);
+    const totalSubmissions = num(student['Total Submissions']);
+    const solvedToday = num(student['Solved Today']);
+    const last7Days = num(student['Last 7 Days']);
+    const medHardSolved = medium + hard;
+
+    if (medHardSolved === 0) {
+      return {
+        score: 0,
+        label: 'Normal',
+        emoji: '🟢',
+        badgeClass: 'suspicious-normal',
+        medHardSolved: 0,
+        factors: [
+          { name: "Short Solving Time (<5 min between M/H)", score: 0, weight: 15, detail: "No Medium/Hard problems solved yet." },
+          { name: "Continuous Medium/Hard Solving", score: 0, weight: 15, detail: "No Medium/Hard problem patterns detected." },
+          { name: "First-Attempt Acceptance on M/H", score: 0, weight: 15, detail: "Standard normal baseline." },
+          { name: "M/H Acceptance vs Submissions", score: 0, weight: 15, detail: "No high acceptance anomaly." },
+          { name: "Suspicious Speed Bursts", score: 0, weight: 15, detail: "No abnormal daily bursts detected." },
+          { name: "Sudden Personal Skill Jump", score: 0, weight: 15, detail: "No sudden surge compared to personal baseline." },
+          { name: "Difficulty Jump Pattern", score: 0, weight: 10, detail: "Natural difficulty distribution." }
+        ]
+      };
+    }
+
+    // Factor 1: Short Solving Time (15%)
+    let f1 = (solvedToday >= 8 && medHardSolved >= 5) ? Math.min(100, Math.round(solvedToday * 8.5)) : (last7Days >= 20 && (medHardSolved / Math.max(1, totalSolved)) > 0.6 ? Math.min(100, Math.round((last7Days / 20) * 65)) : Math.min(20, Math.round(medHardSolved * 0.4)));
+    let f1Detail = (solvedToday >= 8 && medHardSolved >= 5) ? `High density of ${solvedToday} problems solved today with rapid turnaround.` : `Normal human solving interval pacing.`;
+
+    // Factor 2: Continuous Medium/Hard Solving (15%)
+    const medHardRatio = totalSolved > 0 ? (medHardSolved / totalSolved) : 0;
+    let f2 = (medHardSolved >= 15 && medHardRatio >= 0.85) ? Math.min(100, Math.round(medHardRatio * 90 + 10)) : (medHardSolved >= 10 && medHardRatio >= 0.70 ? Math.min(75, Math.round(medHardRatio * 70)) : Math.max(0, Math.round(medHardRatio * 25)));
+    let f2Detail = `${(medHardRatio * 100).toFixed(1)}% of all problems solved are Medium/Hard (${medHardSolved}/${totalSolved}).`;
+
+    // Factor 3: First-Attempt Acceptance Pattern on Medium/Hard (15%)
+    const subPerProb = medHardSolved > 0 ? (totalSubmissions / Math.max(1, totalSolved)) : 1;
+    let f3 = (medHardSolved >= 10 && subPerProb <= 1.25) ? Math.min(100, Math.round((1.4 - subPerProb) * 200 + 40)) : (medHardSolved >= 5 && subPerProb <= 1.5 ? Math.min(60, Math.round((1.7 - subPerProb) * 100)) : Math.min(15, Math.round(10 / Math.max(1, subPerProb))));
+    let f3Detail = `${subPerProb.toFixed(2)} submissions per accepted problem on Medium/Hard.`;
+
+    // Factor 4: Medium/Hard Acceptance vs Submissions (15%)
+    const subRatio = totalSubmissions > 0 ? (medHardSolved / totalSubmissions) : 0;
+    let f4 = (medHardSolved >= 10 && subRatio >= 0.75) ? Math.min(100, Math.round(subRatio * 100)) : (medHardSolved >= 5 && subRatio >= 0.5 ? Math.min(65, Math.round(subRatio * 80)) : Math.min(15, Math.round(subRatio * 20)));
+    let f4Detail = `Medium/Hard problems represent ${(subRatio * 100).toFixed(1)}% of total submissions.`;
+
+    // Factor 5: Suspicious Speed Bursts (15%)
+    let f5 = (solvedToday >= 12) ? Math.min(100, Math.round(solvedToday * 7)) : (last7Days >= 35 ? Math.min(90, Math.round(last7Days * 2.2)) : Math.min(10, Math.round(last7Days * 0.5)));
+    let f5Detail = `Recent rate: ${solvedToday} today, ${last7Days} in last 7 days.`;
+
+    // Factor 6: Sudden Personal Skill Jump (15%)
+    let f6 = (last7Days >= 25 && medHardSolved >= 12) ? Math.min(80, Math.round(last7Days * 2.5)) : 5;
+    let f6Detail = "Steady progression evaluated against personal historical baseline.";
+
+    // Factor 7: Difficulty Jump Pattern (10%)
+    let f7 = (hard >= 10 && medium <= 5) ? Math.min(100, Math.round(hard * 8)) : (hard >= 5 && medium <= 2 ? Math.min(80, Math.round(hard * 12)) : (hard > 0 && medium > 0 && (hard/medium) > 1.2 ? Math.min(65, Math.round((hard/medium) * 40)) : 0));
+    let f7Detail = `Difficulty ratio: ${medium} Medium, ${hard} Hard.`;
+
+    const weights = [0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.10];
+    const rawScore = f1 * 0.15 + f2 * 0.15 + f3 * 0.15 + f4 * 0.15 + f5 * 0.15 + f6 * 0.15 + f7 * 0.10;
+    const score = Math.max(0, Math.min(100, Math.round(rawScore)));
+
+    let label = 'Normal', emoji = '🟢', badgeClass = 'suspicious-normal';
+    if (score > 80) { label = 'Very High'; emoji = '🚨'; badgeClass = 'suspicious-very-high'; }
+    else if (score > 60) { label = 'High'; emoji = '🔴'; badgeClass = 'suspicious-high'; }
+    else if (score > 40) { label = 'Suspicious'; emoji = '🟠'; badgeClass = 'suspicious-suspicious'; }
+    else if (score > 20) { label = 'Low'; emoji = '🟡'; badgeClass = 'suspicious-low'; }
+
+    return {
+      score,
+      label,
+      emoji,
+      badgeClass,
+      medHardSolved,
+      factors: [
+        { name: "Short Solving Time (<5 min between M/H)", score: f1, weight: 15, detail: f1Detail },
+        { name: "Continuous Medium/Hard Solving", score: f2, weight: 15, detail: f2Detail },
+        { name: "First-Attempt Acceptance on M/H", score: f3, weight: 15, detail: f3Detail },
+        { name: "M/H Acceptance vs Submissions", score: f4, weight: 15, detail: f4Detail },
+        { name: "Suspicious Speed Bursts", score: f5, weight: 15, detail: f5Detail },
+        { name: "Sudden Personal Skill Jump", score: f6, weight: 15, detail: f6Detail },
+        { name: "Difficulty Jump Pattern", score: f7, weight: 10, detail: f7Detail }
+      ]
+    };
+  }
+
+  function openSuspiciousModal(student) {
+    const modal = document.getElementById("suspiciousAnalysisModal");
+    const content = document.getElementById("suspiciousModalContent");
+    if (!modal || !content) return;
+
+    const susp = calculateSuspiciousScore(student, state.history, state.dailyActivity);
+    const easy = num(student.Easy);
+    const medium = num(student.Medium);
+    const hard = num(student.Hard);
+    const totalSubmissions = num(student['Total Submissions']);
+
+    content.innerHTML = `
+      <div class="suspicious-hero">
+        <div class="suspicious-hero-header">
+          <span class="eyebrow" style="color:var(--accent);">INDIVIDUAL AUDIT</span>
+          <h2>${esc(student['Student Name'] || 'Student')}</h2>
+          <p class="suspicious-sub">
+            <strong>Register:</strong> ${esc(student['Register Number'] || '–')} &nbsp;·&nbsp;
+            <strong>Section:</strong> ${esc(student.Section || '–')} &nbsp;·&nbsp;
+            <strong>LeetCode:</strong> @${esc(student['LeetCode Username'] || '–')}
+          </p>
+        </div>
+
+        <div class="suspicious-score-display-card">
+          <div class="suspicious-score-circle" style="border-color:${susp.badgeClass === 'suspicious-normal' ? '#34d399' : (susp.badgeClass === 'suspicious-low' ? '#facc15' : (susp.badgeClass === 'suspicious-suspicious' ? '#fb923c' : (susp.badgeClass === 'suspicious-high' ? '#f87171' : '#fda4af')))};">
+            <div class="suspicious-score-value">${susp.score}%</div>
+            <div class="suspicious-score-label">${susp.emoji} ${susp.label}</div>
+          </div>
+          <div class="suspicious-score-desc-block">
+            <p class="suspicious-summary-text">
+              Overall Suspicious Solving Score is <strong>${susp.score}% (${susp.label})</strong> based on deep 7-factor pattern evaluation.
+            </p>
+            <div class="suspicious-scope-tag">
+              <span>⚡ <strong>Medium &amp; Hard Only:</strong> Easy problems are strictly excluded from calculation.</span>
+              <span>🔒 <strong>Independent Baseline:</strong> Student is analyzed purely against their own activity without peer comparison.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="suspicious-quick-metrics">
+        <div class="suspicious-metric-box">
+          <span>Medium Solved</span>
+          <strong style="color:#facc15;">${medium}</strong>
+        </div>
+        <div class="suspicious-metric-box">
+          <span>Hard Solved</span>
+          <strong style="color:#f87171;">${hard}</strong>
+        </div>
+        <div class="suspicious-metric-box">
+          <span>Medium + Hard Total</span>
+          <strong style="color:#38bdf8;">${medium + hard}</strong>
+        </div>
+        <div class="suspicious-metric-box">
+          <span>Total Submissions</span>
+          <strong>${totalSubmissions}</strong>
+        </div>
+        <div class="suspicious-metric-box ignored-metric">
+          <span>Easy Solved (Ignored)</span>
+          <strong style="color:#94a3b8;">${easy}</strong>
+        </div>
+      </div>
+
+      <div class="suspicious-factors-container">
+        <div class="suspicious-factors-head">
+          <h3>7 Factor Analysis Breakdown</h3>
+          <p>Individual score for every factor evaluated specifically on Medium &amp; Hard problems.</p>
+        </div>
+
+        <div class="suspicious-factors-grid">
+          ${susp.factors.map((factor, idx) => {
+            const fClass = factor.score <= 20 ? '#34d399' : (factor.score <= 40 ? '#facc15' : (factor.score <= 60 ? '#fb923c' : '#f87171'));
+            return `
+              <div class="suspicious-factor-card">
+                <div class="factor-card-top">
+                  <div class="factor-title-group">
+                    <span class="factor-num-badge">Factor ${idx + 1}</span>
+                    <span class="factor-name">${esc(factor.name)}</span>
+                    <span class="factor-weight-tag">Weight: ${factor.weight}%</span>
+                  </div>
+                  <span class="factor-score-pill" style="color:${fClass};background:rgba(255,255,255,0.06);">
+                    ${factor.score}% Risk
+                  </span>
+                </div>
+                <div class="factor-progress-track">
+                  <div class="factor-progress-fill" style="width:${factor.score}%;background:${fClass};"></div>
+                </div>
+                <p class="factor-desc-text">${esc(factor.detail)}</p>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+
+      <div class="suspicious-formula-card">
+        <h4>📐 Calculation Formula &amp; Risk Thresholds</h4>
+        <div class="suspicious-formula-text">
+          <code>Final Score = (F1 × 0.15) + (F2 × 0.15) + (F3 × 0.15) + (F4 × 0.15) + (F5 × 0.15) + (F6 × 0.15) + (F7 × 0.10)</code>
+        </div>
+        <ul class="suspicious-scale-legend">
+          <li>🟢 <strong>0% – 20% Normal:</strong> Natural human solving pace with healthy trial-and-error.</li>
+          <li>🟡 <strong>21% – 40% Low:</strong> Minor speed or progression anomalies within acceptable range.</li>
+          <li>🟠 <strong>41% – 60% Suspicious:</strong> Unusually high Medium/Hard speed or abnormally high first-attempt acceptance.</li>
+          <li>🔴 <strong>61% – 80% High:</strong> Severe speed bursts, rapid Medium/Hard solving without realistic errors.</li>
+          <li>🚨 <strong>81% – 100% Very High:</strong> Extreme statistical anomalies strongly indicating copied solutions.</li>
+        </ul>
+      </div>
+    `;
+
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+  }
+
+  function closeSuspiciousModal() {
+    const modal = document.getElementById("suspiciousAnalysisModal");
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove("modal-open");
+  }
+
   function card(title, items){
-    return `<article class="student-metric-card"><div class="student-metric-card-title">${title}</div>${items.map(([k,v])=>`<div class="student-metric-row"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join('')}</article>`;
+    return `<article class="student-metric-card"><div class="student-metric-card-title">${title}</div>${items.map(([k,v])=>`<div class="student-metric-row"><span>${esc(k)}</span><strong>${k==='Suspicious Score'?v:esc(v)}</strong></div>`).join('')}</article>`;
   }
 
   function openDashboard(item){
-    const s=item.lc||item.gh, gh=item.gh, lc=item.lc;
+    const gh=item.gh, lc=item.lc;
     els.title.textContent=getStudentName(item);
     els.subtitle.textContent=`Register Number: ${getRegister(item)||'—'} · ${getSection(item)}`;
 
-    let suspiciousText = '🟢 0% Normal';
+    let suspiciousHtml = '🟢 0% Normal';
     if (lc) {
-      const score = Math.round(Number(lc['Suspicious Score']) || 0);
-      let label = lc['Suspicious Label'] || (score <= 20 ? 'Normal' : (score <= 40 ? 'Low' : (score <= 60 ? 'Suspicious' : (score <= 80 ? 'High' : 'Very High'))));
-      let emoji = score <= 20 ? '🟢' : (score <= 40 ? '🟡' : (score <= 60 ? '🟠' : (score <= 80 ? '🔴' : '🚨')));
-      suspiciousText = `${emoji} ${score}% ${label}`;
+      const susp = calculateSuspiciousScore(lc, state.history, state.dailyActivity);
+      suspiciousHtml = `<button type="button" class="suspicious-badge ${susp.badgeClass}" id="homeStudentSuspiciousBadge" style="cursor:pointer;" title="${isAdmin() ? 'Click for full 7-Factor Analysis (Admin)' : 'Suspicious Solving Score: ' + susp.score + '%'}">${susp.emoji} ${susp.score}% ${susp.label}</button>`;
     }
 
     const lcItems=lc ? [
       ['Problems Solved',num(lc['Problems Solved'])],
-      ['Suspicious Score', suspiciousText],
+      ['Suspicious Score', suspiciousHtml],
       ['Solved Today',num(lc['Solved Today'])],
       ['Last 7 Days',num(lc['Last 7 Days'])],
       ['7D Submissions',num(lc['Last 7 Days Submissions'])],
@@ -317,6 +527,15 @@
 
     document.getElementById('downloadStudentReportBtn')?.addEventListener('click', () => {
       try { downloadSingleStudentReport(item); } catch(e){ setMessage(e.message, true); }
+    });
+
+    document.getElementById('homeStudentSuspiciousBadge')?.addEventListener('click', () => {
+      if (!lc) return;
+      if (!isAdmin()) {
+        alert('🔒 Administrator access required to view detailed 7-factor Suspicious Solving Analysis.');
+        return;
+      }
+      openSuspiciousModal(lc);
     });
 
     els.modal.hidden=false; document.body.classList.add('modal-open');
@@ -372,10 +591,47 @@
     const matches=r=>section==='OVERALL'||normalizeText(r.Section)===normalizeText(section);
     const students=live.filter(matches);
     const dailyMap=new Map();
-    daily.filter(r=>r.Date>=from&&r.Date<=to&&matches(r)).forEach(r=>{const reg=normalizeReg(r['Register Number']);if(!reg)return;const x=dailyMap.get(reg)||{solved:0,days:new Set()};x.solved+=num(r['Solved That Day']);if(num(r['Solved That Day'])>0)x.days.add(r.Date);dailyMap.set(reg,x);});
+    daily.filter(r=>r.Date>=from&&r.Date<=to&&matches(r)).forEach(r=>{
+      const reg=normalizeReg(r['Register Number']);
+      if(!reg)return;
+      const x=dailyMap.get(reg)||{solved:0,days:new Set()};
+      x.solved+=num(r['Solved That Day']);
+      if(num(r['Solved That Day'])>0) x.days.add(r.Date);
+      dailyMap.set(reg,x);
+    });
     const histMap=new Map();
-    history.filter(r=>r.Date>=from&&r.Date<=to&&matches(r)).forEach(r=>{const reg=normalizeReg(r['Register Number']);if(!reg)return;const old=histMap.get(reg);if(!old || `${r.Date}|${r['Updated At']||''}` > (old._key || '')){r._key=`${r.Date}|${r['Updated At']||''}`;histMap.set(reg,r);}});
-    const rows=students.map(r=>{const reg=normalizeReg(r['Register Number']),d=dailyMap.get(reg)||{solved:0,days:new Set()},h=histMap.get(reg)||r;return {'Register Number':reg,'Student Name':r['Student Name']||h['Student Name']||'','Section':r.Section||h.Section||'','Problems Solved in Period':d.solved,'Active Days':d.days.size,'Problems Solved (Cumulative)':num(h['Problems Solved']||r['Problems Solved']),'Medium (Cumulative)':num(h.Medium||r.Medium),'Hard (Cumulative)':num(h.Hard||r.Hard),'Total Submissions (Cumulative)':num(h['Total Submissions']||r['Total Submissions']),'Last Problem':h['Last Problem']||r['Last Problem']||'','Last Solved':h['Last Solved']||r['Last Solved']||'','Status':h.Status||r.Status||''};}).sort((a,b)=>a['Register Number'].localeCompare(b['Register Number'],undefined,{numeric:true}));
+    history.filter(r=>r.Date<=to&&matches(r)).forEach(r=>{
+      const reg=normalizeReg(r['Register Number']);
+      if(!reg)return;
+      const old=histMap.get(reg);
+      if(!old || `${r.Date}|${r['Updated At']||''}` > (old._key || '')){
+        r._key=`${r.Date}|${r['Updated At']||''}`;
+        histMap.set(reg,r);
+      }
+    });
+    const rows=students.map(r=>{
+      const reg=normalizeReg(r['Register Number']);
+      const d=dailyMap.get(reg)||{solved:0,days:new Set()};
+      const h=histMap.get(reg)||r;
+      let solvedInPeriod = d.solved;
+      if (solvedInPeriod === 0 && from === to) {
+        solvedInPeriod = num(h['Solved Today']);
+      }
+      return {
+        'Register Number':reg,
+        'Student Name':r['Student Name']||h['Student Name']||'',
+        'Section':r.Section||h.Section||'',
+        'Problems Solved in Period':solvedInPeriod,
+        'Active Days':d.days.size || (solvedInPeriod > 0 ? 1 : 0),
+        'Problems Solved (Cumulative)':num(h['Problems Solved']||r['Problems Solved']),
+        'Medium (Cumulative)':num(h.Medium||r.Medium),
+        'Hard (Cumulative)':num(h.Hard||r.Hard),
+        'Total Submissions (Cumulative)':num(h['Total Submissions']||r['Total Submissions']),
+        'Last Problem':h['Last Problem']||r['Last Problem']||'',
+        'Last Solved':h['Last Solved']||r['Last Solved']||'',
+        'Status':h.Status||r.Status||''
+      };
+    }).sort((a,b)=>a['Register Number'].localeCompare(b['Register Number'],undefined,{numeric:true}));
     return {from,to,section,scope:section==='OVERALL'?'ECE Overall':section,students:rows};
   }
   async function downloadHomeDateReportCsv(){const r=await prepareHomeDateReport();const cols=Object.keys(r.students[0]||{'Register Number':'','Student Name':'','Section':'','Problems Solved in Period':0,'Active Days':0});const lines=[['ECE CodeMetrix Date Report'],['Scope',r.scope],['From',r.from],['To',r.to],[],cols,...r.students.map(x=>cols.map(c=>x[c]??''))];downloadTextFile(`CodeMetrix_Date_Report_${r.from}_to_${r.to}.csv`,'\uFEFF'+lines.map(x=>x.map(csvEscape).join(',')).join('\r\n'),'text/csv;charset=utf-8');closeHomeDateReport();setMessage('Date report downloaded successfully.');}
@@ -665,20 +921,20 @@
   // ============================================================
   // EVENT LISTENERS
   // ============================================================
-  const attachDownload = (id, fn) => {
-    document.getElementById(id)?.addEventListener('click', async () => {
-      try { await ensureData(); fn(); } catch(e) { setMessage(e.message, true); }
-    });
-  };
+  els.leetTop?.addEventListener('click', async () => {
+    try { await ensureData(); downloadTop50(state.leetcode, 'leetcode'); } catch (e) { setMessage(e.message, true); }
+  });
+  els.gitTop?.addEventListener('click', async () => {
+    try { await ensureData(); downloadTop50(state.github, 'github'); } catch (e) { setMessage(e.message, true); }
+  });
+  els.facultyLeetCode?.addEventListener('click', async () => {
+    try { await downloadAllFacultyLeetCodeReport(); } catch (e) { setMessage(e.message, true); }
+  });
 
-  els.leetTop?.addEventListener('click',async()=>{try{await ensureData();downloadTop50(state.leetcode,'leetcode');}catch(e){setMessage(e.message,true);}});
-  els.gitTop?.addEventListener('click',async()=>{try{await ensureData();downloadTop50(state.github,'github');}catch(e){setMessage(e.message,true);}});
-  els.facultyLeetCode?.addEventListener('click',async()=>{try{await downloadAllFacultyLeetCodeReport();}catch(e){setMessage(e.message,true);}});
-
-  attachDownload('bannerTop50LeetCode', () => downloadTop50(state.leetcode, 'leetcode'));
-  attachDownload('bannerTop50GitHub', () => downloadTop50(state.github, 'github'));
-  attachDownload('bannerAllFacultyLeetCode', () => downloadAllFacultyLeetCodeReport());
-  attachDownload('bannerAllStudentsReport', () => downloadAllStudentsMerged());
+  document.getElementById("closeSuspiciousModal")?.addEventListener("click", closeSuspiciousModal);
+  document.querySelectorAll("[data-close-suspicious-modal]").forEach((element) => {
+    element.addEventListener("click", closeSuspiciousModal);
+  });
 
   els.form?.addEventListener('submit',async e=>{
     e.preventDefault();
@@ -698,6 +954,8 @@
       if(!els.modal?.hidden) closeDashboard();
       if(!els.adminLoginModal?.hidden) closeAdminLoginModal();
       if(!els.unifiedModal?.hidden) closeAddProfileModal();
+      closeSuspiciousModal();
+      closeHomeDateReport();
     }
   });
   els.back?.addEventListener('click',()=>{if(history.length>1)history.back();else location.href='leetcode.html';});
