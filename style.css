@@ -4142,52 +4142,6 @@ body.modal-open {
 .home-search-form{display:flex;gap:10px;min-width:min(100%,430px)}.home-search-input{width:100%;min-width:0;padding:13px 15px;border-radius:13px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18);color:inherit;outline:none}.home-search-input:focus{border-color:rgba(139,92,246,.65);box-shadow:0 0 0 3px rgba(139,92,246,.12)}
 .home-action-message{min-height:22px;margin:10px 4px 0;color:#99f6e4;font-size:.9rem}.home-action-message.error{color:#fca5a5}
 .student-dashboard-modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:24px}.student-dashboard-modal[hidden]{display:none}.student-dashboard-backdrop{position:absolute;inset:0;background:rgba(2,6,23,.76);backdrop-filter:blur(8px)}.student-dashboard-panel{position:relative;width:min(100%,980px);max-height:90vh;overflow:auto;border:1px solid rgba(255,255,255,.1);border-radius:24px;background:#0b1220;box-shadow:0 30px 100px rgba(0,0,0,.5);padding:24px}.student-dashboard-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}.student-dashboard-header h2{margin:4px 0 5px}.student-dashboard-header p{margin:0;color:rgba(226,232,240,.65)}.student-dashboard-content{margin-top:22px}.student-dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.student-metric-card{border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:18px;background:rgba(255,255,255,.025)}.student-metric-card-title{font-size:1.1rem;font-weight:900;margin-bottom:12px}.student-metric-row{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-top:1px solid rgba(255,255,255,.06)}.student-metric-row span{color:rgba(226,232,240,.65)}.student-metric-row strong{text-align:right;max-width:60%;overflow-wrap:anywhere}.student-dashboard-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.modal-open{overflow:hidden}
-.home-downloads-bar {
-  margin-top: 20px;
-  padding: 20px 24px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 22px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(20, 184, 166, 0.06)), rgba(255, 255, 255, 0.025);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.home-downloads-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.home-downloads-copy strong {
-  font-size: 1.15rem;
-}
-
-.home-downloads-copy > span:last-child {
-  color: rgba(226, 232, 240, 0.65);
-  font-size: 0.88rem;
-}
-
-.home-downloads-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 760px) {
-  .home-downloads-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .home-downloads-actions {
-    flex-direction: column;
-  }
-  .home-downloads-actions button {
-    width: 100%;
-  }
-}
 
 /* YEAR NAV BAR & SECTION UI */
 .year-nav-bar {
