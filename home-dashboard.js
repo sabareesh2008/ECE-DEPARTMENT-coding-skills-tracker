@@ -641,25 +641,39 @@
     const live=state.leetcode.length?state.leetcode:await loadFile('LiveData.csv');
     const matches=r=>section==='OVERALL'||normalizeText(r.Section)===normalizeText(section);
     const students=live.filter(matches);
+    const regSet = new Set(students.map(s => normalizeReg(s['Register Number'])).filter(Boolean));
+
     const dailyMap=new Map();
-    daily.filter(r=>r.Date>=from&&r.Date<=to&&matches(r)).forEach(r=>{
+    const dailyRows=[];
+    daily.filter(r=>r.Date>=from&&r.Date<=to).forEach(r=>{
       const reg=normalizeReg(r['Register Number']);
-      if(!reg)return;
+      if(!reg || !regSet.has(reg)) return;
       const x=dailyMap.get(reg)||{solved:0,days:new Set()};
-      x.solved+=num(r['Solved That Day']);
-      if(num(r['Solved That Day'])>0) x.days.add(r.Date);
+      const solved=num(r['Solved That Day']);
+      x.solved+=solved;
+      if(solved>0) x.days.add(r.Date);
       dailyMap.set(reg,x);
+      dailyRows.push({
+        'Date': r.Date,
+        'Register Number': reg,
+        'Student Name': r['Student Name']||'',
+        'Section': r.Section||'',
+        'Solved That Day': solved,
+        'Source': r.Source||'DAILY_ACTIVITY'
+      });
     });
+
     const histMap=new Map();
-    history.filter(r=>r.Date<=to&&matches(r)).forEach(r=>{
+    history.filter(r=>r.Date<=to).forEach(r=>{
       const reg=normalizeReg(r['Register Number']);
-      if(!reg)return;
+      if(!reg || !regSet.has(reg)) return;
       const old=histMap.get(reg);
       if(!old || `${r.Date}|${r['Updated At']||''}` > (old._key || '')){
         r._key=`${r.Date}|${r['Updated At']||''}`;
         histMap.set(reg,r);
       }
     });
+
     const rows=students.map(r=>{
       const reg=normalizeReg(r['Register Number']);
       const d=dailyMap.get(reg)||{solved:0,days:new Set()};
@@ -672,22 +686,55 @@
         'Register Number':reg,
         'Student Name':r['Student Name']||h['Student Name']||'',
         'Section':r.Section||h.Section||'',
+        'LeetCode Username':r['LeetCode Username']||h['LeetCode Username']||'',
         'Problems Solved in Period':solvedInPeriod,
         'Active Days':d.days.size || (solvedInPeriod > 0 ? 1 : 0),
         'Problems Solved (Cumulative)':num(h['Problems Solved']||r['Problems Solved']),
         'Medium (Cumulative)':num(h.Medium||r.Medium),
         'Hard (Cumulative)':num(h.Hard||r.Hard),
         'Total Submissions (Cumulative)':num(h['Total Submissions']||r['Total Submissions']),
+        'Solved on Last Snapshot':num(h['Solved Today']||r['Solved Today']),
         'Last Problem':h['Last Problem']||r['Last Problem']||'',
         'Last Solved':h['Last Solved']||r['Last Solved']||'',
         'Status':h.Status||r.Status||''
       };
     }).sort((a,b)=>a['Register Number'].localeCompare(b['Register Number'],undefined,{numeric:true}));
-    return {from,to,section,scope:section==='OVERALL'?'ECE Overall':section,students:rows};
+    return {from,to,section,scope:section==='OVERALL'?'ECE Overall':section,students:rows,dailyRows};
   }
-  async function downloadHomeDateReportCsv(){const r=await prepareHomeDateReport();const cols=Object.keys(r.students[0]||{'Register Number':'','Student Name':'','Section':'','Problems Solved in Period':0,'Active Days':0});const lines=[['ECE CodeMetrix Date Report'],['Scope',r.scope],['From',r.from],['To',r.to],[],cols,...r.students.map(x=>cols.map(c=>x[c]??''))];downloadTextFile(`CodeMetrix_Date_Report_${r.from}_to_${r.to}.csv`,'\uFEFF'+lines.map(x=>x.map(csvEscape).join(',')).join('\r\n'),'text/csv;charset=utf-8');closeHomeDateReport();setMessage('Date report downloaded successfully.');}
-  async function downloadHomeDateReportExcel(){const r=await prepareHomeDateReport();if(typeof XLSX==='undefined')throw new Error('Excel library is unavailable. Please reload the page.');const ws=XLSX.utils.json_to_sheet(r.students);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,(r.section==='OVERALL'?'Overall':r.section).slice(0,31));XLSX.writeFile(wb,`CodeMetrix_Date_Report_${r.from}_to_${r.to}.xlsx`);closeHomeDateReport();setMessage('Excel date report downloaded successfully.');}
-  async function downloadHomeDateReportPdf(){const r=await prepareHomeDateReport();const w=window.open('','_blank');if(!w)throw new Error('Please allow pop-ups to generate the PDF report.');const cols=['Register Number','Student Name','Section','Problems Solved in Period','Active Days','Problems Solved (Cumulative)','Medium (Cumulative)','Hard (Cumulative)','Total Submissions (Cumulative)','Last Problem','Last Solved','Status'];const rows=r.students.map(x=>'<tr>'+cols.map(c=>'<td>'+esc(x[c])+'</td>').join('')+'</tr>').join('');w.document.write('<!doctype html><html><head><title>CodeMetrix Date Report</title><style>body{font-family:Arial;padding:24px;color:#111}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #aaa;padding:5px;text-align:left}th{background:#eee}@media print{button{display:none}}</style></head><body><h1>ECE CodeMetrix Date Report</h1><p><b>'+esc(r.scope)+'</b> · '+esc(r.from)+' to '+esc(r.to)+'</p><table><thead><tr>'+cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table><p><button onclick="window.print()">Print / Save as PDF</button></p></body></html>');w.document.close();closeHomeDateReport();setMessage('PDF report opened. Choose Save as PDF.');}
+
+  async function downloadHomeDateReportCsv(){
+    const r=await prepareHomeDateReport();
+    const cols=Object.keys(r.students[0]||{'Register Number':'','Student Name':'','Section':'','Problems Solved in Period':0,'Active Days':0});
+    const lines=[['ECE CodeMetrix Date Report'],['Scope',r.scope],['From',r.from],['To',r.to],[],cols,...r.students.map(x=>cols.map(c=>x[c]??''))];
+    downloadTextFile(`ECE_LeetCode_Report_${r.from}_to_${r.to}.csv`,'\uFEFF'+lines.map(x=>x.map(csvEscape).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+    closeHomeDateReport();
+    setMessage('Date report downloaded successfully.');
+  }
+
+  async function downloadHomeDateReportExcel(){
+    const r=await prepareHomeDateReport();
+    if(typeof XLSX==='undefined')throw new Error('Excel library is unavailable. Please reload the page.');
+    const wb=XLSX.utils.book_new();
+    const wsSummary=XLSX.utils.json_to_sheet(r.students);
+    const wsDaily=XLSX.utils.json_to_sheet(r.dailyRows||[]);
+    XLSX.utils.book_append_sheet(wb,wsSummary,"Summary");
+    XLSX.utils.book_append_sheet(wb,wsDaily,"Daily Activity");
+    XLSX.writeFile(wb,`ECE_LeetCode_Report_${r.from}_to_${r.to}.xlsx`);
+    closeHomeDateReport();
+    setMessage('Excel date report downloaded successfully.');
+  }
+
+  async function downloadHomeDateReportPdf(){
+    const r=await prepareHomeDateReport();
+    const w=window.open('','_blank');
+    if(!w)throw new Error('Please allow pop-ups to generate the PDF report.');
+    const cols=['Register Number','Student Name','Section','Problems Solved in Period','Active Days','Problems Solved (Cumulative)','Medium (Cumulative)','Hard (Cumulative)','Total Submissions (Cumulative)','Last Problem','Last Solved','Status'];
+    const rows=r.students.map(x=>'<tr>'+cols.map(c=>'<td>'+esc(x[c])+'</td>').join('')+'</tr>').join('');
+    w.document.write('<!doctype html><html><head><title>CodeMetrix Date Report</title><style>body{font-family:Arial;padding:24px;color:#111}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #aaa;padding:5px;text-align:left}th{background:#eee}@media print{button{display:none}}</style></head><body><h1>ECE CodeMetrix Date Report</h1><p><b>'+esc(r.scope)+'</b> · '+esc(r.from)+' to '+esc(r.to)+'</p><table><thead><tr>'+cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table><p><button onclick="window.print()">Print / Save as PDF</button></p></body></html>');
+    w.document.close();
+    closeHomeDateReport();
+    setMessage('PDF report opened. Choose Save as PDF.');
+  }
 
   // ============================================================
   // ADMIN AUTHENTICATION
