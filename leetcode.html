@@ -231,6 +231,10 @@
           ↻ Sync Now
         </button>
 
+        <button id="homeOpenDateReportButton" class="action-button secondary admin-only" type="button" hidden>
+          📅 Date Report
+        </button>
+
         <button id="homeManageStudentsButton" class="action-button secondary" type="button">
           Manage Students
         </button>
@@ -287,17 +291,84 @@
           </div>
         </div>
 
-        <div class="actions compact-actions">
+        <div class="actions">
           <button
-            id="openAdminActionsMenu"
-            class="action-button primary admin-menu-trigger"
+            id="downloadCsvButton"
+            class="action-button secondary"
             type="button"
-            aria-haspopup="dialog"
-            aria-controls="adminActionsModal"
           >
-            <span class="admin-menu-trigger-icon" aria-hidden="true">⚙</span>
-            <span>Actions</span>
-            <span class="admin-menu-trigger-arrow" aria-hidden="true">▾</span>
+            Download CSV
+          </button>
+
+          <button
+            id="downloadPdfButton"
+            class="action-button secondary"
+            type="button"
+          >
+            Download PDF
+          </button>
+
+          <button
+            id="openDateReportButton"
+            class="action-button secondary admin-only"
+            type="button"
+            hidden
+          >
+            📅 Date Report
+          </button>
+
+          <button
+            id="addProfileButton"
+            class="action-button primary admin-only"
+            type="button"
+            hidden
+          >
+            + Add Profile
+          </button>
+
+          <button
+            id="syncNowButton"
+            class="action-button secondary admin-only"
+            type="button"
+            hidden
+          >
+            ↻ Sync Now
+          </button>
+
+          <button
+            id="manageStudentsButton"
+            class="action-button secondary admin-only"
+            type="button"
+            hidden
+          >
+            Manage Students
+          </button>
+
+          <button
+            id="facultyAnalyticsButton"
+            class="action-button secondary admin-only"
+            type="button"
+            hidden
+          >
+            Faculty Analytics
+          </button>
+
+          <button
+            id="aiAnalystButton"
+            class="action-button ai-analyst-button admin-only"
+            type="button"
+            hidden
+          >
+            🤖 AI Analyst
+          </button>
+
+          <button
+            id="adminLogoutButton"
+            class="action-button secondary admin-only"
+            type="button"
+            hidden
+          >
+            Logout
           </button>
         </div>
       </section>

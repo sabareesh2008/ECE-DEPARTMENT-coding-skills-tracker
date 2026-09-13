@@ -83,6 +83,7 @@ const dateReportPrintContent = document.getElementById("dateReportPrintContent")
 
 const homeAddProfileButton = document.getElementById("homeAddProfileButton");
 const homeSyncNowButton = document.getElementById("homeSyncNowButton");
+const homeOpenDateReportButton = document.getElementById("homeOpenDateReportButton");
 const homeManageStudentsButton = document.getElementById("homeManageStudentsButton");
 const homeFacultyAnalyticsButton = document.getElementById("homeFacultyAnalyticsButton");
 const facultyAnalyticsButton = document.getElementById("facultyAnalyticsButton");
@@ -4882,6 +4883,7 @@ document
   .addEventListener("click", downloadPDF);
 
 openDateReportButton?.addEventListener("click", openDateReportModal);
+homeOpenDateReportButton?.addEventListener("click", openDateReportModal);
 closeDateReportButton?.addEventListener("click", closeDateReportModal);
 cancelDateReportButton?.addEventListener("click", closeDateReportModal);
 
