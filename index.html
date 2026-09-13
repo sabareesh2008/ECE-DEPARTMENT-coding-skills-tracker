@@ -110,6 +110,32 @@
 
       <div id="homeActionMessage" class="home-action-message" role="status" aria-live="polite"></div>
 
+      <!-- Quick Download Reports Hub -->
+      <section class="home-downloads-bar" aria-label="Download Reports">
+        <div class="home-downloads-copy">
+          <span class="section-card-title">📥 DOWNLOAD REPORTS</span>
+          <strong>Department Reports &amp; Exports</strong>
+          <span>Export Excel reports for LeetCode, GitHub and Faculty performance.</span>
+        </div>
+        <div class="home-downloads-actions">
+          <button id="bannerTop50LeetCode" class="action-button secondary" type="button">
+            🏆 Top 50 LeetCode
+          </button>
+          <button id="bannerTop50GitHub" class="action-button secondary" type="button">
+            🐙 Top 50 GitHub
+          </button>
+          <button id="bannerAllFacultyLeetCode" class="action-button secondary" type="button">
+            👨‍🏫 Faculty Report
+          </button>
+          <button id="bannerAllStudentsReport" class="action-button primary" type="button">
+            📊 All Students Report
+          </button>
+          <button id="homeDateReportButton" class="action-button primary admin-only" type="button" hidden>
+            📅 Date Report
+          </button>
+        </div>
+      </section>
+
       <div class="tracker-entry-grid">
         <a class="section-card tracker-entry-card" href="leetcode.html">
           <span class="section-card-title">LeetCode</span>
@@ -127,6 +153,57 @@
       </div>
     </section>
   </main>
+
+  <!-- =======================================================
+       ADMIN DATE-RANGE REPORT
+       ======================================================= -->
+  <div id="homeDateReportModal" class="profile-modal date-report-modal" hidden>
+    <div class="profile-modal-backdrop" data-close-home-date-report></div>
+
+    <section
+      class="profile-modal-card date-report-card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="homeDateReportTitle"
+    >
+      <div class="profile-modal-head">
+        <div>
+          <div class="eyebrow">ADMIN REPORT</div>
+          <h2 id="homeDateReportTitle">Download Date Report</h2>
+          <p class="modal-help">Generate a report for one day or any custom date range.</p>
+        </div>
+        <button id="closeHomeDateReport" class="modal-close" type="button" aria-label="Close">×</button>
+      </div>
+
+      <div class="date-report-grid">
+        <label class="form-label" for="homeDateReportFrom">From date
+          <input id="homeDateReportFrom" class="form-input" type="date" required>
+        </label>
+
+        <label class="form-label" for="homeDateReportTo">To date
+          <input id="homeDateReportTo" class="form-input" type="date" required>
+        </label>
+      </div>
+
+      <label class="form-label date-report-section-label" for="homeDateReportSection">
+        Section
+        <select id="homeDateReportSection" class="form-input" required>
+          <option value="OVERALL">ECE Overall</option>
+        </select>
+      </label>
+
+      <p id="homeDateReportMessage" class="form-message" role="status" aria-live="polite"></p>
+
+      <div class="modal-actions date-report-actions">
+        <button id="homeDownloadDateReportCsv" class="action-button secondary" type="button">Download CSV</button>
+        <button id="homeDownloadDateReportExcel" class="action-button primary" type="button">Download Excel</button>
+        <button id="homeDownloadDateReportPdf" class="action-button secondary" type="button">Download PDF</button>
+        <button id="cancelHomeDateReport" class="action-button secondary" type="button">Cancel</button>
+      </div>
+
+      <div id="homeDateReportPrintContent" class="date-report-print-content" hidden></div>
+    </section>
+  </div>
 
   <!-- =======================================================
        HOME ADMIN LOGIN MODAL

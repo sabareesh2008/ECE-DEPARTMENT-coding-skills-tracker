@@ -4338,7 +4338,7 @@ body.modal-open {
         display: none !important;
     }
 
-    body.printing-date-report #dateReportModal {
+    body.printing-date-report .date-report-modal {
         display: block !important;
         position: static !important;
         inset: auto !important;
@@ -4348,16 +4348,16 @@ body.modal-open {
         color: black !important;
     }
 
-    body.printing-date-report #dateReportModal .profile-modal-backdrop,
-    body.printing-date-report #dateReportModal .profile-modal-head,
-    body.printing-date-report #dateReportModal .date-report-grid,
-    body.printing-date-report #dateReportModal .date-report-scope,
-    body.printing-date-report #dateReportModal .date-report-actions,
-    body.printing-date-report #dateReportModal .form-message {
+    body.printing-date-report .date-report-modal .profile-modal-backdrop,
+    body.printing-date-report .date-report-modal .profile-modal-head,
+    body.printing-date-report .date-report-modal .date-report-grid,
+    body.printing-date-report .date-report-modal .date-report-scope,
+    body.printing-date-report .date-report-modal .date-report-actions,
+    body.printing-date-report .date-report-modal .form-message {
         display: none !important;
     }
 
-    body.printing-date-report #dateReportModal .date-report-card {
+    body.printing-date-report .date-report-modal .date-report-card {
         display: block !important;
         width: 100% !important;
         max-width: none !important;

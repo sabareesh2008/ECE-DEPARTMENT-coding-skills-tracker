@@ -231,10 +231,6 @@
           ↻ Sync Now
         </button>
 
-        <button id="homeOpenDateReportButton" class="action-button secondary admin-only" type="button" hidden>
-          📅 Date Report
-        </button>
-
         <button id="homeManageStudentsButton" class="action-button secondary" type="button">
           Manage Students
         </button>
@@ -306,15 +302,6 @@
             type="button"
           >
             Download PDF
-          </button>
-
-          <button
-            id="openDateReportButton"
-            class="action-button secondary admin-only"
-            type="button"
-            hidden
-          >
-            📅 Date Report
           </button>
 
           <button
@@ -482,18 +469,6 @@
             </span>
           </button>
 
-          <button
-            id="openDateReportButton"
-            class="admin-action-tile export-tile admin-only"
-            type="button"
-            hidden
-          >
-            <span class="admin-action-icon">📅</span>
-            <span class="admin-action-copy">
-              <strong>Download Date Report</strong>
-              <small>Select a date or custom date range</small>
-            </span>
-          </button>
         </div>
       </div>
 
@@ -580,63 +555,6 @@
           </button>
         </div>
       </div>
-    </section>
-  </div>
-
-  <!-- =======================================================
-       ADMIN DATE-RANGE REPORT
-       ======================================================= -->
-  <div id="dateReportModal" class="profile-modal date-report-modal" hidden>
-    <div class="profile-modal-backdrop" data-close-date-report></div>
-
-    <section
-      class="profile-modal-card date-report-card"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="dateReportTitle"
-    >
-      <div class="profile-modal-head">
-        <div>
-          <div class="eyebrow">ADMIN REPORT</div>
-          <h2 id="dateReportTitle">Download Date Report</h2>
-          <p class="modal-help">Generate a report for one day or any custom date range.</p>
-        </div>
-        <button id="closeDateReport" class="modal-close" type="button" aria-label="Close">×</button>
-      </div>
-
-      <div class="date-report-grid">
-        <label class="form-label" for="dateReportFrom">From date
-          <input id="dateReportFrom" class="form-input" type="date" required>
-        </label>
-
-        <label class="form-label" for="dateReportTo">To date
-          <input id="dateReportTo" class="form-input" type="date" required>
-        </label>
-      </div>
-
-      <div class="date-report-scope">
-        <span>Report scope</span>
-        <strong id="dateReportScope">Current view</strong>
-      </div>
-
-      <p id="dateReportMessage" class="form-message" role="status" aria-live="polite"></p>
-
-      <div class="modal-actions date-report-actions">
-        <button id="downloadDateReportCsv" class="action-button secondary" type="button">
-          Download CSV
-        </button>
-        <button id="downloadDateReportExcel" class="action-button primary" type="button">
-          Download Excel
-        </button>
-        <button id="downloadDateReportPdf" class="action-button secondary" type="button">
-          Download PDF
-        </button>
-        <button id="cancelDateReport" class="action-button secondary" type="button">
-          Cancel
-        </button>
-      </div>
-
-      <div id="dateReportPrintContent" class="date-report-print-content" hidden></div>
     </section>
   </div>
 
