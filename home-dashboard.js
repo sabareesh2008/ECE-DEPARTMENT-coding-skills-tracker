@@ -267,68 +267,112 @@
   }
 
   // ============================================================
+  // ============================================================
   // SUSPICIOUS SOLVING SCORE ENGINE (7 FACTORS, MEDIUM & HARD ONLY)
+  // Active starting from today (2026-09-13) with baseline at 0%
   // ============================================================
   function calculateSuspiciousScore(student, history = [], activity = []) {
-    if (!student) return { score: 0, label: 'Normal', emoji: '🟢', badgeClass: 'suspicious-normal', factors: [] };
-    const easy = num(student.Easy);
-    const medium = num(student.Medium);
-    const hard = num(student.Hard);
-    const totalSolved = num(student['Problems Solved']);
-    const totalSubmissions = num(student['Total Submissions']);
-    const solvedToday = num(student['Solved Today']);
-    const last7Days = num(student['Last 7 Days']);
-    const medHardSolved = medium + hard;
+    if (!student) return { score: 0, label: 'Normal', emoji: '🟢', badgeClass: 'suspicious-normal', medHardSolved: 0, newMed: 0, newHard: 0, newSolved: 0, factors: [] };
 
-    if (medHardSolved === 0) {
+    const reg = String(student['Register Number'] || '').trim();
+    const solvedToday = num(student['Solved Today']);
+    const currentTotal = num(student['Problems Solved']);
+    const currentMedium = num(student.Medium);
+    const currentHard = num(student.Hard);
+    const currentSubmissions = num(student['Total Submissions']);
+
+    const studentHistory = (history || []).filter(h => String(h['Register Number'] || '').trim() === reg);
+    let baselineMed = currentMedium;
+    let baselineHard = currentHard;
+    let baselineSolved = currentTotal;
+    let baselineSubmissions = currentSubmissions;
+
+    if (studentHistory.length > 0) {
+      const sorted = [...studentHistory].sort((a,b) => String(a.Date || '').localeCompare(String(b.Date || '')));
+      const beforeToday = sorted.filter(h => String(h.Date || '') < '2026-09-13');
+      if (beforeToday.length > 0) {
+        const rec = beforeToday[beforeToday.length - 1];
+        baselineMed = num(rec.Medium);
+        baselineHard = num(rec.Hard);
+        baselineSolved = num(rec['Problems Solved']);
+        baselineSubmissions = num(rec['Total Submissions']);
+      } else {
+        const rec = sorted[0];
+        baselineMed = num(rec.Medium);
+        baselineHard = num(rec.Hard);
+        baselineSolved = num(rec['Problems Solved']);
+        baselineSubmissions = num(rec['Total Submissions']);
+      }
+    }
+
+    let newMed = Math.max(0, currentMedium - baselineMed);
+    let newHard = Math.max(0, currentHard - baselineHard);
+    let newSolved = Math.max(0, currentTotal - baselineSolved);
+    let newSubmissions = Math.max(0, currentSubmissions - baselineSubmissions);
+
+    if (solvedToday === 0) {
+      newMed = 0;
+      newHard = 0;
+      newSolved = 0;
+    }
+
+    const newMedHard = newMed + newHard;
+
+    if (newMedHard === 0 || solvedToday === 0) {
       return {
         score: 0,
         label: 'Normal',
         emoji: '🟢',
         badgeClass: 'suspicious-normal',
         medHardSolved: 0,
+        newMed: 0,
+        newHard: 0,
+        newSolved: 0,
         factors: [
-          { name: "Short Solving Time (<5 min between M/H)", score: 0, weight: 15, detail: "No Medium/Hard problems solved yet." },
-          { name: "Continuous Medium/Hard Solving", score: 0, weight: 15, detail: "No Medium/Hard problem patterns detected." },
-          { name: "First-Attempt Acceptance on M/H", score: 0, weight: 15, detail: "Standard normal baseline." },
-          { name: "M/H Acceptance vs Submissions", score: 0, weight: 15, detail: "No high acceptance anomaly." },
-          { name: "Suspicious Speed Bursts", score: 0, weight: 15, detail: "No abnormal daily bursts detected." },
-          { name: "Sudden Personal Skill Jump", score: 0, weight: 15, detail: "No sudden surge compared to personal baseline." },
-          { name: "Difficulty Jump Pattern", score: 0, weight: 10, detail: "Natural difficulty distribution." }
+          { name: "Short Solving Time (<5 min between M/H)", score: 0, weight: 15, detail: "Tracking active from today. No Medium/Hard problems solved yet in current tracker cycle." },
+          { name: "Continuous Medium/Hard Solving", score: 0, weight: 15, detail: "No Medium/Hard problem patterns detected in current tracking window." },
+          { name: "First-Attempt Acceptance on M/H", score: 0, weight: 15, detail: "Standard normal baseline (0% starting rate)." },
+          { name: "M/H Acceptance vs Submissions", score: 0, weight: 15, detail: "No anomaly in tracker runs starting today." },
+          { name: "Suspicious Speed Bursts", score: 0, weight: 15, detail: "No bursts detected starting from today." },
+          { name: "Sudden Personal Skill Jump", score: 0, weight: 15, detail: "No surge detected compared to starting baseline." },
+          { name: "Difficulty Jump Pattern", score: 0, weight: 10, detail: "Normal progression starting today." }
         ]
       };
     }
 
     // Factor 1: Short Solving Time (15%)
-    let f1 = (solvedToday >= 8 && medHardSolved >= 5) ? Math.min(100, Math.round(solvedToday * 8.5)) : (last7Days >= 20 && (medHardSolved / Math.max(1, totalSolved)) > 0.6 ? Math.min(100, Math.round((last7Days / 20) * 65)) : Math.min(20, Math.round(medHardSolved * 0.4)));
-    let f1Detail = (solvedToday >= 8 && medHardSolved >= 5) ? `High density of ${solvedToday} problems solved today with rapid turnaround.` : `Normal human solving interval pacing.`;
+    let f1 = (newMedHard >= 5 && solvedToday >= 8) ? Math.min(100, Math.round(newMedHard * 16)) : (newMedHard >= 3 ? Math.min(65, Math.round(newMedHard * 18)) : Math.min(20, Math.round(newMedHard * 8)));
+    let f1Detail = (newMedHard >= 5 && solvedToday >= 8) ? `High density burst: ${newMedHard} Medium/Hard problems solved today in rapid succession.` : `Normal human pacing on ${newMedHard} Medium/Hard problems today.`;
 
     // Factor 2: Continuous Medium/Hard Solving (15%)
-    const medHardRatio = totalSolved > 0 ? (medHardSolved / totalSolved) : 0;
-    let f2 = (medHardSolved >= 15 && medHardRatio >= 0.85) ? Math.min(100, Math.round(medHardRatio * 90 + 10)) : (medHardSolved >= 10 && medHardRatio >= 0.70 ? Math.min(75, Math.round(medHardRatio * 70)) : Math.max(0, Math.round(medHardRatio * 25)));
-    let f2Detail = `${(medHardRatio * 100).toFixed(1)}% of all problems solved are Medium/Hard (${medHardSolved}/${totalSolved}).`;
+    const medHardRatio = newSolved > 0 ? (newMedHard / newSolved) : 1;
+    let f2 = (newMedHard >= 6 && medHardRatio >= 0.9) ? Math.min(100, Math.round(medHardRatio * 90 + 10)) : (newMedHard >= 3 && medHardRatio >= 0.75 ? Math.min(70, Math.round(medHardRatio * 75)) : Math.max(0, Math.round(medHardRatio * 20)));
+    let f2Detail = `${(medHardRatio * 100).toFixed(0)}% of today's solved problems are Medium/Hard (${newMedHard}/${newSolved}).`;
 
     // Factor 3: First-Attempt Acceptance Pattern on Medium/Hard (15%)
-    const subPerProb = medHardSolved > 0 ? (totalSubmissions / Math.max(1, totalSolved)) : 1;
-    let f3 = (medHardSolved >= 10 && subPerProb <= 1.25) ? Math.min(100, Math.round((1.4 - subPerProb) * 200 + 40)) : (medHardSolved >= 5 && subPerProb <= 1.5 ? Math.min(60, Math.round((1.7 - subPerProb) * 100)) : Math.min(15, Math.round(10 / Math.max(1, subPerProb))));
-    let f3Detail = `${subPerProb.toFixed(2)} submissions per accepted problem on Medium/Hard.`;
+    const subPerProb = (newSolved > 0 && newSubmissions > 0) ? (newSubmissions / newSolved) : 1;
+    let f3 = (newMedHard >= 4 && subPerProb <= 1.2) ? Math.min(100, Math.round((1.3 - subPerProb) * 200 + 40)) : (newMedHard >= 2 && subPerProb <= 1.4 ? Math.min(55, Math.round((1.6 - subPerProb) * 90)) : Math.min(15, Math.round(10 / Math.max(1, subPerProb))));
+    let f3Detail = `${subPerProb.toFixed(2)} submissions per problem on today's Medium/Hard solves.`;
 
     // Factor 4: Medium/Hard Acceptance vs Submissions (15%)
-    const subRatio = totalSubmissions > 0 ? (medHardSolved / totalSubmissions) : 0;
-    let f4 = (medHardSolved >= 10 && subRatio >= 0.75) ? Math.min(100, Math.round(subRatio * 100)) : (medHardSolved >= 5 && subRatio >= 0.5 ? Math.min(65, Math.round(subRatio * 80)) : Math.min(15, Math.round(subRatio * 20)));
-    let f4Detail = `Medium/Hard problems represent ${(subRatio * 100).toFixed(1)}% of total submissions.`;
+    const subRatio = newSubmissions > 0 ? (newMedHard / newSubmissions) : (newMedHard > 0 ? 0.8 : 0);
+    let f4 = (newMedHard >= 4 && subRatio >= 0.8) ? Math.min(100, Math.round(subRatio * 100)) : (newMedHard >= 2 && subRatio >= 0.5 ? Math.min(60, Math.round(subRatio * 80)) : Math.min(15, Math.round(subRatio * 20)));
+    let f4Detail = `Medium/Hard problems represent ${(subRatio * 100).toFixed(1)}% of new submissions today.`;
 
     // Factor 5: Suspicious Speed Bursts (15%)
-    let f5 = (solvedToday >= 12) ? Math.min(100, Math.round(solvedToday * 7)) : (last7Days >= 35 ? Math.min(90, Math.round(last7Days * 2.2)) : Math.min(10, Math.round(last7Days * 0.5)));
-    let f5Detail = `Recent rate: ${solvedToday} today, ${last7Days} in last 7 days.`;
+    let f5 = (newMedHard >= 10) ? Math.min(100, Math.round(newMedHard * 9)) : (newMedHard >= 5 ? Math.min(75, Math.round(newMedHard * 14)) : (newMedHard >= 3 ? Math.min(45, Math.round(newMedHard * 12)) : Math.min(10, newMedHard * 5)));
+    let f5Detail = `Today's rate: ${newMedHard} Medium/Hard problems completed today.`;
 
     // Factor 6: Sudden Personal Skill Jump (15%)
-    let f6 = (last7Days >= 25 && medHardSolved >= 12) ? Math.min(80, Math.round(last7Days * 2.5)) : 5;
-    let f6Detail = "Steady progression evaluated against personal historical baseline.";
+    const pastDaysCount = Math.max(1, studentHistory.length);
+    const pastAvg = baselineSolved / Math.max(1, pastDaysCount);
+    const jumpToday = newSolved - pastAvg;
+    let f6 = (newMedHard >= 5 && jumpToday >= 4) ? Math.min(100, Math.round(jumpToday * 18)) : (newMedHard >= 3 && jumpToday >= 2 ? Math.min(60, Math.round(jumpToday * 20)) : Math.min(10, Math.max(0, Math.round(newMedHard * 3))));
+    let f6Detail = `Evaluated against personal baseline of ${pastAvg.toFixed(1)} solved/day (+${newSolved} today).`;
 
     // Factor 7: Difficulty Jump Pattern (10%)
-    let f7 = (hard >= 10 && medium <= 5) ? Math.min(100, Math.round(hard * 8)) : (hard >= 5 && medium <= 2 ? Math.min(80, Math.round(hard * 12)) : (hard > 0 && medium > 0 && (hard/medium) > 1.2 ? Math.min(65, Math.round((hard/medium) * 40)) : 0));
-    let f7Detail = `Difficulty ratio: ${medium} Medium, ${hard} Hard.`;
+    let f7 = (newHard >= 5 && newMed <= 1) ? Math.min(100, Math.round(newHard * 18)) : (newHard >= 3 && newMed === 0 ? Math.min(80, Math.round(newHard * 25)) : (newHard > 0 && newMed > 0 && (newHard / newMed) > 1.5 && newHard >= 3 ? Math.min(65, Math.round((newHard / newMed) * 35)) : 0));
+    let f7Detail = `Difficulty ratio today: ${newMed} Medium, ${newHard} Hard.`;
 
     const weights = [0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.10];
     const rawScore = f1 * 0.15 + f2 * 0.15 + f3 * 0.15 + f4 * 0.15 + f5 * 0.15 + f6 * 0.15 + f7 * 0.10;
@@ -345,7 +389,10 @@
       label,
       emoji,
       badgeClass,
-      medHardSolved,
+      medHardSolved: newMedHard,
+      newMed,
+      newHard,
+      newSolved,
       factors: [
         { name: "Short Solving Time (<5 min between M/H)", score: f1, weight: 15, detail: f1Detail },
         { name: "Continuous Medium/Hard Solving", score: f2, weight: 15, detail: f2Detail },
@@ -400,24 +447,28 @@
 
       <div class="suspicious-quick-metrics">
         <div class="suspicious-metric-box">
-          <span>Medium Solved</span>
-          <strong style="color:#facc15;">${medium}</strong>
+          <span>Medium (Today)</span>
+          <strong style="color:#facc15;">${susp.newMed || 0}</strong>
         </div>
         <div class="suspicious-metric-box">
-          <span>Hard Solved</span>
-          <strong style="color:#f87171;">${hard}</strong>
+          <span>Hard (Today)</span>
+          <strong style="color:#f87171;">${susp.newHard || 0}</strong>
         </div>
         <div class="suspicious-metric-box">
-          <span>Medium + Hard Total</span>
-          <strong style="color:#38bdf8;">${medium + hard}</strong>
+          <span>M+H Today (Active)</span>
+          <strong style="color:#38bdf8;">${susp.medHardSolved || 0}</strong>
         </div>
         <div class="suspicious-metric-box">
-          <span>Total Submissions</span>
-          <strong>${totalSubmissions}</strong>
+          <span>Solved Today (Total)</span>
+          <strong>${num(student['Solved Today'])}</strong>
+        </div>
+        <div class="suspicious-metric-box">
+          <span>All-Time M+H</span>
+          <strong style="color:#94a3b8;">${medium + hard}</strong>
         </div>
         <div class="suspicious-metric-box ignored-metric">
-          <span>Easy Solved (Ignored)</span>
-          <strong style="color:#94a3b8;">${easy}</strong>
+          <span>Easy (Ignored)</span>
+          <strong style="color:#64748b;">${easy}</strong>
         </div>
       </div>
 
