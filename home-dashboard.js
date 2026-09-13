@@ -45,8 +45,6 @@
     githubInput: document.getElementById('homeGithubUser'),
     saveProfileBtn: document.getElementById('homeSaveProfileButton'),
     profileMsg: document.getElementById('homeProfileFormMessage'),
-
-    // Admin Date Report
     dateReportButton: document.getElementById('homeOpenDateReportButton'),
     dateReportModal: document.getElementById('homeDateReportModal'),
     closeDateReport: document.getElementById('closeHomeDateReport'),
@@ -58,8 +56,7 @@
     dateReportMessage: document.getElementById('homeDateReportMessage'),
     downloadDateReportCsv: document.getElementById('homeDownloadDateReportCsv'),
     downloadDateReportExcel: document.getElementById('homeDownloadDateReportExcel'),
-    downloadDateReportPdf: document.getElementById('homeDownloadDateReportPdf'),
-    dateReportPrintContent: document.getElementById('homeDateReportPrintContent')
+    downloadDateReportPdf: document.getElementById('homeDownloadDateReportPdf')
   };
 
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -340,148 +337,50 @@
   function closeDashboard(){els.modal.hidden=true;document.body.classList.remove('modal-open');}
   async function ensureData(){ if(!state.leetcode.length && !state.github.length) await loadData(); }
 
-  function localISODate(daysOffset = 0) {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + daysOffset);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
-
-  function reportEscapeCsv(value) {
-    const text = String(value ?? '');
-    return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-  }
-
-  function downloadBlob(filename, content, type) {
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
-  async function prepareHomeDateReport() {
-    if (!isAdmin()) throw new Error('Administrator access required.');
-
-    const from = els.dateReportFrom?.value;
-    const to = els.dateReportTo?.value;
-    const section = els.dateReportSection?.value || 'OVERALL';
-    const today = localISODate();
-
-    if (!from || !to) throw new Error('Please select both From and To dates.');
-    if (from > to) throw new Error('From date cannot be after To date.');
-    if (to > today) throw new Error('To date cannot be in the future.');
-
-    const [students, daily, history] = await Promise.all([
-      loadFile('students.csv'),
-      loadFile('DailyActivity.csv'),
-      loadFile('History.csv')
-    ]);
-
-    const filteredStudents = students.filter(student =>
-      section === 'OVERALL' || String(student.Section || '').trim() === section
-    );
-
-    const reportStudents = filteredStudents.map(student => {
-      const reg = normalizeReg(student['Register Number']);
-      const dailyRows = daily.filter(row =>
-        normalizeReg(row['Register Number']) === reg &&
-        String(row.Date || '').slice(0, 10) >= from &&
-        String(row.Date || '').slice(0, 10) <= to &&
-        String(row.Exact || '').toLowerCase() === 'true'
-      );
-
-      const byDate = new Map();
-      dailyRows.forEach(row => {
-        const date = String(row.Date || '').slice(0, 10);
-        byDate.set(date, (byDate.get(date) || 0) + num(row['Solved That Day']));
-      });
-
-      const studentHistory = history
-        .filter(row => normalizeReg(row['Register Number']) === reg && String(row.Date || '').slice(0, 10) <= to)
-        .sort((a, b) => String(a.Date || '').localeCompare(String(b.Date || '')));
-      const snapshot = studentHistory.length ? studentHistory[studentHistory.length - 1] : student;
-
-      return {
-        'Register Number': reg,
-        'Student Name': student['Student Name'] || snapshot['Student Name'] || '',
-        'Section': student.Section || snapshot.Section || '',
-        'LeetCode Username': student['LeetCode Username'] || snapshot['LeetCode Username'] || '',
-        'Problems Solved in Period': [...byDate.values()].reduce((a, b) => a + b, 0),
-        'Active Days': [...byDate.values()].filter(v => v > 0).length,
-        'Problems Solved (Cumulative)': num(snapshot['Problems Solved']),
-        'Medium (Cumulative)': num(snapshot.Medium),
-        'Hard (Cumulative)': num(snapshot.Hard),
-        'Total Submissions (Cumulative)': num(snapshot['Total Submissions']),
-        'Last Problem': snapshot['Last Problem'] || '',
-        'Last Solved': snapshot['Last Solved'] || '',
-        'Status': snapshot.Status || student.Status || ''
-      };
-    }).sort((a, b) => String(a.Section).localeCompare(String(b.Section)) || String(a['Register Number']).localeCompare(String(b['Register Number'])));
-
-    return { from, to, section, scope: section === 'OVERALL' ? 'ECE Overall' : section, students: reportStudents };
-  }
+  // ============================================================
+  // ADMIN DATE REPORT
+  // ============================================================
+  const reportISODate = (d = new Date()) => {
+    const x = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return x.toISOString().slice(0, 10);
+  };
+  const reportOffsetDate = (days) => { const d=new Date(); d.setDate(d.getDate()+days); return reportISODate(d); };
 
   function openHomeDateReport() {
-    if (!isAdmin()) return;
-    const today = localISODate();
-    if (els.dateReportFrom) els.dateReportFrom.value = els.dateReportFrom.value || localISODate(-7);
-    if (els.dateReportTo) els.dateReportTo.value = els.dateReportTo.value || today;
-    if (els.dateReportFrom) els.dateReportFrom.max = today;
-    if (els.dateReportTo) els.dateReportTo.max = today;
-    if (els.dateReportScope) els.dateReportScope.textContent = els.dateReportSection?.selectedOptions?.[0]?.text || 'ECE Overall';
-    if (els.dateReportMessage) { els.dateReportMessage.textContent = ''; els.dateReportMessage.className = 'form-message'; }
-    if (els.dateReportModal) els.dateReportModal.hidden = false;
-    document.body.classList.add('modal-open');
+    if (!isAdmin()) { openAdminLogin(); return; }
+    const today=reportISODate();
+    if (els.dateReportFrom && !els.dateReportFrom.value) els.dateReportFrom.value=reportOffsetDate(-7);
+    if (els.dateReportTo && !els.dateReportTo.value) els.dateReportTo.value=today;
+    if (els.dateReportFrom) els.dateReportFrom.max=today;
+    if (els.dateReportTo) els.dateReportTo.max=today;
+    if (els.dateReportScope) els.dateReportScope.textContent=els.dateReportSection?.selectedOptions?.[0]?.text||'ECE Overall';
+    if (els.dateReportMessage) els.dateReportMessage.textContent='';
+    if (els.dateReportModal) { els.dateReportModal.hidden=false; document.body.classList.add('modal-open'); }
   }
+  function closeHomeDateReport() { if(els.dateReportModal) els.dateReportModal.hidden=true; document.body.classList.remove('modal-open'); }
+  function csvEscape(v) { const t=String(v??''); return /[",\n\r]/.test(t) ? '"'+t.replace(/"/g,'""')+'"' : t; }
+  function downloadTextFile(filename,content,type) { const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
 
-  function closeHomeDateReport() {
-    if (els.dateReportModal) els.dateReportModal.hidden = true;
-    document.body.classList.remove('modal-open');
+  async function prepareHomeDateReport() {
+    if(!isAdmin()) throw new Error('Administrator access required.');
+    const from=els.dateReportFrom?.value, to=els.dateReportTo?.value, section=els.dateReportSection?.value||'OVERALL', today=reportISODate();
+    if(!from||!to) throw new Error('Please select both From and To dates.');
+    if(from>to) throw new Error('From date cannot be after To date.');
+    if(to>today) throw new Error('Future dates are not available.');
+    const [history,daily]=await Promise.all([loadFile('History.csv'),loadFile('DailyActivity.csv')]);
+    const live=state.leetcode.length?state.leetcode:await loadFile('LiveData.csv');
+    const matches=r=>section==='OVERALL'||normalizeText(r.Section)===normalizeText(section);
+    const students=live.filter(matches);
+    const dailyMap=new Map();
+    daily.filter(r=>r.Date>=from&&r.Date<=to&&matches(r)).forEach(r=>{const reg=normalizeReg(r['Register Number']);if(!reg)return;const x=dailyMap.get(reg)||{solved:0,days:new Set()};x.solved+=num(r['Solved That Day']);if(num(r['Solved That Day'])>0)x.days.add(r.Date);dailyMap.set(reg,x);});
+    const histMap=new Map();
+    history.filter(r=>r.Date>=from&&r.Date<=to&&matches(r)).forEach(r=>{const reg=normalizeReg(r['Register Number']);if(!reg)return;const old=histMap.get(reg);if(!old || `${r.Date}|${r['Updated At']||''}` > (old._key || '')){r._key=`${r.Date}|${r['Updated At']||''}`;histMap.set(reg,r);}});
+    const rows=students.map(r=>{const reg=normalizeReg(r['Register Number']),d=dailyMap.get(reg)||{solved:0,days:new Set()},h=histMap.get(reg)||r;return {'Register Number':reg,'Student Name':r['Student Name']||h['Student Name']||'','Section':r.Section||h.Section||'','Problems Solved in Period':d.solved,'Active Days':d.days.size,'Problems Solved (Cumulative)':num(h['Problems Solved']||r['Problems Solved']),'Medium (Cumulative)':num(h.Medium||r.Medium),'Hard (Cumulative)':num(h.Hard||r.Hard),'Total Submissions (Cumulative)':num(h['Total Submissions']||r['Total Submissions']),'Last Problem':h['Last Problem']||r['Last Problem']||'','Last Solved':h['Last Solved']||r['Last Solved']||'','Status':h.Status||r.Status||''};}).sort((a,b)=>a['Register Number'].localeCompare(b['Register Number'],undefined,{numeric:true}));
+    return {from,to,section,scope:section==='OVERALL'?'ECE Overall':section,students:rows};
   }
-
-  async function downloadHomeDateReportCsv() {
-    const report = await prepareHomeDateReport();
-    const columns = ['Register Number','Student Name','Section','LeetCode Username','Problems Solved in Period','Active Days','Problems Solved (Cumulative)','Medium (Cumulative)','Hard (Cumulative)','Total Submissions (Cumulative)','Last Problem','Last Solved','Status'];
-    const rows = [
-      ['Report Scope', report.scope], ['From', report.from], ['To', report.to], [], columns,
-      ...report.students.map(student => columns.map(column => student[column] ?? ''))
-    ];
-    const csv = '\uFEFF' + rows.map(row => row.map(reportEscapeCsv).join(',')).join('\r\n');
-    downloadBlob(`CodeMetrix_Date_Report_${report.from}_to_${report.to}_${report.section === 'OVERALL' ? 'Overall' : report.section.replace(/\s+/g, '_')}.csv`, csv, 'text/csv;charset=utf-8');
-    setMessage(`Date report downloaded for ${report.scope}.`);
-    closeHomeDateReport();
-  }
-
-  async function downloadHomeDateReportExcel() {
-    if (typeof XLSX === 'undefined') throw new Error('Excel library is unavailable. Please refresh the page.');
-    const report = await prepareHomeDateReport();
-    const ws = XLSX.utils.json_to_sheet(report.students);
-    ws['!cols'] = Object.keys(report.students[0] || {}).map(k => ({ wch: Math.min(34, Math.max(12, k.length + 3)) }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, report.section === 'OVERALL' ? 'ECE Overall' : report.section);
-    XLSX.writeFile(wb, `CodeMetrix_Date_Report_${report.from}_to_${report.to}_${report.section === 'OVERALL' ? 'Overall' : report.section.replace(/\s+/g, '_')}.xlsx`);
-    setMessage(`Excel date report downloaded for ${report.scope}.`);
-    closeHomeDateReport();
-  }
-
-  async function downloadHomeDateReportPdf() {
-    const report = await prepareHomeDateReport();
-    const rows = report.students.map(student => `<tr>${['Register Number','Student Name','Section','Problems Solved in Period','Active Days','Problems Solved (Cumulative)','Medium (Cumulative)','Hard (Cumulative)','Total Submissions (Cumulative)','Last Problem','Last Solved','Status'].map(k => `<td>${esc(student[k])}</td>`).join('')}</tr>`).join('');
-    const win = window.open('', '_blank', 'noopener,noreferrer');
-    if (!win) throw new Error('Please allow pop-ups to generate the PDF report.');
-    win.document.write(`<!doctype html><html><head><title>CodeMetrix Date Report</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}h1{margin-bottom:6px}p{margin:4px 0 18px}table{width:100%;border-collapse:collapse;font-size:10px}th,td{border:1px solid #bbb;padding:6px;text-align:left}th{background:#eee}</style></head><body><h1>ECE CodeMetrix Date Report</h1><p><b>Scope:</b> ${esc(report.scope)} &nbsp; <b>From:</b> ${esc(report.from)} &nbsp; <b>To:</b> ${esc(report.to)}</p><table><thead><tr>${['Register Number','Student Name','Section','Problems Solved in Period','Active Days','Problems Solved (Cumulative)','Medium (Cumulative)','Hard (Cumulative)','Total Submissions (Cumulative)','Last Problem','Last Solved','Status'].map(k => `<th>${esc(k)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table><script>window.onload=()=>{window.print();};</script></body></html>`);
-    win.document.close();
-    setMessage(`PDF print report prepared for ${report.scope}.`);
-    closeHomeDateReport();
-  }
+  async function downloadHomeDateReportCsv(){const r=await prepareHomeDateReport();const cols=Object.keys(r.students[0]||{'Register Number':'','Student Name':'','Section':'','Problems Solved in Period':0,'Active Days':0});const lines=[['ECE CodeMetrix Date Report'],['Scope',r.scope],['From',r.from],['To',r.to],[],cols,...r.students.map(x=>cols.map(c=>x[c]??''))];downloadTextFile(`CodeMetrix_Date_Report_${r.from}_to_${r.to}.csv`,'\uFEFF'+lines.map(x=>x.map(csvEscape).join(',')).join('\r\n'),'text/csv;charset=utf-8');closeHomeDateReport();setMessage('Date report downloaded successfully.');}
+  async function downloadHomeDateReportExcel(){const r=await prepareHomeDateReport();if(typeof XLSX==='undefined')throw new Error('Excel library is unavailable. Please reload the page.');const ws=XLSX.utils.json_to_sheet(r.students);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,(r.section==='OVERALL'?'Overall':r.section).slice(0,31));XLSX.writeFile(wb,`CodeMetrix_Date_Report_${r.from}_to_${r.to}.xlsx`);closeHomeDateReport();setMessage('Excel date report downloaded successfully.');}
+  async function downloadHomeDateReportPdf(){const r=await prepareHomeDateReport();const w=window.open('','_blank');if(!w)throw new Error('Please allow pop-ups to generate the PDF report.');const cols=['Register Number','Student Name','Section','Problems Solved in Period','Active Days','Problems Solved (Cumulative)','Medium (Cumulative)','Hard (Cumulative)','Total Submissions (Cumulative)','Last Problem','Last Solved','Status'];const rows=r.students.map(x=>'<tr>'+cols.map(c=>'<td>'+esc(x[c])+'</td>').join('')+'</tr>').join('');w.document.write('<!doctype html><html><head><title>CodeMetrix Date Report</title><style>body{font-family:Arial;padding:24px;color:#111}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #aaa;padding:5px;text-align:left}th{background:#eee}@media print{button{display:none}}</style></head><body><h1>ECE CodeMetrix Date Report</h1><p><b>'+esc(r.scope)+'</b> · '+esc(r.from)+' to '+esc(r.to)+'</p><table><thead><tr>'+cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table><p><button onclick="window.print()">Print / Save as PDF</button></p></body></html>');w.document.close();closeHomeDateReport();setMessage('PDF report opened. Choose Save as PDF.');}
 
   // ============================================================
   // ADMIN AUTHENTICATION
@@ -799,24 +698,19 @@
       if(!els.modal?.hidden) closeDashboard();
       if(!els.adminLoginModal?.hidden) closeAdminLoginModal();
       if(!els.unifiedModal?.hidden) closeAddProfileModal();
-      if(!els.dateReportModal?.hidden) closeHomeDateReport();
     }
   });
   els.back?.addEventListener('click',()=>{if(history.length>1)history.back();else location.href='leetcode.html';});
 
-  // Admin Date Report Events
+  // Date Report Events
   els.dateReportButton?.addEventListener('click', openHomeDateReport);
   els.closeDateReport?.addEventListener('click', closeHomeDateReport);
   els.cancelDateReport?.addEventListener('click', closeHomeDateReport);
-  els.dateReportModal?.addEventListener('click', e => {
-    if (e.target.matches('[data-close-home-date-report]')) closeHomeDateReport();
-  });
-  els.dateReportSection?.addEventListener('change', () => {
-    if (els.dateReportScope) els.dateReportScope.textContent = els.dateReportSection.selectedOptions?.[0]?.text || 'ECE Overall';
-  });
-  els.downloadDateReportCsv?.addEventListener('click', async () => { try { await downloadHomeDateReportCsv(); } catch (e) { if (els.dateReportMessage) { els.dateReportMessage.textContent = e.message; els.dateReportMessage.className = 'form-message error'; } } });
-  els.downloadDateReportExcel?.addEventListener('click', async () => { try { await downloadHomeDateReportExcel(); } catch (e) { if (els.dateReportMessage) { els.dateReportMessage.textContent = e.message; els.dateReportMessage.className = 'form-message error'; } } });
-  els.downloadDateReportPdf?.addEventListener('click', async () => { try { await downloadHomeDateReportPdf(); } catch (e) { if (els.dateReportMessage) { els.dateReportMessage.textContent = e.message; els.dateReportMessage.className = 'form-message error'; } } });
+  els.dateReportModal?.addEventListener('click', e => { if(e.target.matches('[data-close-home-date-report]')) closeHomeDateReport(); });
+  els.dateReportSection?.addEventListener('change', () => { if(els.dateReportScope) els.dateReportScope.textContent=els.dateReportSection.selectedOptions?.[0]?.text||'ECE Overall'; });
+  els.downloadDateReportCsv?.addEventListener('click', async()=>{try{await downloadHomeDateReportCsv();}catch(e){if(els.dateReportMessage){els.dateReportMessage.textContent=e.message;els.dateReportMessage.className='form-message error';}}});
+  els.downloadDateReportExcel?.addEventListener('click', async()=>{try{await downloadHomeDateReportExcel();}catch(e){if(els.dateReportMessage){els.dateReportMessage.textContent=e.message;els.dateReportMessage.className='form-message error';}}});
+  els.downloadDateReportPdf?.addEventListener('click', async()=>{try{await downloadHomeDateReportPdf();}catch(e){if(els.dateReportMessage){els.dateReportMessage.textContent=e.message;els.dateReportMessage.className='form-message error';}}});
 
   // Admin Events
   els.adminLoginBtn?.addEventListener('click', openAdminLogin);
