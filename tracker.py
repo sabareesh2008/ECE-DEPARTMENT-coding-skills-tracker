@@ -116,6 +116,8 @@ def empty_profile(status: str) -> dict[str, Any]:
         "easy": 0,
         "medium": 0,
         "hard": 0,
+        "med_submissions": 0,
+        "hard_submissions": 0,
         "submissions": 0,
         "solved_today": 0,
         "last_7_days": 0,
@@ -345,6 +347,256 @@ def validate_window_order(
 
 
 # ============================================================
+# SUSPICIOUS SOLVING SCORE (MEDIUM & HARD ONLY)
+# ============================================================
+
+def calculate_suspicious_score(
+    easy: int,
+    medium: int,
+    hard: int,
+    med_submissions: int,
+    hard_submissions: int,
+    recent_submissions: list[dict[str, Any]],
+    student_history: pd.DataFrame | None = None,
+) -> dict[str, Any]:
+    """
+    Calculate Suspicious Solving Score (0-100%) strictly analyzing LeetCode
+    Medium and Hard problems. Easy problems are completely ignored.
+    Evaluates individual patterns without peer comparisons across 7 factors:
+      1. Very short solving time (timestamp deltas)
+      2. Continuous Medium/Hard solving (streaks without natural pauses)
+      3. First-attempt acceptance pattern (1-shot rate on complex problems)
+      4. Medium/Hard acceptance rate (accepted / total submissions on Med/Hard)
+      5. Suspicious speed bursts (high volume in rolling short window)
+      6. Sudden personal skill jump (vs own historical baseline)
+      7. Difficulty jump pattern (ratio of Med/Hard vs overall progression)
+    """
+    total_med_hard = int(medium or 0) + int(hard or 0)
+    total_med_hard_subs = int(med_submissions or 0) + int(hard_submissions or 0)
+
+    if total_med_hard == 0:
+        return {
+            "score": 0,
+            "label": "Normal",
+            "emoji": "🟢",
+            "factors": {
+                "f1_short_solving_time": {"percent": 0, "weight": 20, "desc": "No Medium/Hard problems solved yet."},
+                "f2_continuous_solving": {"percent": 0, "weight": 15, "desc": "No consecutive Medium/Hard solving activity."},
+                "f3_first_attempt_pattern": {"percent": 0, "weight": 15, "desc": "No Medium/Hard attempts recorded."},
+                "f4_acceptance_rate": {"percent": 0, "weight": 15, "desc": "No Medium/Hard submissions recorded."},
+                "f5_speed_bursts": {"percent": 0, "weight": 15, "desc": "No rapid solve bursts detected."},
+                "f6_sudden_skill_jump": {"percent": 0, "weight": 10, "desc": "No sudden velocity spike vs personal baseline."},
+                "f7_difficulty_jump": {"percent": 0, "weight": 10, "desc": "Normal distribution."},
+            },
+            "summary": "No Medium or Hard problem activity recorded."
+        }
+
+    # Factor 1: Very short solving time (Weight: 20%)
+    timestamps = []
+    for sub in recent_submissions or []:
+        dt = sub.get("_submitted_at")
+        if isinstance(dt, datetime):
+            timestamps.append(dt.timestamp())
+        elif sub.get("timestamp"):
+            try:
+                timestamps.append(float(sub["timestamp"]))
+            except (ValueError, TypeError):
+                pass
+
+    timestamps.sort()
+    short_solve_count = 0
+    for i in range(1, len(timestamps)):
+        delta_sec = timestamps[i] - timestamps[i-1]
+        if delta_sec < 240:  # Solves under 4 minutes
+            short_solve_count += 1
+
+    if short_solve_count == 0:
+        f1_score = 0
+        f1_desc = "Solving times between submissions show natural human intervals (> 4 minutes)."
+    elif short_solve_count <= 2:
+        f1_score = 35
+        f1_desc = f"{short_solve_count} solve(s) recorded within < 4 minutes of previous submission."
+    elif short_solve_count <= 5:
+        f1_score = 70
+        f1_desc = f"{short_solve_count} solves recorded under 4 minutes each."
+    else:
+        f1_score = 100
+        f1_desc = f"{short_solve_count} unnaturally rapid solves (< 4 mins each) detected."
+
+    # Factor 2: Continuous Medium/Hard solving (Weight: 15%)
+    max_consecutive = 1
+    current_consecutive = 1
+    for i in range(1, len(timestamps)):
+        if timestamps[i] - timestamps[i-1] <= 900:  # <= 15 minutes apart
+            current_consecutive += 1
+            max_consecutive = max(max_consecutive, current_consecutive)
+        else:
+            current_consecutive = 1
+
+    if max_consecutive <= 2:
+        f2_score = 0
+        f2_desc = f"Max continuous solve streak is {max_consecutive}, displaying normal pacing."
+    elif max_consecutive <= 4:
+        f2_score = 40
+        f2_desc = f"{max_consecutive} consecutive solves without natural pauses."
+    elif max_consecutive <= 7:
+        f2_score = 75
+        f2_desc = f"{max_consecutive} back-to-back solves in rapid succession."
+    else:
+        f2_score = 100
+        f2_desc = f"Extremely long unbroken streak of {max_consecutive} solves."
+
+    # Factor 3: First-attempt acceptance pattern on Medium/Hard (Weight: 15%)
+    if total_med_hard_subs > 0:
+        ratio = total_med_hard / max(total_med_hard, total_med_hard_subs)
+        if total_med_hard < 5:
+            f3_score = 0
+            f3_desc = f"Low sample size ({total_med_hard} Med/Hard solved)."
+        elif ratio >= 0.95:
+            f3_score = 95
+            f3_desc = f"95%+ 1st-try solve rate on Medium/Hard ({total_med_hard} solved in {total_med_hard_subs} attempts)."
+        elif ratio >= 0.85:
+            f3_score = 70
+            f3_desc = f"85%+ 1st-try solve rate on complex problems with minimal wrong attempts."
+        elif ratio >= 0.70:
+            f3_score = 40
+            f3_desc = f"Above-average 1st-try solve rate ({ratio*100:.1f}%)."
+        else:
+            f3_score = 0
+            f3_desc = f"Normal trial-and-error debugging pattern ({ratio*100:.1f}% 1st-attempt rate)."
+    else:
+        f3_score = 0
+        f3_desc = "No Medium/Hard submission data."
+
+    # Factor 4: Medium/Hard acceptance rate (Weight: 15%)
+    if total_med_hard_subs > 0:
+        ac_rate = (total_med_hard / total_med_hard_subs) * 100.0
+        if total_med_hard < 5:
+            f4_score = 0
+            f4_desc = f"Low sample size ({total_med_hard} Med/Hard problems)."
+        elif ac_rate >= 90.0:
+            f4_score = 100
+            f4_desc = f"Abnormally high acceptance rate of {ac_rate:.1f}% on Medium/Hard (human average is 30-55%)."
+        elif ac_rate >= 75.0:
+            f4_score = 70
+            f4_desc = f"High acceptance rate ({ac_rate:.1f}%) on complex problems."
+        elif ac_rate >= 60.0:
+            f4_score = 35
+            f4_desc = f"Moderate-high acceptance rate ({ac_rate:.1f}%)."
+        else:
+            f4_score = 0
+            f4_desc = f"Healthy human acceptance rate ({ac_rate:.1f}%) with expected test failure cycles."
+    else:
+        f4_score = 0
+        f4_desc = "No Medium/Hard submission data."
+
+    # Factor 5: Suspicious speed bursts (Weight: 15%)
+    burst_1h = 0
+    for i in range(len(timestamps)):
+        window_count = sum(1 for t in timestamps if 0 <= t - timestamps[i] <= 3600)
+        burst_1h = max(burst_1h, window_count)
+
+    if burst_1h <= 2:
+        f5_score = 0
+        f5_desc = f"Max 1-hour solve speed is {burst_1h} problem(s), within normal limits."
+    elif burst_1h <= 4:
+        f5_score = 40
+        f5_desc = f"{burst_1h} problems solved within a 1-hour window."
+    elif burst_1h <= 7:
+        f5_score = 75
+        f5_desc = f"High speed burst of {burst_1h} problems solved in under 1 hour."
+    else:
+        f5_score = 100
+        f5_desc = f"Unnatural burst: {burst_1h} problems solved within a single hour."
+
+    # Factor 6: Sudden personal skill jump based on student's own history (Weight: 10%)
+    if student_history is not None and not student_history.empty and len(student_history) >= 7:
+        try:
+            hist_sorted = student_history.sort_values(by="Date", ascending=True)
+            med_hard_series = pd.to_numeric(hist_sorted["Medium"], errors="coerce").fillna(0) + pd.to_numeric(hist_sorted["Hard"], errors="coerce").fillna(0)
+            first_val = float(med_hard_series.iloc[0])
+            mid_val = float(med_hard_series.iloc[len(med_hard_series)//2])
+            last_val = float(med_hard_series.iloc[-1])
+            early_rate = max(0.0, mid_val - first_val) / max(1, len(med_hard_series)//2)
+            late_rate = max(0.0, last_val - mid_val) / max(1, len(med_hard_series) - len(med_hard_series)//2)
+            if early_rate <= 0.2 and late_rate >= 5.0:
+                f6_score = 90
+                f6_desc = f"Sudden personal velocity surge: {late_rate:.1f} Med/Hard/day vs baseline {early_rate:.1f}/day."
+            elif early_rate <= 0.5 and late_rate >= 3.0:
+                f6_score = 50
+                f6_desc = f"Noticeable velocity increase from {early_rate:.1f} to {late_rate:.1f} Med/Hard/day."
+            else:
+                f6_score = 0
+                f6_desc = "Steady, consistent personal progression over history."
+        except Exception:
+            f6_score = 0
+            f6_desc = "Historical baseline within normal variation."
+    else:
+        f6_score = 0
+        f6_desc = "Consistent personal baseline."
+
+    # Factor 7: Difficulty jump pattern (Weight: 10%)
+    total_all = int(easy or 0) + int(medium or 0) + int(hard or 0)
+    if total_all >= 10:
+        med_hard_ratio = total_med_hard / total_all
+        if med_hard_ratio >= 0.90 and int(hard or 0) >= 5:
+            f7_score = 85
+            f7_desc = f"{med_hard_ratio*100:.1f}% of all problems are Medium/Hard with only {easy} Easy problems."
+        elif med_hard_ratio >= 0.75:
+            f7_score = 45
+            f7_desc = f"Heavy focus on Medium/Hard ({med_hard_ratio*100:.1f}%)."
+        else:
+            f7_score = 0
+            f7_desc = f"Balanced difficulty progression ({easy} Easy, {medium} Medium, {hard} Hard)."
+    else:
+        f7_score = 0
+        f7_desc = "Normal difficulty distribution."
+
+    weighted_score = round(
+        f1_score * 0.20 +
+        f2_score * 0.15 +
+        f3_score * 0.15 +
+        f4_score * 0.15 +
+        f5_score * 0.15 +
+        f6_score * 0.10 +
+        f7_score * 0.10
+    )
+    final_score = max(0, min(100, weighted_score))
+
+    if final_score <= 20:
+        label = "Normal"
+        emoji = "🟢"
+    elif final_score <= 40:
+        label = "Low"
+        emoji = "🟡"
+    elif final_score <= 60:
+        label = "Suspicious"
+        emoji = "🟠"
+    elif final_score <= 80:
+        label = "High"
+        emoji = "🔴"
+    else:
+        label = "Very High"
+        emoji = "🚨"
+
+    return {
+        "score": final_score,
+        "label": label,
+        "emoji": emoji,
+        "factors": {
+            "f1_short_solving_time": {"percent": f1_score, "weight": 20, "desc": f1_desc},
+            "f2_continuous_solving": {"percent": f2_score, "weight": 15, "desc": f2_desc},
+            "f3_first_attempt_pattern": {"percent": f3_score, "weight": 15, "desc": f3_desc},
+            "f4_acceptance_rate": {"percent": f4_score, "weight": 15, "desc": f4_desc},
+            "f5_speed_bursts": {"percent": f5_score, "weight": 15, "desc": f5_desc},
+            "f6_sudden_skill_jump": {"percent": f6_score, "weight": 10, "desc": f6_desc},
+            "f7_difficulty_jump": {"percent": f7_score, "weight": 10, "desc": f7_desc},
+        },
+        "summary": f"{emoji} {label} ({final_score}%) — Evaluated strictly on Medium & Hard problem behaviors."
+    }
+
+
+# ============================================================
 # LEETCODE FETCH
 # ============================================================
 
@@ -571,6 +823,16 @@ def fetch_leetcode(username: str) -> dict[str, Any]:
                 ),
             )
 
+            med_submissions = max(
+                get_stat(total_stats, "Medium", "submissions"),
+                get_stat(total_stats, "Medium", "count"),
+            )
+
+            hard_submissions = max(
+                get_stat(total_stats, "Hard", "submissions"),
+                get_stat(total_stats, "Hard", "count"),
+            )
+
             now = ist_now()
 
             today_start = datetime.combine(
@@ -685,6 +947,8 @@ def fetch_leetcode(username: str) -> dict[str, Any]:
                 "easy": easy,
                 "medium": medium,
                 "hard": hard,
+                "med_submissions": med_submissions,
+                "hard_submissions": hard_submissions,
                 "submissions": total_submissions,
                 "solved_today": solved_today,
                 "last_7_days": last_7_days,
@@ -2265,6 +2529,24 @@ def process_student(
         f"30:{rolling['30d_source']}"
     )
 
+    student_history = (
+        previous_history[
+            previous_history["Register Number"].astype(str) == str(register_number)
+        ].copy()
+        if previous_history is not None and not previous_history.empty
+        else None
+    )
+
+    suspicious_info = calculate_suspicious_score(
+        easy=profile.get("easy", 0),
+        medium=profile.get("medium", 0),
+        hard=profile.get("hard", 0),
+        med_submissions=profile.get("med_submissions", 0),
+        hard_submissions=profile.get("hard_submissions", 0),
+        recent_submissions=profile.get("recent_submissions", []),
+        student_history=student_history,
+    )
+
     row = {
         "Section": section,
         "Register Number": register_number,
@@ -2292,6 +2574,12 @@ def process_student(
             profile["medium"],
         "Hard":
             profile["hard"],
+        "Suspicious Score":
+            suspicious_info["score"],
+        "Suspicious Label":
+            suspicious_info["label"],
+        "Suspicious Details":
+            json.dumps(suspicious_info),
         "Last Problem":
             profile["last_problem"],
         "Last Solved":
@@ -2522,11 +2810,18 @@ def add_ranks(
         "Easy",
         "Medium",
         "Hard",
+        "Suspicious Score",
+        "Suspicious Label",
+        "Suspicious Details",
         "Last Problem",
         "Last Solved",
         "Status",
         "Updated At",
     ]
+
+    for col in ["Suspicious Score", "Suspicious Label", "Suspicious Details"]:
+        if col not in live_data.columns:
+            live_data[col] = 0 if col == "Suspicious Score" else ("Normal" if col == "Suspicious Label" else "{}")
 
     return live_data[columns]
 
@@ -3196,6 +3491,12 @@ def run_one_update() -> None:
                             stale["medium"],
                         "Hard":
                             stale["hard"],
+                        "Suspicious Score":
+                            0,
+                        "Suspicious Label":
+                            "Normal",
+                        "Suspicious Details":
+                            json.dumps(calculate_suspicious_score(0, 0, 0, 0, 0, [])),
                         "Last Problem":
                             stale["last_problem"],
                         "Last Solved":
