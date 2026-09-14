@@ -39,6 +39,8 @@
     profileRequestsContent: document.getElementById('profileRequestsContent'),
     profileRequestCount: document.getElementById('profileRequestCount'),
     bulkAddRequestsBtn: document.getElementById('bulkAddProfileRequestsButton'),
+    downloadProfileRequestsExcel: document.getElementById('downloadProfileRequestsExcel'),
+    downloadProfileRequestsCsv: document.getElementById('downloadProfileRequestsCsv'),
     profileRequestsMessage: document.getElementById('homeProfileRequestsMessage'),
 
     // Admin Auth
@@ -759,6 +761,87 @@
     }
   }
 
+  async function downloadProfileRequestsExcel() {
+    if (!isAdmin()) throw new Error('Admin authentication required.');
+    if (typeof XLSX === 'undefined') throw new Error('Excel export library is unavailable. Please check your network and reload.');
+    const client = supabaseClient();
+    const { data: rows, error } = await client
+      .from('profile_requests')
+      .select('*')
+      .order('requested_at', { ascending: false });
+
+    if (error) throw error;
+    if (!rows || !rows.length) throw new Error('No profile requests found to export.');
+
+    const sheetData = rows.map((r, i) => ({
+      '#': i + 1,
+      'Register Number': r.register_number || '',
+      'Student Name': r.student_name || '',
+      'Year': r.year ? `Year ${r.year}` : '',
+      'Department': r.department || 'ECE',
+      'Section': r.section || '',
+      'LeetCode Username': r.leetcode_username || '',
+      'LeetCode Link': r.leetcode_link || '',
+      'GitHub Username': r.github_username || '',
+      'GitHub Link': r.github_link || '',
+      'Status': r.status || 'Pending',
+      'Requested At': r.requested_at ? new Date(r.requested_at).toLocaleString() : '',
+      'Processed At': r.processed_at ? new Date(r.processed_at).toLocaleString() : '',
+      'Admin Note': r.admin_note || ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(sheetData);
+    ws['!cols'] = Object.keys(sheetData[0] || {}).map(k => ({ wch: Math.min(36, Math.max(12, k.length + 3)) }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Profile Requests');
+    XLSX.writeFile(wb, `CodeMetrix_Profile_Requests_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    setProfileRequestsMessage(`Downloaded ${rows.length} profile request(s) to Excel.`);
+  }
+
+  async function downloadProfileRequestsCsv() {
+    if (!isAdmin()) throw new Error('Admin authentication required.');
+    const client = supabaseClient();
+    const { data: rows, error } = await client
+      .from('profile_requests')
+      .select('*')
+      .order('requested_at', { ascending: false });
+
+    if (error) throw error;
+    if (!rows || !rows.length) throw new Error('No profile requests found to export.');
+
+    const headers = ['#', 'Register Number', 'Student Name', 'Year', 'Department', 'Section', 'LeetCode Username', 'LeetCode Link', 'GitHub Username', 'GitHub Link', 'Status', 'Requested At', 'Processed At', 'Admin Note'];
+    const csvRows = [
+      headers.join(','),
+      ...rows.map((r, i) => [
+        i + 1,
+        `"${String(r.register_number || '').replace(/"/g, '""')}"`,
+        `"${String(r.student_name || '').replace(/"/g, '""')}"`,
+        `"${r.year ? `Year ${r.year}` : ''}"`,
+        `"${String(r.department || 'ECE').replace(/"/g, '""')}"`,
+        `"${String(r.section || '').replace(/"/g, '""')}"`,
+        `"${String(r.leetcode_username || '').replace(/"/g, '""')}"`,
+        `"${String(r.leetcode_link || '').replace(/"/g, '""')}"`,
+        `"${String(r.github_username || '').replace(/"/g, '""')}"`,
+        `"${String(r.github_link || '').replace(/"/g, '""')}"`,
+        `"${String(r.status || 'Pending').replace(/"/g, '""')}"`,
+        `"${r.requested_at ? new Date(r.requested_at).toLocaleString().replace(/"/g, '""') : ''}"`,
+        `"${r.processed_at ? new Date(r.processed_at).toLocaleString().replace(/"/g, '""') : ''}"`,
+        `"${String(r.admin_note || '').replace(/"/g, '""')}"`
+      ].join(','))
+    ];
+
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `CodeMetrix_Profile_Requests_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setProfileRequestsMessage(`Downloaded ${rows.length} profile request(s) to CSV.`);
+  }
+
   function searchStudents(query){
     const q=normalizeText(query);
     if(!q) return [];
@@ -1256,8 +1339,13 @@
   els.profileRequestForm?.addEventListener('submit', submitProfileRequest);
   els.profileRequestsBtn?.addEventListener('click', openProfileRequestsModal);
   els.closeProfileRequests?.addEventListener('click', closeProfileRequestsModal);
-  els.profileRequestsModal?.addEventListener('click', e => { if(e.target.matches('[data-close-profile-requests]')) closeProfileRequestsModal(); });
   els.bulkAddRequestsBtn?.addEventListener('click', bulkAddProfileRequests);
+  els.downloadProfileRequestsExcel?.addEventListener('click', async () => {
+    try { await downloadProfileRequestsExcel(); } catch (e) { setProfileRequestsMessage(e.message, true); }
+  });
+  els.downloadProfileRequestsCsv?.addEventListener('click', async () => {
+    try { await downloadProfileRequestsCsv(); } catch (e) { setProfileRequestsMessage(e.message, true); }
+  });
 
   // Initialize
   loadData().catch(()=>{});

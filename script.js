@@ -4348,6 +4348,57 @@ tableBody.addEventListener("click", (event) => {
   openStudentProfile(profileButton.dataset.profileRegister);
 });
 
+let currentActiveLeetCodeStudent = null;
+
+const origOpenStudentProfile = openStudentProfile;
+openStudentProfile = async function(registerNumber) {
+  const s = allStudents.find(
+    (item) => String(item["Register Number"]) === String(registerNumber)
+  );
+  if (s) currentActiveLeetCodeStudent = s;
+  return origOpenStudentProfile(registerNumber);
+};
+
+function downloadCurrentStudentProfileReport() {
+  if (!currentActiveLeetCodeStudent) return;
+  const s = currentActiveLeetCodeStudent;
+  if (typeof XLSX === 'undefined') {
+    alert('Excel export library is unavailable. Please check your connection.');
+    return;
+  }
+  const summary = [
+    ['CodeMetrix Student LeetCode Performance Report'],
+    ['Student Name', s['Student Name'] || ''],
+    ['Register Number', s['Register Number'] || ''],
+    ['Section', s.Section || 'ECE'],
+    ['Generated On', new Date().toLocaleString()],
+    [],
+    ['Metric', 'Value'],
+    ['LeetCode Username', s['LeetCode Username'] || '—'],
+    ['Section Rank', s['Section Rank'] || '—'],
+    ['Overall Rank', s['Overall Rank'] || '—'],
+    ['Problems Solved', Number(s['Problems Solved']) || 0],
+    ['Solved Today', Number(s['Solved Today']) || 0],
+    ['Last 7 Days', Number(s['Last 7 Days']) || 0],
+    ['Last 14 Days', Number(s['Last 14 Days']) || 0],
+    ['Last 30 Days', Number(s['Last 30 Days']) || 0],
+    ['Easy Solved', Number(s.Easy) || 0],
+    ['Medium Solved', Number(s.Medium) || 0],
+    ['Hard Solved', Number(s.Hard) || 0],
+    ['Last 7 Days Submissions', Number(s['Last 7 Days Submissions']) || 0],
+    ['Total Submissions', Number(s['Total Submissions']) || 0],
+    ['Suspicious Score', s['Suspicious Score'] !== undefined ? `${s['Suspicious Score']}% (${s['Suspicious Label']||'Normal'})` : '0% (Normal)'],
+    ['Status', s.Status || '—']
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(summary);
+  ws['!cols'] = [{ wch: 30 }, { wch: 36 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'LeetCode Report');
+  XLSX.writeFile(wb, `Student_${s['Register Number'] || s['Student Name'].replace(/\s+/g,'_')}_LeetCode_Report.xlsx`);
+}
+
+document.getElementById('downloadStudentProfileExcelBtn')?.addEventListener('click', downloadCurrentStudentProfileReport);
+
 closeStudentProfileButton.addEventListener("click", closeStudentProfile);
 
 studentProfileModal

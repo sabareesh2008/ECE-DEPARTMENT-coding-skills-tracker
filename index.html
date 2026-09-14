@@ -377,7 +377,11 @@
           <span class="status-dot pending"></span>
           <strong id="profileRequestCount">0 pending</strong>
         </div>
-        <button id="bulkAddProfileRequestsButton" class="action-button primary" type="button">Bulk Add / Update All</button>
+        <div class="profile-requests-actions">
+          <button id="downloadProfileRequestsExcel" class="action-button secondary" type="button" title="Download Profile Requests as Excel">📥 Download Excel</button>
+          <button id="downloadProfileRequestsCsv" class="action-button secondary" type="button" title="Download Profile Requests as CSV">📄 Download CSV</button>
+          <button id="bulkAddProfileRequestsButton" class="action-button primary" type="button">Bulk Add / Update All</button>
+        </div>
       </div>
       <div id="profileRequestsContent" class="profile-requests-content"></div>
       <p id="homeProfileRequestsMessage" class="form-message" role="status" aria-live="polite"></p>
