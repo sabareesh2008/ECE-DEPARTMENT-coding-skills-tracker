@@ -4818,4 +4818,366 @@ body.modal-open {
 .date-report-scope span{color:rgba(226,232,240,.65);}.date-report-scope strong{font-size:1.05rem;}
 .date-report-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:20px;}
 @media(max-width:700px){.date-report-grid{grid-template-columns:1fr}.date-report-actions{justify-content:stretch}.date-report-actions .action-button{flex:1 1 100%}.home-quick-actions{right:12px;top:12px;gap:7px}}
-\n\n/* ==========================================================\n   STUDENT PROFILE REQUEST WORKFLOW\n   ========================================================== */\n.request-profile-button{border:1px solid rgba(94,234,212,.35);background:rgba(13,20,36,.86);color:var(--text);padding:10px 15px;border-radius:999px;font-weight:800;font-size:13px;cursor:pointer;backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.18);transition:.2s ease}.request-profile-button:hover{transform:translateY(-2px);border-color:var(--accent);background:rgba(20,35,52,.95)}\n.home-quick-actions{align-items:center}.home-student-search{position:relative;flex-wrap:wrap}.home-profile-status{width:100%;min-height:0;display:flex;align-items:center;gap:10px;margin-top:2px;padding:0;color:var(--muted);font-size:13px}.home-profile-status:empty{display:none}.home-profile-status>div{display:flex;flex-direction:column;gap:2px}.home-profile-status strong{color:var(--text)}.home-profile-status small{color:var(--muted)}.status-dot{width:9px;height:9px;border-radius:50%;background:#64748b;box-shadow:0 0 0 4px rgba(100,116,139,.12);flex:0 0 auto}.status-dot.active{background:#34d399;box-shadow:0 0 0 4px rgba(52,211,153,.12)}.status-dot.pending{background:#fbbf24;box-shadow:0 0 0 4px rgba(251,191,36,.12)}.status-dot.rejected{background:#fb7185;box-shadow:0 0 0 4px rgba(251,113,133,.12)}\n.profile-request-card{width:min(850px,100%);max-height:92vh;overflow:auto}.profile-request-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.profile-request-platform{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.platform-request-box{border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:16px;background:rgba(255,255,255,.025)}.platform-request-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.profile-check-status{font-size:12px;color:var(--muted)}.profile-check-status.valid{color:#6ee7b7}.profile-check-status.invalid{color:#fda4af}.verify-profile-button{width:100%;margin-top:10px}.profile-requests-admin-card{width:min(1200px,100%);max-height:90vh;overflow:auto}.profile-requests-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:10px 0 16px}.profile-requests-content{overflow:auto}.profile-requests-table{width:100%;border-collapse:collapse;font-size:12px}.profile-requests-table th,.profile-requests-table td{padding:10px 9px;border-bottom:1px solid rgba(255,255,255,.07);text-align:left;white-space:nowrap}.profile-requests-table th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}.profile-requests-table a{color:var(--accent-2);text-decoration:none}.profile-requests-empty{padding:35px;text-align:center;color:var(--muted);border:1px dashed rgba(255,255,255,.12);border-radius:16px}.form-message.success{color:#6ee7b7}.form-message.error{color:#fda4af}@media(max-width:760px){.request-profile-button{padding:9px 12px;font-size:12px}.profile-request-grid,.profile-request-platform{grid-template-columns:1fr}.profile-requests-toolbar{flex-direction:column;align-items:stretch}.profile-requests-toolbar button{width:100%}.profile-requests-table{font-size:11px}}\n
+/* ==========================================================
+   STUDENT PROFILE REQUEST & STATUS WORKFLOW
+   ========================================================== */
+
+.request-profile-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 18px;
+  border: 1px solid rgba(94, 234, 212, 0.35);
+  background: rgba(13, 20, 36, 0.88);
+  color: var(--text);
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.request-profile-button:hover {
+  border-color: var(--accent);
+  background: rgba(20, 35, 56, 0.98);
+  box-shadow: 0 0 20px rgba(94, 234, 212, 0.25);
+}
+
+.request-btn-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.home-quick-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Home Universal Search Status */
+.home-profile-status {
+  width: 100%;
+  margin-top: 8px;
+  transition: all 0.2s ease;
+}
+
+.home-profile-status:empty {
+  display: none;
+}
+
+.profile-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.profile-status-badge.badge-active {
+  background: rgba(52, 211, 153, 0.08);
+  border-color: rgba(52, 211, 153, 0.28);
+}
+
+.profile-status-badge.badge-pending {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.28);
+}
+
+.profile-status-badge.badge-rejected {
+  background: rgba(251, 113, 133, 0.08);
+  border-color: rgba(251, 113, 133, 0.28);
+}
+
+.profile-status-badge.badge-not-found {
+  background: rgba(148, 163, 184, 0.06);
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+.profile-status-badge.badge-unavailable {
+  background: rgba(245, 158, 11, 0.06);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.profile-status-text {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-status-text strong {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.profile-status-text small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.18);
+  flex: 0 0 auto;
+}
+
+.status-dot.active {
+  background: #34d399;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.22);
+}
+
+.status-dot.pending {
+  background: #fbbf24;
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.22);
+}
+
+.status-dot.rejected {
+  background: #fb7185;
+  box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.22);
+}
+
+.status-dot.not-found {
+  background: #64748b;
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.18);
+}
+
+.status-dot.unavailable {
+  background: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+}
+
+/* Public Profile Request Modal */
+.profile-request-card {
+  width: min(840px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-request-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.form-group-full {
+  grid-column: 1 / -1;
+}
+
+.required-star {
+  color: #f87171;
+  font-weight: 700;
+}
+
+.profile-request-platform {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.platform-request-box {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.platform-request-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.platform-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.profile-check-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.profile-check-status.verifying {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fde047;
+  border-color: rgba(251, 191, 36, 0.25);
+}
+
+.profile-check-status.valid {
+  background: rgba(52, 211, 153, 0.12);
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+.profile-check-status.invalid {
+  background: rgba(251, 113, 133, 0.12);
+  color: #fda4af;
+  border-color: rgba(251, 113, 133, 0.3);
+}
+
+.verify-profile-button {
+  width: 100%;
+  margin-top: 4px;
+  height: 40px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Admin Profile Requests Modal */
+.profile-requests-admin-card {
+  width: min(1140px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.profile-requests-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 14px 0 16px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+}
+
+.profile-requests-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.profile-requests-content {
+  overflow-x: auto;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 16, 30, 0.4);
+}
+
+.profile-requests-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.profile-requests-table th,
+.profile-requests-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.profile-requests-table th {
+  background: rgba(15, 23, 42, 0.7);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.profile-requests-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.profile-requests-table .table-link {
+  color: var(--accent-2);
+  text-decoration: none;
+  display: inline-block;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.profile-requests-table .table-link:hover {
+  text-decoration: underline;
+}
+
+.profile-request-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(251, 191, 36, 0.12);
+  color: #fde047;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.profile-requests-empty {
+  padding: 42px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .home-quick-actions {
+    position: static;
+    margin-bottom: 16px;
+    justify-content: flex-end;
+  }
+  .request-profile-button {
+    height: 40px;
+    padding: 0 14px;
+    font-size: 12px;
+  }
+  .profile-request-grid,
+  .profile-request-platform {
+    grid-template-columns: 1fr;
+  }
+  .profile-requests-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .profile-requests-toolbar button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-status-text {
+    flex-direction: column;
+    gap: 2px;
+  }
+}

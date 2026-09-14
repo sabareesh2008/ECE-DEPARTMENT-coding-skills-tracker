@@ -280,25 +280,462 @@
   function getRegister(item){ return normalizeReg(item.lc?.['Register Number'] || item.gh?.['Register Number']); }
   function getSection(item){ return item.lc?.Section || item.gh?.Section || 'Section not available'; }
 
-  function profileRequestClient(){ return supabaseClient(); }
-  function setProfileRequestMessage(text, error=false){ if(els.requestMessage){els.requestMessage.textContent=text;els.requestMessage.className=`form-message ${error?'error':'success'}`;} }
-  function setVerification(kind, ok, text){ const target=kind==='leetcode'?els.requestLcStatus:els.requestGhStatus; state.profileVerification[kind]=!!ok; if(target){target.textContent=text; target.className=`profile-check-status ${ok?'valid':'invalid'}`;} updateRequestSubmitState(); }
-  function updateRequestSubmitState(){ if(els.submitRequest) els.submitRequest.disabled=!(state.profileVerification.leetcode && state.profileVerification.github); }
-  function resetRequestVerification(){ state.profileVerification={leetcode:false,github:false}; if(els.requestLcStatus){els.requestLcStatus.textContent='Not verified';els.requestLcStatus.className='profile-check-status';} if(els.requestGhStatus){els.requestGhStatus.textContent='Not verified';els.requestGhStatus.className='profile-check-status';} updateRequestSubmitState(); }
-  function openProfileRequestModal(){ if(els.profileRequestForm) els.profileRequestForm.reset(); if(els.requestYear) els.requestYear.value='2'; if(els.requestDepartment) els.requestDepartment.value='ECE'; if(els.requestMessage){els.requestMessage.textContent='';els.requestMessage.className='form-message';} resetRequestVerification(); if(els.profileRequestModal){els.profileRequestModal.hidden=false;document.body.classList.add('modal-open');} }
-  function closeProfileRequestModal(){ if(els.profileRequestModal) els.profileRequestModal.hidden=true; document.body.classList.remove('modal-open'); }
-  async function invokeProfileRequest(body){ const endpoint=`${window.APP_CONFIG?.SUPABASE_URL||''}/functions/v1/profile-request`; const headers={'Content-Type':'application/json','apikey':window.APP_CONFIG?.SUPABASE_ANON_KEY||''}; const client=profileRequestClient(); const {data:{session}}=await client.auth.getSession(); if(session?.access_token) headers.Authorization=`Bearer ${session.access_token}`; const response=await fetch(endpoint,{method:'POST',headers,body:JSON.stringify(body)}); const payload=await response.json().catch(()=>({})); if(!response.ok) throw new Error(payload.error||payload.message||`Request failed (${response.status})`); return payload; }
-  function normalizeProfileUrl(value, host){ try{const u=new URL(value); if(u.protocol!=='https:') return null; if(u.hostname.toLowerCase()!==host) return null; return u;}catch{return null;} }
-  function profileFormValues(){ return {register_number:els.requestReg?.value.trim()||'',student_name:els.requestName?.value.trim()||'',year:Number(els.requestYear?.value)||2,department:els.requestDepartment?.value.trim()||'ECE',section:els.requestSection?.value||'',leetcode_username:els.requestLcUser?.value.trim().replace(/\s+/g,'')||'',leetcode_link:els.requestLcLink?.value.trim()||'',github_username:els.requestGhUser?.value.trim().replace(/\s+/g,'')||'',github_link:els.requestGhLink?.value.trim()||''}; }
-  async function verifyRequestedProfile(kind){ const v=profileFormValues(); const user=kind==='leetcode'?v.leetcode_username:v.github_username; const link=kind==='leetcode'?v.leetcode_link:v.github_link; const host=kind==='leetcode'?'leetcode.com':'github.com'; const url=normalizeProfileUrl(link,host); if(!user||!url){setVerification(kind,false,'Invalid input');setProfileRequestMessage(`Enter a valid ${kind==='leetcode'?'LeetCode':'GitHub'} username and https://${host}/ profile link.`,true);return;} const button=kind==='leetcode'?els.verifyLc:els.verifyGh; if(button){button.disabled=true;button.textContent='Verifying...';} try{ const result=await invokeProfileRequest({action:'validate',platform:kind,username:user,profile_link:link}); setVerification(kind,true,'✓ Verified'); setProfileRequestMessage(`${kind==='leetcode'?'LeetCode':'GitHub'} profile verified successfully.`); if(kind==='leetcode' && result.canonical_link) els.requestLcLink.value=result.canonical_link; if(kind==='github' && result.canonical_link) els.requestGhLink.value=result.canonical_link; }catch(err){setVerification(kind,false,'✗ Invalid');setProfileRequestMessage(err.message||`Could not verify ${kind} profile.`,true);} finally{if(button){button.disabled=false;button.textContent=kind==='leetcode'?'Verify LeetCode':'Verify GitHub';}} }
-  async function submitProfileRequest(event){ event.preventDefault(); const v=profileFormValues(); if(!v.register_number||!v.student_name||!v.section||!v.leetcode_username||!v.github_username){setProfileRequestMessage('Please complete all required fields.',true);return;} if(!(state.profileVerification.leetcode&&state.profileVerification.github)){setProfileRequestMessage('Verify both LeetCode and GitHub profiles before submitting.',true);return;} els.submitRequest.disabled=true; els.submitRequest.textContent='Submitting...'; try{const result=await invokeProfileRequest({action:'submit',request:v}); setProfileRequestMessage(result.message||'Profile request submitted successfully.'); setVerification('leetcode',true,'✓ Verified'); setVerification('github',true,'✓ Verified'); setMessage('Profile request submitted. Faculty/admin can process it from Profile Requests.'); setTimeout(closeProfileRequestModal,1100);}catch(err){setProfileRequestMessage(err.message||'Could not submit profile request.',true);updateRequestSubmitState();}finally{els.submitRequest.textContent='Submit Request';} }
-  async function checkPublicProfileStatus(query){ if(!els.profileStatus) return; const q=String(query||'').trim(); if(!q) return; els.profileStatus.innerHTML='<span class="status-dot pending"></span><span>Checking profile status…</span>'; try{const result=await invokeProfileRequest({action:'status',query:q}); const status=String(result.status||'NOT_FOUND'); if(status==='ACTIVE'){els.profileStatus.innerHTML=`<span class="status-dot active"></span><div><strong>Profile Active</strong><small>${esc(result.register_number||'')} · ${esc(result.student_name||'')}</small></div>`;} else if(status==='PENDING'){els.profileStatus.innerHTML=`<span class="status-dot pending"></span><div><strong>Request Pending</strong><small>Your profile request is waiting for admin/faculty processing.</small></div>`;} else if(status==='REJECTED'){els.profileStatus.innerHTML=`<span class="status-dot rejected"></span><div><strong>Request Rejected</strong><small>Please submit a new request with corrected details.</small></div>`;} else {els.profileStatus.innerHTML='<span class="status-dot"></span><div><strong>Profile Not Found</strong><small>You can use Request Profile to submit your details.</small></div>';}}catch(err){els.profileStatus.innerHTML='<span class="status-dot rejected"></span><div><strong>Status unavailable</strong><small>Please try again.</small></div>';}}
-  function openProfileRequestsModal(){ if(!isAdmin()){openAdminLogin();return;} if(els.profileRequestsModal){els.profileRequestsModal.hidden=false;document.body.classList.add('modal-open');} loadProfileRequests().catch(err=>setProfileRequestsMessage(err.message,true)); }
-  function closeProfileRequestsModal(){if(els.profileRequestsModal)els.profileRequestsModal.hidden=true;document.body.classList.remove('modal-open');}
-  function setProfileRequestsMessage(text,error=false){if(els.profileRequestsMessage){els.profileRequestsMessage.textContent=text;els.profileRequestsMessage.className=`form-message ${error?'error':'success'}`;}}
-  function renderProfileRequests(rows){ const list=rows||[]; if(els.profileRequestCount)els.profileRequestCount.textContent=`${list.length} pending`; if(!els.profileRequestsContent)return; if(!list.length){els.profileRequestsContent.innerHTML='<div class="profile-requests-empty">No pending profile requests.</div>';return;} els.profileRequestsContent.innerHTML=`<div class="profile-requests-table-wrap"><table class="profile-requests-table"><thead><tr><th>Register</th><th>Name</th><th>Year</th><th>Section</th><th>LeetCode</th><th>GitHub</th><th>Requested</th></tr></thead><tbody>${list.map(r=>`<tr><td>${esc(r.register_number)}</td><td>${esc(r.student_name)}</td><td>Year ${esc(r.year)}</td><td>${esc(r.section)}</td><td><a href="${esc(r.leetcode_link)}" target="_blank" rel="noopener">${esc(r.leetcode_username)}</a></td><td><a href="${esc(r.github_link)}" target="_blank" rel="noopener">${esc(r.github_username)}</a></td><td>${esc(new Date(r.requested_at).toLocaleString())}</td></tr>`).join('')}</tbody></table></div>`; }
-  async function loadProfileRequests(){ if(!isAdmin())return; const client=supabaseClient(); const {data,error}=await client.from('profile_requests').select('*').eq('status','Pending').order('requested_at',{ascending:true}); if(error)throw error; renderProfileRequests(data||[]); }
-  async function bulkAddProfileRequests(){ if(!isAdmin())return; const button=els.bulkAddRequestsBtn; if(button){button.disabled=true;button.textContent='Processing...';} try{const client=supabaseClient(); const {data:rows,error}=await client.from('profile_requests').select('*').eq('status','Pending').order('requested_at',{ascending:true}); if(error)throw error; if(!rows?.length){setProfileRequestsMessage('There are no pending requests.');return;} const confirmed=window.confirm(`Process ${rows.length} pending profile request(s)? Existing students will be updated by register number; new students will be added.`); if(!confirmed)return; let added=0,updated=0,failed=0; const failures=[]; for(const r of rows){ try{ const {data:existing,error:findErr}=await client.from('students').select('id').eq('register_number',r.register_number).maybeSingle(); if(findErr)throw findErr; const payload={register_number:r.register_number,student_name:r.student_name,year:r.year,department:r.department,section:r.section,leetcode_username:r.leetcode_username,github_username:r.github_username,leetcode_link:r.leetcode_link,github_link:r.github_link}; let result; if(existing?.id){result=await client.from('students').update(payload).eq('id',existing.id);}else{result=await client.from('students').insert(payload);} if(result.error)throw result.error; const {error:markErr}=await client.from('profile_requests').update({status:'Approved',processed_at:new Date().toISOString(),processed_by:state.currentUser?.id||null,admin_note:existing?.id?'Existing profile updated':'New profile added'}).eq('id',r.id); if(markErr)throw markErr; existing?.id?updated++:added++; }catch(err){failed++;failures.push(`${r.register_number}: ${err.message}`);} } await loadProfileRequests(); const msg=`Completed: ${added} added, ${updated} updated, ${failed} failed.`; setProfileRequestsMessage(failed?msg+' '+failures.slice(0,3).join(' | '):msg); if(added||updated){setMessage('Profile requests processed. Tracker sync will use the updated student directory.'); loadData().catch(()=>{});} }catch(err){setProfileRequestsMessage(err.message||'Bulk processing failed.',true);}finally{if(button){button.disabled=false;button.textContent='Bulk Add / Update All';}} }
+  function profileRequestClient() { return supabaseClient(); }
+
+  function setProfileRequestMessage(text, error = false) {
+    if (els.requestMessage) {
+      els.requestMessage.textContent = text;
+      els.requestMessage.className = `form-message ${error ? 'error' : 'success'}`;
+    }
+  }
+
+  function setVerification(kind, ok, text, verifying = false) {
+    const target = kind === 'leetcode' ? els.requestLcStatus : els.requestGhStatus;
+    state.profileVerification[kind] = !!ok;
+    if (target) {
+      target.textContent = text;
+      target.className = `profile-check-status ${verifying ? 'verifying' : (ok ? 'valid' : (text === 'Not verified' || text === '⚪ Not verified' ? '' : 'invalid'))}`;
+    }
+    updateRequestSubmitState();
+  }
+
+  function updateRequestSubmitState() {
+    if (els.submitRequest) {
+      const canSubmit = state.profileVerification.leetcode && state.profileVerification.github;
+      els.submitRequest.disabled = !canSubmit;
+    }
+  }
+
+  function resetRequestVerification() {
+    state.profileVerification = { leetcode: false, github: false };
+    if (els.requestLcStatus) {
+      els.requestLcStatus.textContent = '⚪ Not verified';
+      els.requestLcStatus.className = 'profile-check-status';
+    }
+    if (els.requestGhStatus) {
+      els.requestGhStatus.textContent = '⚪ Not verified';
+      els.requestGhStatus.className = 'profile-check-status';
+    }
+    updateRequestSubmitState();
+  }
+
+  function openProfileRequestModal() {
+    if (els.profileRequestForm) els.profileRequestForm.reset();
+    if (els.requestYear) els.requestYear.value = '2';
+    if (els.requestDepartment) els.requestDepartment.value = 'ECE';
+    if (els.requestMessage) {
+      els.requestMessage.textContent = '';
+      els.requestMessage.className = 'form-message';
+    }
+    resetRequestVerification();
+    if (els.profileRequestModal) {
+      els.profileRequestModal.hidden = false;
+      document.body.classList.add('modal-open');
+    }
+  }
+
+  function closeProfileRequestModal() {
+    if (els.profileRequestModal) els.profileRequestModal.hidden = true;
+    document.body.classList.remove('modal-open');
+  }
+
+  async function invokeProfileRequest(body) {
+    const endpoint = `${window.APP_CONFIG?.SUPABASE_URL || ''}/functions/v1/profile-request`;
+    const headers = {
+      'Content-Type': 'application/json',
+      'apikey': window.APP_CONFIG?.SUPABASE_ANON_KEY || ''
+    };
+    const client = profileRequestClient();
+    const { data: { session } } = await client.auth.getSession();
+    if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+    const response = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || payload.message || `Request failed (${response.status})`);
+    return payload;
+  }
+
+  function normalizeProfileUrl(value, host) {
+    try {
+      const u = new URL(value);
+      if (u.protocol !== 'https:') return null;
+      if (u.hostname.toLowerCase() !== host) return null;
+      return u;
+    } catch {
+      return null;
+    }
+  }
+
+  function profileFormValues() {
+    return {
+      register_number: els.requestReg?.value.trim() || '',
+      student_name: els.requestName?.value.trim() || '',
+      year: Number(els.requestYear?.value) || 2,
+      department: els.requestDepartment?.value.trim() || 'ECE',
+      section: els.requestSection?.value || '',
+      leetcode_username: els.requestLcUser?.value.trim().replace(/\s+/g, '') || '',
+      leetcode_link: els.requestLcLink?.value.trim() || '',
+      github_username: els.requestGhUser?.value.trim().replace(/\s+/g, '') || '',
+      github_link: els.requestGhLink?.value.trim() || ''
+    };
+  }
+
+  async function verifyRequestedProfile(kind) {
+    const v = profileFormValues();
+    const user = kind === 'leetcode' ? v.leetcode_username : v.github_username;
+    const link = kind === 'leetcode' ? v.leetcode_link : v.github_link;
+    const host = kind === 'leetcode' ? 'leetcode.com' : 'github.com';
+    const url = normalizeProfileUrl(link, host);
+
+    if (!user || !url) {
+      setVerification(kind, false, '✕ Invalid profile');
+      setProfileRequestMessage(`Please enter a valid ${kind === 'leetcode' ? 'LeetCode' : 'GitHub'} username and https://${host}/ profile link.`, true);
+      return;
+    }
+
+    const button = kind === 'leetcode' ? els.verifyLc : els.verifyGh;
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Verifying...';
+    }
+    setVerification(kind, false, '⏳ Verifying...', true);
+
+    try {
+      const result = await invokeProfileRequest({
+        action: 'validate',
+        platform: kind,
+        username: user,
+        profile_link: link
+      });
+      setVerification(kind, true, '✓ Verified');
+      setProfileRequestMessage(`${kind === 'leetcode' ? 'LeetCode' : 'GitHub'} profile verified successfully.`);
+      if (kind === 'leetcode' && result.canonical_link && els.requestLcLink) {
+        els.requestLcLink.value = result.canonical_link;
+      }
+      if (kind === 'github' && result.canonical_link && els.requestGhLink) {
+        els.requestGhLink.value = result.canonical_link;
+      }
+    } catch (err) {
+      setVerification(kind, false, '✕ Invalid profile');
+      setProfileRequestMessage(err.message || `Could not verify ${kind} profile.`, true);
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = kind === 'leetcode' ? 'Verify LeetCode' : 'Verify GitHub';
+      }
+    }
+  }
+
+  async function submitProfileRequest(event) {
+    event.preventDefault();
+    const v = profileFormValues();
+    if (!v.register_number || !v.student_name || !v.section || !v.leetcode_username || !v.github_username) {
+      setProfileRequestMessage('Please complete all required fields.', true);
+      return;
+    }
+    if (!(state.profileVerification.leetcode && state.profileVerification.github)) {
+      setProfileRequestMessage('Please verify both LeetCode and GitHub profiles before submitting.', true);
+      return;
+    }
+    if (els.submitRequest) {
+      els.submitRequest.disabled = true;
+      els.submitRequest.textContent = 'Submitting...';
+    }
+    try {
+      const result = await invokeProfileRequest({ action: 'submit', request: v });
+      setProfileRequestMessage(result.message || 'Profile request submitted successfully.');
+      setVerification('leetcode', true, '✓ Verified');
+      setVerification('github', true, '✓ Verified');
+      setMessage('Profile request submitted successfully. It will be reviewed and approved by faculty.');
+      setTimeout(closeProfileRequestModal, 1200);
+    } catch (err) {
+      setProfileRequestMessage(err.message || 'Could not submit profile request.', true);
+      updateRequestSubmitState();
+    } finally {
+      if (els.submitRequest) {
+        els.submitRequest.textContent = 'Submit Request';
+      }
+    }
+  }
+
+  async function checkPublicProfileStatus(query) {
+    if (!els.profileStatus) return;
+    const q = String(query || '').trim();
+    if (!q) {
+      els.profileStatus.innerHTML = '';
+      return;
+    }
+
+    const localMatches = searchStudents(q);
+    if (localMatches.length > 0) {
+      const first = localMatches[0];
+      const name = getStudentName(first);
+      const reg = getRegister(first);
+      const sec = getSection(first);
+      els.profileStatus.innerHTML = `
+        <div class="profile-status-badge badge-active">
+          <span class="status-dot active"></span>
+          <div class="profile-status-text">
+            <strong>Profile Active</strong>
+            <small>${esc(reg || '')} · ${esc(name)} (${esc(sec)})</small>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    els.profileStatus.innerHTML = `
+      <div class="profile-status-badge badge-pending">
+        <span class="status-dot pending"></span>
+        <div class="profile-status-text">
+          <span>Checking profile status…</span>
+        </div>
+      </div>
+    `;
+
+    try {
+      const result = await invokeProfileRequest({ action: 'status', query: q });
+      const status = String(result.status || 'NOT_FOUND').toUpperCase();
+
+      if (status === 'ACTIVE') {
+        els.profileStatus.innerHTML = `
+          <div class="profile-status-badge badge-active">
+            <span class="status-dot active"></span>
+            <div class="profile-status-text">
+              <strong>Profile Active</strong>
+              <small>${esc(result.register_number || '')} · ${esc(result.student_name || '')}</small>
+            </div>
+          </div>
+        `;
+      } else if (status === 'PENDING') {
+        els.profileStatus.innerHTML = `
+          <div class="profile-status-badge badge-pending">
+            <span class="status-dot pending"></span>
+            <div class="profile-status-text">
+              <strong>Request Pending</strong>
+              <small>Profile request is waiting for administrator approval.</small>
+            </div>
+          </div>
+        `;
+      } else if (status === 'REJECTED') {
+        els.profileStatus.innerHTML = `
+          <div class="profile-status-badge badge-rejected">
+            <span class="status-dot rejected"></span>
+            <div class="profile-status-text">
+              <strong>Request Rejected</strong>
+              <small>Please submit a new request with verified details.</small>
+            </div>
+          </div>
+        `;
+      } else {
+        els.profileStatus.innerHTML = `
+          <div class="profile-status-badge badge-not-found">
+            <span class="status-dot not-found"></span>
+            <div class="profile-status-text">
+              <strong>Profile Not Found</strong>
+              <small>Use "Request Profile" to onboard your details.</small>
+            </div>
+          </div>
+        `;
+      }
+    } catch (err) {
+      els.profileStatus.innerHTML = `
+        <div class="profile-status-badge badge-unavailable">
+          <span class="status-dot unavailable"></span>
+          <div class="profile-status-text">
+            <strong>Status Unavailable</strong>
+            <small>Unable to retrieve status at this moment.</small>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function openProfileRequestsModal() {
+    if (!isAdmin()) {
+      openAdminLogin();
+      return;
+    }
+    if (els.profileRequestsModal) {
+      els.profileRequestsModal.hidden = false;
+      document.body.classList.add('modal-open');
+    }
+    loadProfileRequests().catch(err => setProfileRequestsMessage(err.message, true));
+  }
+
+  function closeProfileRequestsModal() {
+    if (els.profileRequestsModal) els.profileRequestsModal.hidden = true;
+    document.body.classList.remove('modal-open');
+  }
+
+  function setProfileRequestsMessage(text, error = false) {
+    if (els.profileRequestsMessage) {
+      els.profileRequestsMessage.textContent = text;
+      els.profileRequestsMessage.className = `form-message ${error ? 'error' : 'success'}`;
+    }
+  }
+
+  function renderProfileRequests(rows) {
+    const list = rows || [];
+    if (els.profileRequestCount) els.profileRequestCount.textContent = `${list.length} pending`;
+    if (!els.profileRequestsContent) return;
+
+    if (!list.length) {
+      els.profileRequestsContent.innerHTML = '<div class="profile-requests-empty">No pending profile requests at this time.</div>';
+      return;
+    }
+
+    els.profileRequestsContent.innerHTML = `
+      <table class="profile-requests-table">
+        <thead>
+          <tr>
+            <th>Register Number</th>
+            <th>Name</th>
+            <th>Year</th>
+            <th>Section</th>
+            <th>LeetCode</th>
+            <th>GitHub</th>
+            <th>Requested At</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map(r => `
+            <tr>
+              <td><strong>${esc(r.register_number)}</strong></td>
+              <td>${esc(r.student_name)}</td>
+              <td>Year ${esc(r.year)}</td>
+              <td>${esc(r.section)}</td>
+              <td>
+                <a class="table-link" href="${esc(r.leetcode_link)}" target="_blank" rel="noopener" title="${esc(r.leetcode_link)}">
+                  💻 ${esc(r.leetcode_username)}
+                </a>
+              </td>
+              <td>
+                <a class="table-link" href="${esc(r.github_link)}" target="_blank" rel="noopener" title="${esc(r.github_link)}">
+                  🐙 ${esc(r.github_username)}
+                </a>
+              </td>
+              <td>${esc(r.requested_at ? new Date(r.requested_at).toLocaleString() : '—')}</td>
+              <td><span class="profile-request-status-pill">🟡 Pending</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  async function loadProfileRequests() {
+    if (!isAdmin()) return;
+    const client = supabaseClient();
+    const { data, error } = await client
+      .from('profile_requests')
+      .select('*')
+      .eq('status', 'Pending')
+      .order('requested_at', { ascending: true });
+
+    if (error) throw error;
+    renderProfileRequests(data || []);
+  }
+
+  async function bulkAddProfileRequests() {
+    if (!isAdmin()) return;
+    const button = els.bulkAddRequestsBtn;
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Processing...';
+    }
+    setProfileRequestsMessage('');
+    try {
+      const client = supabaseClient();
+      const { data: rows, error } = await client
+        .from('profile_requests')
+        .select('*')
+        .eq('status', 'Pending')
+        .order('requested_at', { ascending: true });
+
+      if (error) throw error;
+      if (!rows?.length) {
+        setProfileRequestsMessage('There are no pending requests to process.');
+        return;
+      }
+
+      const confirmed = window.confirm(`Process ${rows.length} pending profile request(s)?\n\n• Existing register numbers will be UPDATED\n• New register numbers will be ADDED\n• Historical metrics and activity will remain intact`);
+      if (!confirmed) return;
+
+      let added = 0;
+      let updated = 0;
+      let failed = 0;
+      const failures = [];
+
+      for (const r of rows) {
+        try {
+          const regClean = String(r.register_number || '').trim();
+          if (!regClean) throw new Error('Missing register number.');
+
+          const { data: existing, error: findErr } = await client
+            .from('students')
+            .select('id, register_number')
+            .ilike('register_number', regClean)
+            .maybeSingle();
+
+          if (findErr) throw findErr;
+
+          const payload = {
+            register_number: regClean,
+            student_name: String(r.student_name || '').trim(),
+            year: Number(r.year) || 2,
+            department: String(r.department || 'ECE').trim(),
+            section: String(r.section || '').trim(),
+            leetcode_username: String(r.leetcode_username || '').trim(),
+            github_username: String(r.github_username || '').trim(),
+            leetcode_link: String(r.leetcode_link || '').trim(),
+            github_link: String(r.github_link || '').trim()
+          };
+
+          let result;
+          if (existing?.id) {
+            result = await client.from('students').update(payload).eq('id', existing.id);
+          } else {
+            result = await client.from('students').insert(payload);
+          }
+
+          if (result.error) throw result.error;
+
+          const { error: markErr } = await client
+            .from('profile_requests')
+            .update({
+              status: 'Approved',
+              processed_at: new Date().toISOString(),
+              processed_by: state.currentUser?.id || null,
+              admin_note: existing?.id ? 'Existing profile updated' : 'New profile added'
+            })
+            .eq('id', r.id);
+
+          if (markErr) throw markErr;
+          existing?.id ? updated++ : added++;
+        } catch (err) {
+          failed++;
+          failures.push(`${r.register_number}: ${err.message || 'Error'}`);
+        }
+      }
+
+      await loadProfileRequests();
+      const summaryMsg = `Bulk processing complete — Added: ${added} | Updated: ${updated} | Failed: ${failed}`;
+      setProfileRequestsMessage(failed ? `${summaryMsg}\nFailures: ${failures.slice(0, 3).join(' | ')}` : summaryMsg, failed > 0 && added === 0 && updated === 0);
+
+      if (added || updated) {
+        setMessage('Profile requests processed successfully. Tracker directory updated.');
+        loadData().catch(() => {});
+      }
+    } catch (err) {
+      setProfileRequestsMessage(err.message || 'Bulk processing failed.', true);
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Bulk Add / Update All';
+      }
+    }
+  }
 
   function searchStudents(query){
     const q=normalizeText(query);

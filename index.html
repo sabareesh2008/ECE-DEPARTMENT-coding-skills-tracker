@@ -22,7 +22,7 @@
     <button id="top50GitHubButton" class="quick-circle-button" type="button" title="Download Top 50 GitHub" aria-label="Download Top 50 GitHub">🐙</button>
     <button id="allFacultyLeetCodeButton" class="quick-circle-button" type="button" title="Download All Faculty LeetCode Report" aria-label="Download All Faculty LeetCode Report">👨‍🏫</button>
     <button id="homeOpenDateReportButton" class="quick-circle-button admin-only home-date-report-button" type="button" hidden title="Download Date Report" aria-label="Download Date Report">📅</button>
-    <button id="homeRequestProfileButton" class="request-profile-button" type="button">Request Profile</button>
+    <button id="homeRequestProfileButton" class="request-profile-button" type="button"><span class="request-btn-icon">📝</span> Request Profile</button>
   </div>
 
   <header class="hero tracker-entry-hero">
@@ -270,36 +270,92 @@
     <section class="profile-modal-card profile-request-card" role="dialog" aria-modal="true" aria-labelledby="homeProfileRequestTitle">
       <div class="profile-modal-head">
         <div>
-          <div class="eyebrow">STUDENT PROFILE REQUEST</div>
+          <div class="eyebrow">STUDENT ONBOARDING</div>
           <h2 id="homeProfileRequestTitle">Request Your CodeMetrix Profile</h2>
-          <p class="modal-help">Enter your academic and coding-platform details. Profiles are verified before the request is stored.</p>
+          <p class="modal-help">Enter your academic information and coding profiles. Both LeetCode and GitHub profiles are verified before submission.</p>
         </div>
-        <button id="closeHomeProfileRequest" class="modal-close" type="button">×</button>
+        <button id="closeHomeProfileRequest" class="modal-close" type="button" aria-label="Close modal">×</button>
       </div>
-      <form id="homeProfileRequestForm">
+      <form id="homeProfileRequestForm" novalidate>
         <div class="profile-request-grid">
-          <div><label class="form-label" for="requestRegNumber">Register Number</label><input id="requestRegNumber" class="form-input" required maxlength="30" placeholder="e.g. 922525106123"></div>
-          <div><label class="form-label" for="requestStudentName">Student Name</label><input id="requestStudentName" class="form-input" required maxlength="100" placeholder="Your full name"></div>
-          <div><label class="form-label" for="requestYear">Year</label><select id="requestYear" class="form-input" required><option value="1">Year I</option><option value="2" selected>Year II</option><option value="3">Year III</option><option value="4">Year IV</option></select></div>
-          <div><label class="form-label" for="requestDepartment">Department</label><input id="requestDepartment" class="form-input" value="ECE" required maxlength="30"></div>
-          <div><label class="form-label" for="requestSection">Section</label><select id="requestSection" class="form-input" required><option value="">Select Section</option><option>ECE A</option><option>ECE B</option><option>ECE C</option><option>ECE D</option><option>ECE E</option><option>ECE F</option><option>ECE G</option><option>ECE H</option><option>ECE I</option></select></div>
+          <div>
+            <label class="form-label" for="requestRegNumber">Register Number <span class="required-star">*</span></label>
+            <input id="requestRegNumber" class="form-input" required maxlength="30" placeholder="e.g. 922525106123" autocomplete="off">
+          </div>
+          <div>
+            <label class="form-label" for="requestStudentName">Student Name <span class="required-star">*</span></label>
+            <input id="requestStudentName" class="form-input" required maxlength="100" placeholder="Your full name as in college records" autocomplete="name">
+          </div>
+          <div>
+            <label class="form-label" for="requestYear">Year <span class="required-star">*</span></label>
+            <select id="requestYear" class="form-input" required>
+              <option value="1">Year I</option>
+              <option value="2" selected>Year II</option>
+              <option value="3">Year III</option>
+              <option value="4">Year IV</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="requestDepartment">Department <span class="required-star">*</span></label>
+            <input id="requestDepartment" class="form-input" value="ECE" required maxlength="30">
+          </div>
+          <div class="form-group-full">
+            <label class="form-label" for="requestSection">Section <span class="required-star">*</span></label>
+            <select id="requestSection" class="form-input" required>
+              <option value="">Select Section</option>
+              <option value="ECE A">ECE A</option>
+              <option value="ECE B">ECE B</option>
+              <option value="ECE C">ECE C</option>
+              <option value="ECE D">ECE D</option>
+              <option value="ECE E">ECE E</option>
+              <option value="ECE F">ECE F</option>
+              <option value="ECE G">ECE G</option>
+              <option value="ECE H">ECE H</option>
+              <option value="ECE I">ECE I</option>
+            </select>
+          </div>
         </div>
+
         <div class="profile-request-platform">
           <div class="platform-request-box">
-            <div class="platform-request-head"><strong>💻 LeetCode</strong><span id="requestLeetcodeStatus" class="profile-check-status">Not verified</span></div>
-            <label class="form-label" for="requestLeetcodeUsername">Username</label><input id="requestLeetcodeUsername" class="form-input" required placeholder="e.g. sabari123" autocomplete="off">
-            <label class="form-label" for="requestLeetcodeLink">Profile Link</label><input id="requestLeetcodeLink" class="form-input" required placeholder="https://leetcode.com/u/username/" autocomplete="url">
+            <div class="platform-request-head">
+              <span class="platform-title">💻 LeetCode Profile</span>
+              <span id="requestLeetcodeStatus" class="profile-check-status">Not verified</span>
+            </div>
+            <div>
+              <label class="form-label" for="requestLeetcodeUsername">LeetCode Username <span class="required-star">*</span></label>
+              <input id="requestLeetcodeUsername" class="form-input" required placeholder="e.g. sabari123" autocomplete="off">
+            </div>
+            <div>
+              <label class="form-label" for="requestLeetcodeLink">Profile Link <span class="required-star">*</span></label>
+              <input id="requestLeetcodeLink" class="form-input" required placeholder="https://leetcode.com/u/username/" autocomplete="url">
+            </div>
             <button id="verifyLeetcodeButton" class="action-button secondary verify-profile-button" type="button">Verify LeetCode</button>
           </div>
+
           <div class="platform-request-box">
-            <div class="platform-request-head"><strong>🐙 GitHub</strong><span id="requestGithubStatus" class="profile-check-status">Not verified</span></div>
-            <label class="form-label" for="requestGithubUsername">Username</label><input id="requestGithubUsername" class="form-input" required placeholder="e.g. sabareesh2008" autocomplete="off">
-            <label class="form-label" for="requestGithubLink">Profile Link</label><input id="requestGithubLink" class="form-input" required placeholder="https://github.com/username" autocomplete="url">
+            <div class="platform-request-head">
+              <span class="platform-title">🐙 GitHub Profile</span>
+              <span id="requestGithubStatus" class="profile-check-status">Not verified</span>
+            </div>
+            <div>
+              <label class="form-label" for="requestGithubUsername">GitHub Username <span class="required-star">*</span></label>
+              <input id="requestGithubUsername" class="form-input" required placeholder="e.g. sabareesh2008" autocomplete="off">
+            </div>
+            <div>
+              <label class="form-label" for="requestGithubLink">Profile Link <span class="required-star">*</span></label>
+              <input id="requestGithubLink" class="form-input" required placeholder="https://github.com/username" autocomplete="url">
+            </div>
             <button id="verifyGithubButton" class="action-button secondary verify-profile-button" type="button">Verify GitHub</button>
           </div>
         </div>
+
         <p id="homeProfileRequestMessage" class="form-message" role="status" aria-live="polite"></p>
-        <div class="modal-actions"><button class="action-button secondary" type="button" data-close-profile-request>Cancel</button><button id="submitProfileRequestButton" class="action-button primary" type="submit" disabled>Submit Request</button></div>
+
+        <div class="modal-actions">
+          <button class="action-button secondary" type="button" data-close-profile-request>Cancel</button>
+          <button id="submitProfileRequestButton" class="action-button primary" type="submit" disabled>Submit Request</button>
+        </div>
       </form>
     </section>
   </div>
@@ -308,8 +364,21 @@
   <div id="homeProfileRequestsModal" class="profile-modal" hidden>
     <div class="profile-modal-backdrop" data-close-profile-requests></div>
     <section class="profile-modal-card profile-requests-admin-card" role="dialog" aria-modal="true" aria-labelledby="homeProfileRequestsTitle">
-      <div class="profile-modal-head"><div><div class="eyebrow">ADMIN</div><h2 id="homeProfileRequestsTitle">Profile Requests</h2><p class="modal-help">Validate and add/update student profiles in bulk. Existing students are matched by register number.</p></div><button id="closeHomeProfileRequests" class="modal-close" type="button">×</button></div>
-      <div class="profile-requests-toolbar"><strong id="profileRequestCount">0 pending</strong><button id="bulkAddProfileRequestsButton" class="action-button primary" type="button">Bulk Add / Update All</button></div>
+      <div class="profile-modal-head">
+        <div>
+          <div class="eyebrow">ADMIN MANAGEMENT</div>
+          <h2 id="homeProfileRequestsTitle">Pending Profile Requests</h2>
+          <p class="modal-help">Review submitted student profile requests. Clicking Bulk Add/Update processes all pending records, matching by Register Number.</p>
+        </div>
+        <button id="closeHomeProfileRequests" class="modal-close" type="button" aria-label="Close modal">×</button>
+      </div>
+      <div class="profile-requests-toolbar">
+        <div class="profile-requests-count-badge">
+          <span class="status-dot pending"></span>
+          <strong id="profileRequestCount">0 pending</strong>
+        </div>
+        <button id="bulkAddProfileRequestsButton" class="action-button primary" type="button">Bulk Add / Update All</button>
+      </div>
       <div id="profileRequestsContent" class="profile-requests-content"></div>
       <p id="homeProfileRequestsMessage" class="form-message" role="status" aria-live="polite"></p>
     </section>
