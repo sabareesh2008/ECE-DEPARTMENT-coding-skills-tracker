@@ -463,20 +463,29 @@ tbody tr:hover {
 
 .status {
     display: inline-flex;
-    padding: 6px 9px;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
     border-radius: 999px;
     font-size: 11px;
     font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
 }
 
 .status-success {
     color: #052e16;
-    background: rgba(52, 211, 153, 0.85);
+    background: rgba(52, 211, 153, 0.9);
+}
+
+.status-pending {
+    color: #451a03;
+    background: rgba(251, 191, 36, 0.9);
 }
 
 .status-error {
     color: #4c0519;
-    background: rgba(251, 113, 133, 0.85);
+    background: rgba(251, 113, 133, 0.9);
 }
 
 .loading-row {

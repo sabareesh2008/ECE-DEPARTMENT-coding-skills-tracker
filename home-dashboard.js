@@ -855,14 +855,57 @@
     }).sort((a,b)=>getStudentName(a).localeCompare(getStudentName(b)));
   }
 
-  function card(title, items){
-    return `<article class="student-metric-card"><div class="student-metric-card-title">${title}</div>${items.map(([k,v])=>`<div class="student-metric-row"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join('')}</article>`;
+  function card(title, items, badgeHtml = ''){
+    return `
+      <article class="student-metric-card">
+        <div class="student-metric-card-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <span>${title}</span>
+          ${badgeHtml || ''}
+        </div>
+        ${items.map(([k, v, isHtml]) => `
+          <div class="student-metric-row">
+            <span>${esc(k)}</span>
+            <strong>${isHtml ? v : esc(v)}</strong>
+          </div>
+        `).join('')}
+      </article>
+    `;
   }
 
   function openDashboard(item){
-    const s=item.lc||item.gh, gh=item.gh, lc=item.lc;
-    els.title.textContent=getStudentName(item);
-    els.subtitle.textContent=`Register Number: ${getRegister(item)||'—'} · ${getSection(item)}`;
+    const gh = item.gh, lc = item.lc;
+    const studentName = getStudentName(item);
+    const regNum = getRegister(item) || '—';
+    const sectionName = getSection(item);
+
+    els.title.textContent = studentName;
+
+    const getStatusInfo = (record, platformName) => {
+      if (!record) {
+        return {
+          text: 'Not Found',
+          badgeHtml: `<span class="status status-error">Not Found</span>`
+        };
+      }
+      const raw = String(record.Status || 'Success').trim();
+      const lower = raw.toLowerCase();
+      let badgeClass = 'status-success';
+      if (lower.includes('error') || lower.includes('invalid') || lower.includes('not found') || lower.includes('not_found')) {
+        badgeClass = 'status-error';
+      } else if (lower.includes('pending') || lower.includes('verifying') || lower.includes('warn')) {
+        badgeClass = 'status-pending';
+      }
+      const label = raw || 'Success';
+      return {
+        text: label,
+        badgeHtml: `<span class="status ${badgeClass}">${esc(label)}</span>`
+      };
+    };
+
+    const lcStat = getStatusInfo(lc, 'LeetCode');
+    const ghStat = getStatusInfo(gh, 'GitHub');
+
+    els.subtitle.innerHTML = `Register Number: ${esc(regNum)} · ${esc(sectionName)} &nbsp;&nbsp;|&nbsp;&nbsp; 💻 ${lcStat.badgeHtml} &nbsp;&nbsp; 🐙 ${ghStat.badgeHtml}`;
 
     let suspiciousText = '🟢 0% Normal';
     if (lc) {
@@ -872,20 +915,8 @@
       suspiciousText = `${emoji} ${score}% ${label}`;
     }
 
-    const formatStatus = (rawStatus, hasRecord) => {
-      if (!hasRecord) return '🔴 Not Found';
-      const st = String(rawStatus || '').trim();
-      if (!st || st.toLowerCase() === 'success' || st.toLowerCase() === 'active') {
-        return '🟢 Success';
-      }
-      if (st.toLowerCase().includes('error') || st.toLowerCase().includes('invalid') || st.toLowerCase().includes('not found') || st.toLowerCase().includes('not_found')) {
-        return `🔴 ${st}`;
-      }
-      return `🟡 ${st}`;
-    };
-
     const lcItems = lc ? [
-      ['Status', formatStatus(lc.Status || 'Success', true)],
+      ['Status', lcStat.badgeHtml, true],
       ['Problems Solved', num(lc['Problems Solved'])],
       ['Suspicious Score', suspiciousText],
       ['Solved Today', num(lc['Solved Today'])],
@@ -897,10 +928,10 @@
       ['Current Streak', lc['Current Streak'] || '—'],
       ['Last Problem', lc['Last Problem'] || '—'],
       ['Last Solved', lc['Last Solved'] || '—']
-    ] : [['Status', '🔴 Not Found']];
+    ] : [['Status', lcStat.badgeHtml, true]];
 
     const ghItems = gh ? [
-      ['Status', formatStatus(gh.Status || 'Success', true)],
+      ['Status', ghStat.badgeHtml, true],
       ['Deployments', num(gh['Detected Deployments'])],
       ['Repositories', num(gh['Repositories Total'])],
       ['Contributions · 30 Days', num(gh['Contributions 30 Days'])],
@@ -909,20 +940,21 @@
       ['Repositories · 30 Days', num(gh['Repositories 30 Days'])],
       ['Latest Repository', gh['Latest Repository'] || '—'],
       ['Last Activity', gh['Last Activity'] || '—']
-    ] : [['Status', '🔴 Not Found']];
+    ] : [['Status', ghStat.badgeHtml, true]];
 
-    const links=[];
-    if(lc?.['LeetCode Link']) links.push(`<a class="action-button secondary" href="${esc(lc['LeetCode Link'])}" target="_blank" rel="noopener">Open LeetCode ↗</a>`);
-    if(gh?.['GitHub Link']) links.push(`<a class="action-button secondary" href="${esc(gh['GitHub Link'])}" target="_blank" rel="noopener">Open GitHub ↗</a>`);
+    const links = [];
+    if (lc?.['LeetCode Link']) links.push(`<a class="action-button secondary" href="${esc(lc['LeetCode Link'])}" target="_blank" rel="noopener">Open LeetCode ↗</a>`);
+    if (gh?.['GitHub Link']) links.push(`<a class="action-button secondary" href="${esc(gh['GitHub Link'])}" target="_blank" rel="noopener">Open GitHub ↗</a>`);
     links.push(`<button class="action-button primary" id="downloadStudentReportBtn" type="button">📥 Download Report (Excel)</button>`);
 
-    els.content.innerHTML=`<div class="student-dashboard-grid">${card('💻 LeetCode',lcItems)}${card('🐙 GitHub',ghItems)}</div><div class="student-dashboard-links">${links.join('')}</div>`;
+    els.content.innerHTML = `<div class="student-dashboard-grid">${card('💻 LeetCode', lcItems, lcStat.badgeHtml)}${card('🐙 GitHub', ghItems, ghStat.badgeHtml)}</div><div class="student-dashboard-links">${links.join('')}</div>`;
 
     document.getElementById('downloadStudentReportBtn')?.addEventListener('click', () => {
       try { downloadSingleStudentReport(item); } catch(e){ setMessage(e.message, true); }
     });
 
-    els.modal.hidden=false; document.body.classList.add('modal-open');
+    els.modal.hidden = false;
+    document.body.classList.add('modal-open');
   }
 
   function showSearchResults(results, query){
