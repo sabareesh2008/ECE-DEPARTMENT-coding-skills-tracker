@@ -123,7 +123,44 @@
   }
 
   async function loadData(){
-    [state.leetcode,state.github]=await Promise.all([loadFile('LiveData.csv'),loadFile('GitHubLiveData.csv')]);
+    // Keep the existing live tracker data untouched, but also load the error logs
+    // so a student with a platform error can still be opened in the dashboard.
+    const [leetcodeRows, githubRows, leetcodeErrors, githubErrors] = await Promise.all([
+      loadFile('LiveData.csv'),
+      loadFile('GitHubLiveData.csv'),
+      loadFile('LeetCode_Errors.csv').catch(() => []),
+      loadFile('GitHubErrors.csv').catch(() => [])
+    ]);
+    state.leetcode = leetcodeRows;
+    state.github = githubRows;
+
+    // Error rows are only added when the corresponding live row is missing.
+    // This prevents duplicate students and does not alter existing tracker data.
+    const lcRegs = new Set(state.leetcode.map(r => normalizeReg(r['Register Number'])).filter(Boolean));
+    leetcodeErrors.forEach(r => {
+      const reg = normalizeReg(r['Register Number']);
+      if (reg && !lcRegs.has(reg)) {
+        state.leetcode.push(r);
+        lcRegs.add(reg);
+      }
+    });
+
+    const ghRegs = new Set(state.github.map(r => normalizeReg(r['Register Number'])).filter(Boolean));
+    githubErrors.forEach(r => {
+      const reg = normalizeReg(r['Register Number']);
+      if (reg && !ghRegs.has(reg)) {
+        state.github.push({
+          'Register Number': reg,
+          'Student Name': r['Student Name'] || '',
+          'GitHub Username': r['GitHub Username'] || '',
+          'GitHub Link': r['GitHub Username'] ? `https://github.com/${r['GitHub Username']}` : '',
+          Status: r['Error Message'] || r['Error Type'] || 'Error',
+          'Updated At': r['Checked At'] || ''
+        });
+        ghRegs.add(reg);
+      }
+    });
+
     buildMergedIndex();
   }
 
@@ -855,6 +892,54 @@
     }).sort((a,b)=>getStudentName(a).localeCompare(getStudentName(b)));
   }
 
+  function getStatusInfo(record, platformName) {
+    const username = record ? String(record[`${platformName} Username`] || '').trim() : '';
+    const raw = record ? String(record.Status || '').trim() : '';
+    const lower = raw.toLowerCase();
+
+    if (!record || !username || username === '—' || username === '-' || lower.includes('not added') || lower === 'not added') {
+      return {
+        text: 'Not Added',
+        badgeClass: 'status-error',
+        badgeHtml: `<span class="status status-error" style="color:#f87171!important; background:rgba(239,68,68,0.22)!important; border:1px solid rgba(248,113,113,0.5)!important;">🔴 Not Added</span>`
+      };
+    }
+
+    if (lower.includes('not found') || lower.includes('could not resolve') || lower.includes('worker error') || lower.includes('stale') || lower.includes('error') || lower.includes('invalid') || lower.includes('fail')) {
+      let label = 'Error';
+      if (lower.includes('not found')) label = 'User Not Found';
+      else if (lower.includes('worker error') || lower.includes('could not resolve')) label = 'Worker Error';
+      else if (lower.includes('stale')) label = 'Stale / Error';
+      return {
+        text: raw,
+        badgeClass: 'status-error',
+        badgeHtml: `<span class="status status-error" style="color:#f87171!important; background:rgba(239,68,68,0.22)!important; border:1px solid rgba(248,113,113,0.5)!important;" title="${esc(raw)}">🔴 ${esc(label)}</span>`
+      };
+    }
+
+    if (lower === 'pending' || lower.includes('verifying') || lower.includes('queued')) {
+      return {
+        text: 'Pending',
+        badgeClass: 'status-pending',
+        badgeHtml: `<span class="status status-pending" style="color:#facc15!important; background:rgba(234,179,8,0.2)!important; border:1px solid rgba(250,204,21,0.5)!important;">🟡 Pending</span>`
+      };
+    }
+
+    if (lower === 'success' || lower === 'active') {
+      return {
+        text: 'Success',
+        badgeClass: 'status-success',
+        badgeHtml: `<span class="status status-success" style="color:#4ade80!important; background:rgba(34,197,94,0.2)!important; border:1px solid rgba(74,222,128,0.5)!important;">🟢 Success</span>`
+      };
+    }
+
+    return {
+      text: raw || 'Error',
+      badgeClass: 'status-error',
+      badgeHtml: `<span class="status status-error" style="color:#f87171!important; background:rgba(239,68,68,0.22)!important; border:1px solid rgba(248,113,113,0.5)!important;" title="${esc(raw)}">🔴 ${esc(raw || 'Error')}</span>`
+    };
+  }
+
   function card(title, items, badgeHtml = ''){
     return `
       <article class="student-metric-card">
@@ -877,68 +962,6 @@
     const studentName = getStudentName(item);
     const regNum = getRegister(item) || '—';
     const sectionName = getSection(item);
-
-    const getStatusInfo = (record, platformName) => {
-      const username = record ? String(record[`${platformName} Username`] || '').trim() : '';
-      const raw = record ? String(record.Status || '').trim() : '';
-      const lower = raw.toLowerCase();
-
-      // 1. Missing profile / not added -> RED
-      if (!record || !username || username === '—' || username === '-' || lower.includes('not added') || lower === 'not added') {
-        return {
-          text: 'Not Added',
-          badgeClass: 'status-error',
-          badgeHtml: `<span class="status status-error" style="color:#f87171!important; background:rgba(239,68,68,0.22)!important; border:1px solid rgba(248,113,113,0.5)!important;">🔴 Not Added</span>`
-        };
-      }
-
-      // 2. Error / Not found / Stale / Worker error -> RED
-      if (
-        lower.includes('not found') ||
-        lower.includes('could not resolve') ||
-        lower.includes('worker error') ||
-        lower.includes('stale') ||
-        lower.includes('error') ||
-        lower.includes('invalid') ||
-        lower.includes('fail')
-      ) {
-        let label = 'Error';
-        if (lower.includes('not found')) label = 'User Not Found';
-        else if (lower.includes('not added')) label = 'Not Added';
-        else if (lower.includes('worker error') || lower.includes('could not resolve')) label = 'Worker Error';
-        else if (lower.includes('stale')) label = 'Stale / Error';
-        return {
-          text: raw,
-          badgeClass: 'status-error',
-          badgeHtml: `<span class="status status-error" style="color:#f87171!important; background:rgba(239,68,68,0.22)!important; border:1px solid rgba(248,113,113,0.5)!important;" title="${esc(raw)}">🔴 ${esc(label)}</span>`
-        };
-      }
-
-      // 3. Pending -> YELLOW
-      if (lower === 'pending' || lower.includes('verifying') || lower.includes('queued')) {
-        return {
-          text: 'Pending',
-          badgeClass: 'status-pending',
-          badgeHtml: `<span class="status status-pending" style="color:#facc15!important; background:rgba(234,179,8,0.2)!important; border:1px solid rgba(250,204,21,0.5)!important;">🟡 Pending</span>`
-        };
-      }
-
-      // 4. Exact Success / Active -> GREEN
-      if (lower === 'success' || lower === 'active') {
-        return {
-          text: 'Success',
-          badgeClass: 'status-success',
-          badgeHtml: `<span class="status status-success" style="color:#4ade80!important; background:rgba(34,197,94,0.2)!important; border:1px solid rgba(74,222,128,0.5)!important;">🟢 Success</span>`
-        };
-      }
-
-      // 5. Fallback for any unknown status -> RED
-      return {
-        text: raw || 'Error',
-        badgeClass: 'status-error',
-        badgeHtml: `<span class="status status-error" style="color:#f87171!important; background:rgba(239,68,68,0.22)!important; border:1px solid rgba(248,113,113,0.5)!important;" title="${esc(raw)}">🔴 ${esc(raw || 'Error')}</span>`
-      };
-    };
 
     const lcStat = getStatusInfo(lc, 'LeetCode');
     const ghStat = getStatusInfo(gh, 'GitHub');
