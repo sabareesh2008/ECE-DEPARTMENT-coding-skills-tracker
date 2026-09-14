@@ -878,27 +878,64 @@
     const regNum = getRegister(item) || '—';
     const sectionName = getSection(item);
 
-    els.title.textContent = studentName;
-
     const getStatusInfo = (record, platformName) => {
-      if (!record) {
+      const username = record ? String(record[`${platformName} Username`] || '').trim() : '';
+      const raw = record ? String(record.Status || '').trim() : '';
+      const lower = raw.toLowerCase();
+
+      // 1. Missing profile / not added
+      if (!record || !username || username === '—' || username === '-' || lower === 'github not added' || lower.includes('not added')) {
         return {
-          text: 'Not Found',
-          badgeHtml: `<span class="status status-error">Not Found</span>`
+          text: 'Not Added',
+          badgeClass: 'status-error',
+          badgeHtml: `<span class="status status-error">Not Added</span>`
         };
       }
-      const raw = String(record.Status || 'Success').trim();
-      const lower = raw.toLowerCase();
-      let badgeClass = 'status-success';
-      if (lower.includes('error') || lower.includes('invalid') || lower.includes('not found') || lower.includes('not_found')) {
-        badgeClass = 'status-error';
-      } else if (lower.includes('pending') || lower.includes('verifying') || lower.includes('warn')) {
-        badgeClass = 'status-pending';
+
+      // 2. Error / Not found / Stale / Worker error -> RED
+      if (
+        lower.includes('not found') ||
+        lower.includes('could not resolve') ||
+        lower.includes('worker error') ||
+        lower.includes('stale') ||
+        lower.includes('error') ||
+        lower.includes('invalid') ||
+        lower.includes('fail')
+      ) {
+        let label = 'Error';
+        if (lower.includes('not found')) label = 'User Not Found';
+        else if (lower.includes('worker error') || lower.includes('could not resolve')) label = 'Worker Error';
+        else if (lower.includes('stale')) label = 'Stale / Error';
+        return {
+          text: raw,
+          badgeClass: 'status-error',
+          badgeHtml: `<span class="status status-error" title="${esc(raw)}">${esc(label)}</span>`
+        };
       }
-      const label = raw || 'Success';
+
+      // 3. Pending -> YELLOW
+      if (lower === 'pending' || lower.includes('verifying') || lower.includes('queued')) {
+        return {
+          text: 'Pending',
+          badgeClass: 'status-pending',
+          badgeHtml: `<span class="status status-pending">Pending</span>`
+        };
+      }
+
+      // 4. Exact Success / Active -> GREEN
+      if (lower === 'success' || lower === 'active') {
+        return {
+          text: 'Success',
+          badgeClass: 'status-success',
+          badgeHtml: `<span class="status status-success">Success</span>`
+        };
+      }
+
+      // 5. Fallback for any unknown non-success status -> RED
       return {
-        text: label,
-        badgeHtml: `<span class="status ${badgeClass}">${esc(label)}</span>`
+        text: raw || 'Error',
+        badgeClass: 'status-error',
+        badgeHtml: `<span class="status status-error" title="${esc(raw)}">${esc(raw || 'Error')}</span>`
       };
     };
 
@@ -962,11 +999,22 @@
     els.title.textContent=`Search Results (${results.length})`;
     els.subtitle.textContent=`Matches for “${query}”`;
     els.content.innerHTML=`<div class="universal-search-results">${results.map((item,i)=>{
-      const lc=item.lc, gh=item.gh;
-      return `<button type="button" class="universal-search-result" data-result-index="${i}"><span class="universal-search-result-main"><strong>${esc(getStudentName(item))}</strong><small>${esc(getRegister(item)||'No register number')} · ${esc(getSection(item))}</small></span><span class="universal-search-result-meta"><span>${lc?'💻 LeetCode':''}</span><span>${gh?'🐙 GitHub':''}</span></span></button>`;
+      const lcStat = getStatusInfo(item.lc, 'LeetCode');
+      const ghStat = getStatusInfo(item.gh, 'GitHub');
+      return `<button type="button" class="universal-search-result" data-result-index="${i}">
+        <span class="universal-search-result-main">
+          <strong>${esc(getStudentName(item))}</strong>
+          <small>${esc(getRegister(item)||'No register number')} · ${esc(getSection(item))}</small>
+        </span>
+        <span class="universal-search-result-meta" style="display:flex; gap:6px; align-items:center;">
+          <span>💻 ${lcStat.badgeHtml}</span>
+          <span>🐙 ${ghStat.badgeHtml}</span>
+        </span>
+      </button>`;
     }).join('')}</div>`;
     els.content.querySelectorAll('[data-result-index]').forEach(btn=>btn.addEventListener('click',()=>openDashboard(results[Number(btn.dataset.resultIndex)])));
-    els.modal.hidden=false; document.body.classList.add('modal-open');
+    els.modal.hidden=false;
+    document.body.classList.add('modal-open');
   }
 
   function closeDashboard(){els.modal.hidden=true;document.body.classList.remove('modal-open');}
