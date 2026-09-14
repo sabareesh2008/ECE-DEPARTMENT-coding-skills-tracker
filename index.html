@@ -22,7 +22,6 @@
     <button id="top50GitHubButton" class="quick-circle-button" type="button" title="Download Top 50 GitHub" aria-label="Download Top 50 GitHub">🐙</button>
     <button id="allFacultyLeetCodeButton" class="quick-circle-button" type="button" title="Download All Faculty LeetCode Report" aria-label="Download All Faculty LeetCode Report">👨‍🏫</button>
     <button id="homeOpenDateReportButton" class="quick-circle-button admin-only home-date-report-button" type="button" hidden title="Download Date Report" aria-label="Download Date Report">📅</button>
-    <button id="homeRequestProfileButton" class="request-profile-button" type="button" onclick="window.openProfileRequestModal ? window.openProfileRequestModal() : null"><span class="request-btn-icon">📝</span> Request Profile</button>
   </div>
 
   <header class="hero tracker-entry-hero">
@@ -50,7 +49,6 @@
       <div class="home-admin-badge-wrap">
         <button id="homeAdminLoginButton" class="action-button primary" type="button">Admin Login</button>
         <button id="homeAddProfileButton" class="action-button primary admin-only" type="button" hidden>+ Add Profile</button>
-        <button id="homeProfileRequestsButton" class="action-button secondary admin-only" type="button" hidden>Profile Requests</button>
       </div>
 
       <div class="status-card tracker-entry-status">
@@ -262,133 +260,37 @@
     </section>
   </div>
 
-
-  <!-- PUBLIC STUDENT PROFILE REQUEST MODAL -->
-  <div id="homeProfileRequestModal" class="profile-modal" hidden>
-    <div class="profile-modal-backdrop" data-close-profile-request></div>
-    <section class="profile-modal-card profile-request-card" role="dialog" aria-modal="true" aria-labelledby="homeProfileRequestTitle">
-      <div class="profile-modal-head">
-        <div>
-          <div class="eyebrow">STUDENT ONBOARDING</div>
-          <h2 id="homeProfileRequestTitle">Request Your CodeMetrix Profile</h2>
-          <p class="modal-help">Enter your academic information and coding profiles. Both LeetCode and GitHub profiles are verified before submission.</p>
-        </div>
-        <button id="closeHomeProfileRequest" class="modal-close" type="button" aria-label="Close modal" onclick="window.closeProfileRequestModal ? window.closeProfileRequestModal() : null">×</button>
-      </div>
-      <form id="homeProfileRequestForm" novalidate>
-        <div class="profile-request-grid">
-          <div>
-            <label class="form-label" for="requestRegNumber">Register Number <span class="required-star">*</span></label>
-            <input id="requestRegNumber" class="form-input" required maxlength="30" placeholder="e.g. 922525106123" autocomplete="off">
-          </div>
-          <div>
-            <label class="form-label" for="requestStudentName">Student Name <span class="required-star">*</span></label>
-            <input id="requestStudentName" class="form-input" required maxlength="100" placeholder="Your full name as in college records" autocomplete="name">
-          </div>
-          <div>
-            <label class="form-label" for="requestYear">Year <span class="required-star">*</span></label>
-            <select id="requestYear" class="form-input" required>
-              <option value="1">Year I</option>
-              <option value="2" selected>Year II</option>
-              <option value="3">Year III</option>
-              <option value="4">Year IV</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label" for="requestDepartment">Department <span class="required-star">*</span></label>
-            <input id="requestDepartment" class="form-input" value="ECE" required maxlength="30">
-          </div>
-          <div class="form-group-full">
-            <label class="form-label" for="requestSection">Section <span class="required-star">*</span></label>
-            <select id="requestSection" class="form-input" required>
-              <option value="">Select Section</option>
-              <option value="ECE A">ECE A</option>
-              <option value="ECE B">ECE B</option>
-              <option value="ECE C">ECE C</option>
-              <option value="ECE D">ECE D</option>
-              <option value="ECE E">ECE E</option>
-              <option value="ECE F">ECE F</option>
-              <option value="ECE G">ECE G</option>
-              <option value="ECE H">ECE H</option>
-              <option value="ECE I">ECE I</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="profile-request-platform">
-          <div class="platform-request-box">
-            <div class="platform-request-head">
-              <span class="platform-title">💻 LeetCode Profile</span>
-              <span id="requestLeetcodeStatus" class="profile-check-status">Not verified</span>
-            </div>
-            <div>
-              <label class="form-label" for="requestLeetcodeUsername">LeetCode Username <span class="required-star">*</span></label>
-              <input id="requestLeetcodeUsername" class="form-input" required placeholder="e.g. sabari123" autocomplete="off">
-            </div>
-            <div>
-              <label class="form-label" for="requestLeetcodeLink">Profile Link <span class="required-star">*</span></label>
-              <input id="requestLeetcodeLink" class="form-input" required placeholder="https://leetcode.com/u/username/" autocomplete="url">
-            </div>
-            <button id="verifyLeetcodeButton" class="action-button secondary verify-profile-button" type="button">Verify LeetCode</button>
-          </div>
-
-          <div class="platform-request-box">
-            <div class="platform-request-head">
-              <span class="platform-title">🐙 GitHub Profile</span>
-              <span id="requestGithubStatus" class="profile-check-status">Not verified</span>
-            </div>
-            <div>
-              <label class="form-label" for="requestGithubUsername">GitHub Username <span class="required-star">*</span></label>
-              <input id="requestGithubUsername" class="form-input" required placeholder="e.g. sabareesh2008" autocomplete="off">
-            </div>
-            <div>
-              <label class="form-label" for="requestGithubLink">Profile Link <span class="required-star">*</span></label>
-              <input id="requestGithubLink" class="form-input" required placeholder="https://github.com/username" autocomplete="url">
-            </div>
-            <button id="verifyGithubButton" class="action-button secondary verify-profile-button" type="button">Verify GitHub</button>
-          </div>
-        </div>
-
-        <p id="homeProfileRequestMessage" class="form-message" role="status" aria-live="polite"></p>
-
-        <div class="modal-actions">
-          <button class="action-button secondary" type="button" data-close-profile-request onclick="window.closeProfileRequestModal ? window.closeProfileRequestModal() : null">Cancel</button>
-          <button id="submitProfileRequestButton" class="action-button primary" type="submit" disabled>Submit Request</button>
-        </div>
-      </form>
-    </section>
-  </div>
-
-  <!-- ADMIN PROFILE REQUESTS MODAL -->
-  <div id="homeProfileRequestsModal" class="profile-modal" hidden>
-    <div class="profile-modal-backdrop" data-close-profile-requests></div>
-    <section class="profile-modal-card profile-requests-admin-card" role="dialog" aria-modal="true" aria-labelledby="homeProfileRequestsTitle">
-      <div class="profile-modal-head">
-        <div>
-          <div class="eyebrow">ADMIN MANAGEMENT</div>
-          <h2 id="homeProfileRequestsTitle">Pending Profile Requests</h2>
-          <p class="modal-help">Review submitted student profile requests. Clicking Bulk Add/Update processes all pending records, matching by Register Number.</p>
-        </div>
-        <button id="closeHomeProfileRequests" class="modal-close" type="button" aria-label="Close modal">×</button>
-      </div>
-      <div class="profile-requests-toolbar">
-        <div class="profile-requests-count-badge">
-          <span class="status-dot pending"></span>
-          <strong id="profileRequestCount">0 pending</strong>
-        </div>
-        <div class="profile-requests-actions">
-          <button id="downloadProfileRequestsExcel" class="action-button secondary" type="button" title="Download Profile Requests as Excel">📥 Download Excel</button>
-          <button id="downloadProfileRequestsCsv" class="action-button secondary" type="button" title="Download Profile Requests as CSV">📄 Download CSV</button>
-          <button id="bulkAddProfileRequestsButton" class="action-button primary" type="button">Bulk Add / Update All</button>
-        </div>
-      </div>
-      <div id="profileRequestsContent" class="profile-requests-content"></div>
-      <p id="homeProfileRequestsMessage" class="form-message" role="status" aria-live="polite"></p>
-    </section>
-  </div>
   <footer>
     ECE CodeMetrix · Public Coding Progress Platform
   </footer>
+
+  <!-- =======================================================
+       SUSPICIOUS ACTIVITY ANALYSIS MODAL (ADMIN ONLY)
+       ======================================================= -->
+  <div id="suspiciousAnalysisModal" class="profile-modal" hidden>
+    <div class="profile-modal-backdrop" data-close-suspicious-modal></div>
+
+    <section
+      class="profile-modal-card"
+      style="width:min(96%,920px);max-height:90vh;overflow-y:auto;"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="suspiciousModalTitle"
+    >
+      <div class="profile-modal-head">
+        <div>
+          <div class="eyebrow" style="color:var(--gold);">⚡ ADMIN AUDIT · 7-FACTOR ENGINE</div>
+          <h2 id="suspiciousModalTitle">Suspicious Solving Analysis</h2>
+          <p id="suspiciousModalSubtitle" class="modal-help">Deep-dive algorithmic analysis of Medium &amp; Hard problem solving patterns.</p>
+        </div>
+        <button id="closeSuspiciousModal" class="modal-close" type="button" aria-label="Close">×</button>
+      </div>
+
+      <div id="suspiciousModalContent" class="suspicious-modal-content">
+        <!-- Injected dynamically by renderSuspiciousModal -->
+      </div>
+    </section>
+  </div>
 
   <!-- ADMIN DATE REPORT -->
   <div id="homeDateReportModal" class="profile-modal date-report-modal" hidden>

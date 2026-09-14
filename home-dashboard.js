@@ -1,5 +1,5 @@
 (() => {
-  const state = { leetcode: [], github: [], leetcodeErrors: [], githubErrors: [], merged: [], currentUser: null, currentRole: null, profileVerification: { leetcode: false, github: false } };
+  const state = { leetcode: [], github: [], merged: [], currentUser: null, currentRole: null };
   const els = {
     leetTop: document.getElementById('top50LeetCodeButton'),
     gitTop: document.getElementById('top50GitHubButton'),
@@ -13,35 +13,6 @@
     title: document.getElementById('studentDashboardTitle'),
     subtitle: document.getElementById('studentDashboardSubtitle'),
     message: document.getElementById('homeActionMessage'),
-    profileStatus: document.getElementById('homeProfileStatus'),
-    requestProfileBtn: document.getElementById('homeRequestProfileButton'),
-    profileRequestModal: document.getElementById('homeProfileRequestModal'),
-    closeProfileRequest: document.getElementById('closeHomeProfileRequest'),
-    profileRequestForm: document.getElementById('homeProfileRequestForm'),
-    requestReg: document.getElementById('requestRegNumber'),
-    requestName: document.getElementById('requestStudentName'),
-    requestYear: document.getElementById('requestYear'),
-    requestDepartment: document.getElementById('requestDepartment'),
-    requestSection: document.getElementById('requestSection'),
-    requestLcUser: document.getElementById('requestLeetcodeUsername'),
-    requestLcLink: document.getElementById('requestLeetcodeLink'),
-    requestGhUser: document.getElementById('requestGithubUsername'),
-    requestGhLink: document.getElementById('requestGithubLink'),
-    verifyLc: document.getElementById('verifyLeetcodeButton'),
-    verifyGh: document.getElementById('verifyGithubButton'),
-    requestLcStatus: document.getElementById('requestLeetcodeStatus'),
-    requestGhStatus: document.getElementById('requestGithubStatus'),
-    requestMessage: document.getElementById('homeProfileRequestMessage'),
-    submitRequest: document.getElementById('submitProfileRequestButton'),
-    profileRequestsBtn: document.getElementById('homeProfileRequestsButton'),
-    profileRequestsModal: document.getElementById('homeProfileRequestsModal'),
-    closeProfileRequests: document.getElementById('closeHomeProfileRequests'),
-    profileRequestsContent: document.getElementById('profileRequestsContent'),
-    profileRequestCount: document.getElementById('profileRequestCount'),
-    bulkAddRequestsBtn: document.getElementById('bulkAddProfileRequestsButton'),
-    downloadProfileRequestsExcel: document.getElementById('downloadProfileRequestsExcel'),
-    downloadProfileRequestsCsv: document.getElementById('downloadProfileRequestsCsv'),
-    profileRequestsMessage: document.getElementById('homeProfileRequestsMessage'),
 
     // Admin Auth
     adminLoginBtn: document.getElementById('homeAdminLoginButton'),
@@ -123,57 +94,21 @@
   }
 
   async function loadData(){
-    const [leetcode, github, leetcodeErrors, githubErrors] = await Promise.all([
-      loadFile('LiveData.csv'),
-      loadFile('GitHubLiveData.csv'),
-      loadFile('LeetCodeErrors.csv').catch(() => []),
-      loadFile('GitHubErrors.csv').catch(() => [])
-    ]);
-    state.leetcode = leetcode;
-    state.github = github;
-    state.leetcodeErrors = leetcodeErrors;
-    state.githubErrors = githubErrors;
+    [state.leetcode,state.github]=await Promise.all([loadFile('LiveData.csv'),loadFile('GitHubLiveData.csv')]);
     buildMergedIndex();
   }
 
   function buildMergedIndex(){
     const map = new Map();
-    const add = (row, source, allowFallback = false) => {
+    const add = (row, source) => {
       const reg = normalizeReg(row['Register Number']);
-      const usernameKey = source === 'leetcode' ? row['LeetCode Username'] : row['GitHub Username'];
-      const key = reg || `${normalizeText(row['Student Name'])}|${normalizeText(usernameKey)}`;
+      const key = reg || `${normalizeText(row['Student Name'])}|${normalizeText(source==='leetcode'?row['LeetCode Username']:row['GitHub Username'])}`;
       if(!key) return;
       if(!map.has(key)) map.set(key, { lc:null, gh:null });
-      const platformKey = source === 'leetcode' ? 'lc' : 'gh';
-      // Live data is authoritative. Error CSV data only fills a missing platform record.
-      if(!map.get(key)[platformKey] || !allowFallback) map.get(key)[platformKey] = row;
+      map.get(key)[source === 'leetcode' ? 'lc' : 'gh'] = row;
     };
-
     state.leetcode.forEach(r=>add(r,'leetcode'));
     state.github.forEach(r=>add(r,'github'));
-
-    // If a student exists only in the current error CSV, keep the student searchable
-    // and show the platform error in the normal dashboard instead of hiding the student.
-    state.leetcodeErrors.forEach(r=>add({
-      'Register Number': r['Register Number'],
-      'Student Name': r['Student Name'],
-      Section: r.Section || r['Section'] || '',
-      'LeetCode Username': r['LeetCode Username'] || '',
-      'LeetCode Link': r['LeetCode Link'] || '',
-      Status: r['Error Message'] || r['Error Type'] || 'Error',
-      'Updated At': r['Checked At'] || ''
-    }, 'leetcode', true));
-
-    state.githubErrors.forEach(r=>add({
-      'Register Number': r['Register Number'],
-      'Student Name': r['Student Name'],
-      Section: r.Section || r['Section'] || '',
-      'GitHub Username': r['GitHub Username'] || '',
-      'GitHub Link': r['GitHub Link'] || '',
-      Status: r['Error Message'] || r['Error Type'] || 'Error',
-      'Updated At': r['Checked At'] || ''
-    }, 'github', true));
-
     state.merged = [...map.values()];
   }
 
@@ -318,566 +253,6 @@
   function getRegister(item){ return normalizeReg(item.lc?.['Register Number'] || item.gh?.['Register Number']); }
   function getSection(item){ return item.lc?.Section || item.gh?.Section || 'Section not available'; }
 
-  function profileRequestClient() { return supabaseClient(); }
-
-  function setProfileRequestMessage(text, error = false) {
-    if (els.requestMessage) {
-      els.requestMessage.textContent = text;
-      els.requestMessage.className = `form-message ${error ? 'error' : 'success'}`;
-    }
-  }
-
-  function setVerification(kind, ok, text, verifying = false) {
-    const target = kind === 'leetcode' ? els.requestLcStatus : els.requestGhStatus;
-    state.profileVerification[kind] = !!ok;
-    if (target) {
-      target.textContent = text;
-      target.className = `profile-check-status ${verifying ? 'verifying' : (ok ? 'valid' : (text === 'Not verified' || text === '⚪ Not verified' ? '' : 'invalid'))}`;
-    }
-    updateRequestSubmitState();
-  }
-
-  function updateRequestSubmitState() {
-    if (els.submitRequest) {
-      const canSubmit = state.profileVerification.leetcode && state.profileVerification.github;
-      els.submitRequest.disabled = !canSubmit;
-    }
-  }
-
-  function resetRequestVerification() {
-    state.profileVerification = { leetcode: false, github: false };
-    if (els.requestLcStatus) {
-      els.requestLcStatus.textContent = '⚪ Not verified';
-      els.requestLcStatus.className = 'profile-check-status';
-    }
-    if (els.requestGhStatus) {
-      els.requestGhStatus.textContent = '⚪ Not verified';
-      els.requestGhStatus.className = 'profile-check-status';
-    }
-    updateRequestSubmitState();
-  }
-
-  function openProfileRequestModal() {
-    if (els.profileRequestForm) els.profileRequestForm.reset();
-    if (els.requestYear) els.requestYear.value = '2';
-    if (els.requestDepartment) els.requestDepartment.value = 'ECE';
-    if (els.requestMessage) {
-      els.requestMessage.textContent = '';
-      els.requestMessage.className = 'form-message';
-    }
-    resetRequestVerification();
-    const modal = els.profileRequestModal || document.getElementById('homeProfileRequestModal');
-    if (modal) {
-      modal.hidden = false;
-      modal.removeAttribute('hidden');
-      modal.style.display = 'grid';
-      document.body.classList.add('modal-open');
-    }
-  }
-
-  function closeProfileRequestModal() {
-    const modal = els.profileRequestModal || document.getElementById('homeProfileRequestModal');
-    if (modal) {
-      modal.hidden = true;
-      modal.setAttribute('hidden', '');
-      modal.style.display = 'none';
-    }
-    document.body.classList.remove('modal-open');
-  }
-
-  window.openProfileRequestModal = openProfileRequestModal;
-  window.closeProfileRequestModal = closeProfileRequestModal;
-
-  async function invokeProfileRequest(body) {
-    const endpoint = `${window.APP_CONFIG?.SUPABASE_URL || ''}/functions/v1/profile-request`;
-    const headers = {
-      'Content-Type': 'application/json',
-      'apikey': window.APP_CONFIG?.SUPABASE_ANON_KEY || ''
-    };
-    const client = profileRequestClient();
-    const { data: { session } } = await client.auth.getSession();
-    if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-    const response = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.error || payload.message || `Request failed (${response.status})`);
-    return payload;
-  }
-
-  function normalizeProfileUrl(value, host) {
-    try {
-      const u = new URL(value);
-      if (u.protocol !== 'https:') return null;
-      if (u.hostname.toLowerCase() !== host) return null;
-      return u;
-    } catch {
-      return null;
-    }
-  }
-
-  function profileFormValues() {
-    return {
-      register_number: els.requestReg?.value.trim() || '',
-      student_name: els.requestName?.value.trim() || '',
-      year: Number(els.requestYear?.value) || 2,
-      department: els.requestDepartment?.value.trim() || 'ECE',
-      section: els.requestSection?.value || '',
-      leetcode_username: els.requestLcUser?.value.trim().replace(/\s+/g, '') || '',
-      leetcode_link: els.requestLcLink?.value.trim() || '',
-      github_username: els.requestGhUser?.value.trim().replace(/\s+/g, '') || '',
-      github_link: els.requestGhLink?.value.trim() || ''
-    };
-  }
-
-  async function verifyRequestedProfile(kind) {
-    const v = profileFormValues();
-    const user = kind === 'leetcode' ? v.leetcode_username : v.github_username;
-    const link = kind === 'leetcode' ? v.leetcode_link : v.github_link;
-    const host = kind === 'leetcode' ? 'leetcode.com' : 'github.com';
-    const url = normalizeProfileUrl(link, host);
-
-    if (!user || !url) {
-      setVerification(kind, false, '✕ Invalid profile');
-      setProfileRequestMessage(`Please enter a valid ${kind === 'leetcode' ? 'LeetCode' : 'GitHub'} username and https://${host}/ profile link.`, true);
-      return;
-    }
-
-    const button = kind === 'leetcode' ? els.verifyLc : els.verifyGh;
-    if (button) {
-      button.disabled = true;
-      button.textContent = 'Verifying...';
-    }
-    setVerification(kind, false, '⏳ Verifying...', true);
-
-    try {
-      const result = await invokeProfileRequest({
-        action: 'validate',
-        platform: kind,
-        username: user,
-        profile_link: link
-      });
-      setVerification(kind, true, '✓ Verified');
-      setProfileRequestMessage(`${kind === 'leetcode' ? 'LeetCode' : 'GitHub'} profile verified successfully.`);
-      if (kind === 'leetcode' && result.canonical_link && els.requestLcLink) {
-        els.requestLcLink.value = result.canonical_link;
-      }
-      if (kind === 'github' && result.canonical_link && els.requestGhLink) {
-        els.requestGhLink.value = result.canonical_link;
-      }
-    } catch (err) {
-      setVerification(kind, false, '✕ Invalid profile');
-      setProfileRequestMessage(err.message || `Could not verify ${kind} profile.`, true);
-    } finally {
-      if (button) {
-        button.disabled = false;
-        button.textContent = kind === 'leetcode' ? 'Verify LeetCode' : 'Verify GitHub';
-      }
-    }
-  }
-
-  async function submitProfileRequest(event) {
-    event.preventDefault();
-    const v = profileFormValues();
-    if (!v.register_number || !v.student_name || !v.section || !v.leetcode_username || !v.github_username) {
-      setProfileRequestMessage('Please complete all required fields.', true);
-      return;
-    }
-    if (!(state.profileVerification.leetcode && state.profileVerification.github)) {
-      setProfileRequestMessage('Please verify both LeetCode and GitHub profiles before submitting.', true);
-      return;
-    }
-    if (els.submitRequest) {
-      els.submitRequest.disabled = true;
-      els.submitRequest.textContent = 'Submitting...';
-    }
-    try {
-      const result = await invokeProfileRequest({ action: 'submit', request: v });
-      setProfileRequestMessage(result.message || 'Profile request submitted successfully.');
-      setVerification('leetcode', true, '✓ Verified');
-      setVerification('github', true, '✓ Verified');
-      setMessage('Profile request submitted successfully. It will be reviewed and approved by faculty.');
-      setTimeout(closeProfileRequestModal, 1200);
-    } catch (err) {
-      setProfileRequestMessage(err.message || 'Could not submit profile request.', true);
-      updateRequestSubmitState();
-    } finally {
-      if (els.submitRequest) {
-        els.submitRequest.textContent = 'Submit Request';
-      }
-    }
-  }
-
-  async function checkPublicProfileStatus(query) {
-    if (!els.profileStatus) return;
-    const q = String(query || '').trim();
-    if (!q) {
-      els.profileStatus.innerHTML = '';
-      return;
-    }
-
-    const localMatches = searchStudents(q);
-    if (localMatches.length > 0) {
-      const first = localMatches[0];
-      const name = getStudentName(first);
-      const reg = getRegister(first);
-      const sec = getSection(first);
-      els.profileStatus.innerHTML = `
-        <div class="profile-status-badge badge-active">
-          <span class="status-dot active"></span>
-          <div class="profile-status-text">
-            <strong>Profile Active</strong>
-            <small>${esc(reg || '')} · ${esc(name)} (${esc(sec)})</small>
-          </div>
-        </div>
-      `;
-      return;
-    }
-
-    els.profileStatus.innerHTML = `
-      <div class="profile-status-badge badge-pending">
-        <span class="status-dot pending"></span>
-        <div class="profile-status-text">
-          <span>Checking profile status…</span>
-        </div>
-      </div>
-    `;
-
-    try {
-      const result = await invokeProfileRequest({ action: 'status', query: q });
-      const status = String(result.status || 'NOT_FOUND').toUpperCase();
-
-      if (status === 'ACTIVE') {
-        els.profileStatus.innerHTML = `
-          <div class="profile-status-badge badge-active">
-            <span class="status-dot active"></span>
-            <div class="profile-status-text">
-              <strong>Profile Active</strong>
-              <small>${esc(result.register_number || '')} · ${esc(result.student_name || '')}</small>
-            </div>
-          </div>
-        `;
-      } else if (status === 'PENDING') {
-        els.profileStatus.innerHTML = `
-          <div class="profile-status-badge badge-pending">
-            <span class="status-dot pending"></span>
-            <div class="profile-status-text">
-              <strong>Request Pending</strong>
-              <small>Profile request is waiting for administrator approval.</small>
-            </div>
-          </div>
-        `;
-      } else if (status === 'REJECTED') {
-        els.profileStatus.innerHTML = `
-          <div class="profile-status-badge badge-rejected">
-            <span class="status-dot rejected"></span>
-            <div class="profile-status-text">
-              <strong>Request Rejected</strong>
-              <small>Please submit a new request with verified details.</small>
-            </div>
-          </div>
-        `;
-      } else {
-        els.profileStatus.innerHTML = `
-          <div class="profile-status-badge badge-not-found">
-            <span class="status-dot not-found"></span>
-            <div class="profile-status-text">
-              <strong>Profile Not Found</strong>
-              <small>Use "Request Profile" to onboard your details.</small>
-            </div>
-          </div>
-        `;
-      }
-    } catch (err) {
-      els.profileStatus.innerHTML = `
-        <div class="profile-status-badge badge-unavailable">
-          <span class="status-dot unavailable"></span>
-          <div class="profile-status-text">
-            <strong>Status Unavailable</strong>
-            <small>Unable to retrieve status at this moment.</small>
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  function openProfileRequestsModal() {
-    if (!isAdmin()) {
-      openAdminLogin();
-      return;
-    }
-    const modal = els.profileRequestsModal || document.getElementById('homeProfileRequestsModal');
-    if (modal) {
-      modal.hidden = false;
-      modal.removeAttribute('hidden');
-      modal.style.display = 'grid';
-      document.body.classList.add('modal-open');
-    }
-    loadProfileRequests().catch(err => setProfileRequestsMessage(err.message, true));
-  }
-
-  function closeProfileRequestsModal() {
-    const modal = els.profileRequestsModal || document.getElementById('homeProfileRequestsModal');
-    if (modal) {
-      modal.hidden = true;
-      modal.setAttribute('hidden', '');
-      modal.style.display = 'none';
-    }
-    document.body.classList.remove('modal-open');
-  }
-
-  window.openProfileRequestsModal = openProfileRequestsModal;
-  window.closeProfileRequestsModal = closeProfileRequestsModal;
-
-  function setProfileRequestsMessage(text, error = false) {
-    if (els.profileRequestsMessage) {
-      els.profileRequestsMessage.textContent = text;
-      els.profileRequestsMessage.className = `form-message ${error ? 'error' : 'success'}`;
-    }
-  }
-
-  function renderProfileRequests(rows) {
-    const list = rows || [];
-    if (els.profileRequestCount) els.profileRequestCount.textContent = `${list.length} pending`;
-    if (!els.profileRequestsContent) return;
-
-    if (!list.length) {
-      els.profileRequestsContent.innerHTML = '<div class="profile-requests-empty">No pending profile requests at this time.</div>';
-      return;
-    }
-
-    els.profileRequestsContent.innerHTML = `
-      <table class="profile-requests-table">
-        <thead>
-          <tr>
-            <th>Register Number</th>
-            <th>Name</th>
-            <th>Year</th>
-            <th>Section</th>
-            <th>LeetCode</th>
-            <th>GitHub</th>
-            <th>Requested At</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${list.map(r => `
-            <tr>
-              <td><strong>${esc(r.register_number)}</strong></td>
-              <td>${esc(r.student_name)}</td>
-              <td>Year ${esc(r.year)}</td>
-              <td>${esc(r.section)}</td>
-              <td>
-                <a class="table-link" href="${esc(r.leetcode_link)}" target="_blank" rel="noopener" title="${esc(r.leetcode_link)}">
-                  💻 ${esc(r.leetcode_username)}
-                </a>
-              </td>
-              <td>
-                <a class="table-link" href="${esc(r.github_link)}" target="_blank" rel="noopener" title="${esc(r.github_link)}">
-                  🐙 ${esc(r.github_username)}
-                </a>
-              </td>
-              <td>${esc(r.requested_at ? new Date(r.requested_at).toLocaleString() : '—')}</td>
-              <td><span class="profile-request-status-pill">🟡 Pending</span></td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    `;
-  }
-
-  async function loadProfileRequests() {
-    if (!isAdmin()) return;
-    const client = supabaseClient();
-    const { data, error } = await client
-      .from('profile_requests')
-      .select('*')
-      .eq('status', 'Pending')
-      .order('requested_at', { ascending: true });
-
-    if (error) throw error;
-    renderProfileRequests(data || []);
-  }
-
-  async function bulkAddProfileRequests() {
-    if (!isAdmin()) return;
-    const button = els.bulkAddRequestsBtn;
-    if (button) {
-      button.disabled = true;
-      button.textContent = 'Processing...';
-    }
-    setProfileRequestsMessage('');
-    try {
-      const client = supabaseClient();
-      const { data: rows, error } = await client
-        .from('profile_requests')
-        .select('*')
-        .eq('status', 'Pending')
-        .order('requested_at', { ascending: true });
-
-      if (error) throw error;
-      if (!rows?.length) {
-        setProfileRequestsMessage('There are no pending requests to process.');
-        return;
-      }
-
-      const confirmed = window.confirm(`Process ${rows.length} pending profile request(s)?\n\n• Existing register numbers will be UPDATED\n• New register numbers will be ADDED\n• Historical metrics and activity will remain intact`);
-      if (!confirmed) return;
-
-      let added = 0;
-      let updated = 0;
-      let failed = 0;
-      const failures = [];
-
-      for (const r of rows) {
-        try {
-          const regClean = String(r.register_number || '').trim();
-          if (!regClean) throw new Error('Missing register number.');
-
-          const { data: existing, error: findErr } = await client
-            .from('students')
-            .select('id, register_number')
-            .ilike('register_number', regClean)
-            .maybeSingle();
-
-          if (findErr) throw findErr;
-
-          const payload = {
-            register_number: regClean,
-            student_name: String(r.student_name || '').trim(),
-            year: Number(r.year) || 2,
-            department: String(r.department || 'ECE').trim(),
-            section: String(r.section || '').trim(),
-            leetcode_username: String(r.leetcode_username || '').trim(),
-            github_username: String(r.github_username || '').trim(),
-            leetcode_link: String(r.leetcode_link || '').trim(),
-            github_link: String(r.github_link || '').trim()
-          };
-
-          let result;
-          if (existing?.id) {
-            result = await client.from('students').update(payload).eq('id', existing.id);
-          } else {
-            result = await client.from('students').insert(payload);
-          }
-
-          if (result.error) throw result.error;
-
-          const { error: markErr } = await client
-            .from('profile_requests')
-            .update({
-              status: 'Approved',
-              processed_at: new Date().toISOString(),
-              processed_by: state.currentUser?.id || null,
-              admin_note: existing?.id ? 'Existing profile updated' : 'New profile added'
-            })
-            .eq('id', r.id);
-
-          if (markErr) throw markErr;
-          existing?.id ? updated++ : added++;
-        } catch (err) {
-          failed++;
-          failures.push(`${r.register_number}: ${err.message || 'Error'}`);
-        }
-      }
-
-      await loadProfileRequests();
-      const summaryMsg = `Bulk processing complete — Added: ${added} | Updated: ${updated} | Failed: ${failed}`;
-      setProfileRequestsMessage(failed ? `${summaryMsg}\nFailures: ${failures.slice(0, 3).join(' | ')}` : summaryMsg, failed > 0 && added === 0 && updated === 0);
-
-      if (added || updated) {
-        setMessage('Profile requests processed successfully. Tracker directory updated.');
-        loadData().catch(() => {});
-      }
-    } catch (err) {
-      setProfileRequestsMessage(err.message || 'Bulk processing failed.', true);
-    } finally {
-      if (button) {
-        button.disabled = false;
-        button.textContent = 'Bulk Add / Update All';
-      }
-    }
-  }
-
-  async function downloadProfileRequestsExcel() {
-    if (!isAdmin()) throw new Error('Admin authentication required.');
-    if (typeof XLSX === 'undefined') throw new Error('Excel export library is unavailable. Please check your network and reload.');
-    const client = supabaseClient();
-    const { data: rows, error } = await client
-      .from('profile_requests')
-      .select('*')
-      .order('requested_at', { ascending: false });
-
-    if (error) throw error;
-    if (!rows || !rows.length) throw new Error('No profile requests found to export.');
-
-    const sheetData = rows.map((r, i) => ({
-      '#': i + 1,
-      'Register Number': r.register_number || '',
-      'Student Name': r.student_name || '',
-      'Year': r.year ? `Year ${r.year}` : '',
-      'Department': r.department || 'ECE',
-      'Section': r.section || '',
-      'LeetCode Username': r.leetcode_username || '',
-      'LeetCode Link': r.leetcode_link || '',
-      'GitHub Username': r.github_username || '',
-      'GitHub Link': r.github_link || '',
-      'Status': r.status || 'Pending',
-      'Requested At': r.requested_at ? new Date(r.requested_at).toLocaleString() : '',
-      'Processed At': r.processed_at ? new Date(r.processed_at).toLocaleString() : '',
-      'Admin Note': r.admin_note || ''
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(sheetData);
-    ws['!cols'] = Object.keys(sheetData[0] || {}).map(k => ({ wch: Math.min(36, Math.max(12, k.length + 3)) }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Profile Requests');
-    XLSX.writeFile(wb, `CodeMetrix_Profile_Requests_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    setProfileRequestsMessage(`Downloaded ${rows.length} profile request(s) to Excel.`);
-  }
-
-  async function downloadProfileRequestsCsv() {
-    if (!isAdmin()) throw new Error('Admin authentication required.');
-    const client = supabaseClient();
-    const { data: rows, error } = await client
-      .from('profile_requests')
-      .select('*')
-      .order('requested_at', { ascending: false });
-
-    if (error) throw error;
-    if (!rows || !rows.length) throw new Error('No profile requests found to export.');
-
-    const headers = ['#', 'Register Number', 'Student Name', 'Year', 'Department', 'Section', 'LeetCode Username', 'LeetCode Link', 'GitHub Username', 'GitHub Link', 'Status', 'Requested At', 'Processed At', 'Admin Note'];
-    const csvRows = [
-      headers.join(','),
-      ...rows.map((r, i) => [
-        i + 1,
-        `"${String(r.register_number || '').replace(/"/g, '""')}"`,
-        `"${String(r.student_name || '').replace(/"/g, '""')}"`,
-        `"${r.year ? `Year ${r.year}` : ''}"`,
-        `"${String(r.department || 'ECE').replace(/"/g, '""')}"`,
-        `"${String(r.section || '').replace(/"/g, '""')}"`,
-        `"${String(r.leetcode_username || '').replace(/"/g, '""')}"`,
-        `"${String(r.leetcode_link || '').replace(/"/g, '""')}"`,
-        `"${String(r.github_username || '').replace(/"/g, '""')}"`,
-        `"${String(r.github_link || '').replace(/"/g, '""')}"`,
-        `"${String(r.status || 'Pending').replace(/"/g, '""')}"`,
-        `"${r.requested_at ? new Date(r.requested_at).toLocaleString().replace(/"/g, '""') : ''}"`,
-        `"${r.processed_at ? new Date(r.processed_at).toLocaleString().replace(/"/g, '""') : ''}"`,
-        `"${String(r.admin_note || '').replace(/"/g, '""')}"`
-      ].join(','))
-    ];
-
-    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `CodeMetrix_Profile_Requests_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-    setProfileRequestsMessage(`Downloaded ${rows.length} profile request(s) to CSV.`);
-  }
-
   function searchStudents(query){
     const q=normalizeText(query);
     if(!q) return [];
@@ -891,144 +266,330 @@
     }).sort((a,b)=>getStudentName(a).localeCompare(getStudentName(b)));
   }
 
-  function card(title, items, badgeHtml = ''){
-    return `
-      <article class="student-metric-card">
-        <div class="student-metric-card-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-          <span>${title}</span>
-          ${badgeHtml || ''}
-        </div>
-        ${items.map(([k, v, isHtml]) => `
-          <div class="student-metric-row">
-            <span>${esc(k)}</span>
-            <strong>${isHtml ? v : esc(v)}</strong>
-          </div>
-        `).join('')}
-      </article>
-    `;
-  }
+  // ============================================================
+  // ============================================================
+  // SUSPICIOUS SOLVING SCORE ENGINE (7 FACTORS, MEDIUM & HARD ONLY)
+  // Active starting from today (2026-09-13) with baseline at 0%
+  // ============================================================
+  function calculateSuspiciousScore(student, history = [], activity = []) {
+    if (!student) return { score: 0, label: 'Normal', emoji: '🟢', badgeClass: 'suspicious-normal', medHardSolved: 0, newMed: 0, newHard: 0, newSolved: 0, factors: [] };
 
-const getStatusInfo = (record, platformName) => {
-  const username = record ? String(record[`${platformName} Username`] || '').trim() : '';
-  const raw = record ? String(record.Status || '').trim() : '';
-  const lower = raw.toLowerCase();
+    const reg = String(student['Register Number'] || '').trim();
+    const solvedToday = num(student['Solved Today']);
+    const currentTotal = num(student['Problems Solved']);
+    const currentMedium = num(student.Medium);
+    const currentHard = num(student.Hard);
+    const currentSubmissions = num(student['Total Submissions']);
 
-  // 1. Missing profile / not added -> RED
-  if (!record || !username || username === '—' || username === '-' || lower.includes('not added') || lower === 'not added') {
-    return {
-      text: 'Not Added',
-      badgeClass: 'status-error',
-      badgeHtml: `<span class="status status-error" style="color:#f87171!important; background:rgba(239,68,68,0.22)!important; border:1px solid rgba(248,113,113,0.5)!important;">🔴 Not Added</span>`
-    };
-  }
+    const studentHistory = (history || []).filter(h => String(h['Register Number'] || '').trim() === reg);
+    let baselineMed = currentMedium;
+    let baselineHard = currentHard;
+    let baselineSolved = currentTotal;
+    let baselineSubmissions = currentSubmissions;
 
-  // 2. Error / Not found / Stale / Worker error -> RED
-  if (
-    lower.includes('not found') ||
-    lower.includes('could not resolve') ||
-    lower.includes('worker error') ||
-    lower.includes('stale') ||
-    lower.includes('error') ||
-    lower.includes('invalid') ||
-    lower.includes('fail')
-  ) {
-    let label = 'Error';
-    if (lower.includes('not found')) label = 'User Not Found';
-    else if (lower.includes('not added')) label = 'Not Added';
-    else if (lower.includes('worker error') || lower.includes('could not resolve')) label = 'Worker Error';
-    else if (lower.includes('stale')) label = 'Stale / Error';
-    return {
-      text: raw,
-      badgeClass: 'status-error',
-      badgeHtml: `<span class="status status-error" style="color:#f87171!important; background:rgba(239,68,68,0.22)!important; border:1px solid rgba(248,113,113,0.5)!important;" title="${esc(raw)}">🔴 ${esc(label)}</span>`
-    };
-  }
-
-  // 3. Pending -> YELLOW
-  if (lower === 'pending' || lower.includes('verifying') || lower.includes('queued')) {
-    return {
-      text: 'Pending',
-      badgeClass: 'status-pending',
-      badgeHtml: `<span class="status status-pending" style="color:#facc15!important; background:rgba(234,179,8,0.2)!important; border:1px solid rgba(250,204,21,0.5)!important;">🟡 Pending</span>`
-    };
-  }
-
-  // 4. Exact Success / Active -> GREEN
-  if (lower === 'success' || lower === 'active') {
-    return {
-      text: 'Success',
-      badgeClass: 'status-success',
-      badgeHtml: `<span class="status status-success" style="color:#4ade80!important; background:rgba(34,197,94,0.2)!important; border:1px solid rgba(74,222,128,0.5)!important;">🟢 Success</span>`
-    };
-  }
-
-  // 5. Fallback for any unknown status -> RED
-  return {
-    text: raw || 'Error',
-    badgeClass: 'status-error',
-    badgeHtml: `<span class="status status-error" style="color:#f87171!important; background:rgba(239,68,68,0.22)!important; border:1px solid rgba(248,113,113,0.5)!important;" title="${esc(raw)}">🔴 ${esc(raw || 'Error')}</span>`
-  };
-};
-
-  function openDashboard(item){
-    const gh = item.gh, lc = item.lc;
-    const studentName = getStudentName(item);
-    const regNum = getRegister(item) || '—';
-    const sectionName = getSection(item);
-
-    const lcStat = getStatusInfo(lc, 'LeetCode');
-    const ghStat = getStatusInfo(gh, 'GitHub');
-
-    els.subtitle.innerHTML = `Register Number: ${esc(regNum)} · ${esc(sectionName)} &nbsp;&nbsp;|&nbsp;&nbsp; 💻 ${lcStat.badgeHtml} &nbsp;&nbsp; 🐙 ${ghStat.badgeHtml}`;
-
-    let suspiciousText = '🟢 0% Normal';
-    if (lc) {
-      const score = Math.round(Number(lc['Suspicious Score']) || 0);
-      let label = lc['Suspicious Label'] || (score <= 20 ? 'Normal' : (score <= 40 ? 'Low' : (score <= 60 ? 'Suspicious' : (score <= 80 ? 'High' : 'Very High'))));
-      let emoji = score <= 20 ? '🟢' : (score <= 40 ? '🟡' : (score <= 60 ? '🟠' : (score <= 80 ? '🔴' : '🚨')));
-      suspiciousText = `${emoji} ${score}% ${label}`;
+    if (studentHistory.length > 0) {
+      const sorted = [...studentHistory].sort((a,b) => String(a.Date || '').localeCompare(String(b.Date || '')));
+      const beforeToday = sorted.filter(h => String(h.Date || '') < '2026-09-13');
+      if (beforeToday.length > 0) {
+        const rec = beforeToday[beforeToday.length - 1];
+        baselineMed = num(rec.Medium);
+        baselineHard = num(rec.Hard);
+        baselineSolved = num(rec['Problems Solved']);
+        baselineSubmissions = num(rec['Total Submissions']);
+      } else {
+        const rec = sorted[0];
+        baselineMed = num(rec.Medium);
+        baselineHard = num(rec.Hard);
+        baselineSolved = num(rec['Problems Solved']);
+        baselineSubmissions = num(rec['Total Submissions']);
+      }
     }
 
-    const lcItems = lc ? [
-      ['Status', lcStat.badgeHtml, true],
-      ['Problems Solved', num(lc['Problems Solved'])],
-      ['Suspicious Score', suspiciousText],
-      ['Solved Today', num(lc['Solved Today'])],
-      ['Last 7 Days', num(lc['Last 7 Days'])],
-      ['7D Submissions', num(lc['Last 7 Days Submissions'])],
-      ['Last 30 Days', num(lc['Last 30 Days'])],
-      ['Total Submissions', num(lc['Total Submissions'])],
-      ['Easy / Medium / Hard', `${num(lc.Easy)} / ${num(lc.Medium)} / ${num(lc.Hard)}`],
-      ['Current Streak', lc['Current Streak'] || '—'],
-      ['Last Problem', lc['Last Problem'] || '—'],
-      ['Last Solved', lc['Last Solved'] || '—']
-    ] : [['Status', lcStat.badgeHtml, true]];
+    let newMed = Math.max(0, currentMedium - baselineMed);
+    let newHard = Math.max(0, currentHard - baselineHard);
+    let newSolved = Math.max(0, currentTotal - baselineSolved);
+    let newSubmissions = Math.max(0, currentSubmissions - baselineSubmissions);
 
-    const ghItems = gh ? [
-      ['Status', ghStat.badgeHtml, true],
-      ['Deployments', num(gh['Detected Deployments'])],
-      ['Repositories', num(gh['Repositories Total'])],
-      ['Contributions · 30 Days', num(gh['Contributions 30 Days'])],
-      ['Commits · 30 Days', num(gh['Commits 30 Days'])],
-      ['Commits · 7 Days', num(gh['Commits 7 Days'])],
-      ['Repositories · 30 Days', num(gh['Repositories 30 Days'])],
-      ['Latest Repository', gh['Latest Repository'] || '—'],
-      ['Last Activity', gh['Last Activity'] || '—']
-    ] : [['Status', ghStat.badgeHtml, true]];
+    if (solvedToday === 0) {
+      newMed = 0;
+      newHard = 0;
+      newSolved = 0;
+    }
 
-    const links = [];
-    if (lc?.['LeetCode Link']) links.push(`<a class="action-button secondary" href="${esc(lc['LeetCode Link'])}" target="_blank" rel="noopener">Open LeetCode ↗</a>`);
-    if (gh?.['GitHub Link']) links.push(`<a class="action-button secondary" href="${esc(gh['GitHub Link'])}" target="_blank" rel="noopener">Open GitHub ↗</a>`);
+    const newMedHard = newMed + newHard;
+
+    if (newMedHard === 0 || solvedToday === 0) {
+      return {
+        score: 0,
+        label: 'Normal',
+        emoji: '🟢',
+        badgeClass: 'suspicious-normal',
+        medHardSolved: 0,
+        newMed: 0,
+        newHard: 0,
+        newSolved: 0,
+        factors: [
+          { name: "Short Solving Time (<5 min between M/H)", score: 0, weight: 15, detail: "Tracking active from today. No Medium/Hard problems solved yet in current tracker cycle." },
+          { name: "Continuous Medium/Hard Solving", score: 0, weight: 15, detail: "No Medium/Hard problem patterns detected in current tracking window." },
+          { name: "First-Attempt Acceptance on M/H", score: 0, weight: 15, detail: "Standard normal baseline (0% starting rate)." },
+          { name: "M/H Acceptance vs Submissions", score: 0, weight: 15, detail: "No anomaly in tracker runs starting today." },
+          { name: "Suspicious Speed Bursts", score: 0, weight: 15, detail: "No bursts detected starting from today." },
+          { name: "Sudden Personal Skill Jump", score: 0, weight: 15, detail: "No surge detected compared to starting baseline." },
+          { name: "Difficulty Jump Pattern", score: 0, weight: 10, detail: "Normal progression starting today." }
+        ]
+      };
+    }
+
+    // Factor 1: Short Solving Time (15%)
+    let f1 = (newMedHard >= 5 && solvedToday >= 8) ? Math.min(100, Math.round(newMedHard * 16)) : (newMedHard >= 3 ? Math.min(65, Math.round(newMedHard * 18)) : Math.min(20, Math.round(newMedHard * 8)));
+    let f1Detail = (newMedHard >= 5 && solvedToday >= 8) ? `High density burst: ${newMedHard} Medium/Hard problems solved today in rapid succession.` : `Normal human pacing on ${newMedHard} Medium/Hard problems today.`;
+
+    // Factor 2: Continuous Medium/Hard Solving (15%)
+    const medHardRatio = newSolved > 0 ? (newMedHard / newSolved) : 1;
+    let f2 = (newMedHard >= 6 && medHardRatio >= 0.9) ? Math.min(100, Math.round(medHardRatio * 90 + 10)) : (newMedHard >= 3 && medHardRatio >= 0.75 ? Math.min(70, Math.round(medHardRatio * 75)) : Math.max(0, Math.round(medHardRatio * 20)));
+    let f2Detail = `${(medHardRatio * 100).toFixed(0)}% of today's solved problems are Medium/Hard (${newMedHard}/${newSolved}).`;
+
+    // Factor 3: First-Attempt Acceptance Pattern on Medium/Hard (15%)
+    const subPerProb = (newSolved > 0 && newSubmissions > 0) ? (newSubmissions / newSolved) : 1;
+    let f3 = (newMedHard >= 4 && subPerProb <= 1.2) ? Math.min(100, Math.round((1.3 - subPerProb) * 200 + 40)) : (newMedHard >= 2 && subPerProb <= 1.4 ? Math.min(55, Math.round((1.6 - subPerProb) * 90)) : Math.min(15, Math.round(10 / Math.max(1, subPerProb))));
+    let f3Detail = `${subPerProb.toFixed(2)} submissions per problem on today's Medium/Hard solves.`;
+
+    // Factor 4: Medium/Hard Acceptance vs Submissions (15%)
+    const subRatio = newSubmissions > 0 ? (newMedHard / newSubmissions) : (newMedHard > 0 ? 0.8 : 0);
+    let f4 = (newMedHard >= 4 && subRatio >= 0.8) ? Math.min(100, Math.round(subRatio * 100)) : (newMedHard >= 2 && subRatio >= 0.5 ? Math.min(60, Math.round(subRatio * 80)) : Math.min(15, Math.round(subRatio * 20)));
+    let f4Detail = `Medium/Hard problems represent ${(subRatio * 100).toFixed(1)}% of new submissions today.`;
+
+    // Factor 5: Suspicious Speed Bursts (15%)
+    let f5 = (newMedHard >= 10) ? Math.min(100, Math.round(newMedHard * 9)) : (newMedHard >= 5 ? Math.min(75, Math.round(newMedHard * 14)) : (newMedHard >= 3 ? Math.min(45, Math.round(newMedHard * 12)) : Math.min(10, newMedHard * 5)));
+    let f5Detail = `Today's rate: ${newMedHard} Medium/Hard problems completed today.`;
+
+    // Factor 6: Sudden Personal Skill Jump (15%)
+    const pastDaysCount = Math.max(1, studentHistory.length);
+    const pastAvg = baselineSolved / Math.max(1, pastDaysCount);
+    const jumpToday = newSolved - pastAvg;
+    let f6 = (newMedHard >= 5 && jumpToday >= 4) ? Math.min(100, Math.round(jumpToday * 18)) : (newMedHard >= 3 && jumpToday >= 2 ? Math.min(60, Math.round(jumpToday * 20)) : Math.min(10, Math.max(0, Math.round(newMedHard * 3))));
+    let f6Detail = `Evaluated against personal baseline of ${pastAvg.toFixed(1)} solved/day (+${newSolved} today).`;
+
+    // Factor 7: Difficulty Jump Pattern (10%)
+    let f7 = (newHard >= 5 && newMed <= 1) ? Math.min(100, Math.round(newHard * 18)) : (newHard >= 3 && newMed === 0 ? Math.min(80, Math.round(newHard * 25)) : (newHard > 0 && newMed > 0 && (newHard / newMed) > 1.5 && newHard >= 3 ? Math.min(65, Math.round((newHard / newMed) * 35)) : 0));
+    let f7Detail = `Difficulty ratio today: ${newMed} Medium, ${newHard} Hard.`;
+
+    const weights = [0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.10];
+    const rawScore = f1 * 0.15 + f2 * 0.15 + f3 * 0.15 + f4 * 0.15 + f5 * 0.15 + f6 * 0.15 + f7 * 0.10;
+    const score = Math.max(0, Math.min(100, Math.round(rawScore)));
+
+    let label = 'Normal', emoji = '🟢', badgeClass = 'suspicious-normal';
+    if (score > 80) { label = 'Very High'; emoji = '🚨'; badgeClass = 'suspicious-very-high'; }
+    else if (score > 60) { label = 'High'; emoji = '🔴'; badgeClass = 'suspicious-high'; }
+    else if (score > 40) { label = 'Suspicious'; emoji = '🟠'; badgeClass = 'suspicious-suspicious'; }
+    else if (score > 20) { label = 'Low'; emoji = '🟡'; badgeClass = 'suspicious-low'; }
+
+    return {
+      score,
+      label,
+      emoji,
+      badgeClass,
+      medHardSolved: newMedHard,
+      newMed,
+      newHard,
+      newSolved,
+      factors: [
+        { name: "Short Solving Time (<5 min between M/H)", score: f1, weight: 15, detail: f1Detail },
+        { name: "Continuous Medium/Hard Solving", score: f2, weight: 15, detail: f2Detail },
+        { name: "First-Attempt Acceptance on M/H", score: f3, weight: 15, detail: f3Detail },
+        { name: "M/H Acceptance vs Submissions", score: f4, weight: 15, detail: f4Detail },
+        { name: "Suspicious Speed Bursts", score: f5, weight: 15, detail: f5Detail },
+        { name: "Sudden Personal Skill Jump", score: f6, weight: 15, detail: f6Detail },
+        { name: "Difficulty Jump Pattern", score: f7, weight: 10, detail: f7Detail }
+      ]
+    };
+  }
+
+  function openSuspiciousModal(student) {
+    const modal = document.getElementById("suspiciousAnalysisModal");
+    const content = document.getElementById("suspiciousModalContent");
+    if (!modal || !content) return;
+
+    const susp = calculateSuspiciousScore(student, state.history, state.dailyActivity);
+    const easy = num(student.Easy);
+    const medium = num(student.Medium);
+    const hard = num(student.Hard);
+    const totalSubmissions = num(student['Total Submissions']);
+
+    content.innerHTML = `
+      <div class="suspicious-hero">
+        <div class="suspicious-hero-header">
+          <span class="eyebrow" style="color:var(--accent);">INDIVIDUAL AUDIT</span>
+          <h2>${esc(student['Student Name'] || 'Student')}</h2>
+          <p class="suspicious-sub">
+            <strong>Register:</strong> ${esc(student['Register Number'] || '–')} &nbsp;·&nbsp;
+            <strong>Section:</strong> ${esc(student.Section || '–')} &nbsp;·&nbsp;
+            <strong>LeetCode:</strong> @${esc(student['LeetCode Username'] || '–')}
+          </p>
+        </div>
+
+        <div class="suspicious-score-display-card">
+          <div class="suspicious-score-circle" style="border-color:${susp.badgeClass === 'suspicious-normal' ? '#34d399' : (susp.badgeClass === 'suspicious-low' ? '#facc15' : (susp.badgeClass === 'suspicious-suspicious' ? '#fb923c' : (susp.badgeClass === 'suspicious-high' ? '#f87171' : '#fda4af')))};">
+            <div class="suspicious-score-value">${susp.score}%</div>
+            <div class="suspicious-score-label">${susp.emoji} ${susp.label}</div>
+          </div>
+          <div class="suspicious-score-desc-block">
+            <p class="suspicious-summary-text">
+              Overall Suspicious Solving Score is <strong>${susp.score}% (${susp.label})</strong> based on deep 7-factor pattern evaluation.
+            </p>
+            <div class="suspicious-scope-tag">
+              <span>⚡ <strong>Medium &amp; Hard Only:</strong> Easy problems are strictly excluded from calculation.</span>
+              <span>🔒 <strong>Independent Baseline:</strong> Student is analyzed purely against their own activity without peer comparison.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="suspicious-quick-metrics">
+        <div class="suspicious-metric-box">
+          <span>Medium (Today)</span>
+          <strong style="color:#facc15;">${susp.newMed || 0}</strong>
+        </div>
+        <div class="suspicious-metric-box">
+          <span>Hard (Today)</span>
+          <strong style="color:#f87171;">${susp.newHard || 0}</strong>
+        </div>
+        <div class="suspicious-metric-box">
+          <span>M+H Today (Active)</span>
+          <strong style="color:#38bdf8;">${susp.medHardSolved || 0}</strong>
+        </div>
+        <div class="suspicious-metric-box">
+          <span>Solved Today (Total)</span>
+          <strong>${num(student['Solved Today'])}</strong>
+        </div>
+        <div class="suspicious-metric-box">
+          <span>All-Time M+H</span>
+          <strong style="color:#94a3b8;">${medium + hard}</strong>
+        </div>
+        <div class="suspicious-metric-box ignored-metric">
+          <span>Easy (Ignored)</span>
+          <strong style="color:#64748b;">${easy}</strong>
+        </div>
+      </div>
+
+      <div class="suspicious-factors-container">
+        <div class="suspicious-factors-head">
+          <h3>7 Factor Analysis Breakdown</h3>
+          <p>Individual score for every factor evaluated specifically on Medium &amp; Hard problems.</p>
+        </div>
+
+        <div class="suspicious-factors-grid">
+          ${susp.factors.map((factor, idx) => {
+            const fClass = factor.score <= 20 ? '#34d399' : (factor.score <= 40 ? '#facc15' : (factor.score <= 60 ? '#fb923c' : '#f87171'));
+            return `
+              <div class="suspicious-factor-card">
+                <div class="factor-card-top">
+                  <div class="factor-title-group">
+                    <span class="factor-num-badge">Factor ${idx + 1}</span>
+                    <span class="factor-name">${esc(factor.name)}</span>
+                    <span class="factor-weight-tag">Weight: ${factor.weight}%</span>
+                  </div>
+                  <span class="factor-score-pill" style="color:${fClass};background:rgba(255,255,255,0.06);">
+                    ${factor.score}% Risk
+                  </span>
+                </div>
+                <div class="factor-progress-track">
+                  <div class="factor-progress-fill" style="width:${factor.score}%;background:${fClass};"></div>
+                </div>
+                <p class="factor-desc-text">${esc(factor.detail)}</p>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+
+      <div class="suspicious-formula-card">
+        <h4>📐 Calculation Formula &amp; Risk Thresholds</h4>
+        <div class="suspicious-formula-text">
+          <code>Final Score = (F1 × 0.15) + (F2 × 0.15) + (F3 × 0.15) + (F4 × 0.15) + (F5 × 0.15) + (F6 × 0.15) + (F7 × 0.10)</code>
+        </div>
+        <ul class="suspicious-scale-legend">
+          <li>🟢 <strong>0% – 20% Normal:</strong> Natural human solving pace with healthy trial-and-error.</li>
+          <li>🟡 <strong>21% – 40% Low:</strong> Minor speed or progression anomalies within acceptable range.</li>
+          <li>🟠 <strong>41% – 60% Suspicious:</strong> Unusually high Medium/Hard speed or abnormally high first-attempt acceptance.</li>
+          <li>🔴 <strong>61% – 80% High:</strong> Severe speed bursts, rapid Medium/Hard solving without realistic errors.</li>
+          <li>🚨 <strong>81% – 100% Very High:</strong> Extreme statistical anomalies strongly indicating copied solutions.</li>
+        </ul>
+      </div>
+    `;
+
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+  }
+
+  function closeSuspiciousModal() {
+    const modal = document.getElementById("suspiciousAnalysisModal");
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove("modal-open");
+  }
+
+  function card(title, items){
+    return `<article class="student-metric-card"><div class="student-metric-card-title">${title}</div>${items.map(([k,v])=>`<div class="student-metric-row"><span>${esc(k)}</span><strong>${k==='Suspicious Score'?v:esc(v)}</strong></div>`).join('')}</article>`;
+  }
+
+  function openDashboard(item){
+    const gh=item.gh, lc=item.lc;
+    els.title.textContent=getStudentName(item);
+    els.subtitle.textContent=`Register Number: ${getRegister(item)||'—'} · ${getSection(item)}`;
+
+    let suspiciousHtml = '🟢 0% Normal';
+    if (lc) {
+      const susp = calculateSuspiciousScore(lc, state.history, state.dailyActivity);
+      suspiciousHtml = `<button type="button" class="suspicious-badge ${susp.badgeClass}" id="homeStudentSuspiciousBadge" style="cursor:pointer;" title="${isAdmin() ? 'Click for full 7-Factor Analysis (Admin)' : 'Suspicious Solving Score: ' + susp.score + '%'}">${susp.emoji} ${susp.score}% ${susp.label}</button>`;
+    }
+
+    const lcItems=lc ? [
+      ['Problems Solved',num(lc['Problems Solved'])],
+      ['Suspicious Score', suspiciousHtml],
+      ['Solved Today',num(lc['Solved Today'])],
+      ['Last 7 Days',num(lc['Last 7 Days'])],
+      ['7D Submissions',num(lc['Last 7 Days Submissions'])],
+      ['Last 30 Days',num(lc['Last 30 Days'])],
+      ['Total Submissions',num(lc['Total Submissions'])],
+      ['Easy / Medium / Hard',`${num(lc.Easy)} / ${num(lc.Medium)} / ${num(lc.Hard)}`],
+      ['Current Streak',lc['Current Streak']||'—'],
+      ['Last Problem',lc['Last Problem']||'—'],
+      ['Last Solved',lc['Last Solved']||'—']
+    ] : [['Status','No LeetCode record']];
+
+    const ghItems=gh ? [
+      ['Deployments',num(gh['Detected Deployments'])],
+      ['Repositories',num(gh['Repositories Total'])],
+      ['Contributions · 30 Days',num(gh['Contributions 30 Days'])],
+      ['Commits · 30 Days',num(gh['Commits 30 Days'])],
+      ['Commits · 7 Days',num(gh['Commits 7 Days'])],
+      ['Repositories · 30 Days',num(gh['Repositories 30 Days'])],
+      ['Latest Repository',gh['Latest Repository']||'—'],
+      ['Last Activity',gh['Last Activity']||'—']
+    ] : [['Status','No GitHub record']];
+
+    const links=[];
+    if(lc?.['LeetCode Link']) links.push(`<a class="action-button secondary" href="${esc(lc['LeetCode Link'])}" target="_blank" rel="noopener">Open LeetCode ↗</a>`);
+    if(gh?.['GitHub Link']) links.push(`<a class="action-button secondary" href="${esc(gh['GitHub Link'])}" target="_blank" rel="noopener">Open GitHub ↗</a>`);
     links.push(`<button class="action-button primary" id="downloadStudentReportBtn" type="button">📥 Download Report (Excel)</button>`);
 
-    els.content.innerHTML = `<div class="student-dashboard-grid">${card('💻 LeetCode', lcItems, lcStat.badgeHtml)}${card('🐙 GitHub', ghItems, ghStat.badgeHtml)}</div><div class="student-dashboard-links">${links.join('')}</div>`;
+    els.content.innerHTML=`<div class="student-dashboard-grid">${card('💻 LeetCode',lcItems)}${card('🐙 GitHub',ghItems)}</div><div class="student-dashboard-links">${links.join('')}</div>`;
 
     document.getElementById('downloadStudentReportBtn')?.addEventListener('click', () => {
       try { downloadSingleStudentReport(item); } catch(e){ setMessage(e.message, true); }
     });
 
-    els.modal.hidden = false;
-    document.body.classList.add('modal-open');
+    document.getElementById('homeStudentSuspiciousBadge')?.addEventListener('click', () => {
+      if (!lc) return;
+      if (!isAdmin()) {
+        alert('🔒 Administrator access required to view detailed 7-factor Suspicious Solving Analysis.');
+        return;
+      }
+      openSuspiciousModal(lc);
+    });
+
+    els.modal.hidden=false; document.body.classList.add('modal-open');
   }
 
   function showSearchResults(results, query){
@@ -1036,22 +597,11 @@ const getStatusInfo = (record, platformName) => {
     els.title.textContent=`Search Results (${results.length})`;
     els.subtitle.textContent=`Matches for “${query}”`;
     els.content.innerHTML=`<div class="universal-search-results">${results.map((item,i)=>{
-      const lcStat = getStatusInfo(item.lc, 'LeetCode');
-      const ghStat = getStatusInfo(item.gh, 'GitHub');
-      return `<button type="button" class="universal-search-result" data-result-index="${i}">
-        <span class="universal-search-result-main">
-          <strong>${esc(getStudentName(item))}</strong>
-          <small>${esc(getRegister(item)||'No register number')} · ${esc(getSection(item))}</small>
-        </span>
-        <span class="universal-search-result-meta" style="display:flex; gap:6px; align-items:center;">
-          <span>💻 ${lcStat.badgeHtml}</span>
-          <span>🐙 ${ghStat.badgeHtml}</span>
-        </span>
-      </button>`;
+      const lc=item.lc, gh=item.gh;
+      return `<button type="button" class="universal-search-result" data-result-index="${i}"><span class="universal-search-result-main"><strong>${esc(getStudentName(item))}</strong><small>${esc(getRegister(item)||'No register number')} · ${esc(getSection(item))}</small></span><span class="universal-search-result-meta"><span>${lc?'💻 LeetCode':''}</span><span>${gh?'🐙 GitHub':''}</span></span></button>`;
     }).join('')}</div>`;
     els.content.querySelectorAll('[data-result-index]').forEach(btn=>btn.addEventListener('click',()=>openDashboard(results[Number(btn.dataset.resultIndex)])));
-    els.modal.hidden=false;
-    document.body.classList.add('modal-open');
+    els.modal.hidden=false; document.body.classList.add('modal-open');
   }
 
   function closeDashboard(){els.modal.hidden=true;document.body.classList.remove('modal-open');}
@@ -1091,16 +641,100 @@ const getStatusInfo = (record, platformName) => {
     const live=state.leetcode.length?state.leetcode:await loadFile('LiveData.csv');
     const matches=r=>section==='OVERALL'||normalizeText(r.Section)===normalizeText(section);
     const students=live.filter(matches);
+    const regSet = new Set(students.map(s => normalizeReg(s['Register Number'])).filter(Boolean));
+
     const dailyMap=new Map();
-    daily.filter(r=>r.Date>=from&&r.Date<=to&&matches(r)).forEach(r=>{const reg=normalizeReg(r['Register Number']);if(!reg)return;const x=dailyMap.get(reg)||{solved:0,days:new Set()};x.solved+=num(r['Solved That Day']);if(num(r['Solved That Day'])>0)x.days.add(r.Date);dailyMap.set(reg,x);});
+    const dailyRows=[];
+    daily.filter(r=>r.Date>=from&&r.Date<=to).forEach(r=>{
+      const reg=normalizeReg(r['Register Number']);
+      if(!reg || !regSet.has(reg)) return;
+      const x=dailyMap.get(reg)||{solved:0,days:new Set()};
+      const solved=num(r['Solved That Day']);
+      x.solved+=solved;
+      if(solved>0) x.days.add(r.Date);
+      dailyMap.set(reg,x);
+      dailyRows.push({
+        'Date': r.Date,
+        'Register Number': reg,
+        'Student Name': r['Student Name']||'',
+        'Section': r.Section||'',
+        'Solved That Day': solved,
+        'Source': r.Source||'DAILY_ACTIVITY'
+      });
+    });
+
     const histMap=new Map();
-    history.filter(r=>r.Date>=from&&r.Date<=to&&matches(r)).forEach(r=>{const reg=normalizeReg(r['Register Number']);if(!reg)return;const old=histMap.get(reg);if(!old || `${r.Date}|${r['Updated At']||''}` > (old._key || '')){r._key=`${r.Date}|${r['Updated At']||''}`;histMap.set(reg,r);}});
-    const rows=students.map(r=>{const reg=normalizeReg(r['Register Number']),d=dailyMap.get(reg)||{solved:0,days:new Set()},h=histMap.get(reg)||r;return {'Register Number':reg,'Student Name':r['Student Name']||h['Student Name']||'','Section':r.Section||h.Section||'','Problems Solved in Period':d.solved,'Active Days':d.days.size,'Problems Solved (Cumulative)':num(h['Problems Solved']||r['Problems Solved']),'Medium (Cumulative)':num(h.Medium||r.Medium),'Hard (Cumulative)':num(h.Hard||r.Hard),'Total Submissions (Cumulative)':num(h['Total Submissions']||r['Total Submissions']),'Last Problem':h['Last Problem']||r['Last Problem']||'','Last Solved':h['Last Solved']||r['Last Solved']||'','Status':h.Status||r.Status||''};}).sort((a,b)=>a['Register Number'].localeCompare(b['Register Number'],undefined,{numeric:true}));
-    return {from,to,section,scope:section==='OVERALL'?'ECE Overall':section,students:rows};
+    history.filter(r=>r.Date<=to).forEach(r=>{
+      const reg=normalizeReg(r['Register Number']);
+      if(!reg || !regSet.has(reg)) return;
+      const old=histMap.get(reg);
+      if(!old || `${r.Date}|${r['Updated At']||''}` > (old._key || '')){
+        r._key=`${r.Date}|${r['Updated At']||''}`;
+        histMap.set(reg,r);
+      }
+    });
+
+    const rows=students.map(r=>{
+      const reg=normalizeReg(r['Register Number']);
+      const d=dailyMap.get(reg)||{solved:0,days:new Set()};
+      const h=histMap.get(reg)||r;
+      let solvedInPeriod = d.solved;
+      if (solvedInPeriod === 0 && from === to) {
+        solvedInPeriod = num(h['Solved Today']);
+      }
+      return {
+        'Register Number':reg,
+        'Student Name':r['Student Name']||h['Student Name']||'',
+        'Section':r.Section||h.Section||'',
+        'LeetCode Username':r['LeetCode Username']||h['LeetCode Username']||'',
+        'Problems Solved in Period':solvedInPeriod,
+        'Active Days':d.days.size || (solvedInPeriod > 0 ? 1 : 0),
+        'Problems Solved (Cumulative)':num(h['Problems Solved']||r['Problems Solved']),
+        'Medium (Cumulative)':num(h.Medium||r.Medium),
+        'Hard (Cumulative)':num(h.Hard||r.Hard),
+        'Total Submissions (Cumulative)':num(h['Total Submissions']||r['Total Submissions']),
+        'Solved on Last Snapshot':num(h['Solved Today']||r['Solved Today']),
+        'Last Problem':h['Last Problem']||r['Last Problem']||'',
+        'Last Solved':h['Last Solved']||r['Last Solved']||'',
+        'Status':h.Status||r.Status||''
+      };
+    }).sort((a,b)=>a['Register Number'].localeCompare(b['Register Number'],undefined,{numeric:true}));
+    return {from,to,section,scope:section==='OVERALL'?'ECE Overall':section,students:rows,dailyRows};
   }
-  async function downloadHomeDateReportCsv(){const r=await prepareHomeDateReport();const cols=Object.keys(r.students[0]||{'Register Number':'','Student Name':'','Section':'','Problems Solved in Period':0,'Active Days':0});const lines=[['ECE CodeMetrix Date Report'],['Scope',r.scope],['From',r.from],['To',r.to],[],cols,...r.students.map(x=>cols.map(c=>x[c]??''))];downloadTextFile(`CodeMetrix_Date_Report_${r.from}_to_${r.to}.csv`,'\uFEFF'+lines.map(x=>x.map(csvEscape).join(',')).join('\r\n'),'text/csv;charset=utf-8');closeHomeDateReport();setMessage('Date report downloaded successfully.');}
-  async function downloadHomeDateReportExcel(){const r=await prepareHomeDateReport();if(typeof XLSX==='undefined')throw new Error('Excel library is unavailable. Please reload the page.');const ws=XLSX.utils.json_to_sheet(r.students);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,(r.section==='OVERALL'?'Overall':r.section).slice(0,31));XLSX.writeFile(wb,`CodeMetrix_Date_Report_${r.from}_to_${r.to}.xlsx`);closeHomeDateReport();setMessage('Excel date report downloaded successfully.');}
-  async function downloadHomeDateReportPdf(){const r=await prepareHomeDateReport();const w=window.open('','_blank');if(!w)throw new Error('Please allow pop-ups to generate the PDF report.');const cols=['Register Number','Student Name','Section','Problems Solved in Period','Active Days','Problems Solved (Cumulative)','Medium (Cumulative)','Hard (Cumulative)','Total Submissions (Cumulative)','Last Problem','Last Solved','Status'];const rows=r.students.map(x=>'<tr>'+cols.map(c=>'<td>'+esc(x[c])+'</td>').join('')+'</tr>').join('');w.document.write('<!doctype html><html><head><title>CodeMetrix Date Report</title><style>body{font-family:Arial;padding:24px;color:#111}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #aaa;padding:5px;text-align:left}th{background:#eee}@media print{button{display:none}}</style></head><body><h1>ECE CodeMetrix Date Report</h1><p><b>'+esc(r.scope)+'</b> · '+esc(r.from)+' to '+esc(r.to)+'</p><table><thead><tr>'+cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table><p><button onclick="window.print()">Print / Save as PDF</button></p></body></html>');w.document.close();closeHomeDateReport();setMessage('PDF report opened. Choose Save as PDF.');}
+
+  async function downloadHomeDateReportCsv(){
+    const r=await prepareHomeDateReport();
+    const cols=Object.keys(r.students[0]||{'Register Number':'','Student Name':'','Section':'','Problems Solved in Period':0,'Active Days':0});
+    const lines=[['ECE CodeMetrix Date Report'],['Scope',r.scope],['From',r.from],['To',r.to],[],cols,...r.students.map(x=>cols.map(c=>x[c]??''))];
+    downloadTextFile(`ECE_LeetCode_Report_${r.from}_to_${r.to}.csv`,'\uFEFF'+lines.map(x=>x.map(csvEscape).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+    closeHomeDateReport();
+    setMessage('Date report downloaded successfully.');
+  }
+
+  async function downloadHomeDateReportExcel(){
+    const r=await prepareHomeDateReport();
+    if(typeof XLSX==='undefined')throw new Error('Excel library is unavailable. Please reload the page.');
+    const wb=XLSX.utils.book_new();
+    const wsSummary=XLSX.utils.json_to_sheet(r.students);
+    const wsDaily=XLSX.utils.json_to_sheet(r.dailyRows||[]);
+    XLSX.utils.book_append_sheet(wb,wsSummary,"Summary");
+    XLSX.utils.book_append_sheet(wb,wsDaily,"Daily Activity");
+    XLSX.writeFile(wb,`ECE_LeetCode_Report_${r.from}_to_${r.to}.xlsx`);
+    closeHomeDateReport();
+    setMessage('Excel date report downloaded successfully.');
+  }
+
+  async function downloadHomeDateReportPdf(){
+    const r=await prepareHomeDateReport();
+    const w=window.open('','_blank');
+    if(!w)throw new Error('Please allow pop-ups to generate the PDF report.');
+    const cols=['Register Number','Student Name','Section','Problems Solved in Period','Active Days','Problems Solved (Cumulative)','Medium (Cumulative)','Hard (Cumulative)','Total Submissions (Cumulative)','Last Problem','Last Solved','Status'];
+    const rows=r.students.map(x=>'<tr>'+cols.map(c=>'<td>'+esc(x[c])+'</td>').join('')+'</tr>').join('');
+    w.document.write('<!doctype html><html><head><title>CodeMetrix Date Report</title><style>body{font-family:Arial;padding:24px;color:#111}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #aaa;padding:5px;text-align:left}th{background:#eee}@media print{button{display:none}}</style></head><body><h1>ECE CodeMetrix Date Report</h1><p><b>'+esc(r.scope)+'</b> · '+esc(r.from)+' to '+esc(r.to)+'</p><table><thead><tr>'+cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table><p><button onclick="window.print()">Print / Save as PDF</button></p></body></html>');
+    w.document.close();
+    closeHomeDateReport();
+    setMessage('PDF report opened. Choose Save as PDF.');
+  }
 
   // ============================================================
   // ADMIN AUTHENTICATION
@@ -1117,7 +751,6 @@ const getStatusInfo = (record, platformName) => {
     if (els.adminLoginBtn) els.adminLoginBtn.hidden = isAdmin();
     if (els.sectionAdminLoginBtn) els.sectionAdminLoginBtn.hidden = isAdmin();
     if (els.adminSessionCard) els.adminSessionCard.hidden = !isAdmin();
-    if (els.profileRequestsBtn) els.profileRequestsBtn.hidden = !isAdmin();
 
     if (isAdmin()) {
       if (els.sessionEmail) els.sessionEmail.textContent = state.currentUser?.email || 'Administrator';
@@ -1251,7 +884,7 @@ const getStatusInfo = (record, platformName) => {
     }
   }
 
-  async function triggerBackgroundSync(action = 'sync_all') {
+  async function triggerBackgroundSync() {
     try {
       const client = supabaseClient();
       const { data: { session } } = await client.auth.getSession();
@@ -1264,7 +897,7 @@ const getStatusInfo = (record, platformName) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ action })
+        body: JSON.stringify({ action: 'sync_all' })
       });
     } catch (err) {
       console.warn('Background sync trigger notice:', err);
@@ -1386,20 +1019,20 @@ const getStatusInfo = (record, platformName) => {
   // ============================================================
   // EVENT LISTENERS
   // ============================================================
-  const attachDownload = (id, fn) => {
-    document.getElementById(id)?.addEventListener('click', async () => {
-      try { await ensureData(); fn(); } catch(e) { setMessage(e.message, true); }
-    });
-  };
+  els.leetTop?.addEventListener('click', async () => {
+    try { await ensureData(); downloadTop50(state.leetcode, 'leetcode'); } catch (e) { setMessage(e.message, true); }
+  });
+  els.gitTop?.addEventListener('click', async () => {
+    try { await ensureData(); downloadTop50(state.github, 'github'); } catch (e) { setMessage(e.message, true); }
+  });
+  els.facultyLeetCode?.addEventListener('click', async () => {
+    try { await downloadAllFacultyLeetCodeReport(); } catch (e) { setMessage(e.message, true); }
+  });
 
-  els.leetTop?.addEventListener('click',async()=>{try{await ensureData();downloadTop50(state.leetcode,'leetcode');}catch(e){setMessage(e.message,true);}});
-  els.gitTop?.addEventListener('click',async()=>{try{await ensureData();downloadTop50(state.github,'github');}catch(e){setMessage(e.message,true);}});
-  els.facultyLeetCode?.addEventListener('click',async()=>{try{await downloadAllFacultyLeetCodeReport();}catch(e){setMessage(e.message,true);}});
-
-  attachDownload('bannerTop50LeetCode', () => downloadTop50(state.leetcode, 'leetcode'));
-  attachDownload('bannerTop50GitHub', () => downloadTop50(state.github, 'github'));
-  attachDownload('bannerAllFacultyLeetCode', () => downloadAllFacultyLeetCodeReport());
-  attachDownload('bannerAllStudentsReport', () => downloadAllStudentsMerged());
+  document.getElementById("closeSuspiciousModal")?.addEventListener("click", closeSuspiciousModal);
+  document.querySelectorAll("[data-close-suspicious-modal]").forEach((element) => {
+    element.addEventListener("click", closeSuspiciousModal);
+  });
 
   els.form?.addEventListener('submit',async e=>{
     e.preventDefault();
@@ -1419,8 +1052,8 @@ const getStatusInfo = (record, platformName) => {
       if(!els.modal?.hidden) closeDashboard();
       if(!els.adminLoginModal?.hidden) closeAdminLoginModal();
       if(!els.unifiedModal?.hidden) closeAddProfileModal();
-      if(!els.profileRequestModal?.hidden) closeProfileRequestModal();
-      if(!els.profileRequestsModal?.hidden) closeProfileRequestsModal();
+      closeSuspiciousModal();
+      closeHomeDateReport();
     }
   });
   els.back?.addEventListener('click',()=>{if(history.length>1)history.back();else location.href='leetcode.html';});
@@ -1459,43 +1092,7 @@ const getStatusInfo = (record, platformName) => {
   });
   els.unifiedForm?.addEventListener('submit', handleSaveUnifiedProfile);
 
-  // Student profile request events
-  els.requestProfileBtn?.addEventListener('click', openProfileRequestModal);
-  els.closeProfileRequest?.addEventListener('click', closeProfileRequestModal);
-  els.profileRequestModal?.addEventListener('click', e => { if(e.target.matches('[data-close-profile-request]')) closeProfileRequestModal(); });
-  els.verifyLc?.addEventListener('click', () => verifyRequestedProfile('leetcode'));
-  els.verifyGh?.addEventListener('click', () => verifyRequestedProfile('github'));
-  ['requestReg','requestName','requestYear','requestDepartment','requestSection','requestLcUser','requestLcLink','requestGhUser','requestGhLink'].forEach(k => els[k]?.addEventListener('input', () => { if(k.includes('Lc')) setVerification('leetcode',false,'Not verified'); if(k.includes('Gh')) setVerification('github',false,'Not verified'); }));
-  els.profileRequestForm?.addEventListener('submit', submitProfileRequest);
-  els.profileRequestsBtn?.addEventListener('click', openProfileRequestsModal);
-  els.closeProfileRequests?.addEventListener('click', closeProfileRequestsModal);
-  els.bulkAddRequestsBtn?.addEventListener('click', bulkAddProfileRequests);
-  els.downloadProfileRequestsExcel?.addEventListener('click', async () => {
-    try { await downloadProfileRequestsExcel(); } catch (e) { setProfileRequestsMessage(e.message, true); }
-  });
-  els.downloadProfileRequestsCsv?.addEventListener('click', async () => {
-    try { await downloadProfileRequestsCsv(); } catch (e) { setProfileRequestsMessage(e.message, true); }
-  });
-
   // Initialize
   loadData().catch(()=>{});
   restoreAdminSession().catch(()=>{});
-
-  // URL Hash Trigger (e.g. #request-profile)
-  function checkUrlHash() {
-    const h = (typeof window !== 'undefined' ? window.location?.hash || '' : '').toLowerCase();
-    if (h === '#request-profile' || h === '#request' || h === '#profile-request' || h === '#requestprofile') {
-      setTimeout(() => openProfileRequestModal(), 50);
-    }
-  }
-  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
-    window.addEventListener('hashchange', checkUrlHash);
-  }
-  if (typeof document !== 'undefined') {
-    if (document.readyState === 'loading' && typeof document.addEventListener === 'function') {
-      document.addEventListener('DOMContentLoaded', checkUrlHash);
-    } else {
-      checkUrlHash();
-    }
-  }
 })();

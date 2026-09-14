@@ -3626,55 +3626,6 @@ tableBody.addEventListener("click", (event) => {
   openStudentProfile(profileButton.dataset.profileRegister);
 });
 
-let currentActiveGithubStudent = null;
-
-const origOpenGithubStudentProfile = openStudentProfile;
-openStudentProfile = async function(registerNumber) {
-  const s = allStudents.find(
-    (item) => String(item["Register Number"]) === String(registerNumber)
-  );
-  if (s) currentActiveGithubStudent = s;
-  return origOpenGithubStudentProfile(registerNumber);
-};
-
-function downloadCurrentStudentGithubReport() {
-  if (!currentActiveGithubStudent) return;
-  const s = currentActiveGithubStudent;
-  if (typeof XLSX === 'undefined') {
-    alert('Excel export library is unavailable. Please check your connection.');
-    return;
-  }
-  const summary = [
-    ['CodeMetrix Student GitHub Performance Report'],
-    ['Student Name', s['Student Name'] || ''],
-    ['Register Number', s['Register Number'] || ''],
-    ['Section', s.Section || 'ECE'],
-    ['Generated On', new Date().toLocaleString()],
-    [],
-    ['Metric', 'Value'],
-    ['GitHub Username', s['GitHub Username'] || '—'],
-    ['Section Rank', s['Section Rank'] || '—'],
-    ['Overall Rank', s['Overall Rank'] || '—'],
-    ['Repositories Total', Number(s['Repositories Total']) || 0],
-    ['Detected Deployments', Number(s['Detected Deployments']) || 0],
-    ['Contributions Today', Number(s['Contributions Today']) || 0],
-    ['Contributions 7 Days', Number(s['Contributions 7 Days']) || 0],
-    ['Contributions 14 Days', Number(s['Contributions 14 Days']) || 0],
-    ['Contributions 30 Days', Number(s['Contributions 30 Days']) || 0],
-    ['Commits 7 Days', Number(s['Commits 7 Days']) || 0],
-    ['Commits 30 Days', Number(s['Commits 30 Days']) || 0],
-    ['Latest Repository', s['Latest Repository'] || '—'],
-    ['Status', s.Status || '—']
-  ];
-  const ws = XLSX.utils.aoa_to_sheet(summary);
-  ws['!cols'] = [{ wch: 30 }, { wch: 36 }];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'GitHub Report');
-  XLSX.writeFile(wb, `Student_${s['Register Number'] || s['Student Name'].replace(/\s+/g,'_')}_GitHub_Report.xlsx`);
-}
-
-document.getElementById('downloadStudentProfileExcelBtn')?.addEventListener('click', downloadCurrentStudentGithubReport);
-
 closeStudentProfileButton.addEventListener("click", closeStudentProfile);
 
 studentProfileModal
