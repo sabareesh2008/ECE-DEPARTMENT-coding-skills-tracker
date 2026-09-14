@@ -1,0 +1,4 @@
+# CodeMetrix Supabase Edge Function settings
+# profile-request intentionally accepts public validation/status/request submissions.
+[functions.profile-request]
+verify_jwt = false
