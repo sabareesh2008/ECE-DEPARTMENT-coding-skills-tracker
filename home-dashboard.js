@@ -328,16 +328,27 @@
       els.requestMessage.className = 'form-message';
     }
     resetRequestVerification();
-    if (els.profileRequestModal) {
-      els.profileRequestModal.hidden = false;
+    const modal = els.profileRequestModal || document.getElementById('homeProfileRequestModal');
+    if (modal) {
+      modal.hidden = false;
+      modal.removeAttribute('hidden');
+      modal.style.display = 'grid';
       document.body.classList.add('modal-open');
     }
   }
 
   function closeProfileRequestModal() {
-    if (els.profileRequestModal) els.profileRequestModal.hidden = true;
+    const modal = els.profileRequestModal || document.getElementById('homeProfileRequestModal');
+    if (modal) {
+      modal.hidden = true;
+      modal.setAttribute('hidden', '');
+      modal.style.display = 'none';
+    }
     document.body.classList.remove('modal-open');
   }
+
+  window.openProfileRequestModal = openProfileRequestModal;
+  window.closeProfileRequestModal = closeProfileRequestModal;
 
   async function invokeProfileRequest(body) {
     const endpoint = `${window.APP_CONFIG?.SUPABASE_URL || ''}/functions/v1/profile-request`;
@@ -555,17 +566,28 @@
       openAdminLogin();
       return;
     }
-    if (els.profileRequestsModal) {
-      els.profileRequestsModal.hidden = false;
+    const modal = els.profileRequestsModal || document.getElementById('homeProfileRequestsModal');
+    if (modal) {
+      modal.hidden = false;
+      modal.removeAttribute('hidden');
+      modal.style.display = 'grid';
       document.body.classList.add('modal-open');
     }
     loadProfileRequests().catch(err => setProfileRequestsMessage(err.message, true));
   }
 
   function closeProfileRequestsModal() {
-    if (els.profileRequestsModal) els.profileRequestsModal.hidden = true;
+    const modal = els.profileRequestsModal || document.getElementById('homeProfileRequestsModal');
+    if (modal) {
+      modal.hidden = true;
+      modal.setAttribute('hidden', '');
+      modal.style.display = 'none';
+    }
     document.body.classList.remove('modal-open');
   }
+
+  window.openProfileRequestsModal = openProfileRequestsModal;
+  window.closeProfileRequestsModal = closeProfileRequestsModal;
 
   function setProfileRequestsMessage(text, error = false) {
     if (els.profileRequestsMessage) {
@@ -1240,4 +1262,22 @@
   // Initialize
   loadData().catch(()=>{});
   restoreAdminSession().catch(()=>{});
+
+  // URL Hash Trigger (e.g. #request-profile)
+  function checkUrlHash() {
+    const h = (typeof window !== 'undefined' ? window.location?.hash || '' : '').toLowerCase();
+    if (h === '#request-profile' || h === '#request' || h === '#profile-request' || h === '#requestprofile') {
+      setTimeout(() => openProfileRequestModal(), 50);
+    }
+  }
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('hashchange', checkUrlHash);
+  }
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading' && typeof document.addEventListener === 'function') {
+      document.addEventListener('DOMContentLoaded', checkUrlHash);
+    } else {
+      checkUrlHash();
+    }
+  }
 })();

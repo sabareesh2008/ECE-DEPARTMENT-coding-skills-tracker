@@ -615,10 +615,37 @@ footer {
 }
 
 /* Add Profile modal */
-.profile-modal { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; }
-.profile-modal[hidden] { display: none; }
-.profile-modal-backdrop { position: absolute; inset: 0; background: rgba(2, 6, 23, .72); backdrop-filter: blur(8px); }
-.profile-modal-card { position: relative; width: min(560px, 100%); border: 1px solid var(--border); border-radius: 24px; background: #0d1424; padding: 26px; box-shadow: 0 30px 90px rgba(0,0,0,.45); animation: modalIn .2s ease-out; }
+.profile-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 12000 !important;
+  display: grid !important;
+  place-items: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+.profile-modal[hidden] {
+  display: none !important;
+}
+.profile-modal-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(2, 6, 23, 0.75) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 1 !important;
+}
+.profile-modal-card {
+  position: relative !important;
+  z-index: 2 !important;
+  width: min(560px, 100%);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: #0d1424 !important;
+  padding: 26px;
+  box-shadow: 0 30px 90px rgba(0,0,0,.45);
+  animation: modalIn .2s ease-out;
+}
 .profile-modal-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
 .profile-modal-head h2 { margin: 6px 0 0; font-size: 1.55rem; }
 .modal-close { border: 1px solid var(--border); background: rgba(255,255,255,.04); color: var(--text); width: 38px; height: 38px; border-radius: 12px; font-size: 24px; cursor:pointer; }
