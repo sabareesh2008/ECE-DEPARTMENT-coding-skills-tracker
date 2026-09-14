@@ -883,12 +883,12 @@
       const raw = record ? String(record.Status || '').trim() : '';
       const lower = raw.toLowerCase();
 
-      // 1. Missing profile / not added
-      if (!record || !username || username === '—' || username === '-' || lower === 'github not added' || lower.includes('not added')) {
+      // 1. Missing profile / not added -> RED
+      if (!record || !username || username === '—' || username === '-' || lower.includes('not added') || lower === 'not added') {
         return {
           text: 'Not Added',
           badgeClass: 'status-error',
-          badgeHtml: `<span class="status status-error">Not Added</span>`
+          badgeHtml: `<span class="status status-error" style="color:#f87171!important; background:rgba(239,68,68,0.22)!important; border:1px solid rgba(248,113,113,0.5)!important;">🔴 Not Added</span>`
         };
       }
 
@@ -904,12 +904,13 @@
       ) {
         let label = 'Error';
         if (lower.includes('not found')) label = 'User Not Found';
+        else if (lower.includes('not added')) label = 'Not Added';
         else if (lower.includes('worker error') || lower.includes('could not resolve')) label = 'Worker Error';
         else if (lower.includes('stale')) label = 'Stale / Error';
         return {
           text: raw,
           badgeClass: 'status-error',
-          badgeHtml: `<span class="status status-error" title="${esc(raw)}">${esc(label)}</span>`
+          badgeHtml: `<span class="status status-error" style="color:#f87171!important; background:rgba(239,68,68,0.22)!important; border:1px solid rgba(248,113,113,0.5)!important;" title="${esc(raw)}">🔴 ${esc(label)}</span>`
         };
       }
 
@@ -918,7 +919,7 @@
         return {
           text: 'Pending',
           badgeClass: 'status-pending',
-          badgeHtml: `<span class="status status-pending">Pending</span>`
+          badgeHtml: `<span class="status status-pending" style="color:#facc15!important; background:rgba(234,179,8,0.2)!important; border:1px solid rgba(250,204,21,0.5)!important;">🟡 Pending</span>`
         };
       }
 
@@ -927,15 +928,15 @@
         return {
           text: 'Success',
           badgeClass: 'status-success',
-          badgeHtml: `<span class="status status-success">Success</span>`
+          badgeHtml: `<span class="status status-success" style="color:#4ade80!important; background:rgba(34,197,94,0.2)!important; border:1px solid rgba(74,222,128,0.5)!important;">🟢 Success</span>`
         };
       }
 
-      // 5. Fallback for any unknown non-success status -> RED
+      // 5. Fallback for any unknown status -> RED
       return {
         text: raw || 'Error',
         badgeClass: 'status-error',
-        badgeHtml: `<span class="status status-error" title="${esc(raw)}">${esc(raw || 'Error')}</span>`
+        badgeHtml: `<span class="status status-error" style="color:#f87171!important; background:rgba(239,68,68,0.22)!important; border:1px solid rgba(248,113,113,0.5)!important;" title="${esc(raw)}">🔴 ${esc(raw || 'Error')}</span>`
       };
     };
 

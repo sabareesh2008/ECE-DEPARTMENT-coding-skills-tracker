@@ -462,30 +462,37 @@ tbody tr:hover {
 }
 
 .status {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    line-height: 1.2;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 4px 10px !important;
+    border-radius: 999px !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.02em !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
 }
 
+.status.status-success,
 .status-success {
-    color: #052e16;
-    background: rgba(52, 211, 153, 0.9);
+    color: #4ade80 !important;
+    background: rgba(34, 197, 94, 0.18) !important;
+    border: 1px solid rgba(74, 222, 128, 0.45) !important;
 }
 
+.status.status-pending,
 .status-pending {
-    color: #451a03;
-    background: rgba(251, 191, 36, 0.9);
+    color: #facc15 !important;
+    background: rgba(234, 179, 8, 0.18) !important;
+    border: 1px solid rgba(250, 204, 21, 0.45) !important;
 }
 
+.status.status-error,
 .status-error {
-    color: #4c0519;
-    background: rgba(251, 113, 133, 0.9);
+    color: #f87171 !important;
+    background: rgba(239, 68, 68, 0.22) !important;
+    border: 1px solid rgba(248, 113, 113, 0.5) !important;
 }
 
 .loading-row {
