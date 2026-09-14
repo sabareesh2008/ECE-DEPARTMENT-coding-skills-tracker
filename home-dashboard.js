@@ -872,30 +872,44 @@
       suspiciousText = `${emoji} ${score}% ${label}`;
     }
 
-    const lcItems=lc ? [
-      ['Problems Solved',num(lc['Problems Solved'])],
-      ['Suspicious Score', suspiciousText],
-      ['Solved Today',num(lc['Solved Today'])],
-      ['Last 7 Days',num(lc['Last 7 Days'])],
-      ['7D Submissions',num(lc['Last 7 Days Submissions'])],
-      ['Last 30 Days',num(lc['Last 30 Days'])],
-      ['Total Submissions',num(lc['Total Submissions'])],
-      ['Easy / Medium / Hard',`${num(lc.Easy)} / ${num(lc.Medium)} / ${num(lc.Hard)}`],
-      ['Current Streak',lc['Current Streak']||'—'],
-      ['Last Problem',lc['Last Problem']||'—'],
-      ['Last Solved',lc['Last Solved']||'—']
-    ] : [['Status','No LeetCode record']];
+    const formatStatus = (rawStatus, hasRecord) => {
+      if (!hasRecord) return '🔴 Not Found';
+      const st = String(rawStatus || '').trim();
+      if (!st || st.toLowerCase() === 'success' || st.toLowerCase() === 'active') {
+        return '🟢 Success';
+      }
+      if (st.toLowerCase().includes('error') || st.toLowerCase().includes('invalid') || st.toLowerCase().includes('not found') || st.toLowerCase().includes('not_found')) {
+        return `🔴 ${st}`;
+      }
+      return `🟡 ${st}`;
+    };
 
-    const ghItems=gh ? [
-      ['Deployments',num(gh['Detected Deployments'])],
-      ['Repositories',num(gh['Repositories Total'])],
-      ['Contributions · 30 Days',num(gh['Contributions 30 Days'])],
-      ['Commits · 30 Days',num(gh['Commits 30 Days'])],
-      ['Commits · 7 Days',num(gh['Commits 7 Days'])],
-      ['Repositories · 30 Days',num(gh['Repositories 30 Days'])],
-      ['Latest Repository',gh['Latest Repository']||'—'],
-      ['Last Activity',gh['Last Activity']||'—']
-    ] : [['Status','No GitHub record']];
+    const lcItems = lc ? [
+      ['Status', formatStatus(lc.Status || 'Success', true)],
+      ['Problems Solved', num(lc['Problems Solved'])],
+      ['Suspicious Score', suspiciousText],
+      ['Solved Today', num(lc['Solved Today'])],
+      ['Last 7 Days', num(lc['Last 7 Days'])],
+      ['7D Submissions', num(lc['Last 7 Days Submissions'])],
+      ['Last 30 Days', num(lc['Last 30 Days'])],
+      ['Total Submissions', num(lc['Total Submissions'])],
+      ['Easy / Medium / Hard', `${num(lc.Easy)} / ${num(lc.Medium)} / ${num(lc.Hard)}`],
+      ['Current Streak', lc['Current Streak'] || '—'],
+      ['Last Problem', lc['Last Problem'] || '—'],
+      ['Last Solved', lc['Last Solved'] || '—']
+    ] : [['Status', '🔴 Not Found']];
+
+    const ghItems = gh ? [
+      ['Status', formatStatus(gh.Status || 'Success', true)],
+      ['Deployments', num(gh['Detected Deployments'])],
+      ['Repositories', num(gh['Repositories Total'])],
+      ['Contributions · 30 Days', num(gh['Contributions 30 Days'])],
+      ['Commits · 30 Days', num(gh['Commits 30 Days'])],
+      ['Commits · 7 Days', num(gh['Commits 7 Days'])],
+      ['Repositories · 30 Days', num(gh['Repositories 30 Days'])],
+      ['Latest Repository', gh['Latest Repository'] || '—'],
+      ['Last Activity', gh['Last Activity'] || '—']
+    ] : [['Status', '🔴 Not Found']];
 
     const links=[];
     if(lc?.['LeetCode Link']) links.push(`<a class="action-button secondary" href="${esc(lc['LeetCode Link'])}" target="_blank" rel="noopener">Open LeetCode ↗</a>`);
@@ -1277,7 +1291,6 @@
     try{
       await ensureData();
       const results=searchStudents(query);
-      await checkPublicProfileStatus(query);
       if(!results.length){setMessage(`No student found for “${query}”.`,true);return;}
       showSearchResults(results,query);
     }catch(err){setMessage(err.message,true);}
