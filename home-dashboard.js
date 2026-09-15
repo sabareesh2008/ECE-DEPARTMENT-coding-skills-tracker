@@ -77,7 +77,11 @@
     if(value!==''||row.length){row.push(value);rows.push(row);}
     if(rows.length<2)return[];
     const headers=rows[0].map(h=>h.replace(/^\uFEFF/,'').trim());
-    return rows.slice(1).map(cells=>Object.fromEntries(headers.map((h,i)=>[h,(cells[i]??'').trim()])));
+    return rows.slice(1).map(cells=>Object.fromEntries(headers.map((h,i)=>[h,(cells[i]??'').trim()]))).filter(row => {
+      const reg = String(row['Register Number'] || row.register_number || '').trim();
+      const name = String(row['Student Name'] || row.student_name || '').trim();
+      return reg !== '' && reg !== '—' && reg !== '-' && !reg.startsWith('<') && !reg.startsWith('=') && !reg.startsWith('>') && name !== '';
+    });
   }
 
   async function loadFile(file){

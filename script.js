@@ -261,14 +261,29 @@ function parseCSV(text) {
     (header) => header.replace(/^\uFEFF/, "").trim()
   );
 
-  return rows.slice(1).map((cells) =>
-    Object.fromEntries(
-      headers.map((header, index) => [
-        header,
-        (cells[index] ?? "").trim()
-      ])
+  return rows
+    .slice(1)
+    .map((cells) =>
+      Object.fromEntries(
+        headers.map((header, index) => [
+          header,
+          (cells[index] ?? "").trim()
+        ])
+      )
     )
-  );
+    .filter((row) => {
+      const reg = String(row["Register Number"] || row.register_number || "").trim();
+      const name = String(row["Student Name"] || row.student_name || "").trim();
+      return (
+        reg !== "" &&
+        reg !== "—" &&
+        reg !== "-" &&
+        !reg.startsWith("<") &&
+        !reg.startsWith("=") &&
+        !reg.startsWith(">") &&
+        name !== ""
+      );
+    });
 }
 
 
