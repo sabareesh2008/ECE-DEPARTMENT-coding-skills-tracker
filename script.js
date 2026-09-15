@@ -1330,6 +1330,15 @@ async function loadRegisteredStudents() {
     throw new Error("Administrator access required.");
   }
 
+  // Ensure dashboard CSV is loaded if empty
+  if ((!allStudents || !allStudents.length) && typeof loadData === "function") {
+    try {
+      await loadData(2);
+    } catch (e) {
+      console.warn("Could not load local LiveData in loadRegisteredStudents:", e);
+    }
+  }
+
   let dbStudents = [];
   try {
     let { data, error } = await supabaseClient
@@ -1364,7 +1373,7 @@ async function loadRegisteredStudents() {
 
   const mergedMap = new Map();
 
-  // Populate from DB students
+  // 1. Populate from DB students
   dbStudents.forEach((s) => {
     const reg = String(s.register_number || "").trim().toUpperCase();
     if (reg) {
@@ -1381,39 +1390,48 @@ async function loadRegisteredStudents() {
     }
   });
 
-  // Seamlessly merge with allStudents from LiveData.csv / dashboard dataset
-  if (Array.isArray(allStudents)) {
-    allStudents.forEach((s) => {
-      const reg = String(s["Register Number"] || s.register_number || "").trim().toUpperCase();
-      if (!reg) return;
-
-      const existing = mergedMap.get(reg);
-      const name = String(s["Student Name"] || s.student_name || "").trim();
-      const lcUser = String(s["LeetCode Username"] || s.leetcode_username || "").trim();
-      const ghUser = String(s["GitHub Username"] || s.github_username || "").trim();
-      const sec = String(s.Section || s.section || "ECE A").trim();
-      const yr = s.Year || s.year || 2;
-
-      if (existing) {
-        if (lcUser && !existing.leetcode_username) existing.leetcode_username = lcUser;
-        if (ghUser && !existing.github_username) existing.github_username = ghUser;
-        if (name && !existing.student_name) existing.student_name = name;
-        if (sec && !existing.section) existing.section = sec;
-        if (yr && !existing.year) existing.year = yr;
-      } else {
-        mergedMap.set(reg, {
-          id: s.id || reg,
-          register_number: String(s["Register Number"] || s.register_number || "").trim(),
-          student_name: name,
-          leetcode_username: lcUser,
-          github_username: ghUser,
-          section: sec,
-          year: yr,
-          created_at: s["Created At"] || s.created_at || ""
-        });
-      }
+  // 2. Gather all dataset sources (allStudents + all yearCache entries)
+  const allSources = [];
+  if (Array.isArray(allStudents) && allStudents.length) {
+    allSources.push(...allStudents);
+  }
+  if (typeof yearCache === "object" && yearCache !== null) {
+    Object.values(yearCache).forEach((list) => {
+      if (Array.isArray(list)) allSources.push(...list);
     });
   }
+
+  // 3. Seamlessly merge all sources
+  allSources.forEach((s) => {
+    const reg = String(s["Register Number"] || s.register_number || "").trim().toUpperCase();
+    if (!reg) return;
+
+    const existing = mergedMap.get(reg);
+    const name = String(s["Student Name"] || s.student_name || "").trim();
+    const lcUser = String(s["LeetCode Username"] || s.leetcode_username || "").trim();
+    const ghUser = String(s["GitHub Username"] || s.github_username || "").trim();
+    const sec = String(s.Section || s.section || "ECE A").trim();
+    const yr = s.Year || s.year || 2;
+
+    if (existing) {
+      if (lcUser && !existing.leetcode_username) existing.leetcode_username = lcUser;
+      if (ghUser && !existing.github_username) existing.github_username = ghUser;
+      if (name && !existing.student_name) existing.student_name = name;
+      if (sec && (!existing.section || existing.section === "ECE A")) existing.section = sec;
+      if (yr && !existing.year) existing.year = yr;
+    } else {
+      mergedMap.set(reg, {
+        id: s.id || reg,
+        register_number: String(s["Register Number"] || s.register_number || "").trim(),
+        student_name: name,
+        leetcode_username: lcUser,
+        github_username: ghUser,
+        section: sec,
+        year: yr,
+        created_at: s["Created At"] || s.created_at || ""
+      });
+    }
+  });
 
   directoryStudents = Array.from(mergedMap.values()).sort((a, b) => {
     const secComp = String(a.section).localeCompare(String(b.section));
@@ -1433,11 +1451,17 @@ function getFilteredManagedStudents() {
   return directoryStudents.filter((student) => {
     const studentYear = student.year || student.Year || 2;
     const yearMatches =
-      yearFilter === "ALL" || String(studentYear) === String(yearFilter);
+      yearFilter === "ALL"
+      || String(studentYear) === String(yearFilter)
+      || String(studentYear).toLowerCase() === `year ${yearFilter}`.toLowerCase()
+      || (String(yearFilter) === "2" && (!student.year || String(student.year) === "2"));
 
     const studentSec = String(student.section || student.Section || "").trim();
+    const cleanSection = String(section || "").trim();
     const sectionMatches =
-      section === "ALL" || studentSec.toUpperCase() === String(section).trim().toUpperCase();
+      cleanSection === "ALL"
+      || studentSec.toUpperCase() === cleanSection.toUpperCase()
+      || studentSec.replace(/\s+/g, "").toUpperCase() === cleanSection.replace(/\s+/g, "").toUpperCase();
 
     const textMatches =
       !query
