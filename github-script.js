@@ -956,58 +956,129 @@ async function loadRegisteredStudents() {
     throw new Error("Administrator access required.");
   }
 
-  let { data, error } = await supabaseClient
-    .from("students")
-    .select(
-      "id,register_number,student_name,leetcode_username,github_username,section,created_at,year"
-    )
-    .order("section", { ascending: true })
-    .order("register_number", { ascending: true });
-
-  if (error && String(error.message || "").toLowerCase().includes("year")) {
-    const retry = await supabaseClient
+  let dbStudents = [];
+  try {
+    let { data, error } = await supabaseClient
       .from("students")
       .select(
-        "id,register_number,student_name,leetcode_username,github_username,section,created_at"
+        "id,register_number,student_name,leetcode_username,github_username,section,created_at,year"
       )
       .order("section", { ascending: true })
       .order("register_number", { ascending: true });
 
-    if (!retry.error) {
-      data = retry.data;
-      error = null;
+    if (error && String(error.message || "").toLowerCase().includes("year")) {
+      const retry = await supabaseClient
+        .from("students")
+        .select(
+          "id,register_number,student_name,leetcode_username,github_username,section,created_at"
+        )
+        .order("section", { ascending: true })
+        .order("register_number", { ascending: true });
+
+      if (!retry.error) {
+        data = retry.data;
+        error = null;
+      }
     }
+
+    if (!error && Array.isArray(data)) {
+      dbStudents = data;
+    }
+  } catch (err) {
+    console.warn("Notice: Could not query Supabase students table directly, relying on dashboard dataset:", err);
   }
 
-  if (error) throw error;
+  const mergedMap = new Map();
 
-  directoryStudents = data || [];
+  // Populate from DB students
+  dbStudents.forEach((s) => {
+    const reg = String(s.register_number || "").trim().toUpperCase();
+    if (reg) {
+      mergedMap.set(reg, {
+        id: s.id,
+        register_number: String(s.register_number || "").trim(),
+        student_name: String(s.student_name || "").trim(),
+        leetcode_username: String(s.leetcode_username || "").trim(),
+        github_username: String(s.github_username || "").trim(),
+        section: String(s.section || "ECE A").trim(),
+        year: s.year || 2,
+        created_at: s.created_at || ""
+      });
+    }
+  });
+
+  // Seamlessly merge with allStudents from GitHubLiveData.csv / dashboard dataset
+  if (Array.isArray(allStudents)) {
+    allStudents.forEach((s) => {
+      const reg = String(s["Register Number"] || s.register_number || "").trim().toUpperCase();
+      if (!reg) return;
+
+      const existing = mergedMap.get(reg);
+      const name = String(s["Student Name"] || s.student_name || "").trim();
+      const lcUser = String(s["LeetCode Username"] || s.leetcode_username || "").trim();
+      const ghUser = String(s["GitHub Username"] || s.github_username || "").trim();
+      const sec = String(s.Section || s.section || "ECE A").trim();
+      const yr = s.Year || s.year || 2;
+
+      if (existing) {
+        if (ghUser && !existing.github_username) existing.github_username = ghUser;
+        if (lcUser && !existing.leetcode_username) existing.leetcode_username = lcUser;
+        if (name && !existing.student_name) existing.student_name = name;
+        if (sec && !existing.section) existing.section = sec;
+        if (yr && !existing.year) existing.year = yr;
+      } else {
+        mergedMap.set(reg, {
+          id: s.id || reg,
+          register_number: String(s["Register Number"] || s.register_number || "").trim(),
+          student_name: name,
+          leetcode_username: lcUser,
+          github_username: ghUser,
+          section: sec,
+          year: yr,
+          created_at: s["Created At"] || s.created_at || ""
+        });
+      }
+    });
+  }
+
+  directoryStudents = Array.from(mergedMap.values()).sort((a, b) => {
+    const secComp = String(a.section).localeCompare(String(b.section));
+    if (secComp !== 0) return secComp;
+    return String(a.register_number).localeCompare(String(b.register_number));
+  });
+
   return directoryStudents;
 }
-
-
 
 
 function getFilteredManagedStudents() {
   const yearFilter = document.getElementById("manageYearFilter")?.value || "ALL";
   const section = manageSectionFilter ? manageSectionFilter.value : "ALL";
-  const query = manageSearch.value.trim().toLowerCase();
+  const query = (manageSearch ? manageSearch.value : "").trim().toLowerCase();
 
   return directoryStudents.filter((student) => {
+    const studentYear = student.year || student.Year || 2;
     const yearMatches =
-      yearFilter === "ALL" || String(student.year || 2) === String(yearFilter);
+      yearFilter === "ALL" || String(studentYear) === String(yearFilter);
 
+    const studentSec = String(student.section || student.Section || "").trim();
     const sectionMatches =
-      section === "ALL" || student.section === section;
+      section === "ALL" || studentSec.toUpperCase() === String(section).trim().toUpperCase();
 
     const textMatches =
       !query
       || [
         student.register_number,
+        student["Register Number"],
         student.student_name,
+        student["Student Name"],
         student.github_username,
-        student.section
+        student["GitHub Username"],
+        student.leetcode_username,
+        student["LeetCode Username"],
+        studentSec
       ]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase()
         .includes(query);
@@ -1015,8 +1086,6 @@ function getFilteredManagedStudents() {
     return yearMatches && sectionMatches && textMatches;
   });
 }
-
-
 
 
 function renderManageStudents() {
@@ -1061,7 +1130,7 @@ function renderManageStudents() {
           <button
             class="row-action edit-action"
             type="button"
-            data-manage-edit="${escapeHTML(student.id)}"
+            data-manage-edit="${escapeHTML(student.id || student.register_number)}"
           >
             Edit
           </button>
@@ -1069,7 +1138,7 @@ function renderManageStudents() {
           <button
             class="row-action delete-action"
             type="button"
-            data-manage-delete="${escapeHTML(student.id)}"
+            data-manage-delete="${escapeHTML(student.id || student.register_number)}"
           >
             Delete
           </button>
@@ -1080,33 +1149,33 @@ function renderManageStudents() {
 }
 
 
-
-
 async function openManageStudents() {
   if (!isAdmin()) return;
 
   manageStudentsModal.hidden = false;
+  document.body.classList.add("modal-open");
 
-  await loadRegisteredStudents();
-
-  if (selectedSection && selectedSection !== "OVERALL") {
-    manageSectionFilter.value = selectedSection;
-  } else {
+  if (manageSectionFilter) {
     manageSectionFilter.value = "ALL";
   }
 
   const yearFilterEl = document.getElementById("manageYearFilter");
   if (yearFilterEl) {
-    yearFilterEl.value = selectedYear ? String(selectedYear) : "ALL";
+    yearFilterEl.value = "ALL";
   }
 
-  manageSearch.value = "";
+  if (manageSearch) {
+    manageSearch.value = "";
+  }
+
+  await loadRegisteredStudents().catch((err) => console.warn(err));
   renderManageStudents();
 }
 
 
 function closeManageStudentsModal() {
   manageStudentsModal.hidden = true;
+  document.body.classList.remove("modal-open");
 }
 
 
@@ -1118,8 +1187,6 @@ function resetProfileForm() {
   if (yearInput) yearInput.value = selectedYear ? String(selectedYear) : "2";
   generatedLink.textContent = "https://github.com/username";
 }
-
-
 
 
 function openAddModal() {
@@ -1140,18 +1207,16 @@ function openAddModal() {
 }
 
 
-
-
 function openEditModal(studentId) {
   const student = directoryStudents.find(
-    (item) => String(item.id) === String(studentId)
+    (item) => String(item.id) === String(studentId) || String(item.register_number) === String(studentId)
   );
 
   if (!student) return;
 
   resetProfileForm();
 
-  editingStudentId.value = student.id;
+  editingStudentId.value = student.id || student.register_number;
   registerNumberInput.value = student.register_number;
   studentNameInput.value = student.student_name;
   usernameInput.value = student.github_username || "";
@@ -1230,7 +1295,7 @@ async function saveProfile(event) {
   try {
     let targetId = id;
 
-    if (!targetId) {
+    if (!targetId || targetId === registerNumber) {
       const { data: existing, error: lookupError } = await supabaseClient
         .from("students")
         .select("id,register_number")
@@ -1245,7 +1310,7 @@ async function saveProfile(event) {
     }
 
     let result;
-    if (targetId) {
+    if (targetId && targetId !== registerNumber) {
       result = await supabaseClient
         .from("students")
         .update(payload)
@@ -1255,7 +1320,7 @@ async function saveProfile(event) {
     } else {
       result = await supabaseClient
         .from("students")
-        .insert(payload)
+        .upsert(payload, { onConflict: "register_number" })
         .select()
         .single();
     }
@@ -1263,7 +1328,7 @@ async function saveProfile(event) {
     if (result.error && String(result.error.message || "").toLowerCase().includes("year")) {
       const fallbackPayload = { ...payload };
       delete fallbackPayload.year;
-      if (targetId) {
+      if (targetId && targetId !== registerNumber) {
         result = await supabaseClient
           .from("students")
           .update(fallbackPayload)
@@ -1273,13 +1338,41 @@ async function saveProfile(event) {
       } else {
         result = await supabaseClient
           .from("students")
-          .insert(fallbackPayload)
+          .upsert(fallbackPayload, { onConflict: "register_number" })
           .select()
           .single();
       }
     }
 
     if (result.error) throw result.error;
+
+    // Also update in-memory allStudents immediately
+    const regUpper = registerNumber.toUpperCase();
+    const memStudent = allStudents.find((s) => String(s["Register Number"] || s.register_number || "").trim().toUpperCase() === regUpper);
+    if (memStudent) {
+      memStudent["Student Name"] = studentNameInput.value.trim();
+      memStudent.student_name = studentNameInput.value.trim();
+      memStudent["GitHub Username"] = githubUsername;
+      memStudent.github_username = githubUsername;
+      memStudent.Section = studentSectionInput.value;
+      memStudent.section = studentSectionInput.value;
+      memStudent.Year = yearVal;
+      memStudent.year = yearVal;
+    } else {
+      allStudents.push({
+        id: result.data?.id || registerNumber,
+        "Register Number": registerNumber,
+        register_number: registerNumber,
+        "Student Name": studentNameInput.value.trim(),
+        student_name: studentNameInput.value.trim(),
+        "GitHub Username": githubUsername,
+        github_username: githubUsername,
+        Section: studentSectionInput.value,
+        section: studentSectionInput.value,
+        Year: yearVal,
+        year: yearVal
+      });
+    }
 
     formMessage.textContent =
       id ? "GitHub profile updated successfully." : "GitHub profile added successfully.";
@@ -1313,28 +1406,27 @@ async function saveProfile(event) {
 }
 
 
-
 function openDeleteModal(studentId) {
   const student = directoryStudents.find(
-    (item) => String(item.id) === String(studentId)
+    (item) => String(item.id) === String(studentId) || String(item.register_number) === String(studentId)
   );
 
   if (!student) return;
 
-  pendingDeleteId = student.id;
+  pendingDeleteId = student.id || student.register_number;
 
   deleteDescription.textContent =
     `Remove GitHub profile from ${student.student_name} (${student.section})? The student record and LeetCode profile will not be deleted.`;
 
   deleteModal.hidden = false;
+  document.body.classList.add("modal-open");
 }
-
-
 
 
 function closeDelete() {
   deleteModal.hidden = true;
   pendingDeleteId = null;
+  document.body.classList.remove("modal-open");
 }
 
 
@@ -1344,16 +1436,32 @@ async function confirmDelete() {
   confirmDeleteButton.disabled = true;
 
   try {
-    const { error } = await supabaseClient
+    let { error } = await supabaseClient
       .from("students")
       .update({ github_username: null })
       .eq("id", pendingDeleteId);
 
-    if (error) throw error;
+    if (error) {
+      const fallback = await supabaseClient
+        .from("students")
+        .update({ github_username: null })
+        .eq("register_number", pendingDeleteId);
+      if (fallback.error) throw error;
+    }
+
+    // Update in-memory allStudents
+    const delTarget = String(pendingDeleteId).toUpperCase();
+    const memStudent = allStudents.find(
+      (s) => String(s.id).toUpperCase() === delTarget || String(s["Register Number"] || s.register_number || "").trim().toUpperCase() === delTarget
+    );
+    if (memStudent) {
+      memStudent["GitHub Username"] = "";
+      memStudent.github_username = "";
+    }
 
     closeDelete();
 
-    await loadRegisteredStudents();
+    await loadRegisteredStudents().catch(() => {});
     renderManageStudents();
     await loadData();
   } catch (error) {
