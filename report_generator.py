@@ -346,10 +346,62 @@ def supabase_report_snapshot_get(config: Config, boundary: datetime, register_nu
     return {str(r.get("register_number","")).strip():safe_int(r.get("total_submissions")) for r in rows if str(r.get("register_number","")).strip() in wanted}
 
 
+def is_daily_report_already_sent(config: Config, boundary: datetime, route_label: str) -> bool:
+    """Check if a daily report for this boundary & route has already been dispatched today."""
+    if not config.supabase_url or not config.supabase_key:
+        return False
+    boundary_text = boundary.astimezone(timezone.utc).isoformat()
+    sent_key = f"__SENT_{scope_slug(route_label)}__"
+    try:
+        rows = supabase_get(
+            config,
+            "report_submission_snapshots",
+            params={
+                "select": "register_number",
+                "register_number": f"eq.{sent_key}",
+                "boundary_at": f"eq.{boundary_text}",
+                "limit": "1",
+            },
+        )
+        return bool(rows)
+    except Exception as exc:
+        print(f"Warning: Could not check sent status for {sent_key}: {exc}", file=sys.stderr)
+        return False
+
+
+def mark_daily_report_sent(config: Config, boundary: datetime, route_label: str) -> None:
+    """Record that a daily report for this boundary & route was successfully dispatched."""
+    if not config.supabase_url or not config.supabase_key:
+        return
+    boundary_text = boundary.astimezone(timezone.utc).isoformat()
+    sent_key = f"__SENT_{scope_slug(route_label)}__"
+    row = {
+        "register_number": sent_key,
+        "boundary_at": boundary_text,
+        "total_submissions": 1,
+    }
+    try:
+        response = requests.post(
+            f"{config.supabase_url}/rest/v1/report_submission_snapshots",
+            headers={
+                "apikey": config.supabase_key,
+                "Authorization": f"Bearer {config.supabase_key}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates,return=minimal",
+            },
+            params={"on_conflict": "register_number,boundary_at"},
+            json=[row],
+            timeout=REQUEST_TIMEOUT,
+        )
+        response.raise_for_status()
+    except Exception as exc:
+        print(f"Warning: Could not record sent status for {sent_key}: {exc}", file=sys.stderr)
+
+
 def supabase_report_snapshot_upsert(config: Config, live: pd.DataFrame, boundary: datetime) -> None:
     if not config.supabase_url or not config.supabase_key or live.empty: return
     age=ist_now()-boundary
-    if age.total_seconds()<0 or age>timedelta(minutes=45): return
+    if age.total_seconds()<0 or age>timedelta(hours=24): return
     rows=[]
     for _,row in live.iterrows():
         current=row.get("_Current Total Submissions")
@@ -1328,11 +1380,20 @@ def main() -> int:
         help="Generate only one report, e.g. --scope 'ECE E'.",
     )
 
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force send emails even if today's report was already sent.",
+    )
+
     args = parser.parse_args()
 
     config = load_config(
         require_email=not args.dry_run
     )
+
+    is_forced = args.force or env("FORCE_SEND", "").lower() in {"true", "1", "yes"}
+    report_end = latest_7am_boundary()
 
     scope_filter = (args.scope or env("SCOPE", "")).strip()
     if scope_filter.upper() in {"ALL", ""}:
@@ -1369,6 +1430,14 @@ def main() -> int:
     for route_label, section, recipients in selected_routes:
         print("=" * 72)
         print(f"Building {args.mode} report for {route_label}")
+
+        if args.mode == "daily" and not is_forced and not args.dry_run:
+            if is_daily_report_already_sent(config, report_end, route_label):
+                print(
+                    f"[INFO] Daily report for {route_label} ({report_end.date().isoformat()}) "
+                    "was ALREADY sent today. Skipping duplicate send."
+                )
+                continue
 
         subject, html_body, attachment_paths = build_report(
             args.mode,
@@ -1409,6 +1478,9 @@ def main() -> int:
 
             sent_reports += 1
             sent_recipients += len(recipients)
+
+            if args.mode == "daily" and not args.dry_run:
+                mark_daily_report_sent(config, report_end, route_label)
 
             print(
                 f"{route_label}: sent to {len(recipients)} recipient(s) "
