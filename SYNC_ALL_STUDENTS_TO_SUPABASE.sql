@@ -2,10 +2,19 @@
 -- SYNC ALL 368 ECE STUDENTS INTO SUPABASE TABLE public.students
 -- ============================================================
 
--- Ensure columns exist safely
+-- 1. Ensure columns exist safely
 alter table public.students
   add column if not exists github_username text;
 
+-- 2. Drop obsolete unique constraints on usernames so register_number is the unique identifier
+alter table public.students
+  drop constraint if exists students_leetcode_username_key,
+  drop constraint if exists students_github_username_key;
+
+drop index if exists public.students_leetcode_username_key;
+drop index if exists public.students_github_username_key;
+
+-- 3. Insert and upsert all 368 students
 insert into public.students (register_number, student_name, leetcode_username, github_username, section)
 values
   ('922525106286', 'SARAN K', 'saran32', 's60243275-tech', 'ECE E'),
@@ -306,7 +315,7 @@ values
   ('922525106098', 'GOUTHAM R J', '922525106098', 'gouthamrj2007-tech', 'ECE B'),
   ('922525106100', 'GOWRIKA K P', '922525106100', 'gowrikakp2007-source', 'ECE B'),
   ('922525106101', 'GOWRISANKAR S', '922524106101', 'gowrisankarselvakumar-art', 'ECE B'),
-  ('922525106102', 'GOWSICK S', '922525106106', 'gowsicksivakumar-tech', 'ECE B'),
+  ('922525106102', 'GOWSICK S', '922525106102', 'gowsicksivakumar-tech', 'ECE B'),
   ('922525106103', 'GOWTHAM M', '922525106103', 'gowthammarimuthu2008-cmyk', 'ECE B'),
   ('922525106104', 'GOWTHAM R', '922525106104', 'gowtham0518629', 'ECE B'),
   ('922525106105', 'GOWTHAM S', 'Gowtham_080', 'Gowtham08-S', 'ECE B'),
