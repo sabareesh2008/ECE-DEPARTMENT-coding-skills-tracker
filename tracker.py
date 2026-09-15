@@ -773,7 +773,7 @@ def atomic_csv_write(
 # ============================================================
 
 def sync_students_from_supabase() -> None:
-    """Download the authoritative student directory from Supabase."""
+    """Synchronize student directory bidirectionally with Supabase."""
 
     if (
         not SUPABASE_URL
@@ -813,40 +813,74 @@ def sync_students_from_supabase() -> None:
     )
 
     response.raise_for_status()
-
     rows = response.json()
 
-    frame = pd.DataFrame(
-        [
-            {
-                "Register Number":
-                    clean(
-                        row.get(
-                            "register_number"
-                        )
-                    ),
-                "Student Name":
-                    clean(
-                        row.get(
-                            "student_name"
-                        )
-                    ),
-                "LeetCode Username":
-                    clean(
-                        row.get(
-                            "leetcode_username"
-                        )
-                    ),
-                "Section":
-                    clean(
-                        row.get("section")
-                    )
-                    or "ECE E",
+    db_map = {}
+    for row in rows:
+        reg = clean(row.get("register_number"))
+        if reg:
+            db_map[reg.upper()] = {
+                "Register Number": reg,
+                "Student Name": clean(row.get("student_name")),
+                "LeetCode Username": clean(row.get("leetcode_username")),
+                "Section": clean(row.get("section")) or "ECE A",
             }
-            for row in rows
-        ]
-    )
 
+    # Also read local students.csv and upsert any missing/updated students to Supabase
+    local_students = []
+    if STUDENTS_FILE.exists():
+        try:
+            loc_df = pd.read_csv(STUDENTS_FILE, dtype=str).fillna("")
+            to_upsert = []
+            for _, r in loc_df.iterrows():
+                reg = clean(r.get("Register Number"))
+                if not reg or reg.startswith("<") or reg.startswith("="):
+                    continue
+                name = clean(r.get("Student Name"))
+                lc_user = clean(r.get("LeetCode Username"))
+                sec = clean(r.get("Section")) or "ECE A"
+
+                existing = db_map.get(reg.upper())
+                if not existing:
+                    db_map[reg.upper()] = {
+                        "Register Number": reg,
+                        "Student Name": name,
+                        "LeetCode Username": lc_user,
+                        "Section": sec,
+                    }
+                    to_upsert.append({
+                        "register_number": reg,
+                        "student_name": name,
+                        "leetcode_username": lc_user or None,
+                        "section": sec,
+                        "year": 2,
+                    })
+                elif lc_user and not existing.get("LeetCode Username"):
+                    existing["LeetCode Username"] = lc_user
+                    to_upsert.append({
+                        "register_number": reg,
+                        "student_name": name or existing.get("Student Name"),
+                        "leetcode_username": lc_user,
+                        "section": sec,
+                        "year": 2,
+                    })
+
+            if to_upsert:
+                print(f"Upserting {len(to_upsert)} local student(s) to Supabase...")
+                up_headers = dict(headers)
+                up_headers["Content-Type"] = "application/json"
+                up_headers["Prefer"] = "resolution=merge-duplicates,return=minimal"
+                requests.post(
+                    url,
+                    headers=up_headers,
+                    params={"on_conflict": "register_number"},
+                    json=to_upsert,
+                    timeout=30,
+                )
+        except Exception as e:
+            print(f"Notice: local student upsert check skipped: {e}")
+
+    frame = pd.DataFrame(list(db_map.values()))
     if frame.empty:
         frame = pd.DataFrame(
             columns=[
@@ -864,7 +898,7 @@ def sync_students_from_supabase() -> None:
 
     print(
         f"Synced {len(frame)} student(s) "
-        "from Supabase"
+        "with Supabase"
     )
 
 

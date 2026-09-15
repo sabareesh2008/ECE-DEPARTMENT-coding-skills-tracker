@@ -266,10 +266,7 @@ def atomic_csv_write(frame: pd.DataFrame, path: Path) -> None:
 
 def sync_students_from_supabase() -> None:
     """
-    Supabase students is authoritative.
-
-    GitHub username is optional so the GitHub page can show every registered
-    student and clearly mark profiles that have not yet been attached.
+    Synchronize student directory bidirectionally with Supabase.
     """
     if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
         print("Supabase secrets not set; using local github_students.csv")
@@ -304,15 +301,71 @@ def sync_students_from_supabase() -> None:
 
     rows = response.json()
 
-    frame = pd.DataFrame([
-        {
-            "Register Number": clean(row.get("register_number")),
-            "Student Name": clean(row.get("student_name")),
-            "GitHub Username": clean(row.get("github_username")),
-            "Section": clean(row.get("section")) or "ECE E",
-        }
-        for row in rows
-    ])
+    db_map = {}
+    for row in rows:
+        reg = clean(row.get("register_number"))
+        if reg:
+            db_map[reg.upper()] = {
+                "Register Number": reg,
+                "Student Name": clean(row.get("student_name")),
+                "GitHub Username": clean(row.get("github_username")),
+                "Section": clean(row.get("section")) or "ECE A",
+            }
+
+    # Also read local github_students.csv and upsert any missing/updated students to Supabase
+    if STUDENTS_CSV.exists():
+        try:
+            loc_df = pd.read_csv(STUDENTS_CSV, dtype=str).fillna("")
+            to_upsert = []
+            for _, r in loc_df.iterrows():
+                reg = clean(r.get("Register Number"))
+                if not reg or reg.startswith("<") or reg.startswith("="):
+                    continue
+                name = clean(r.get("Student Name"))
+                gh_user = clean(r.get("GitHub Username"))
+                sec = clean(r.get("Section")) or "ECE A"
+
+                existing = db_map.get(reg.upper())
+                if not existing:
+                    db_map[reg.upper()] = {
+                        "Register Number": reg,
+                        "Student Name": name,
+                        "GitHub Username": gh_user,
+                        "Section": sec,
+                    }
+                    to_upsert.append({
+                        "register_number": reg,
+                        "student_name": name,
+                        "github_username": gh_user or None,
+                        "section": sec,
+                        "year": 2,
+                    })
+                elif gh_user and not existing.get("GitHub Username"):
+                    existing["GitHub Username"] = gh_user
+                    to_upsert.append({
+                        "register_number": reg,
+                        "student_name": name or existing.get("Student Name"),
+                        "github_username": gh_user,
+                        "section": sec,
+                        "year": 2,
+                    })
+
+            if to_upsert:
+                print(f"Upserting {len(to_upsert)} local student(s) to Supabase...")
+                up_headers = dict(headers)
+                up_headers["Content-Type"] = "application/json"
+                up_headers["Prefer"] = "resolution=merge-duplicates,return=minimal"
+                requests.post(
+                    url,
+                    headers=up_headers,
+                    params={"on_conflict": "register_number"},
+                    json=to_upsert,
+                    timeout=30,
+                )
+        except Exception as e:
+            print(f"Notice: local student upsert check skipped: {e}")
+
+    frame = pd.DataFrame(list(db_map.values()))
 
     if frame.empty:
         frame = pd.DataFrame(columns=[
