@@ -335,403 +335,6 @@ function rankClass(rank) {
 
 
 
-// ============================================================
-// SUSPICIOUS SOLVING SCORE (7 FACTORS, MEDIUM & HARD ONLY)
-// Active starting from today (2026-09-13) with baseline at 0%
-// ============================================================
-
-function calculateSuspiciousScore(student, history = [], activity = []) {
-  if (!student) {
-    return {
-      score: 0,
-      label: "Normal",
-      emoji: "🟢",
-      badgeClass: "suspicious-normal",
-      medHardSolved: 0,
-      newMed: 0,
-      newHard: 0,
-      newSolved: 0,
-      factors: []
-    };
-  }
-
-  const reg = String(student["Register Number"] || "").trim();
-  const solvedToday = toNumber(student["Solved Today"]);
-  const currentTotal = toNumber(student["Problems Solved"]);
-  const currentMedium = toNumber(student.Medium);
-  const currentHard = toNumber(student.Hard);
-  const currentSubmissions = toNumber(student["Total Submissions"]);
-
-  // We track starting from today (2026-09-13).
-  // Find the baseline snapshot for this student prior to today / at start of today.
-  const studentHistory = (history || []).filter(h => String(h["Register Number"] || "").trim() === reg);
-  let baselineMed = currentMedium;
-  let baselineHard = currentHard;
-  let baselineSolved = currentTotal;
-  let baselineSubmissions = currentSubmissions;
-
-  if (studentHistory.length > 0) {
-    const sorted = [...studentHistory].sort((a,b) => String(a.Date || "").localeCompare(String(b.Date || "")));
-    const beforeToday = sorted.filter(h => String(h.Date || "") < "2026-09-13");
-    if (beforeToday.length > 0) {
-      const rec = beforeToday[beforeToday.length - 1];
-      baselineMed = toNumber(rec.Medium);
-      baselineHard = toNumber(rec.Hard);
-      baselineSolved = toNumber(rec["Problems Solved"]);
-      baselineSubmissions = toNumber(rec["Total Submissions"]);
-    } else {
-      const rec = sorted[0];
-      baselineMed = toNumber(rec.Medium);
-      baselineHard = toNumber(rec.Hard);
-      baselineSolved = toNumber(rec["Problems Solved"]);
-      baselineSubmissions = toNumber(rec["Total Submissions"]);
-    }
-  }
-
-  // Delta since start of tracking today
-  let newMed = Math.max(0, currentMedium - baselineMed);
-  let newHard = Math.max(0, currentHard - baselineHard);
-  let newSolved = Math.max(0, currentTotal - baselineSolved);
-  let newSubmissions = Math.max(0, currentSubmissions - baselineSubmissions);
-
-  // If solvedToday is 0, no new solves were recorded today
-  if (solvedToday === 0) {
-    newMed = 0;
-    newHard = 0;
-    newSolved = 0;
-  }
-
-  const newMedHard = newMed + newHard;
-
-  // If 0 Medium/Hard problems solved since tracking started today, score is strictly 0%
-  if (newMedHard === 0 || solvedToday === 0) {
-    return {
-      score: 0,
-      label: "Normal",
-      emoji: "🟢",
-      badgeClass: "suspicious-normal",
-      medHardSolved: 0,
-      newMed: 0,
-      newHard: 0,
-      newSolved: 0,
-      factors: [
-        { name: "Short Solving Time (<5 min between M/H)", score: 0, weight: 15, detail: "Tracking active from today. No Medium/Hard problems solved yet in current tracker cycle." },
-        { name: "Continuous Medium/Hard Solving", score: 0, weight: 15, detail: "No Medium/Hard problem patterns detected in current tracking window." },
-        { name: "First-Attempt Acceptance on M/H", score: 0, weight: 15, detail: "Standard normal baseline (0% starting rate)." },
-        { name: "M/H Acceptance vs Submissions", score: 0, weight: 15, detail: "No anomaly in tracker runs starting today." },
-        { name: "Suspicious Speed Bursts", score: 0, weight: 15, detail: "No bursts detected starting from today." },
-        { name: "Sudden Personal Skill Jump", score: 0, weight: 15, detail: "No surge detected compared to starting baseline." },
-        { name: "Difficulty Jump Pattern", score: 0, weight: 10, detail: "Normal progression starting today." }
-      ]
-    };
-  }
-
-  // Factor 1: Short Solving Time on newly solved M/H (Weight: 15%)
-  let f1 = 0;
-  let f1Detail = "";
-  if (newMedHard >= 5 && solvedToday >= 8) {
-    f1 = Math.min(100, Math.round(newMedHard * 16));
-    f1Detail = `High density burst: ${newMedHard} Medium/Hard problems solved today in rapid succession.`;
-  } else if (newMedHard >= 3) {
-    f1 = Math.min(65, Math.round(newMedHard * 18));
-    f1Detail = `Rapid turnaround on ${newMedHard} Medium/Hard problems today.`;
-  } else {
-    f1 = Math.min(20, Math.round(newMedHard * 8));
-    f1Detail = `Normal human pacing on ${newMedHard} Medium/Hard problems today.`;
-  }
-
-  // Factor 2: Continuous Medium/Hard Solving (Weight: 15%)
-  let f2 = 0;
-  let f2Detail = "";
-  const medHardRatio = newSolved > 0 ? (newMedHard / newSolved) : 1;
-  if (newMedHard >= 6 && medHardRatio >= 0.9) {
-    f2 = Math.min(100, Math.round(medHardRatio * 90 + 10));
-    f2Detail = `Continuous string of ${newMedHard} Medium/Hard problems (${(medHardRatio * 100).toFixed(0)}% of today's solves) without easier problems.`;
-  } else if (newMedHard >= 3 && medHardRatio >= 0.75) {
-    f2 = Math.min(70, Math.round(medHardRatio * 75));
-    f2Detail = `Predominantly Medium/Hard solved today (${newMedHard}/${newSolved}).`;
-  } else {
-    f2 = Math.max(0, Math.round(medHardRatio * 20));
-    f2Detail = `Balanced difficulty spread among today's solves (${newMedHard} M/H out of ${newSolved} solved today).`;
-  }
-
-  // Factor 3: First-Attempt Acceptance Pattern on newly solved M/H (Weight: 15%)
-  let f3 = 0;
-  let f3Detail = "";
-  const subsPerProb = newSolved > 0 && newSubmissions > 0 ? (newSubmissions / newSolved) : 1;
-  if (newMedHard >= 4 && subsPerProb <= 1.2) {
-    f3 = Math.min(100, Math.round((1.3 - subsPerProb) * 200 + 40));
-    f3Detail = `Abnormally high first-attempt acceptance (${subsPerProb.toFixed(2)} subs/problem) on today's Medium/Hard solves.`;
-  } else if (newMedHard >= 2 && subsPerProb <= 1.4) {
-    f3 = Math.min(55, Math.round((1.6 - subsPerProb) * 90));
-    f3Detail = `High first-attempt success rate on today's solves (${subsPerProb.toFixed(2)} subs/problem).`;
-  } else {
-    f3 = Math.min(15, Math.round(10 / Math.max(1, subsPerProb)));
-    f3Detail = `Natural trial-and-error submission curve (${subsPerProb.toFixed(2)} subs/problem).`;
-  }
-
-  // Factor 4: Medium/Hard Acceptance vs New Submissions (Weight: 15%)
-  let f4 = 0;
-  let f4Detail = "";
-  const subRatio = newSubmissions > 0 ? (newMedHard / newSubmissions) : (newMedHard > 0 ? 0.8 : 0);
-  if (newMedHard >= 4 && subRatio >= 0.8) {
-    f4 = Math.min(100, Math.round(subRatio * 100));
-    f4Detail = `Medium/Hard problems account for ${(subRatio * 100).toFixed(1)}% of all new submissions today.`;
-  } else if (newMedHard >= 2 && subRatio >= 0.5) {
-    f4 = Math.min(60, Math.round(subRatio * 80));
-    f4Detail = `High submission efficiency on today's Medium/Hard solves (${(subRatio * 100).toFixed(1)}%).`;
-  } else {
-    f4 = Math.min(15, Math.round(subRatio * 20));
-    f4Detail = `Standard submission efficiency today (${(subRatio * 100).toFixed(1)}%).`;
-  }
-
-  // Factor 5: Suspicious Speed Bursts in New Activity (Weight: 15%)
-  let f5 = 0;
-  let f5Detail = "";
-  if (newMedHard >= 10) {
-    f5 = Math.min(100, Math.round(newMedHard * 9));
-    f5Detail = `Extreme burst of ${newMedHard} Medium/Hard problems solved today.`;
-  } else if (newMedHard >= 5) {
-    f5 = Math.min(75, Math.round(newMedHard * 14));
-    f5Detail = `Speed burst of ${newMedHard} Medium/Hard problems solved in a single day.`;
-  } else if (newMedHard >= 3) {
-    f5 = Math.min(45, Math.round(newMedHard * 12));
-    f5Detail = `Moderate daily volume: ${newMedHard} Medium/Hard problems today.`;
-  } else {
-    f5 = Math.min(10, newMedHard * 5);
-    f5Detail = `Standard solving rate with no irregular speed bursts (${newMedHard} M/H today).`;
-  }
-
-  // Factor 6: Sudden Personal Skill Jump vs Historical Baseline (Weight: 15%)
-  let f6 = 0;
-  let f6Detail = "";
-  const pastDaysCount = Math.max(1, studentHistory.length);
-  const pastAvg = baselineSolved / Math.max(1, pastDaysCount);
-  const jumpToday = newSolved - pastAvg;
-  if (newMedHard >= 5 && jumpToday >= 4) {
-    f6 = Math.min(100, Math.round(jumpToday * 18));
-    f6Detail = `Sudden surge today (+${newSolved} solved vs past daily average of ${pastAvg.toFixed(1)}/day).`;
-  } else if (newMedHard >= 3 && jumpToday >= 2) {
-    f6 = Math.min(60, Math.round(jumpToday * 20));
-    f6Detail = `Noticeable increase today (+${newSolved} solved vs past daily average of ${pastAvg.toFixed(1)}/day).`;
-  } else {
-    f6 = Math.min(10, Math.max(0, Math.round(newMedHard * 3)));
-    f6Detail = "Steady progression consistent with personal historical baseline.";
-  }
-
-  // Factor 7: Difficulty Jump Pattern (Hard vs Medium in new solves) (Weight: 10%)
-  let f7 = 0;
-  let f7Detail = "";
-  if (newHard >= 5 && newMed <= 1) {
-    f7 = Math.min(100, Math.round(newHard * 18));
-    f7Detail = `Disproportionate Hard solves today (${newHard} Hard vs ${newMed} Medium) skipping normal difficulty progression.`;
-  } else if (newHard >= 3 && newMed === 0) {
-    f7 = Math.min(80, Math.round(newHard * 25));
-    f7Detail = `Direct jump to ${newHard} Hard problems today with 0 Medium problems solved.`;
-  } else if (newHard > 0 && newMed > 0) {
-    const hardMedRatio = newHard / newMed;
-    if (hardMedRatio > 1.5 && newHard >= 3) {
-      f7 = Math.min(65, Math.round(hardMedRatio * 35));
-      f7Detail = `High Hard-to-Medium ratio today (${newHard} Hard vs ${newMed} Medium).`;
-    } else {
-      f7 = Math.min(15, Math.round(hardMedRatio * 15));
-      f7Detail = `Healthy difficulty progression today (${newMed} Medium, ${newHard} Hard).`;
-    }
-  } else {
-    f7 = 0;
-    f7Detail = "Normal difficulty curve for today's solves.";
-  }
-
-  const weights = [0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.10];
-  const factorScores = [f1, f2, f3, f4, f5, f6, f7];
-  let rawScore = 0;
-  for (let i = 0; i < 7; i++) {
-    rawScore += factorScores[i] * weights[i];
-  }
-
-  const score = Math.max(0, Math.min(100, Math.round(rawScore)));
-
-  let label = "Normal";
-  let emoji = "🟢";
-  let badgeClass = "suspicious-normal";
-
-  if (score > 80) {
-    label = "Very High";
-    emoji = "🚨";
-    badgeClass = "suspicious-very-high";
-  } else if (score > 60) {
-    label = "High";
-    emoji = "🔴";
-    badgeClass = "suspicious-high";
-  } else if (score > 40) {
-    label = "Suspicious";
-    emoji = "🟠";
-    badgeClass = "suspicious-suspicious";
-  } else if (score > 20) {
-    label = "Low";
-    emoji = "🟡";
-    badgeClass = "suspicious-low";
-  }
-
-  return {
-    score,
-    label,
-    emoji,
-    badgeClass,
-    medHardSolved: newMedHard,
-    newMed,
-    newHard,
-    newSolved,
-    factors: [
-      { name: "Short Solving Time (<5 min between M/H)", score: f1, weight: 15, detail: f1Detail },
-      { name: "Continuous Medium/Hard Solving", score: f2, weight: 15, detail: f2Detail },
-      { name: "First-Attempt Acceptance on M/H", score: f3, weight: 15, detail: f3Detail },
-      { name: "M/H Acceptance vs Submissions", score: f4, weight: 15, detail: f4Detail },
-      { name: "Suspicious Speed Bursts", score: f5, weight: 15, detail: f5Detail },
-      { name: "Sudden Personal Skill Jump", score: f6, weight: 15, detail: f6Detail },
-      { name: "Difficulty Jump Pattern", score: f7, weight: 10, detail: f7Detail }
-    ]
-  };
-}
-
-function openSuspiciousModal(student) {
-  const modal = document.getElementById("suspiciousAnalysisModal");
-  const content = document.getElementById("suspiciousModalContent");
-  if (!modal || !content) return;
-
-  const susp = calculateSuspiciousScore(student, historyRows, dailyActivityRows);
-  const easy = toNumber(student.Easy);
-  const medium = toNumber(student.Medium);
-  const hard = toNumber(student.Hard);
-  const totalSubmissions = toNumber(student["Total Submissions"]);
-
-  content.innerHTML = `
-    <div class="suspicious-hero">
-      <div class="suspicious-hero-header">
-        <span class="eyebrow" style="color:var(--accent);">INDIVIDUAL AUDIT</span>
-        <h2>${escapeHTML(student["Student Name"] || "Student")}</h2>
-        <p class="suspicious-sub">
-          <strong>Register:</strong> ${escapeHTML(student["Register Number"] || "–")} &nbsp;·&nbsp;
-          <strong>Section:</strong> ${escapeHTML(student.Section || "–")} &nbsp;·&nbsp;
-          <strong>LeetCode:</strong> @${escapeHTML(student["LeetCode Username"] || "–")}
-        </p>
-      </div>
-
-      <div class="suspicious-score-display-card">
-        <div class="suspicious-score-circle" style="border-color:${susp.badgeClass === 'suspicious-normal' ? '#34d399' : (susp.badgeClass === 'suspicious-low' ? '#facc15' : (susp.badgeClass === 'suspicious-suspicious' ? '#fb923c' : (susp.badgeClass === 'suspicious-high' ? '#f87171' : '#fda4af')))};">
-          <div class="suspicious-score-value">${susp.score}%</div>
-          <div class="suspicious-score-label">${susp.emoji} ${susp.label}</div>
-        </div>
-        <div class="suspicious-score-desc-block">
-          <p class="suspicious-summary-text">
-            Overall Suspicious Solving Score is <strong>${susp.score}% (${susp.label})</strong> based on deep 7-factor pattern evaluation.
-          </p>
-          <div class="suspicious-scope-tag">
-            <span>⚡ <strong>Medium &amp; Hard Only:</strong> Easy problems are strictly excluded from calculation.</span>
-            <span>🔒 <strong>Independent Baseline:</strong> Student is analyzed purely against their own activity without peer comparison.</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="suspicious-quick-metrics">
-      <div class="suspicious-metric-box">
-        <span>Medium (Today)</span>
-        <strong style="color:#facc15;">${susp.newMed || 0}</strong>
-      </div>
-      <div class="suspicious-metric-box">
-        <span>Hard (Today)</span>
-        <strong style="color:#f87171;">${susp.newHard || 0}</strong>
-      </div>
-      <div class="suspicious-metric-box">
-        <span>M+H Today (Active)</span>
-        <strong style="color:#38bdf8;">${susp.medHardSolved || 0}</strong>
-      </div>
-      <div class="suspicious-metric-box">
-        <span>Solved Today (Total)</span>
-        <strong>${toNumber(student["Solved Today"])}</strong>
-      </div>
-      <div class="suspicious-metric-box">
-        <span>All-Time M+H</span>
-        <strong style="color:#94a3b8;">${medium + hard}</strong>
-      </div>
-      <div class="suspicious-metric-box ignored-metric">
-        <span>Easy (Ignored)</span>
-        <strong style="color:#64748b;">${easy}</strong>
-      </div>
-    </div>
-
-    <div class="suspicious-factors-container">
-      <div class="suspicious-factors-head">
-        <h3>7 Factor Analysis Breakdown</h3>
-        <p>Individual score for every factor evaluated specifically on Medium &amp; Hard problems.</p>
-      </div>
-
-      <div class="suspicious-factors-grid">
-        ${susp.factors.map((factor, idx) => {
-          const fClass = factor.score <= 20 ? '#34d399' : (factor.score <= 40 ? '#facc15' : (factor.score <= 60 ? '#fb923c' : '#f87171'));
-          return `
-            <div class="suspicious-factor-card">
-              <div class="factor-card-top">
-                <div class="factor-title-group">
-                  <span class="factor-num-badge">Factor ${idx + 1}</span>
-                  <span class="factor-name">${escapeHTML(factor.name)}</span>
-                  <span class="factor-weight-tag">Weight: ${factor.weight}%</span>
-                </div>
-                <span class="factor-score-pill" style="color:${fClass};background:rgba(255,255,255,0.06);">
-                  ${factor.score}% Risk
-                </span>
-              </div>
-              <div class="factor-progress-track">
-                <div class="factor-progress-fill" style="width:${factor.score}%;background:${fClass};"></div>
-              </div>
-              <p class="factor-desc-text">${escapeHTML(factor.detail)}</p>
-            </div>
-          `;
-        }).join("")}
-      </div>
-    </div>
-
-    <div class="suspicious-formula-card">
-      <h4>📐 Calculation Formula &amp; Risk Thresholds</h4>
-      <div class="suspicious-formula-text">
-        <code>Final Score = (F1 × 0.15) + (F2 × 0.15) + (F3 × 0.15) + (F4 × 0.15) + (F5 × 0.15) + (F6 × 0.15) + (F7 × 0.10)</code>
-      </div>
-      <ul class="suspicious-scale-legend">
-        <li>🟢 <strong>0% – 20% Normal:</strong> Natural human solving pace with healthy trial-and-error.</li>
-        <li>🟡 <strong>21% – 40% Low:</strong> Minor speed or progression anomalies within acceptable range.</li>
-        <li>🟠 <strong>41% – 60% Suspicious:</strong> Unusually high Medium/Hard speed or abnormally high first-attempt acceptance.</li>
-        <li>🔴 <strong>61% – 80% High:</strong> Severe speed bursts, rapid Medium/Hard solving without realistic errors.</li>
-        <li>🚨 <strong>81% – 100% Very High:</strong> Extreme statistical anomalies strongly indicating copied solutions.</li>
-      </ul>
-    </div>
-  `;
-
-  modal.hidden = false;
-  document.body.classList.add("modal-open");
-}
-
-function closeSuspiciousModal() {
-  const modal = document.getElementById("suspiciousAnalysisModal");
-  if (!modal) return;
-  modal.hidden = true;
-  document.body.classList.remove("modal-open");
-}
-
-function handleSuspiciousClick(registerNumber) {
-  const student = allStudents.find(
-    (s) => String(s["Register Number"]).trim() === String(registerNumber).trim()
-  );
-  if (!student) return;
-
-  if (!isAdmin()) {
-    alert("🔒 Administrator access required to view the detailed 7-factor Suspicious Solving Analysis.");
-    return;
-  }
-
-  openSuspiciousModal(student);
-}
-
 function calculateSectionChampionship() {
   const results = SECTION_NAMES.map((section) => {
     const students = allStudents.filter(
@@ -1062,8 +665,6 @@ function renderStudents(students) {
           ? "status-pending"
           : "status-error";
 
-    const susp = calculateSuspiciousScore(student, historyRows, dailyActivityRows);
-
     return `
       <tr>
         <td>
@@ -1102,17 +703,6 @@ function renderStudents(students) {
           <span class="emh-m" title="Medium">${toNumber(student.Medium)}</span>
           <span class="emh-separator">/</span>
           <span class="emh-h" title="Hard">${toNumber(student.Hard)}</span>
-        </td>
-
-        <td class="suspicious-cell">
-          <button
-            type="button"
-            class="suspicious-badge ${susp.badgeClass}"
-            data-suspicious-register="${escapeHTML(student["Register Number"] || "")}"
-            title="${isAdmin() ? 'Click to view 7-factor detailed analysis (Admin)' : 'Suspicious Solving Score: ' + susp.score + '%'}"
-          >
-            ${susp.emoji} ${susp.score}% ${susp.label}
-          </button>
         </td>
 
         <td>
@@ -4440,16 +4030,6 @@ async function openStudentProfile(registerNumber) {
         )
       : "Today: No Challenge";
 
-  const susp = calculateSuspiciousScore(student, historyRows, dailyActivityRows);
-  const elSuspBadge = document.getElementById("profileSuspiciousBadge");
-  if (elSuspBadge) {
-    elSuspBadge.className = `suspicious-badge ${susp.badgeClass}`;
-    elSuspBadge.textContent = `${susp.emoji} ${susp.score}% ${susp.label}`;
-    elSuspBadge.onclick = () => {
-      handleSuspiciousClick(student["Register Number"]);
-    };
-  }
-
   renderStudentCodingProfile(
     student["Register Number"]
   );
@@ -4490,8 +4070,7 @@ function closeStudentProfile() {
     adminLoginModal,
     profileModal,
     manageStudentsModal,
-    deleteModal,
-    document.getElementById("suspiciousAnalysisModal")
+    deleteModal
   ].some((modal) => modal && !modal.hidden);
 
   if (!anotherModalOpen) {
@@ -4500,12 +4079,6 @@ function closeStudentProfile() {
 }
 
 tableBody.addEventListener("click", (event) => {
-  const suspButton = event.target.closest("[data-suspicious-register]");
-  if (suspButton) {
-    handleSuspiciousClick(suspButton.dataset.suspiciousRegister);
-    return;
-  }
-
   const profileButton = event.target.closest("[data-profile-register]");
   if (!profileButton) return;
 
@@ -4519,11 +4092,6 @@ studentProfileModal
   .forEach((element) =>
     element.addEventListener("click", closeStudentProfile)
   );
-
-document.getElementById("closeSuspiciousModal")?.addEventListener("click", closeSuspiciousModal);
-document.querySelectorAll("[data-close-suspicious-modal]").forEach((element) => {
-  element.addEventListener("click", closeSuspiciousModal);
-});
 
 
 
