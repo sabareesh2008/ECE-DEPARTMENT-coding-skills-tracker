@@ -482,6 +482,19 @@
             body: JSON.stringify(payload)
           });
 
+          if (resp.ok) {
+            // Update student last active timestamp in background
+            fetch(`${supabaseUrl}/rest/v1/extension_installed_students?register_number=eq.${encodeURIComponent(regNumber)}`, {
+              method: 'PATCH',
+              headers: {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ last_active_at: new Date().toISOString() })
+            }).catch(() => {});
+          }
+
           let toastTitle = '⚡ CodeMetrix Synced!';
           let toastMsg = `${problemTitle} (${difficulty} • ${language}) recorded.`;
 
