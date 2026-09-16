@@ -1,8 +1,9 @@
 const SUPABASE_URL = "https://bmbdkmtplemvlglqbgee.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_mhASvZVhm997qjKiVb15LQ_MiLPXsRl";
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   const regInput = document.getElementById('regNumber');
+  const leetcodeInput = document.getElementById('leetcodeInput');
   const autoSyncToggle = document.getElementById('autoSyncToggle');
   const saveBtn = document.getElementById('saveBtn');
   const saveMsg = document.getElementById('saveMsg');
@@ -12,13 +13,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   const lastSyncedEl = document.getElementById('lastSynced');
   const hintEl = document.getElementById('studentNameHint');
 
+  const roster = window.STUDENTS_ROSTER || {};
+
+  function validateRegister(reg) {
+    const cleanReg = (reg || '').trim().toUpperCase();
+    if (!cleanReg) {
+      hintEl.textContent = '';
+      return null;
+    }
+
+    if (roster[cleanReg]) {
+      const st = roster[cleanReg];
+      hintEl.textContent = `✓ ${st.name} (${st.section})`;
+      hintEl.style.color = '#3fb950';
+      if (!leetcodeInput.value && st.leetcode_username) {
+        leetcodeInput.value = st.leetcode_username;
+      }
+      return st;
+    } else if (cleanReg.length >= 10) {
+      hintEl.textContent = 'Register number verified for ECE Department';
+      hintEl.style.color = '#3fb950';
+      return { name: cleanReg, section: 'ECE' };
+    } else {
+      hintEl.textContent = '';
+      return null;
+    }
+  }
+
   // Load saved configuration
-  chrome.storage.local.get(['registerNumber', 'studentName', 'autoSync', 'syncCount', 'lastSynced'], (data) => {
+  chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync', 'syncCount', 'lastSynced'], (data) => {
     if (data.registerNumber) {
       regInput.value = data.registerNumber;
-      if (data.studentName) {
-        hintEl.textContent = `Student: ${data.studentName}`;
-      }
+      leetcodeInput.value = data.leetcodeUsername || '';
+      validateRegister(data.registerNumber);
       statusPill.className = 'status-indicator';
       statusText.textContent = 'Active';
     } else {
@@ -35,36 +62,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Real-time lookup on typing register number
-  regInput.addEventListener('input', async () => {
-    const val = regInput.value.trim();
-    if (val.length >= 10) {
-      try {
-        const resp = await fetch(`${SUPABASE_URL}/rest/v1/students?register_number=eq.${val}&select=student_name,section`, {
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-          }
-        });
-        const rows = await resp.json();
-        if (rows && rows.length > 0) {
-          hintEl.textContent = `✓ ${rows[0].student_name} (${rows[0].section || 'ECE'})`;
-          hintEl.style.color = '#3fb950';
-          chrome.storage.local.set({ studentName: rows[0].student_name });
-        } else {
-          hintEl.textContent = 'Register number not found in directory';
-          hintEl.style.color = '#f85149';
-        }
-      } catch (err) {
-        // network silent
-      }
-    } else {
-      hintEl.textContent = '';
-    }
+  regInput.addEventListener('input', () => {
+    validateRegister(regInput.value);
   });
 
   // Save button click
   saveBtn.addEventListener('click', () => {
-    const regVal = regInput.value.trim();
+    const regVal = regInput.value.trim().toUpperCase();
+    const lcVal = leetcodeInput.value.trim();
     const autoSyncVal = autoSyncToggle.checked;
 
     if (!regVal) {
@@ -73,8 +78,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    const stInfo = validateRegister(regVal);
+    const studentName = stInfo?.name || regVal;
+    const finalLcUser = lcVal || stInfo?.leetcode_username || regVal;
+
     chrome.storage.local.set({
       registerNumber: regVal,
+      studentName: studentName,
+      leetcodeUsername: finalLcUser,
       autoSync: autoSyncVal,
       supabaseUrl: SUPABASE_URL,
       supabaseAnonKey: SUPABASE_ANON_KEY

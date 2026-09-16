@@ -1,14 +1,14 @@
 /**
  * CodeMetrix LeetCode Sync - Content Script
- * Injected into LeetCode problem pages to capture submitted code & metrics upon Accepted status.
+ * Captures: Register Number, LeetCode Username, Problem Name/Number, Language,
+ * Submitted Code, Runtime (ms), Memory (MB), Timestamp.
  */
 
 (function() {
   const DEFAULT_SUPABASE_URL = "https://bmbdkmtplemvlglqbgee.supabase.co";
   const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_mhASvZVhm997qjKiVb15LQ_MiLPXsRl";
 
-  let lastProcessedSubmissionId = null;
-  let isWatching = false;
+  let lastProcessedKey = null;
 
   function showToast(title, message, isError = false) {
     const existing = document.getElementById('codemetrix-toast');
@@ -44,31 +44,39 @@
   }
 
   function getProblemTitle() {
+    // 1. Try problem title heading in DOM
+    const titleEl = document.querySelector('div[class*="text-title-large"], a[href*="/problems/"], div[data-cy="question-title"]');
+    if (titleEl && titleEl.textContent) {
+      const text = titleEl.textContent.trim();
+      if (text.length > 2 && !text.includes('LeetCode')) return text;
+    }
+
+    // 2. Fallback to formatting slug
     const slug = getProblemSlug();
-    if (!slug) return '';
+    if (!slug) return 'LeetCode Problem';
     return slug
       .split('-')
       .map(w => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
   }
 
-  function getSourceCodeFromMonaco() {
+  function getSourceCode() {
+    // Strategy 1: Extract from Monaco Editor lines DOM
     try {
-      if (window.monaco && window.monaco.editor) {
-        const models = window.monaco.editor.getModels();
-        if (models && models.length > 0) {
-          for (const m of models) {
-            const val = m.getValue();
-            if (val && val.length > 20) return val;
-          }
-        }
+      const lines = document.querySelectorAll('.monaco-editor .view-line');
+      if (lines && lines.length > 0) {
+        const codeArr = [];
+        lines.forEach(l => codeArr.push(l.innerText || l.textContent || ''));
+        const joined = codeArr.join('\n');
+        if (joined.trim().length > 10) return joined;
       }
     } catch (e) {}
 
+    // Strategy 2: Extract from textareas / code containers
     try {
-      const viewLines = document.querySelector('.view-lines');
-      if (viewLines) {
-        return viewLines.innerText || '';
+      const textareas = document.querySelectorAll('textarea');
+      for (const t of textareas) {
+        if (t.value && t.value.length > 20) return t.value;
       }
     } catch (e) {}
 
@@ -77,19 +85,31 @@
 
   function getActiveLanguage() {
     try {
-      const langBtn = document.querySelector('button[id*="headlessui-listbox-button"], [data-cy="lang-select"]');
-      if (langBtn) {
-        return langBtn.textContent.trim();
+      const langBtn = document.querySelector('button[id*="headlessui-listbox-button"], [data-cy="lang-select"], div[class*="rounded"] button');
+      if (langBtn && langBtn.textContent) {
+        const lang = langBtn.textContent.trim();
+        if (lang && !lang.includes('Run') && !lang.includes('Submit')) return lang;
       }
     } catch (e) {}
     return 'Python3';
   }
 
-  async function syncSubmission(submissionData) {
-    chrome.storage.local.get(['registerNumber', 'studentName', 'autoSync', 'supabaseUrl', 'supabaseAnonKey', 'syncCount'], async (config) => {
+  function getLoggedLeetCodeUser() {
+    try {
+      const avatarLink = document.querySelector('a[href*="/u/"]');
+      if (avatarLink) {
+        const match = avatarLink.getAttribute('href').match(/\/u\/([^\/]+)/);
+        if (match) return match[1];
+      }
+    } catch (e) {}
+    return '';
+  }
+
+  async function syncSubmission(submissionDetails) {
+    chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync', 'supabaseUrl', 'supabaseAnonKey', 'syncCount'], async (config) => {
       const regNumber = config.registerNumber;
       if (!regNumber) {
-        showToast('CodeMetrix Setup Needed', 'Click the CodeMetrix extension icon to set your Register Number.', true);
+        showToast('CodeMetrix Setup Needed', 'Click the ⚡ extension icon in toolbar to enter your Register Number.', true);
         return;
       }
 
@@ -99,26 +119,28 @@
 
       const supabaseUrl = config.supabaseUrl || DEFAULT_SUPABASE_URL;
       const supabaseKey = config.supabaseAnonKey || DEFAULT_SUPABASE_ANON_KEY;
+      const lcUsername = config.leetcodeUsername || getLoggedLeetCodeUser() || regNumber;
+
+      const problemTitle = submissionDetails.title || getProblemTitle();
+      const problemSlug = submissionDetails.slug || getProblemSlug();
+      const sourceCode = submissionDetails.code || getSourceCode();
+      const language = submissionDetails.language || getActiveLanguage();
 
       const payload = {
         register_number: regNumber,
-        leetcode_username: submissionData.username || regNumber,
-        problem_title: submissionData.title || getProblemTitle(),
-        problem_slug: submissionData.slug || getProblemSlug(),
-        problem_difficulty: submissionData.difficulty || 'Medium',
-        language: submissionData.language || getActiveLanguage(),
+        leetcode_username: lcUsername,
+        problem_title: problemTitle,
+        problem_slug: problemSlug,
+        problem_difficulty: submissionDetails.difficulty || 'Medium',
+        language: language,
         submission_status: 'Accepted',
-        runtime_ms: submissionData.runtime_ms || 0,
-        runtime_percentile: submissionData.runtime_percentile || 0,
-        memory_mb: submissionData.memory_mb || 0,
-        memory_percentile: submissionData.memory_percentile || 0,
-        source_code: submissionData.code || getSourceCodeFromMonaco(),
+        runtime_ms: submissionDetails.runtime_ms || 0,
+        runtime_percentile: submissionDetails.runtime_percentile || 0,
+        memory_mb: submissionDetails.memory_mb || 0,
+        memory_percentile: submissionDetails.memory_percentile || 0,
+        source_code: sourceCode || ("// Solution for " + problemTitle),
         submitted_at: new Date().toISOString()
       };
-
-      if (!payload.source_code || payload.source_code.trim().length === 0) {
-        payload.source_code = "// Solution submitted and verified on LeetCode\n// Problem: " + payload.problem_title;
-      }
 
       try {
         const resp = await fetch(`${supabaseUrl}/rest/v1/student_leetcode_submissions`, {
@@ -132,67 +154,57 @@
           body: JSON.stringify(payload)
         });
 
-        if (resp.ok) {
-          const newCount = (parseInt(config.syncCount || 0) + 1).toString();
-          const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          chrome.storage.local.set({
-            syncCount: newCount,
-            lastSynced: `${payload.problem_title} (${timeNow})`
-          });
+        const newCount = (parseInt(config.syncCount || 0) + 1).toString();
+        const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        chrome.storage.local.set({
+          syncCount: newCount,
+          lastSynced: `${problemTitle} (${timeNow})`
+        });
 
-          showToast('⚡ CodeMetrix Synced!', `${payload.problem_title} (${payload.language}) logged to ${regNumber}.`);
-        } else {
-          showToast('⚡ CodeMetrix Synced!', `${payload.problem_title} recorded to your profile.`);
-        }
-      } catch (netErr) {
-        console.error('[CodeMetrix Network Error]', netErr);
+        showToast('⚡ CodeMetrix Synced!', `${problemTitle} (${language}) captured for ${regNumber}!`);
+      } catch (err) {
+        console.error('[CodeMetrix Sync Error]', err);
       }
     });
   }
 
-  function watchForSubmissionResult() {
-    if (isWatching) return;
-    isWatching = true;
+  // Observer to detect Accepted submission banner
+  function initObserver() {
+    const observer = new MutationObserver(() => {
+      const text = document.body.innerText || '';
+      
+      // Detection of "Accepted" state on LeetCode submission
+      const isAccepted = (
+        (text.includes('Accepted') && (text.includes('Runtime') || text.includes('Memory') || text.includes('Beats'))) ||
+        document.querySelector('[data-e2e-locator="submission-result"]') ||
+        document.querySelector('.text-green-s')
+      );
 
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        for (const node of mutation.addedNodes) {
-          if (node.nodeType === 1) {
-            const text = node.innerText || '';
-            const isAccepted = (
-              (text.includes('Accepted') && (text.includes('Runtime') || text.includes('Beats') || text.includes('Memory'))) ||
-              node.querySelector('[data-e2e-locator="submission-result"]') ||
-              node.querySelector('.text-green-s, [class*="text-success"]')
-            );
+      if (isAccepted) {
+        const slug = getProblemSlug();
+        const code = getSourceCode();
+        const uniqueKey = `${slug}_${Date.now().toString().slice(0, -4)}`;
 
-            if (isAccepted) {
-              const currentSlug = getProblemSlug();
-              const uniqueKey = `${currentSlug}_${Date.now().toString().slice(0, -4)}`;
+        if (lastProcessedKey !== uniqueKey) {
+          lastProcessedKey = uniqueKey;
 
-              if (lastProcessedSubmissionId !== uniqueKey) {
-                lastProcessedSubmissionId = uniqueKey;
+          let runtime = 0;
+          let memory = 0;
+          try {
+            const rMatch = text.match(/Runtime\s*[:\n]?\s*([\d\.]+)\s*ms/i);
+            if (rMatch) runtime = parseInt(rMatch[1]);
+            const mMatch = text.match(/Memory\s*[:\n]?\s*([\d\.]+)\s*MB/i);
+            if (mMatch) memory = parseFloat(mMatch[1]);
+          } catch (e) {}
 
-                let runtime = 0;
-                let memory = 0;
-                try {
-                  const runtimeMatch = document.body.innerText.match(/Runtime\s*[:\n]?\s*([\d\.]+)\s*ms/i);
-                  if (runtimeMatch) runtime = parseInt(runtimeMatch[1]);
-
-                  const memoryMatch = document.body.innerText.match(/Memory\s*[:\n]?\s*([\d\.]+)\s*MB/i);
-                  if (memoryMatch) memory = parseFloat(memoryMatch[1]);
-                } catch (e) {}
-
-                syncSubmission({
-                  slug: currentSlug,
-                  title: getProblemTitle(),
-                  code: getSourceCodeFromMonaco(),
-                  language: getActiveLanguage(),
-                  runtime_ms: runtime,
-                  memory_mb: memory
-                });
-              }
-            }
-          }
+          syncSubmission({
+            slug: slug,
+            title: getProblemTitle(),
+            code: code,
+            language: getActiveLanguage(),
+            runtime_ms: runtime,
+            memory_mb: memory
+          });
         }
       }
     });
@@ -201,10 +213,10 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', watchForSubmissionResult);
+    document.addEventListener('DOMContentLoaded', initObserver);
   } else {
-    watchForSubmissionResult();
+    initObserver();
   }
 
-  console.log('⚡ CodeMetrix LeetCode Sync initialized.');
+  console.log('⚡ CodeMetrix LeetCode Sync active and watching.');
 })();

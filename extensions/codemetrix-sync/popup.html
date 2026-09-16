@@ -15,20 +15,26 @@
         <p>ECE LeetCode Sync</p>
       </div>
     </div>
-    <div class="status-indicator" id="statusPill">
+    <div class="status-indicator not-ready" id="statusPill">
       <span class="dot"></span>
-      <span id="statusText">Active</span>
+      <span id="statusText">Setup Needed</span>
     </div>
   </div>
 
   <div class="card">
     <div class="form-group">
-      <label for="regNumber">Register Number</label>
+      <label for="regNumber">Register Number *</label>
       <input type="text" id="regNumber" placeholder="e.g. 922525106264" maxlength="12">
       <small id="studentNameHint" class="hint"></small>
     </div>
 
     <div class="form-group">
+      <label for="leetcodeInput">LeetCode Username</label>
+      <input type="text" id="leetcodeInput" placeholder="e.g. sabareesh_karikalan">
+      <small class="sub-hint">Auto-detected on leetcode.com if left blank</small>
+    </div>
+
+    <div class="form-group checkbox-group">
       <label for="autoSyncToggle" class="switch-label">
         <span>Automatic Sync on Submit</span>
         <input type="checkbox" id="autoSyncToggle" checked>
@@ -54,6 +60,7 @@
     <span>Department of ECE</span> &bull; <span>CodeMetrix Platform</span>
   </div>
 
+  <script src="students_data.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

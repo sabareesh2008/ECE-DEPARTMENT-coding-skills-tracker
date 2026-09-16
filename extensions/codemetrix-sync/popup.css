@@ -16,8 +16,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
   border-bottom: 1px solid #30363d;
 }
 
@@ -29,13 +29,11 @@ body {
 
 .logo-icon {
   font-size: 24px;
-  background: linear-gradient(135deg, #38ef7d, #11998e);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #38ef7d;
 }
 
 .logo-text h1 {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #f0f6fc;
 }
@@ -82,12 +80,17 @@ body {
   margin-bottom: 12px;
 }
 
+.checkbox-group {
+  margin-top: 6px;
+  margin-bottom: 14px;
+}
+
 label {
   display: block;
   font-size: 12px;
   font-weight: 600;
   color: #8b949e;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .switch-label {
@@ -96,6 +99,7 @@ label {
   align-items: center;
   cursor: pointer;
   margin-bottom: 0;
+  color: #c9d1d9;
 }
 
 input[type="text"] {
@@ -117,13 +121,21 @@ input[type="text"]:focus {
 .hint {
   display: block;
   font-size: 11px;
-  color: #58a6ff;
+  color: #3fb950;
   margin-top: 4px;
+  font-weight: 600;
+}
+
+.sub-hint {
+  display: block;
+  font-size: 10px;
+  color: #6e7681;
+  margin-top: 3px;
 }
 
 .btn {
   width: 100%;
-  padding: 8px 12px;
+  padding: 9px 12px;
   font-size: 13px;
   font-weight: 600;
   border-radius: 6px;
@@ -159,7 +171,7 @@ input[type="text"]:focus {
 .stat-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .stat-label {
