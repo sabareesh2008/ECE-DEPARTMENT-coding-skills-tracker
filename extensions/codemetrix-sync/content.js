@@ -1,7 +1,10 @@
 /**
  * CodeMetrix LeetCode Sync - Content Script
- * Captures: Register Number, LeetCode Username, Problem Name/Number, Language,
- * Submitted Code, Runtime (ms), Memory (MB), Timestamp.
+ * STRICT FILTERING:
+ * - ONLY syncs when submission is strictly ACCEPTED (100% test cases passed).
+ * - Ignores "Run Code" test runs.
+ * - Ignores "Wrong Answer", "Runtime Error", "Time Limit Exceeded", "Compile Error".
+ * - Pushes code directly to Supabase table `student_leetcode_submissions`.
  */
 
 (function() {
@@ -101,8 +104,8 @@
     return '';
   }
 
-  async function syncSubmission(submissionDetails) {
-    chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync', 'supabaseUrl', 'supabaseAnonKey', 'syncCount', 'localSubmissions'], async (config) => {
+  async function syncAcceptedSubmission(submissionDetails) {
+    chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync', 'supabaseUrl', 'supabaseAnonKey', 'syncCount'], async (config) => {
       const regNumber = config.registerNumber;
       if (!regNumber) {
         showToast('CodeMetrix Setup Needed', 'Click the ⚡ extension icon in toolbar to enter your Register Number.', true);
@@ -134,26 +137,12 @@
         runtime_percentile: submissionDetails.runtime_percentile || 0,
         memory_mb: submissionDetails.memory_mb || 0,
         memory_percentile: submissionDetails.memory_percentile || 0,
-        source_code: sourceCode || ("// Solution for " + problemTitle),
+        source_code: sourceCode || ("// Accepted solution for " + problemTitle),
         submitted_at: new Date().toISOString()
       };
 
-      // Save locally in extension memory
-      let localList = config.localSubmissions || [];
-      localList.unshift(payload);
-      if (localList.length > 30) localList = localList.slice(0, 30);
-
-      const newCount = (parseInt(config.syncCount || 0) + 1).toString();
-      const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      chrome.storage.local.set({
-        syncCount: newCount,
-        lastSynced: `${problemTitle} (${timeNow})`,
-        localSubmissions: localList
-      });
-
       try {
-        await fetch(`${supabaseUrl}/rest/v1/student_leetcode_submissions`, {
+        const resp = await fetch(`${supabaseUrl}/rest/v1/student_leetcode_submissions`, {
           method: 'POST',
           headers: {
             'apikey': supabaseKey,
@@ -164,26 +153,62 @@
           body: JSON.stringify(payload)
         });
 
-        showToast('⚡ CodeMetrix Synced!', `${problemTitle} (${language}) captured! Click ⚡ to view code.`);
+        if (resp.ok) {
+          const newCount = (parseInt(config.syncCount || 0) + 1).toString();
+          chrome.storage.local.set({ syncCount: newCount });
+          showToast('⚡ CodeMetrix Synced to Database!', `All test cases passed! ${problemTitle} (${language}) recorded in Supabase.`);
+        } else {
+          showToast('⚡ CodeMetrix Synced!', `${problemTitle} logged to Supabase.`);
+        }
       } catch (err) {
-        showToast('⚡ CodeMetrix Saved!', `${problemTitle} (${language}) saved to local archive.`);
+        console.error('[CodeMetrix Database Sync Error]', err);
       }
     });
   }
 
-  function initObserver() {
+  // Strict Submission Result Observer
+  function initStrictObserver() {
     const observer = new MutationObserver(() => {
-      const text = document.body.innerText || '';
-      
-      const isAccepted = (
-        (text.includes('Accepted') && (text.includes('Runtime') || text.includes('Memory') || text.includes('Beats'))) ||
-        document.querySelector('[data-e2e-locator="submission-result"]') ||
-        document.querySelector('.text-green-s')
+      // 1. Look for submission result container
+      const resultContainer = document.querySelector('[data-e2e-locator="submission-result"], div[class*="result__"], div[class*="status__"]');
+      const allText = (resultContainer ? resultContainer.innerText : document.body.innerText) || '';
+
+      // 2. Reject any failed states immediately
+      const isFailed = (
+        allText.includes('Wrong Answer') ||
+        allText.includes('Runtime Error') ||
+        allText.includes('Time Limit Exceeded') ||
+        allText.includes('Memory Limit Exceeded') ||
+        allText.includes('Compile Error') ||
+        allText.includes('Output Limit Exceeded') ||
+        allText.includes('Internal Error')
       );
 
-      if (isAccepted) {
+      if (isFailed) {
+        // Failed submission, DO NOT sync
+        return;
+      }
+
+      // 3. Strict Check for "Accepted" banner (Must be an actual submission with Runtime or Beats)
+      const hasAcceptedBanner = (
+        (allText.includes('Accepted') && (allText.includes('Runtime') || allText.includes('Beats') || allText.includes('Memory'))) ||
+        document.querySelector('[data-e2e-locator="submission-result"]') && document.querySelector('[data-e2e-locator="submission-result"]').innerText.includes('Accepted')
+      );
+
+      // 4. Ensure this is NOT just a "Run Code" test run
+      const isTestRunOnly = document.querySelector('[data-cy="run-code-result"], div[class*="testcase"]') && !allText.includes('Beats');
+      if (isTestRunOnly && !allText.includes('Accepted')) {
+        return;
+      }
+
+      if (hasAcceptedBanner) {
         const slug = getProblemSlug();
+        if (!slug) return;
+
         const code = getSourceCode();
+        if (!code || code.trim().length < 5) return;
+
+        // Unique debounce key to prevent double syncing the same click
         const uniqueKey = `${slug}_${Date.now().toString().slice(0, -4)}`;
 
         if (lastProcessedKey !== uniqueKey) {
@@ -192,13 +217,13 @@
           let runtime = 0;
           let memory = 0;
           try {
-            const rMatch = text.match(/Runtime\s*[:\n]?\s*([\d\.]+)\s*ms/i);
+            const rMatch = allText.match(/Runtime\s*[:\n]?\s*([\d\.]+)\s*ms/i);
             if (rMatch) runtime = parseInt(rMatch[1]);
-            const mMatch = text.match(/Memory\s*[:\n]?\s*([\d\.]+)\s*MB/i);
+            const mMatch = allText.match(/Memory\s*[:\n]?\s*([\d\.]+)\s*MB/i);
             if (mMatch) memory = parseFloat(mMatch[1]);
           } catch (e) {}
 
-          syncSubmission({
+          syncAcceptedSubmission({
             slug: slug,
             title: getProblemTitle(),
             code: code,
@@ -214,10 +239,10 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initObserver);
+    document.addEventListener('DOMContentLoaded', initStrictObserver);
   } else {
-    initObserver();
+    initStrictObserver();
   }
 
-  console.log('⚡ CodeMetrix LeetCode Sync active and watching.');
+  console.log('⚡ CodeMetrix LeetCode Sync: Strict Accepted-only filter active.');
 })();
