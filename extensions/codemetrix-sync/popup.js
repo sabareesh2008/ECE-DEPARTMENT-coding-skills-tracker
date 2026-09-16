@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusText = document.getElementById('statusText');
   const syncCountEl = document.getElementById('syncCount');
   const hintEl = document.getElementById('studentNameHint');
+  const refreshCountBtn = document.getElementById('refreshCountBtn');
 
   const roster = window.STUDENTS_ROSTER || {};
 
@@ -39,28 +40,65 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function fetchLiveCount(reg) {
+    if (!reg) {
+      syncCountEl.textContent = '0';
+      return;
+    }
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/student_leetcode_submissions?register_number=eq.${reg}&select=id`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Prefer': 'count=exact',
+          'Range': '0-0'
+        }
+      });
+      const countHeader = resp.headers.get('content-range');
+      if (countHeader) {
+        const total = countHeader.split('/')[1];
+        if (total && total !== '*') {
+          syncCountEl.textContent = total;
+          chrome.storage.local.set({ syncCount: total });
+          return;
+        }
+      }
+      const data = await resp.json();
+      const num = Array.isArray(data) ? data.length.toString() : '0';
+      syncCountEl.textContent = num;
+      chrome.storage.local.set({ syncCount: num });
+    } catch (e) {
+      syncCountEl.textContent = '0';
+    }
+  }
+
   // Load saved configuration
-  chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync', 'syncCount'], (data) => {
+  chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync'], (data) => {
     if (data.registerNumber) {
       regInput.value = data.registerNumber;
       leetcodeInput.value = data.leetcodeUsername || '';
       validateRegister(data.registerNumber);
       statusPill.className = 'status-indicator';
       statusText.textContent = 'Active';
+      fetchLiveCount(data.registerNumber);
     } else {
       statusPill.className = 'status-indicator not-ready';
       statusText.textContent = 'Setup Needed';
+      syncCountEl.textContent = '0';
     }
 
     if (typeof data.autoSync !== 'undefined') {
       autoSyncToggle.checked = data.autoSync;
     }
-
-    syncCountEl.textContent = data.syncCount || '0';
   });
 
   regInput.addEventListener('input', () => {
     validateRegister(regInput.value);
+  });
+
+  refreshCountBtn.addEventListener('click', () => {
+    const regVal = regInput.value.trim().toUpperCase();
+    if (regVal) fetchLiveCount(regVal);
   });
 
   saveBtn.addEventListener('click', () => {
@@ -87,9 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
       supabaseAnonKey: SUPABASE_ANON_KEY
     }, () => {
       saveMsg.className = 'msg success';
-      saveMsg.textContent = 'Profile saved! Listening for Accepted submissions.';
+      saveMsg.textContent = 'Profile saved! Ready for Accepted submissions.';
       statusPill.className = 'status-indicator';
       statusText.textContent = 'Active';
+      fetchLiveCount(regVal);
 
       setTimeout(() => {
         saveMsg.textContent = '';
