@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "CodeMetrix LeetCode Sync \u2014 ECE Department",
+  "version": "1.0.0",
+  "description": "Automatically captures and syncs LeetCode submissions & source code directly to your CodeMetrix profile.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://*.leetcode.com/*",
+    "https://leetcode.com/*",
+    "https://*.supabase.co/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "CodeMetrix LeetCode Sync",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://leetcode.com/problems/*",
+        "https://*.leetcode.com/problems/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
