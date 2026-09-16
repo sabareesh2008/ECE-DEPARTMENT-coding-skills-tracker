@@ -1,10 +1,6 @@
 -- =====================================================================
 -- CODEMETRIX LEETCODE SYNC - SUPABASE DATABASE MIGRATION
--- =====================================================================
--- Creates:
---   1. public.student_leetcode_submissions (Stores captured source code & metrics)
---   2. RLS Policies (Allows extension to securely insert & dashboard to read)
---   3. RPC & Helper Views for fast student submission querying
+-- With Anti-Cheating, Keystroke Forensics & Plagiarism Detection
 -- =====================================================================
 
 begin;
@@ -23,17 +19,46 @@ create table if not exists public.student_leetcode_submissions (
   memory_mb numeric default 0,
   memory_percentile numeric default 0,
   source_code text not null,
+  
+  -- Anti-Cheating & Forensics Telemetry
+  keystrokes_count integer default 0,
+  keystroke_ratio numeric default 0,
+  is_pasted boolean default false,
+  paste_count integer default 0,
+  time_spent_seconds integer default 0,
+  tab_switch_count integer default 0,
+  has_prompt_comments boolean default false,
+  ai_comment_flags text[] default '{}',
+  plagiarism_risk_score integer default 0,
+  plagiarism_verdict text default 'CLEAN' check (plagiarism_verdict in ('CLEAN', 'LOW_RISK', 'SUSPICIOUS', 'FLAGGED')),
+  peer_similarity_pct numeric default 0,
+  
   notes text,
   submitted_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
   constraint uq_student_submission unique (register_number, problem_slug, submitted_at)
 );
 
--- Indexes for lightning-fast lookups
+-- Ensure columns exist if table already existed
+alter table public.student_leetcode_submissions add column if not exists keystrokes_count integer default 0;
+alter table public.student_leetcode_submissions add column if not exists keystroke_ratio numeric default 0;
+alter table public.student_leetcode_submissions add column if not exists is_pasted boolean default false;
+alter table public.student_leetcode_submissions add column if not exists paste_count integer default 0;
+alter table public.student_leetcode_submissions add column if not exists time_spent_seconds integer default 0;
+alter table public.student_leetcode_submissions add column if not exists tab_switch_count integer default 0;
+alter table public.student_leetcode_submissions add column if not exists has_prompt_comments boolean default false;
+alter table public.student_leetcode_submissions add column if not exists ai_comment_flags text[] default '{}';
+alter table public.student_leetcode_submissions add column if not exists plagiarism_risk_score integer default 0;
+alter table public.student_leetcode_submissions add column if not exists plagiarism_verdict text default 'CLEAN';
+alter table public.student_leetcode_submissions add column if not exists peer_similarity_pct numeric default 0;
+
+-- Indexes for lightning-fast lookups and anti-cheat filtering
 create index if not exists idx_submissions_register_number on public.student_leetcode_submissions(register_number);
 create index if not exists idx_submissions_submitted_at on public.student_leetcode_submissions(submitted_at desc);
 create index if not exists idx_submissions_problem_slug on public.student_leetcode_submissions(problem_slug);
 create index if not exists idx_submissions_language on public.student_leetcode_submissions(language);
+create index if not exists idx_submissions_plagiarism_risk on public.student_leetcode_submissions(plagiarism_risk_score desc);
+create index if not exists idx_submissions_plagiarism_verdict on public.student_leetcode_submissions(plagiarism_verdict);
 
 -- Enable Row Level Security
 alter table public.student_leetcode_submissions enable row level security;
@@ -50,7 +75,7 @@ for select
 to anon, authenticated
 using (true);
 
--- 2. Insert Policy: Extension can insert solved submissions
+-- 2. Insert Policy: Extension can insert solved submissions with forensics
 create policy "Allow public and extension to insert submissions"
 on public.student_leetcode_submissions
 for insert
