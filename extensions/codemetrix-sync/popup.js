@@ -182,4 +182,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 3500);
     });
   });
+
+  const resetBtn = document.getElementById('resetBtn');
+  resetBtn?.addEventListener('click', () => {
+    chrome.storage.local.clear(() => {
+      regInput.value = '';
+      leetcodeInput.value = '';
+      hintEl.textContent = '';
+      syncCountEl.textContent = '0';
+      statusPill.className = 'status-indicator not-ready';
+      statusText.textContent = 'Setup Needed';
+      saveMsg.className = 'msg success';
+      saveMsg.textContent = 'Local extension data cleared!';
+      setTimeout(() => {
+        saveMsg.textContent = '';
+      }, 3000);
+    });
+  });
 });
