@@ -1,21 +1,19 @@
 /**
  * CodeMetrix LeetCode Sync - Content Script
- * 100% SINGLE-SHOT SUBMISSION LOCK:
- * - Listens for explicit "Submit" button click.
- * - Locks trigger so 1 Submit = EXACTLY 1 Database Insert.
- * - 30-second cooldown per problem.
- * - Robust Language & Difficulty detection.
+ * STRICT SUBMIT-CLICK-ONLY TRIGGER:
+ * - NEVER syncs on page load, tab switch, or refresh.
+ * - ONLY activates when the user explicitly clicks the green "Submit" button.
+ * - Captures code once when verdict becomes "Accepted", then immediately shuts off.
  */
 
 (function() {
   const DEFAULT_SUPABASE_URL = "https://bmbdkmtplemvlglqbgee.supabase.co";
   const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_mhASvZVhm997qjKiVb15LQ_MiLPXsRl";
 
-  // Single-shot state tracking
-  let isSubmitPending = false;
+  // STRICT USER-ACTION GATE
+  let userJustClickedSubmit = false;
+  let submitTimestamp = 0;
   let isCurrentlySyncing = false;
-  let lastSyncedProblemSlug = "";
-  let lastSyncedTimestamp = 0;
 
   function isContextValid() {
     return typeof chrome !== 'undefined' && chrome.runtime && !!chrome.runtime.id;
@@ -192,7 +190,7 @@
     }
 
     try {
-      chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync', 'supabaseUrl', 'supabaseAnonKey', 'syncCount'], async (config) => {
+      chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync', 'supabaseUrl', 'supabaseAnonKey'], async (config) => {
         if (!isContextValid()) {
           isCurrentlySyncing = false;
           return;
@@ -249,10 +247,6 @@
           });
 
           if (resp.ok) {
-            if (isContextValid()) {
-              const newCount = (parseInt(config.syncCount || 0) + 1).toString();
-              chrome.storage.local.set({ syncCount: newCount });
-            }
             showToast('⚡ CodeMetrix Synced to Database!', `Accepted: ${problemTitle} (${difficulty} • ${language}) recorded in Supabase.`);
           } else {
             showToast('⚡ CodeMetrix Synced!', `${problemTitle} (${difficulty} • ${language}) logged to Supabase.`);
@@ -270,24 +264,43 @@
     }
   }
 
-  // 1. Listen for user clicking "Submit"
+  // 1. LISTEN TO USER CLICKING "SUBMIT" BUTTON ONLY
   document.addEventListener('click', (e) => {
     const target = e.target;
     if (!target) return;
+
+    // Check if clicked element is or inside a Submit button
     const btn = target.closest('button[data-e2e-locator="console-submit-button"], button');
     if (btn) {
       const text = (btn.textContent || '').trim().toLowerCase();
-      if (text === 'submit' || text.includes('submit')) {
-        isSubmitPending = true;
-        // Auto reset pending flag after 45s if not resolved
-        setTimeout(() => { isSubmitPending = false; }, 45000);
+      // Must be the Submit button, NOT Run button
+      if (text === 'submit' || (text.includes('submit') && !text.includes('run'))) {
+        userJustClickedSubmit = true;
+        submitTimestamp = Date.now();
+        console.log('[CodeMetrix] Submit button clicked. Listening for Accepted verdict...');
+
+        // Auto-expire submit gate after 45s if no verdict received
+        setTimeout(() => {
+          userJustClickedSubmit = false;
+        }, 45000);
       }
     }
   }, true);
 
-  // 2. Strict Single-Shot Submission Observer
+  // 2. OBSERVE FOR ACCEPTED VERDICT ONLY AFTER A REAL SUBMIT CLICK
   function initStrictObserver() {
     const observer = new MutationObserver(() => {
+      // IF THE USER DID NOT CLICK SUBMIT IN THIS SESSION, DO NOTHING!
+      if (!userJustClickedSubmit) {
+        return;
+      }
+
+      // Check if within 45s of submit click
+      if (Date.now() - submitTimestamp > 45000) {
+        userJustClickedSubmit = false;
+        return;
+      }
+
       if (!isContextValid()) {
         observer.disconnect();
         return;
@@ -308,7 +321,8 @@
       );
 
       if (isFailed) {
-        isSubmitPending = false;
+        console.log('[CodeMetrix] Submission failed. Not syncing.');
+        userJustClickedSubmit = false; // Close gate
         return;
       }
 
@@ -318,28 +332,18 @@
         (document.querySelector('[data-e2e-locator="submission-result"]') && document.querySelector('[data-e2e-locator="submission-result"]').innerText.includes('Accepted'))
       );
 
-      // Must be accepted AND submit action was initiated
-      if (hasAcceptedBanner) {
+      // Must have Accepted banner AND submit was initiated
+      if (hasAcceptedBanner && userJustClickedSubmit) {
         const slug = getProblemSlug();
         if (!slug) return;
 
         const code = getSourceCode();
         if (!code || code.trim().length < 5) return;
 
-        const now = Date.now();
-        // Strict 20-second cooldown per problem
-        if (slug === lastSyncedProblemSlug && (now - lastSyncedTimestamp) < 20000) {
-          return;
-        }
+        if (isCurrentlySyncing) return;
 
-        if (isCurrentlySyncing) {
-          return;
-        }
-
-        // Lock trigger immediately
-        lastSyncedProblemSlug = slug;
-        lastSyncedTimestamp = now;
-        isSubmitPending = false;
+        // SHUT OFF GATE IMMEDIATELY (Guarantees exactly ONE execution per submit click)
+        userJustClickedSubmit = false;
 
         let runtime = 0;
         let memory = 0;
@@ -352,6 +356,8 @@
 
         const lang = getActiveLanguage();
         const diff = getProblemDifficulty();
+
+        console.log('[CodeMetrix] Accepted verdict detected! Syncing solution...');
 
         syncAcceptedSubmission({
           slug: slug,
@@ -374,5 +380,5 @@
     initStrictObserver();
   }
 
-  console.log('⚡ CodeMetrix LeetCode Sync: Single-Shot Submission Lock active.');
+  console.log('⚡ CodeMetrix LeetCode Sync: Active (Waiting for Submit click).');
 })();
