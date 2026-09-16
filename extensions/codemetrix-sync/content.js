@@ -154,41 +154,60 @@
     const finalFlags = [...aiScanResult.flags];
     const codeLen = (code || '').trim().length;
     const ratio = codeLen > 0 ? (keystrokes / codeLen) : 1;
+    const hasAiComments = aiScanResult.hasPromptComments;
 
-    // 1. Direct Full Paste without Typing
-    if (pasted && keystrokes < 25 && codeLen > 80) {
-      score += 45;
-      finalFlags.push('Instant Direct Full Paste (<25 Keystrokes)');
-    } else if (pasted && ratio < 0.25 && codeLen > 150) {
-      score += 30;
-      finalFlags.push(`High Paste-to-Type Ratio (${Math.round(ratio * 100)}%)`);
-    } else if (!pasted && ratio < 0.15 && codeLen > 150) {
-      score += 25;
-      finalFlags.push('Extremely Low Keystroke Count vs Code Length');
+    // DIRECT FLAGGING RULES (100% Guaranteed Plagiarism Catch):
+    // 1. Direct Full Paste with minimal typing (< 30 keystrokes for code > 50 characters)
+    if (pasted && keystrokes < 30 && codeLen > 50) {
+      score = Math.max(score, 95);
+      finalFlags.push(`Direct Full Paste Detected (${keystrokes} Keystrokes / ${codeLen} chars)`);
     }
 
-    // 2. Solving Speed Anomaly
-    const diff = (difficulty || 'Medium').toLowerCase();
-    if (diff === 'hard' && timeSpentSeconds < 90) {
-      score += 25;
-      finalFlags.push(`Suspicious Hard Solve Time (${timeSpentSeconds}s < 90s)`);
-    } else if (diff === 'medium' && timeSpentSeconds < 45) {
-      score += 20;
-      finalFlags.push(`Suspicious Medium Solve Time (${timeSpentSeconds}s < 45s)`);
-    } else if (timeSpentSeconds < 15) {
-      score += 30;
-      finalFlags.push(`Instant Solve (<15s)`);
+    // 2. AI Prompt Signature / Comment Header + (Pasted or Low Typing Ratio)
+    if (hasAiComments && (pasted || ratio < 0.40)) {
+      score = Math.max(score, 95);
+      finalFlags.push('AI-Generated Solution Detected with Low Typing Activity');
     }
 
-    // 3. AI Comments and Prompt Headers
-    if (aiScanResult.hasPromptComments) {
-      score += 25;
+    // 3. Extreme Typing Deficit / Direct Code Injection (< 15 keystrokes on substantive code)
+    if (keystrokes < 15 && codeLen > 60) {
+      score = Math.max(score, 90);
+      finalFlags.push(`Extreme Keystroke Deficit (${keystrokes} Keystrokes)`);
     }
 
-    // 4. External Tab Switch Anomaly Prior to Paste
-    if (switches >= 3 && pasted) {
-      score += 15;
-      finalFlags.push(`Multiple Tab Switches Before Paste (${switches} switches)`);
+    // Additional Forensic Scoring (Accumulative if not already flagged)
+    if (score < 90) {
+      if (pasted && ratio < 0.25 && codeLen > 150) {
+        score += 35;
+        finalFlags.push(`High Paste-to-Type Ratio (${Math.round(ratio * 100)}%)`);
+      } else if (!pasted && ratio < 0.15 && codeLen > 150) {
+        score += 30;
+        finalFlags.push('Low Keystroke Count vs Code Length');
+      }
+
+      // Solving Speed Anomaly
+      const diff = (difficulty || 'Medium').toLowerCase();
+      if (diff === 'hard' && timeSpentSeconds < 90) {
+        score += 25;
+        finalFlags.push(`Suspicious Hard Solve Time (${timeSpentSeconds}s < 90s)`);
+      } else if (diff === 'medium' && timeSpentSeconds < 45) {
+        score += 20;
+        finalFlags.push(`Suspicious Medium Solve Time (${timeSpentSeconds}s < 45s)`);
+      } else if (timeSpentSeconds < 15) {
+        score += 30;
+        finalFlags.push('Instant Solve (<15s)');
+      }
+
+      // AI Comments detected without paste
+      if (hasAiComments) {
+        score += 35;
+      }
+
+      // External Tab Switch Anomaly Prior to Paste
+      if (switches >= 3 && pasted) {
+        score += 15;
+        finalFlags.push(`Multiple Tab Switches Before Paste (${switches} switches)`);
+      }
     }
 
     score = Math.min(100, Math.max(0, score));
@@ -203,7 +222,7 @@
       verdict: verdict,
       keystrokeRatio: parseFloat(ratio.toFixed(2)),
       flags: finalFlags,
-      hasPromptComments: aiScanResult.hasPromptComments
+      hasPromptComments: hasAiComments
     };
   }
 
