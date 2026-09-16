@@ -12,6 +12,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const syncCountEl = document.getElementById('syncCount');
   const lastSyncedEl = document.getElementById('lastSynced');
   const hintEl = document.getElementById('studentNameHint');
+  const solutionsList = document.getElementById('solutionsList');
+  const refreshBtn = document.getElementById('refreshSolutionsBtn');
+
+  // Modal elements
+  const codeModal = document.getElementById('codeModal');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  const modalTitle = document.getElementById('modalProblemTitle');
+  const modalLangBadge = document.getElementById('modalLangBadge');
+  const modalRuntimeBadge = document.getElementById('modalRuntimeBadge');
+  const modalTime = document.getElementById('modalTime');
+  const modalCode = document.getElementById('modalSourceCode');
+  const copyCodeBtn = document.getElementById('copyCodeBtn');
 
   const roster = window.STUDENTS_ROSTER || {};
 
@@ -40,6 +52,84 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function loadSolutions(reg) {
+    if (!reg) return;
+    solutionsList.innerHTML = '<div class="empty-state">Fetching your synced solutions...</div>';
+
+    let solutions = [];
+
+    // 1. Try fetching from Supabase
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/student_leetcode_submissions?register_number=eq.${reg}&order=submitted_at.desc&limit=15`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      });
+      if (resp.ok) {
+        solutions = await resp.json();
+      }
+    } catch (e) {}
+
+    // 2. Fallback to locally stored submissions
+    if (!solutions || solutions.length === 0) {
+      const localData = await new Promise(r => chrome.storage.local.get(['localSubmissions'], r));
+      solutions = localData.localSubmissions || [];
+    }
+
+    if (!solutions || solutions.length === 0) {
+      solutionsList.innerHTML = '<div class="empty-state">No synced solutions found yet. Submit code on LeetCode to view it here!</div>';
+      return;
+    }
+
+    syncCountEl.textContent = solutions.length.toString();
+    solutionsList.innerHTML = '';
+
+    solutions.forEach((sol) => {
+      const item = document.createElement('div');
+      item.className = 'solution-item';
+      const timeStr = sol.submitted_at ? new Date(sol.submitted_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently';
+
+      item.innerHTML = `
+        <div class="solution-title">
+          <span>${sol.problem_title || 'Problem'}</span>
+          <span class="badge badge-green">Accepted</span>
+        </div>
+        <div class="solution-meta">
+          <span class="badge">${sol.language || 'Python3'}</span>
+          <span>${sol.runtime_ms ? sol.runtime_ms + ' ms' : ''}</span>
+          <span>${timeStr}</span>
+        </div>
+      `;
+
+      item.addEventListener('click', () => {
+        openCodeModal(sol);
+      });
+
+      solutionsList.appendChild(item);
+    });
+  }
+
+  function openCodeModal(sol) {
+    modalTitle.textContent = sol.problem_title || 'Solution';
+    modalLangBadge.textContent = sol.language || 'Code';
+    modalRuntimeBadge.textContent = sol.runtime_ms ? `${sol.runtime_ms} ms` : 'Runtime: Fast';
+    modalTime.textContent = sol.submitted_at ? new Date(sol.submitted_at).toLocaleString() : '';
+    modalCode.textContent = sol.source_code || '// No source code recorded';
+    codeModal.hidden = false;
+  }
+
+  closeModalBtn.addEventListener('click', () => {
+    codeModal.hidden = true;
+  });
+
+  copyCodeBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(modalCode.textContent).then(() => {
+      copyCodeBtn.textContent = '✓ Copied!';
+      setTimeout(() => { copyCodeBtn.textContent = 'Copy Source Code'; }, 2000);
+    });
+  });
+
   // Load saved configuration
   chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync', 'syncCount', 'lastSynced'], (data) => {
     if (data.registerNumber) {
@@ -48,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
       validateRegister(data.registerNumber);
       statusPill.className = 'status-indicator';
       statusText.textContent = 'Active';
+      loadSolutions(data.registerNumber);
     } else {
       statusPill.className = 'status-indicator not-ready';
       statusText.textContent = 'Setup Needed';
@@ -61,12 +152,15 @@ document.addEventListener('DOMContentLoaded', () => {
     lastSyncedEl.textContent = data.lastSynced || 'None';
   });
 
-  // Real-time lookup on typing register number
   regInput.addEventListener('input', () => {
     validateRegister(regInput.value);
   });
 
-  // Save button click
+  refreshBtn.addEventListener('click', () => {
+    const reg = regInput.value.trim().toUpperCase();
+    if (reg) loadSolutions(reg);
+  });
+
   saveBtn.addEventListener('click', () => {
     const regVal = regInput.value.trim().toUpperCase();
     const lcVal = leetcodeInput.value.trim();
@@ -94,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
       saveMsg.textContent = 'Profile saved! Ready to capture LeetCode submissions.';
       statusPill.className = 'status-indicator';
       statusText.textContent = 'Active';
+      loadSolutions(regVal);
 
       setTimeout(() => {
         saveMsg.textContent = '';

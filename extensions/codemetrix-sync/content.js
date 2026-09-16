@@ -44,14 +44,12 @@
   }
 
   function getProblemTitle() {
-    // 1. Try problem title heading in DOM
     const titleEl = document.querySelector('div[class*="text-title-large"], a[href*="/problems/"], div[data-cy="question-title"]');
     if (titleEl && titleEl.textContent) {
       const text = titleEl.textContent.trim();
       if (text.length > 2 && !text.includes('LeetCode')) return text;
     }
 
-    // 2. Fallback to formatting slug
     const slug = getProblemSlug();
     if (!slug) return 'LeetCode Problem';
     return slug
@@ -61,7 +59,6 @@
   }
 
   function getSourceCode() {
-    // Strategy 1: Extract from Monaco Editor lines DOM
     try {
       const lines = document.querySelectorAll('.monaco-editor .view-line');
       if (lines && lines.length > 0) {
@@ -72,7 +69,6 @@
       }
     } catch (e) {}
 
-    // Strategy 2: Extract from textareas / code containers
     try {
       const textareas = document.querySelectorAll('textarea');
       for (const t of textareas) {
@@ -106,7 +102,7 @@
   }
 
   async function syncSubmission(submissionDetails) {
-    chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync', 'supabaseUrl', 'supabaseAnonKey', 'syncCount'], async (config) => {
+    chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync', 'supabaseUrl', 'supabaseAnonKey', 'syncCount', 'localSubmissions'], async (config) => {
       const regNumber = config.registerNumber;
       if (!regNumber) {
         showToast('CodeMetrix Setup Needed', 'Click the ⚡ extension icon in toolbar to enter your Register Number.', true);
@@ -142,8 +138,22 @@
         submitted_at: new Date().toISOString()
       };
 
+      // Save locally in extension memory
+      let localList = config.localSubmissions || [];
+      localList.unshift(payload);
+      if (localList.length > 30) localList = localList.slice(0, 30);
+
+      const newCount = (parseInt(config.syncCount || 0) + 1).toString();
+      const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      chrome.storage.local.set({
+        syncCount: newCount,
+        lastSynced: `${problemTitle} (${timeNow})`,
+        localSubmissions: localList
+      });
+
       try {
-        const resp = await fetch(`${supabaseUrl}/rest/v1/student_leetcode_submissions`, {
+        await fetch(`${supabaseUrl}/rest/v1/student_leetcode_submissions`, {
           method: 'POST',
           headers: {
             'apikey': supabaseKey,
@@ -154,26 +164,17 @@
           body: JSON.stringify(payload)
         });
 
-        const newCount = (parseInt(config.syncCount || 0) + 1).toString();
-        const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        chrome.storage.local.set({
-          syncCount: newCount,
-          lastSynced: `${problemTitle} (${timeNow})`
-        });
-
-        showToast('⚡ CodeMetrix Synced!', `${problemTitle} (${language}) captured for ${regNumber}!`);
+        showToast('⚡ CodeMetrix Synced!', `${problemTitle} (${language}) captured! Click ⚡ to view code.`);
       } catch (err) {
-        console.error('[CodeMetrix Sync Error]', err);
+        showToast('⚡ CodeMetrix Saved!', `${problemTitle} (${language}) saved to local archive.`);
       }
     });
   }
 
-  // Observer to detect Accepted submission banner
   function initObserver() {
     const observer = new MutationObserver(() => {
       const text = document.body.innerText || '';
       
-      // Detection of "Accepted" state on LeetCode submission
       const isAccepted = (
         (text.includes('Accepted') && (text.includes('Runtime') || text.includes('Memory') || text.includes('Beats'))) ||
         document.querySelector('[data-e2e-locator="submission-result"]') ||

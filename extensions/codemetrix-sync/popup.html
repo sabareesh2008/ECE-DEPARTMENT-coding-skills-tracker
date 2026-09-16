@@ -56,6 +56,34 @@
     </div>
   </div>
 
+  <!-- Recent Solutions Viewer -->
+  <div class="card solutions-card">
+    <div class="solutions-header">
+      <h3>📋 Synced Code Archive</h3>
+      <button id="refreshSolutionsBtn" class="btn-icon" title="Refresh solutions">⟳</button>
+    </div>
+    <div id="solutionsList" class="solutions-list">
+      <div class="empty-state">No synced solutions yet. Solve a problem on LeetCode to see your code here!</div>
+    </div>
+  </div>
+
+  <!-- Code Modal View -->
+  <div id="codeModal" class="code-modal" hidden>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 id="modalProblemTitle">Problem Title</h4>
+        <button id="closeModalBtn" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-meta">
+        <span id="modalLangBadge" class="badge">Python3</span>
+        <span id="modalRuntimeBadge" class="badge">0 ms</span>
+        <span id="modalTime" class="badge-time"></span>
+      </div>
+      <pre><code id="modalSourceCode"></code></pre>
+      <button id="copyCodeBtn" class="btn btn-secondary">Copy Source Code</button>
+    </div>
+  </div>
+
   <div class="footer">
     <span>Department of ECE</span> &bull; <span>CodeMetrix Platform</span>
   </div>
