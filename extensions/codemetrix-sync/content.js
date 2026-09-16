@@ -1,10 +1,8 @@
 /**
  * CodeMetrix LeetCode Sync - Content Script
- * STRICT FILTERING:
- * - ONLY syncs when submission is strictly ACCEPTED (100% test cases passed).
- * - Ignores "Run Code" test runs.
- * - Ignores "Wrong Answer", "Runtime Error", "Time Limit Exceeded", "Compile Error".
- * - Pushes code directly to Supabase table `student_leetcode_submissions`.
+ * Robust Language Detection (Java, C++, Python, C, etc.)
+ * Robust Difficulty Detection (Easy, Medium, Hard)
+ * Strict Accepted (100% test cases passed) filter
  */
 
 (function() {
@@ -47,12 +45,16 @@
   }
 
   function getProblemTitle() {
-    const titleEl = document.querySelector('div[class*="text-title-large"], a[href*="/problems/"], div[data-cy="question-title"]');
+    // 1. Try finding title in header / DOM
+    const titleEl = document.querySelector('div[class*="text-title-large"], a[href*="/problems/"], div[data-cy="question-title"], h4[class*="text-"]');
     if (titleEl && titleEl.textContent) {
       const text = titleEl.textContent.trim();
-      if (text.length > 2 && !text.includes('LeetCode')) return text;
+      if (text.length > 2 && !text.includes('LeetCode') && !text.includes('Problem List')) {
+        return text;
+      }
     }
 
+    // 2. Format from slug
     const slug = getProblemSlug();
     if (!slug) return 'LeetCode Problem';
     return slug
@@ -61,7 +63,86 @@
       .join(' ');
   }
 
+  function getProblemDifficulty() {
+    // Check DOM badge elements for Easy, Medium, Hard
+    const diffEl = document.querySelector(
+      'div[class*="text-olive"], div[class*="text-yellow"], div[class*="text-pink"], ' +
+      'div[class*="text-difficulty-"], div[class*="text-green"], div[class*="text-red"], ' +
+      'span[class*="text-olive"], span[class*="text-yellow"], span[class*="text-pink"]'
+    );
+
+    if (diffEl && diffEl.textContent) {
+      const txt = diffEl.textContent.trim().toLowerCase();
+      if (txt.includes('easy')) return 'Easy';
+      if (txt.includes('medium')) return 'Medium';
+      if (txt.includes('hard')) return 'Hard';
+    }
+
+    // Fallback: search problem description area text
+    const descArea = document.querySelector('div[data-track-load="description_content"], div[class*="description__"]');
+    const fullText = (descArea ? descArea.parentElement.innerText : document.body.innerText) || '';
+    
+    // Check exact word boundaries near top
+    const topChunk = fullText.slice(0, 1500);
+    if (/\bEasy\b/i.test(topChunk)) return 'Easy';
+    if (/\bHard\b/i.test(topChunk)) return 'Hard';
+    if (/\bMedium\b/i.test(topChunk)) return 'Medium';
+
+    return 'Easy'; // sensible baseline default
+  }
+
+  function getActiveLanguage() {
+    const knownLanguages = [
+      'Java', 'C++', 'Python3', 'Python', 'C', 'C#', 'JavaScript',
+      'TypeScript', 'Go', 'Rust', 'Kotlin', 'Swift', 'Ruby', 'PHP',
+      'Dart', 'Scala', 'Racket', 'Erlang', 'Elixir', 'SQL', 'Pandas'
+    ];
+
+    // Strategy 1: Check language buttons above editor
+    const buttons = document.querySelectorAll('button');
+    for (const btn of buttons) {
+      const txt = (btn.textContent || '').trim();
+      for (const lang of knownLanguages) {
+        if (txt === lang || txt.startsWith(lang + ' ') || txt === lang.toLowerCase()) {
+          return lang;
+        }
+      }
+    }
+
+    // Strategy 2: Check active language in LeetCode dropdown
+    const langSelect = document.querySelector('[data-cy="lang-select"], button[id*="headlessui-listbox-button"]');
+    if (langSelect && langSelect.textContent) {
+      const txt = langSelect.textContent.trim();
+      for (const lang of knownLanguages) {
+        if (txt.includes(lang)) return lang;
+      }
+    }
+
+    // Strategy 3: Inspect submitted source code patterns
+    const code = getSourceCode();
+    if (code) {
+      if (code.includes('public class') || code.includes('class Solution') && code.includes('public ') && code.includes(';') || code.includes('System.out.')) {
+        return 'Java';
+      }
+      if (code.includes('#include') || code.includes('std::') || code.includes('vector<') || code.includes('cout <<')) {
+        return 'C++';
+      }
+      if (code.includes('def ') || code.includes('class Solution:') || code.includes('self,')) {
+        return 'Python3';
+      }
+      if (code.includes('#include <stdio.h>') || code.includes('printf(')) {
+        return 'C';
+      }
+      if (code.includes('function ') || code.includes('const ') || code.includes('var ') && code.includes('=>')) {
+        return 'JavaScript';
+      }
+    }
+
+    return 'Java';
+  }
+
   function getSourceCode() {
+    // 1. Extract from Monaco Editor lines
     try {
       const lines = document.querySelectorAll('.monaco-editor .view-line');
       if (lines && lines.length > 0) {
@@ -72,6 +153,7 @@
       }
     } catch (e) {}
 
+    // 2. Extract from textarea
     try {
       const textareas = document.querySelectorAll('textarea');
       for (const t of textareas) {
@@ -80,17 +162,6 @@
     } catch (e) {}
 
     return '';
-  }
-
-  function getActiveLanguage() {
-    try {
-      const langBtn = document.querySelector('button[id*="headlessui-listbox-button"], [data-cy="lang-select"], div[class*="rounded"] button');
-      if (langBtn && langBtn.textContent) {
-        const lang = langBtn.textContent.trim();
-        if (lang && !lang.includes('Run') && !lang.includes('Submit')) return lang;
-      }
-    } catch (e) {}
-    return 'Python3';
   }
 
   function getLoggedLeetCodeUser() {
@@ -124,13 +195,14 @@
       const problemSlug = submissionDetails.slug || getProblemSlug();
       const sourceCode = submissionDetails.code || getSourceCode();
       const language = submissionDetails.language || getActiveLanguage();
+      const difficulty = submissionDetails.difficulty || getProblemDifficulty();
 
       const payload = {
         register_number: regNumber,
         leetcode_username: lcUsername,
         problem_title: problemTitle,
         problem_slug: problemSlug,
-        problem_difficulty: submissionDetails.difficulty || 'Medium',
+        problem_difficulty: difficulty,
         language: language,
         submission_status: 'Accepted',
         runtime_ms: submissionDetails.runtime_ms || 0,
@@ -156,9 +228,9 @@
         if (resp.ok) {
           const newCount = (parseInt(config.syncCount || 0) + 1).toString();
           chrome.storage.local.set({ syncCount: newCount });
-          showToast('⚡ CodeMetrix Synced to Database!', `All test cases passed! ${problemTitle} (${language}) recorded in Supabase.`);
+          showToast('⚡ CodeMetrix Synced to Database!', `Accepted: ${problemTitle} (${difficulty} • ${language}) recorded in Supabase.`);
         } else {
-          showToast('⚡ CodeMetrix Synced!', `${problemTitle} logged to Supabase.`);
+          showToast('⚡ CodeMetrix Synced!', `${problemTitle} (${difficulty} • ${language}) logged to Supabase.`);
         }
       } catch (err) {
         console.error('[CodeMetrix Database Sync Error]', err);
@@ -169,11 +241,10 @@
   // Strict Submission Result Observer
   function initStrictObserver() {
     const observer = new MutationObserver(() => {
-      // 1. Look for submission result container
       const resultContainer = document.querySelector('[data-e2e-locator="submission-result"], div[class*="result__"], div[class*="status__"]');
       const allText = (resultContainer ? resultContainer.innerText : document.body.innerText) || '';
 
-      // 2. Reject any failed states immediately
+      // Reject any failed states immediately
       const isFailed = (
         allText.includes('Wrong Answer') ||
         allText.includes('Runtime Error') ||
@@ -185,17 +256,16 @@
       );
 
       if (isFailed) {
-        // Failed submission, DO NOT sync
         return;
       }
 
-      // 3. Strict Check for "Accepted" banner (Must be an actual submission with Runtime or Beats)
+      // Check for "Accepted" banner
       const hasAcceptedBanner = (
         (allText.includes('Accepted') && (allText.includes('Runtime') || allText.includes('Beats') || allText.includes('Memory'))) ||
-        document.querySelector('[data-e2e-locator="submission-result"]') && document.querySelector('[data-e2e-locator="submission-result"]').innerText.includes('Accepted')
+        (document.querySelector('[data-e2e-locator="submission-result"]') && document.querySelector('[data-e2e-locator="submission-result"]').innerText.includes('Accepted'))
       );
 
-      // 4. Ensure this is NOT just a "Run Code" test run
+      // Ensure this is NOT just a "Run Code" test run
       const isTestRunOnly = document.querySelector('[data-cy="run-code-result"], div[class*="testcase"]') && !allText.includes('Beats');
       if (isTestRunOnly && !allText.includes('Accepted')) {
         return;
@@ -208,7 +278,6 @@
         const code = getSourceCode();
         if (!code || code.trim().length < 5) return;
 
-        // Unique debounce key to prevent double syncing the same click
         const uniqueKey = `${slug}_${Date.now().toString().slice(0, -4)}`;
 
         if (lastProcessedKey !== uniqueKey) {
@@ -223,11 +292,15 @@
             if (mMatch) memory = parseFloat(mMatch[1]);
           } catch (e) {}
 
+          const lang = getActiveLanguage();
+          const diff = getProblemDifficulty();
+
           syncAcceptedSubmission({
             slug: slug,
             title: getProblemTitle(),
+            difficulty: diff,
+            language: lang,
             code: code,
-            language: getActiveLanguage(),
             runtime_ms: runtime,
             memory_mb: memory
           });
@@ -244,5 +317,5 @@
     initStrictObserver();
   }
 
-  console.log('⚡ CodeMetrix LeetCode Sync: Strict Accepted-only filter active.');
+  console.log('⚡ CodeMetrix LeetCode Sync: Enhanced Language & Difficulty detection active.');
 })();
