@@ -1,16 +1,21 @@
 /**
  * CodeMetrix LeetCode Sync - Content Script
- * Robust Language Detection (Java, C++, Python, C, etc.)
- * Robust Difficulty Detection (Easy, Medium, Hard)
- * Strict Accepted (100% test cases passed) filter
- * Safe Context Guard against Extension Invalidation
+ * 100% SINGLE-SHOT SUBMISSION LOCK:
+ * - Listens for explicit "Submit" button click.
+ * - Locks trigger so 1 Submit = EXACTLY 1 Database Insert.
+ * - 30-second cooldown per problem.
+ * - Robust Language & Difficulty detection.
  */
 
 (function() {
   const DEFAULT_SUPABASE_URL = "https://bmbdkmtplemvlglqbgee.supabase.co";
   const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_mhASvZVhm997qjKiVb15LQ_MiLPXsRl";
 
-  let lastProcessedKey = null;
+  // Single-shot state tracking
+  let isSubmitPending = false;
+  let isCurrentlySyncing = false;
+  let lastSyncedProblemSlug = "";
+  let lastSyncedTimestamp = 0;
 
   function isContextValid() {
     return typeof chrome !== 'undefined' && chrome.runtime && !!chrome.runtime.id;
@@ -178,22 +183,30 @@
   }
 
   async function syncAcceptedSubmission(submissionDetails) {
+    if (isCurrentlySyncing) return;
+    isCurrentlySyncing = true;
+
     if (!isContextValid()) {
-      console.warn('[CodeMetrix] Extension context invalidated. Please refresh the LeetCode tab.');
+      isCurrentlySyncing = false;
       return;
     }
 
     try {
       chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync', 'supabaseUrl', 'supabaseAnonKey', 'syncCount'], async (config) => {
-        if (!isContextValid()) return;
+        if (!isContextValid()) {
+          isCurrentlySyncing = false;
+          return;
+        }
 
         const regNumber = config.registerNumber;
         if (!regNumber) {
           showToast('CodeMetrix Setup Needed', 'Click the ⚡ extension icon in toolbar to enter your Register Number.', true);
+          isCurrentlySyncing = false;
           return;
         }
 
         if (config.autoSync === false) {
+          isCurrentlySyncing = false;
           return;
         }
 
@@ -246,13 +259,33 @@
           }
         } catch (err) {
           console.error('[CodeMetrix Database Sync Error]', err);
+        } finally {
+          setTimeout(() => {
+            isCurrentlySyncing = false;
+          }, 2000);
         }
       });
     } catch (e) {
-      console.warn('[CodeMetrix Storage Error]', e);
+      isCurrentlySyncing = false;
     }
   }
 
+  // 1. Listen for user clicking "Submit"
+  document.addEventListener('click', (e) => {
+    const target = e.target;
+    if (!target) return;
+    const btn = target.closest('button[data-e2e-locator="console-submit-button"], button');
+    if (btn) {
+      const text = (btn.textContent || '').trim().toLowerCase();
+      if (text === 'submit' || text.includes('submit')) {
+        isSubmitPending = true;
+        // Auto reset pending flag after 45s if not resolved
+        setTimeout(() => { isSubmitPending = false; }, 45000);
+      }
+    }
+  }, true);
+
+  // 2. Strict Single-Shot Submission Observer
   function initStrictObserver() {
     const observer = new MutationObserver(() => {
       if (!isContextValid()) {
@@ -263,6 +296,7 @@
       const resultContainer = document.querySelector('[data-e2e-locator="submission-result"], div[class*="result__"], div[class*="status__"]');
       const allText = (resultContainer ? resultContainer.innerText : document.body.innerText) || '';
 
+      // Ignore failed states
       const isFailed = (
         allText.includes('Wrong Answer') ||
         allText.includes('Runtime Error') ||
@@ -274,19 +308,17 @@
       );
 
       if (isFailed) {
+        isSubmitPending = false;
         return;
       }
 
+      // Check for "Accepted" banner
       const hasAcceptedBanner = (
         (allText.includes('Accepted') && (allText.includes('Runtime') || allText.includes('Beats') || allText.includes('Memory'))) ||
         (document.querySelector('[data-e2e-locator="submission-result"]') && document.querySelector('[data-e2e-locator="submission-result"]').innerText.includes('Accepted'))
       );
 
-      const isTestRunOnly = document.querySelector('[data-cy="run-code-result"], div[class*="testcase"]') && !allText.includes('Beats');
-      if (isTestRunOnly && !allText.includes('Accepted')) {
-        return;
-      }
-
+      // Must be accepted AND submit action was initiated
       if (hasAcceptedBanner) {
         const slug = getProblemSlug();
         if (!slug) return;
@@ -294,33 +326,42 @@
         const code = getSourceCode();
         if (!code || code.trim().length < 5) return;
 
-        const uniqueKey = `${slug}_${Date.now().toString().slice(0, -4)}`;
-
-        if (lastProcessedKey !== uniqueKey) {
-          lastProcessedKey = uniqueKey;
-
-          let runtime = 0;
-          let memory = 0;
-          try {
-            const rMatch = allText.match(/Runtime\s*[:\n]?\s*([\d\.]+)\s*ms/i);
-            if (rMatch) runtime = parseInt(rMatch[1]);
-            const mMatch = allText.match(/Memory\s*[:\n]?\s*([\d\.]+)\s*MB/i);
-            if (mMatch) memory = parseFloat(mMatch[1]);
-          } catch (e) {}
-
-          const lang = getActiveLanguage();
-          const diff = getProblemDifficulty();
-
-          syncAcceptedSubmission({
-            slug: slug,
-            title: getProblemTitle(),
-            difficulty: diff,
-            language: lang,
-            code: code,
-            runtime_ms: runtime,
-            memory_mb: memory
-          });
+        const now = Date.now();
+        // Strict 20-second cooldown per problem
+        if (slug === lastSyncedProblemSlug && (now - lastSyncedTimestamp) < 20000) {
+          return;
         }
+
+        if (isCurrentlySyncing) {
+          return;
+        }
+
+        // Lock trigger immediately
+        lastSyncedProblemSlug = slug;
+        lastSyncedTimestamp = now;
+        isSubmitPending = false;
+
+        let runtime = 0;
+        let memory = 0;
+        try {
+          const rMatch = allText.match(/Runtime\s*[:\n]?\s*([\d\.]+)\s*ms/i);
+          if (rMatch) runtime = parseInt(rMatch[1]);
+          const mMatch = allText.match(/Memory\s*[:\n]?\s*([\d\.]+)\s*MB/i);
+          if (mMatch) memory = parseFloat(mMatch[1]);
+        } catch (e) {}
+
+        const lang = getActiveLanguage();
+        const diff = getProblemDifficulty();
+
+        syncAcceptedSubmission({
+          slug: slug,
+          title: getProblemTitle(),
+          difficulty: diff,
+          language: lang,
+          code: code,
+          runtime_ms: runtime,
+          memory_mb: memory
+        });
       }
     });
 
@@ -333,5 +374,5 @@
     initStrictObserver();
   }
 
-  console.log('⚡ CodeMetrix LeetCode Sync active.');
+  console.log('⚡ CodeMetrix LeetCode Sync: Single-Shot Submission Lock active.');
 })();
