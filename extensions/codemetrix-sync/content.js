@@ -3,6 +3,7 @@
  * Robust Language Detection (Java, C++, Python, C, etc.)
  * Robust Difficulty Detection (Easy, Medium, Hard)
  * Strict Accepted (100% test cases passed) filter
+ * Safe Context Guard against Extension Invalidation
  */
 
 (function() {
@@ -11,32 +12,38 @@
 
   let lastProcessedKey = null;
 
+  function isContextValid() {
+    return typeof chrome !== 'undefined' && chrome.runtime && !!chrome.runtime.id;
+  }
+
   function showToast(title, message, isError = false) {
-    const existing = document.getElementById('codemetrix-toast');
-    if (existing) existing.remove();
+    try {
+      const existing = document.getElementById('codemetrix-toast');
+      if (existing) existing.remove();
 
-    const toast = document.createElement('div');
-    toast.id = 'codemetrix-toast';
-    if (isError) toast.className = 'error';
+      const toast = document.createElement('div');
+      toast.id = 'codemetrix-toast';
+      if (isError) toast.className = 'error';
 
-    toast.innerHTML = `
-      <div class="cm-icon">${isError ? '⚠️' : '⚡'}</div>
-      <div class="cm-content">
-        <h4 style="color: ${isError ? '#f85149' : '#3fb950'}">${title}</h4>
-        <p>${message}</p>
-      </div>
-    `;
+      toast.innerHTML = `
+        <div class="cm-icon">${isError ? '⚠️' : '⚡'}</div>
+        <div class="cm-content">
+          <h4 style="color: ${isError ? '#f85149' : '#3fb950'}">${title}</h4>
+          <p>${message}</p>
+        </div>
+      `;
 
-    document.body.appendChild(toast);
+      document.body.appendChild(toast);
 
-    setTimeout(() => {
-      if (toast && toast.parentNode) {
-        toast.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(120%)';
-        setTimeout(() => toast.remove(), 400);
-      }
-    }, 4500);
+      setTimeout(() => {
+        if (toast && toast.parentNode) {
+          toast.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(120%)';
+          setTimeout(() => toast.remove(), 400);
+        }
+      }, 4500);
+    } catch (e) {}
   }
 
   function getProblemSlug() {
@@ -45,16 +52,16 @@
   }
 
   function getProblemTitle() {
-    // 1. Try finding title in header / DOM
-    const titleEl = document.querySelector('div[class*="text-title-large"], a[href*="/problems/"], div[data-cy="question-title"], h4[class*="text-"]');
-    if (titleEl && titleEl.textContent) {
-      const text = titleEl.textContent.trim();
-      if (text.length > 2 && !text.includes('LeetCode') && !text.includes('Problem List')) {
-        return text;
+    try {
+      const titleEl = document.querySelector('div[class*="text-title-large"], a[href*="/problems/"], div[data-cy="question-title"], h4[class*="text-"]');
+      if (titleEl && titleEl.textContent) {
+        const text = titleEl.textContent.trim();
+        if (text.length > 2 && !text.includes('LeetCode') && !text.includes('Problem List')) {
+          return text;
+        }
       }
-    }
+    } catch (e) {}
 
-    // 2. Format from slug
     const slug = getProblemSlug();
     if (!slug) return 'LeetCode Problem';
     return slug
@@ -64,31 +71,50 @@
   }
 
   function getProblemDifficulty() {
-    // Check DOM badge elements for Easy, Medium, Hard
-    const diffEl = document.querySelector(
-      'div[class*="text-olive"], div[class*="text-yellow"], div[class*="text-pink"], ' +
-      'div[class*="text-difficulty-"], div[class*="text-green"], div[class*="text-red"], ' +
-      'span[class*="text-olive"], span[class*="text-yellow"], span[class*="text-pink"]'
-    );
+    try {
+      const diffEl = document.querySelector(
+        'div[class*="text-olive"], div[class*="text-yellow"], div[class*="text-pink"], ' +
+        'div[class*="text-difficulty-"], div[class*="text-green"], div[class*="text-red"], ' +
+        'span[class*="text-olive"], span[class*="text-yellow"], span[class*="text-pink"]'
+      );
 
-    if (diffEl && diffEl.textContent) {
-      const txt = diffEl.textContent.trim().toLowerCase();
-      if (txt.includes('easy')) return 'Easy';
-      if (txt.includes('medium')) return 'Medium';
-      if (txt.includes('hard')) return 'Hard';
-    }
+      if (diffEl && diffEl.textContent) {
+        const txt = diffEl.textContent.trim().toLowerCase();
+        if (txt.includes('easy')) return 'Easy';
+        if (txt.includes('medium')) return 'Medium';
+        if (txt.includes('hard')) return 'Hard';
+      }
 
-    // Fallback: search problem description area text
-    const descArea = document.querySelector('div[data-track-load="description_content"], div[class*="description__"]');
-    const fullText = (descArea ? descArea.parentElement.innerText : document.body.innerText) || '';
-    
-    // Check exact word boundaries near top
-    const topChunk = fullText.slice(0, 1500);
-    if (/\bEasy\b/i.test(topChunk)) return 'Easy';
-    if (/\bHard\b/i.test(topChunk)) return 'Hard';
-    if (/\bMedium\b/i.test(topChunk)) return 'Medium';
+      const descArea = document.querySelector('div[data-track-load="description_content"], div[class*="description__"]');
+      const fullText = (descArea ? descArea.parentElement.innerText : document.body.innerText) || '';
+      const topChunk = fullText.slice(0, 1500);
+      if (/\bEasy\b/i.test(topChunk)) return 'Easy';
+      if (/\bHard\b/i.test(topChunk)) return 'Hard';
+      if (/\bMedium\b/i.test(topChunk)) return 'Medium';
+    } catch (e) {}
 
-    return 'Easy'; // sensible baseline default
+    return 'Easy';
+  }
+
+  function getSourceCode() {
+    try {
+      const lines = document.querySelectorAll('.monaco-editor .view-line');
+      if (lines && lines.length > 0) {
+        const codeArr = [];
+        lines.forEach(l => codeArr.push(l.innerText || l.textContent || ''));
+        const joined = codeArr.join('\n');
+        if (joined.trim().length > 10) return joined;
+      }
+    } catch (e) {}
+
+    try {
+      const textareas = document.querySelectorAll('textarea');
+      for (const t of textareas) {
+        if (t.value && t.value.length > 20) return t.value;
+      }
+    } catch (e) {}
+
+    return '';
   }
 
   function getActiveLanguage() {
@@ -98,27 +124,26 @@
       'Dart', 'Scala', 'Racket', 'Erlang', 'Elixir', 'SQL', 'Pandas'
     ];
 
-    // Strategy 1: Check language buttons above editor
-    const buttons = document.querySelectorAll('button');
-    for (const btn of buttons) {
-      const txt = (btn.textContent || '').trim();
-      for (const lang of knownLanguages) {
-        if (txt === lang || txt.startsWith(lang + ' ') || txt === lang.toLowerCase()) {
-          return lang;
+    try {
+      const buttons = document.querySelectorAll('button');
+      for (const btn of buttons) {
+        const txt = (btn.textContent || '').trim();
+        for (const lang of knownLanguages) {
+          if (txt === lang || txt.startsWith(lang + ' ') || txt === lang.toLowerCase()) {
+            return lang;
+          }
         }
       }
-    }
 
-    // Strategy 2: Check active language in LeetCode dropdown
-    const langSelect = document.querySelector('[data-cy="lang-select"], button[id*="headlessui-listbox-button"]');
-    if (langSelect && langSelect.textContent) {
-      const txt = langSelect.textContent.trim();
-      for (const lang of knownLanguages) {
-        if (txt.includes(lang)) return lang;
+      const langSelect = document.querySelector('[data-cy="lang-select"], button[id*="headlessui-listbox-button"]');
+      if (langSelect && langSelect.textContent) {
+        const txt = langSelect.textContent.trim();
+        for (const lang of knownLanguages) {
+          if (txt.includes(lang)) return lang;
+        }
       }
-    }
+    } catch (e) {}
 
-    // Strategy 3: Inspect submitted source code patterns
     const code = getSourceCode();
     if (code) {
       if (code.includes('public class') || code.includes('class Solution') && code.includes('public ') && code.includes(';') || code.includes('System.out.')) {
@@ -141,29 +166,6 @@
     return 'Java';
   }
 
-  function getSourceCode() {
-    // 1. Extract from Monaco Editor lines
-    try {
-      const lines = document.querySelectorAll('.monaco-editor .view-line');
-      if (lines && lines.length > 0) {
-        const codeArr = [];
-        lines.forEach(l => codeArr.push(l.innerText || l.textContent || ''));
-        const joined = codeArr.join('\n');
-        if (joined.trim().length > 10) return joined;
-      }
-    } catch (e) {}
-
-    // 2. Extract from textarea
-    try {
-      const textareas = document.querySelectorAll('textarea');
-      for (const t of textareas) {
-        if (t.value && t.value.length > 20) return t.value;
-      }
-    } catch (e) {}
-
-    return '';
-  }
-
   function getLoggedLeetCodeUser() {
     try {
       const avatarLink = document.querySelector('a[href*="/u/"]');
@@ -176,75 +178,91 @@
   }
 
   async function syncAcceptedSubmission(submissionDetails) {
-    chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync', 'supabaseUrl', 'supabaseAnonKey', 'syncCount'], async (config) => {
-      const regNumber = config.registerNumber;
-      if (!regNumber) {
-        showToast('CodeMetrix Setup Needed', 'Click the ⚡ extension icon in toolbar to enter your Register Number.', true);
-        return;
-      }
+    if (!isContextValid()) {
+      console.warn('[CodeMetrix] Extension context invalidated. Please refresh the LeetCode tab.');
+      return;
+    }
 
-      if (config.autoSync === false) {
-        return;
-      }
+    try {
+      chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync', 'supabaseUrl', 'supabaseAnonKey', 'syncCount'], async (config) => {
+        if (!isContextValid()) return;
 
-      const supabaseUrl = config.supabaseUrl || DEFAULT_SUPABASE_URL;
-      const supabaseKey = config.supabaseAnonKey || DEFAULT_SUPABASE_ANON_KEY;
-      const lcUsername = config.leetcodeUsername || getLoggedLeetCodeUser() || regNumber;
-
-      const problemTitle = submissionDetails.title || getProblemTitle();
-      const problemSlug = submissionDetails.slug || getProblemSlug();
-      const sourceCode = submissionDetails.code || getSourceCode();
-      const language = submissionDetails.language || getActiveLanguage();
-      const difficulty = submissionDetails.difficulty || getProblemDifficulty();
-
-      const payload = {
-        register_number: regNumber,
-        leetcode_username: lcUsername,
-        problem_title: problemTitle,
-        problem_slug: problemSlug,
-        problem_difficulty: difficulty,
-        language: language,
-        submission_status: 'Accepted',
-        runtime_ms: submissionDetails.runtime_ms || 0,
-        runtime_percentile: submissionDetails.runtime_percentile || 0,
-        memory_mb: submissionDetails.memory_mb || 0,
-        memory_percentile: submissionDetails.memory_percentile || 0,
-        source_code: sourceCode || ("// Accepted solution for " + problemTitle),
-        submitted_at: new Date().toISOString()
-      };
-
-      try {
-        const resp = await fetch(`${supabaseUrl}/rest/v1/student_leetcode_submissions`, {
-          method: 'POST',
-          headers: {
-            'apikey': supabaseKey,
-            'Authorization': `Bearer ${supabaseKey}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates,return=minimal'
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (resp.ok) {
-          const newCount = (parseInt(config.syncCount || 0) + 1).toString();
-          chrome.storage.local.set({ syncCount: newCount });
-          showToast('⚡ CodeMetrix Synced to Database!', `Accepted: ${problemTitle} (${difficulty} • ${language}) recorded in Supabase.`);
-        } else {
-          showToast('⚡ CodeMetrix Synced!', `${problemTitle} (${difficulty} • ${language}) logged to Supabase.`);
+        const regNumber = config.registerNumber;
+        if (!regNumber) {
+          showToast('CodeMetrix Setup Needed', 'Click the ⚡ extension icon in toolbar to enter your Register Number.', true);
+          return;
         }
-      } catch (err) {
-        console.error('[CodeMetrix Database Sync Error]', err);
-      }
-    });
+
+        if (config.autoSync === false) {
+          return;
+        }
+
+        const supabaseUrl = config.supabaseUrl || DEFAULT_SUPABASE_URL;
+        const supabaseKey = config.supabaseAnonKey || DEFAULT_SUPABASE_ANON_KEY;
+        const lcUsername = config.leetcodeUsername || getLoggedLeetCodeUser() || regNumber;
+
+        const problemTitle = submissionDetails.title || getProblemTitle();
+        const problemSlug = submissionDetails.slug || getProblemSlug();
+        const sourceCode = submissionDetails.code || getSourceCode();
+        const language = submissionDetails.language || getActiveLanguage();
+        const difficulty = submissionDetails.difficulty || getProblemDifficulty();
+
+        const payload = {
+          register_number: regNumber,
+          leetcode_username: lcUsername,
+          problem_title: problemTitle,
+          problem_slug: problemSlug,
+          problem_difficulty: difficulty,
+          language: language,
+          submission_status: 'Accepted',
+          runtime_ms: submissionDetails.runtime_ms || 0,
+          runtime_percentile: submissionDetails.runtime_percentile || 0,
+          memory_mb: submissionDetails.memory_mb || 0,
+          memory_percentile: submissionDetails.memory_percentile || 0,
+          source_code: sourceCode || ("// Accepted solution for " + problemTitle),
+          submitted_at: new Date().toISOString()
+        };
+
+        try {
+          const resp = await fetch(`${supabaseUrl}/rest/v1/student_leetcode_submissions`, {
+            method: 'POST',
+            headers: {
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates,return=minimal'
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if (resp.ok) {
+            if (isContextValid()) {
+              const newCount = (parseInt(config.syncCount || 0) + 1).toString();
+              chrome.storage.local.set({ syncCount: newCount });
+            }
+            showToast('⚡ CodeMetrix Synced to Database!', `Accepted: ${problemTitle} (${difficulty} • ${language}) recorded in Supabase.`);
+          } else {
+            showToast('⚡ CodeMetrix Synced!', `${problemTitle} (${difficulty} • ${language}) logged to Supabase.`);
+          }
+        } catch (err) {
+          console.error('[CodeMetrix Database Sync Error]', err);
+        }
+      });
+    } catch (e) {
+      console.warn('[CodeMetrix Storage Error]', e);
+    }
   }
 
-  // Strict Submission Result Observer
   function initStrictObserver() {
     const observer = new MutationObserver(() => {
+      if (!isContextValid()) {
+        observer.disconnect();
+        return;
+      }
+
       const resultContainer = document.querySelector('[data-e2e-locator="submission-result"], div[class*="result__"], div[class*="status__"]');
       const allText = (resultContainer ? resultContainer.innerText : document.body.innerText) || '';
 
-      // Reject any failed states immediately
       const isFailed = (
         allText.includes('Wrong Answer') ||
         allText.includes('Runtime Error') ||
@@ -259,13 +277,11 @@
         return;
       }
 
-      // Check for "Accepted" banner
       const hasAcceptedBanner = (
         (allText.includes('Accepted') && (allText.includes('Runtime') || allText.includes('Beats') || allText.includes('Memory'))) ||
         (document.querySelector('[data-e2e-locator="submission-result"]') && document.querySelector('[data-e2e-locator="submission-result"]').innerText.includes('Accepted'))
       );
 
-      // Ensure this is NOT just a "Run Code" test run
       const isTestRunOnly = document.querySelector('[data-cy="run-code-result"], div[class*="testcase"]') && !allText.includes('Beats');
       if (isTestRunOnly && !allText.includes('Accepted')) {
         return;
@@ -317,5 +333,5 @@
     initStrictObserver();
   }
 
-  console.log('⚡ CodeMetrix LeetCode Sync: Enhanced Language & Difficulty detection active.');
+  console.log('⚡ CodeMetrix LeetCode Sync active.');
 })();
