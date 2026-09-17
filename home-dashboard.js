@@ -84,7 +84,27 @@
     solutionAlertText: document.getElementById('solutionAlertText'),
     solutionCodeLang: document.getElementById('solutionCodeLang'),
     copySolutionCodeBtn: document.getElementById('copySolutionCodeBtn'),
-    solutionCodeContent: document.getElementById('solutionCodeContent')
+    solutionCodeContent: document.getElementById('solutionCodeContent'),
+
+    // Advisor Dispatch & Solved History Downloads
+    advisorDispatchBtn: document.getElementById('homeAdvisorDispatchButton'),
+    sectionAdvisorDispatchBtn: document.getElementById('sectionAdvisorDispatchButton'),
+    advisorModal: document.getElementById('advisorDispatchModal'),
+    closeAdvisorModal: document.getElementById('closeAdvisorDispatch'),
+    cancelAdvisorModal: document.getElementById('cancelAdvisorDispatchBtn'),
+    advisorSectionSelect: document.getElementById('advisorSectionSelect'),
+    advisorEmailInput: document.getElementById('advisorEmailInput'),
+    advisorNameInput: document.getElementById('advisorNameInput'),
+    advisorReportFrom: document.getElementById('advisorReportFrom'),
+    advisorReportTo: document.getElementById('advisorReportTo'),
+    advisorReportPreview: document.getElementById('advisorReportPreview'),
+    advisorIntegritySummaryBadge: document.getElementById('advisorIntegritySummaryBadge'),
+    advisorDispatchMsg: document.getElementById('advisorDispatchMessage'),
+    sendAdvisorMailClientBtn: document.getElementById('sendAdvisorMailClientBtn'),
+    downloadAdvisorExcelBtn: document.getElementById('downloadAdvisorExcelBtn'),
+    copyAdvisorTextBtn: document.getElementById('copyAdvisorTextBtn'),
+    downloadSolvedHistoryExcelBtn: document.getElementById('downloadSolvedHistoryExcelBtn'),
+    downloadSolvedHistoryPdfBtn: document.getElementById('downloadSolvedHistoryPdfBtn')
   };
 
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -302,6 +322,7 @@
   }
 
   let currentSolvedSubmissions = [];
+  let currentSolvedStudent = null;
 
   function openDashboard(item){
     const gh=item.gh, lc=item.lc;
@@ -387,6 +408,7 @@
 
   async function openStudentSolvedProblems(reg, name, section, lcUser) {
     if (!reg) return;
+    currentSolvedStudent = { reg, name, section, lcUser };
     if (els.solvedTitle) els.solvedTitle.textContent = `${name} · Solved Problems`;
     if (els.solvedSubtitle) els.solvedSubtitle.textContent = `Register: ${reg} · ${section} · @${lcUser || 'leetcode'}`;
     if (els.summaryTotalSynced) els.summaryTotalSynced.textContent = '...';
@@ -548,6 +570,93 @@
     if (els.solutionModal) els.solutionModal.hidden = true;
   }
 
+  function downloadCurrentStudentSolvedExcel() {
+    if (!currentSolvedStudent || !currentSolvedSubmissions.length) {
+      throw new Error('No synced submissions found to download.');
+    }
+    if (typeof XLSX === 'undefined') throw new Error('Excel library is unavailable. Please reload the page.');
+    const rows = currentSolvedSubmissions.map((s, idx) => {
+      const timeSec = Number(s.time_spent_seconds || 0);
+      const mins = Math.floor(timeSec / 60);
+      const secs = timeSec % 60;
+      const ratio = Math.round(Number(s.keystroke_ratio || 0) * 100);
+      return {
+        '#': idx + 1,
+        'Problem Title': s.problem_title || 'Untitled',
+        'Difficulty': s.problem_difficulty || 'Medium',
+        'Language': (s.language || 'code').toUpperCase(),
+        'Solved At': s.submitted_at ? new Date(s.submitted_at).toLocaleString() : '—',
+        'Active Time': timeSec > 0 ? `${mins}m ${secs}s` : (s.is_pasted ? '⚡ 0s (Paste)' : '—'),
+        'Keystrokes': Number(s.keystrokes_count || 0),
+        'Pastes': Number(s.paste_count || 0),
+        'Typing Ratio': `${ratio}% typed`,
+        'Integrity Verdict': s.plagiarism_verdict || 'CLEAN',
+        'Risk Score (/100)': Number(s.plagiarism_risk_score || 0),
+        'AI / Paste Notes': (s.ai_comment_flags || []).join('; ') || (s.is_pasted ? 'Full code paste' : 'Clean verified')
+      };
+    });
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, "Solved Problems");
+    XLSX.writeFile(wb, `${currentSolvedStudent.reg}_LeetCode_Solutions_${reportISODate()}.xlsx`);
+  }
+
+  function downloadCurrentStudentSolvedPdf() {
+    if (!currentSolvedStudent || !currentSolvedSubmissions.length) {
+      throw new Error('No synced submissions found to download.');
+    }
+    const w = window.open('', '_blank');
+    if (!w) throw new Error('Please allow pop-ups to generate the PDF portfolio.');
+    const rows = currentSolvedSubmissions.map((s, idx) => {
+      const timeSec = Number(s.time_spent_seconds || 0);
+      const mins = Math.floor(timeSec / 60);
+      const secs = timeSec % 60;
+      const timeStr = timeSec > 0 ? `${mins}m ${secs}s` : (s.is_pasted ? '⚡ 0s (Paste)' : '—');
+      const ratio = Math.round(Number(s.keystroke_ratio || 0) * 100);
+      const verdict = s.plagiarism_verdict || 'CLEAN';
+      const color = verdict === 'FLAGGED' ? '#dc2626' : (verdict === 'SUSPICIOUS' ? '#d97706' : '#16a34a');
+      return `<tr>
+        <td>${idx + 1}</td>
+        <td><strong>${esc(s.problem_title)}</strong></td>
+        <td>${esc(s.problem_difficulty || 'Medium')}</td>
+        <td>${esc((s.language || 'code').toUpperCase())}</td>
+        <td>${esc(s.submitted_at ? new Date(s.submitted_at).toLocaleDateString() : '—')}</td>
+        <td>${esc(timeStr)}</td>
+        <td>${s.keystrokes_count || 0} keys / ${s.paste_count || 0} pastes (${ratio}%)</td>
+        <td style="color:${color};font-weight:bold;">${esc(verdict)}</td>
+      </tr>`;
+    }).join('');
+
+    w.document.write(`<!doctype html><html><head><title>${esc(currentSolvedStudent.name)} - LeetCode Portfolio</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:32px;color:#111;line-height:1.4}
+      .header{border-bottom:2px solid #3b82f6;padding-bottom:16px;margin-bottom:20px}
+      h1{margin:0 0 6px 0;font-size:22px;color:#1e3a8a}
+      p{margin:0;color:#555;font-size:13px}
+      table{width:100%;border-collapse:collapse;margin-top:16px;font-size:11px}
+      th,td{border:1px solid #ccc;padding:8px;text-align:left}
+      th{background:#f1f5f9}
+      @media print{button{display:none}}
+    </style></head>
+    <body>
+      <div class="header">
+        <h1>ECE CodeMetrix · Student Problem Portfolio</h1>
+        <p><strong>${esc(currentSolvedStudent.name)}</strong> (${esc(currentSolvedStudent.reg)}) · Section: <strong>${esc(currentSolvedStudent.section)}</strong> · @${esc(currentSolvedStudent.lcUser || 'leetcode')}</p>
+        <p>Total Synced Verified Solutions: <strong>${currentSolvedSubmissions.length}</strong> | Generated: <strong>${new Date().toLocaleString()}</strong></p>
+      </div>
+      <table>
+        <thead>
+          <tr><th>#</th><th>Problem Title</th><th>Difficulty</th><th>Language</th><th>Date</th><th>Active Time</th><th>Keystroke Ratio</th><th>Integrity</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="margin-top:24px;">
+        <button onclick="window.print()" style="padding:10px 20px;font-weight:bold;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;">🖨️ Print / Save as PDF</button>
+      </div>
+    </body></html>`);
+    w.document.close();
+  }
+
   function showSearchResults(results, query){
     if(results.length===1){ openDashboard(results[0]); return; }
     els.title.textContent=`Search Results (${results.length})`;
@@ -670,14 +779,78 @@
   async function downloadHomeDateReportExcel(){
     const r=await prepareHomeDateReport();
     if(typeof XLSX==='undefined')throw new Error('Excel library is unavailable. Please reload the page.');
+    
+    // Fetch integrity audit telemetry for this period
+    let periodSubmissions = [];
+    try {
+      const client = supabaseClient();
+      if (client) {
+        let q = client.from('student_leetcode_submissions')
+          .select('register_number, student_name, section, problem_title, plagiarism_verdict, is_pasted, keystrokes_count, paste_count, submitted_at');
+        if (r.from) q = q.gte('submitted_at', `${r.from}T00:00:00.000Z`);
+        if (r.to) q = q.lte('submitted_at', `${r.to}T23:59:59.999Z`);
+        if (r.section && r.section !== 'OVERALL' && r.section !== 'ALL') q = q.eq('section', r.section);
+        const { data } = await q;
+        if (data) periodSubmissions = data;
+      }
+    } catch {}
+
+    const subMap = new Map();
+    periodSubmissions.forEach(sub => {
+      const reg = normalizeReg(sub.register_number);
+      if (!reg) return;
+      const st = subMap.get(reg) || { clean: 0, flagged: 0, total: 0 };
+      st.total++;
+      if (sub.plagiarism_verdict === 'FLAGGED' || sub.plagiarism_verdict === 'SUSPICIOUS' || sub.is_pasted) {
+        st.flagged++;
+      } else {
+        st.clean++;
+      }
+      subMap.set(reg, st);
+    });
+
+    const auditRows = r.students.map(st => {
+      const reg = normalizeReg(st['Register Number']);
+      const subInfo = subMap.get(reg) || { clean: 0, flagged: 0, total: 0 };
+      const solvedInPeriod = st['Problems Solved in Period'] || subInfo.total;
+      const cleanCount = subInfo.clean;
+      const flaggedCount = subInfo.flagged;
+      const pasteRatio = (cleanCount + flaggedCount) > 0 ? Math.round((flaggedCount / (cleanCount + flaggedCount)) * 100) : (flaggedCount > 0 ? 100 : 0);
+
+      let actionStatus = '⚪ No Synced Activity';
+      if (solvedInPeriod > 0 || subInfo.total > 0) {
+        if (flaggedCount > 0 && flaggedCount >= (cleanCount + flaggedCount)) {
+          actionStatus = '🚨 [TAKE ACTION - 100% COPY-PASTED]';
+        } else if (flaggedCount > 0) {
+          actionStatus = '⚠️ [SUSPICIOUS - High Plagiarism]';
+        } else {
+          actionStatus = '🟢 [CLEAN - Verified Code]';
+        }
+      }
+
+      return {
+        'Register Number': reg,
+        'Student Name': st['Student Name'],
+        'Section': st['Section'],
+        'LeetCode Username': st['LeetCode Username'],
+        'Problems Solved in Period': solvedInPeriod,
+        'Clean Solves (🟢)': cleanCount,
+        'Flagged Solves (🔴)': flaggedCount,
+        'Copy-Paste %': `${pasteRatio}%`,
+        'Action Status': actionStatus
+      };
+    }).sort((a, b) => b['Flagged Solves (🔴)'] - a['Flagged Solves (🔴)'] || b['Problems Solved in Period'] - a['Problems Solved in Period']);
+
     const wb=XLSX.utils.book_new();
     const wsSummary=XLSX.utils.json_to_sheet(r.students);
+    const wsAudit=XLSX.utils.json_to_sheet(auditRows);
     const wsDaily=XLSX.utils.json_to_sheet(r.dailyRows||[]);
     XLSX.utils.book_append_sheet(wb,wsSummary,"Summary");
+    XLSX.utils.book_append_sheet(wb,wsAudit,"Copy-Paste & Integrity Audit");
     XLSX.utils.book_append_sheet(wb,wsDaily,"Daily Activity");
     XLSX.writeFile(wb,`ECE_LeetCode_Report_${r.from}_to_${r.to}.xlsx`);
     closeHomeDateReport();
-    setMessage('Excel date report downloaded successfully.');
+    setMessage('Excel date report downloaded successfully with Integrity Audit tab.');
   }
 
   async function downloadHomeDateReportPdf(){
@@ -690,6 +863,349 @@
     w.document.close();
     closeHomeDateReport();
     setMessage('PDF report opened. Choose Save as PDF.');
+  }
+
+  // ============================================================
+  // SECTION ADVISOR REPORT DISPATCH SYSTEM
+  // ============================================================
+  const DEFAULT_SECTION_ADVISORS = {
+    'ECE A': { email: 'advisor.ecea@bitsathy.ac.in', name: 'Dr. Advisor ECE A' },
+    'ECE B': { email: 'advisor.eceb@bitsathy.ac.in', name: 'Dr. Advisor ECE B' },
+    'ECE C': { email: 'advisor.ecec@bitsathy.ac.in', name: 'Dr. Advisor ECE C' },
+    'ECE D': { email: 'advisor.eced@bitsathy.ac.in', name: 'Dr. Advisor ECE D' },
+    'ECE E': { email: 'advisor.ecee@bitsathy.ac.in', name: 'Dr. Advisor ECE E' },
+    'ECE F': { email: 'advisor.ecef@bitsathy.ac.in', name: 'Dr. Advisor ECE F' },
+    'ALL': { email: 'hod.ece@bitsathy.ac.in', name: 'ECE Department Head' }
+  };
+
+  async function getSectionAdvisor(sec) {
+    try {
+      const client = supabaseClient();
+      const { data } = await client.from('section_advisors').select('*').eq('section', sec).maybeSingle();
+      if (data && data.advisor_email) {
+        return { email: data.advisor_email, name: data.advisor_name || `Advisor ${sec}` };
+      }
+    } catch {}
+    return DEFAULT_SECTION_ADVISORS[sec] || { email: 'advisor@bitsathy.ac.in', name: 'Class Advisor' };
+  }
+
+  let currentAdvisorData = null;
+
+  async function openAdvisorDispatch() {
+    if (!isAdmin()) { openAdminLogin(); return; }
+    const today = reportISODate();
+    if (els.advisorReportFrom && !els.advisorReportFrom.value) els.advisorReportFrom.value = reportOffsetDate(-7);
+    if (els.advisorReportTo && !els.advisorReportTo.value) els.advisorReportTo.value = today;
+    if (els.advisorReportFrom) els.advisorReportFrom.max = today;
+    if (els.advisorReportTo) els.advisorReportTo.max = today;
+
+    if (els.advisorDispatchMsg) els.advisorDispatchMsg.textContent = '';
+    if (els.advisorModal) {
+      els.advisorModal.hidden = false;
+      document.body.classList.add('modal-open');
+    }
+    await onAdvisorSectionOrDateChange();
+  }
+
+  function closeAdvisorDispatch() {
+    if (els.advisorModal) els.advisorModal.hidden = true;
+    document.body.classList.remove('modal-open');
+  }
+
+  async function onAdvisorSectionOrDateChange() {
+    const sec = els.advisorSectionSelect?.value || 'ECE A';
+    const advisor = await getSectionAdvisor(sec);
+    if (els.advisorEmailInput) els.advisorEmailInput.value = advisor.email;
+    if (els.advisorNameInput) els.advisorNameInput.value = advisor.name;
+    await updateAdvisorPreview();
+  }
+
+  async function compileAdvisorReport(sec, from, to) {
+    const [history, daily] = await Promise.all([loadFile('History.csv'), loadFile('DailyActivity.csv')]);
+    const live = state.leetcode.length ? state.leetcode : await loadFile('LiveData.csv');
+    const matches = r => sec === 'ALL' || normalizeText(r.Section) === normalizeText(sec);
+    const students = live.filter(matches);
+    const regSet = new Set(students.map(s => normalizeReg(s['Register Number'])).filter(Boolean));
+
+    // Daily activity mapping
+    const dailyMap = new Map();
+    const dailyRows = [];
+    daily.filter(r => r.Date >= from && r.Date <= to).forEach(r => {
+      const reg = normalizeReg(r['Register Number']);
+      if (!reg || !regSet.has(reg)) return;
+      const x = dailyMap.get(reg) || { solved: 0, days: new Set() };
+      const solved = num(r['Solved That Day']);
+      x.solved += solved;
+      if (solved > 0) x.days.add(r.Date);
+      dailyMap.set(reg, x);
+      dailyRows.push({
+        'Date': r.Date,
+        'Register Number': reg,
+        'Student Name': r['Student Name'] || '',
+        'Section': r.Section || '',
+        'Solved That Day': solved
+      });
+    });
+
+    // Submissions and anti-cheat telemetry from Supabase
+    let periodSubmissions = [];
+    try {
+      const client = supabaseClient();
+      if (client) {
+        let q = client.from('student_leetcode_submissions')
+          .select('register_number, student_name, section, problem_title, plagiarism_verdict, is_pasted, keystrokes_count, paste_count, submitted_at');
+        if (from) q = q.gte('submitted_at', `${from}T00:00:00.000Z`);
+        if (to) q = q.lte('submitted_at', `${to}T23:59:59.999Z`);
+        if (sec !== 'ALL') q = q.eq('section', sec);
+        const { data } = await q;
+        if (data) periodSubmissions = data;
+      }
+    } catch {}
+
+    const subMap = new Map();
+    periodSubmissions.forEach(sub => {
+      const reg = normalizeReg(sub.register_number);
+      if (!reg) return;
+      const st = subMap.get(reg) || { clean: 0, flagged: 0, total: 0, list: [] };
+      st.total++;
+      st.list.push(sub);
+      if (sub.plagiarism_verdict === 'FLAGGED' || sub.plagiarism_verdict === 'SUSPICIOUS' || sub.is_pasted) {
+        st.flagged++;
+      } else {
+        st.clean++;
+      }
+      subMap.set(reg, st);
+    });
+
+    const summaryRows = [];
+    const auditRows = [];
+    const actionRequiredStudents = [];
+    const cleanTopCoders = [];
+
+    students.forEach(s => {
+      const reg = normalizeReg(s['Register Number']);
+      const name = s['Student Name'] || '';
+      const section = s.Section || sec;
+      const lcUser = s['LeetCode Username'] || '';
+      const d = dailyMap.get(reg) || { solved: 0, days: new Set() };
+      const subInfo = subMap.get(reg) || { clean: 0, flagged: 0, total: 0, list: [] };
+      const solvedInPeriod = d.solved > 0 ? d.solved : subInfo.total;
+
+      const cleanCount = subInfo.clean;
+      const flaggedCount = subInfo.flagged;
+      const pasteRatio = (cleanCount + flaggedCount) > 0 ? Math.round((flaggedCount / (cleanCount + flaggedCount)) * 100) : (flaggedCount > 0 ? 100 : 0);
+
+      let actionStatus = '⚪ No Synced Activity';
+      if (solvedInPeriod > 0 || subInfo.total > 0) {
+        if (flaggedCount > 0 && flaggedCount >= (cleanCount + flaggedCount)) {
+          actionStatus = '🚨 [TAKE ACTION - 100% COPY-PASTED]';
+          actionRequiredStudents.push({
+            reg, name, section, lcUser, solved: solvedInPeriod || subInfo.total, flagged: flaggedCount, clean: cleanCount, pasteRatio
+          });
+        } else if (flaggedCount > 0) {
+          actionStatus = '⚠️ [SUSPICIOUS - High Plagiarism]';
+          actionRequiredStudents.push({
+            reg, name, section, lcUser, solved: solvedInPeriod || subInfo.total, flagged: flaggedCount, clean: cleanCount, pasteRatio
+          });
+        } else {
+          actionStatus = '🟢 [CLEAN - Verified Code]';
+          if (solvedInPeriod > 0) {
+            cleanTopCoders.push({ reg, name, section, lcUser, solved: solvedInPeriod });
+          }
+        }
+      }
+
+      summaryRows.push({
+        'Register Number': reg,
+        'Student Name': name,
+        'Section': section,
+        'LeetCode Username': lcUser,
+        'Problems Solved in Period': solvedInPeriod,
+        'Active Days': d.days.size || (solvedInPeriod > 0 ? 1 : 0),
+        'Problems Solved (Total)': num(s['Problems Solved']),
+        'Easy / Medium / Hard': `${num(s.Easy)} / ${num(s.Medium)} / ${num(s.Hard)}`,
+        'Total Submissions': num(s['Total Submissions']),
+        'Status': s.Status || 'Active'
+      });
+
+      auditRows.push({
+        'Register Number': reg,
+        'Student Name': name,
+        'Section': section,
+        'LeetCode Username': lcUser,
+        'Problems Solved in Period': solvedInPeriod,
+        'Clean Solves (🟢)': cleanCount,
+        'Flagged Solves (🔴)': flaggedCount,
+        'Copy-Paste %': `${pasteRatio}%`,
+        'Action Required': actionStatus
+      });
+    });
+
+    summaryRows.sort((a, b) => b['Problems Solved in Period'] - a['Problems Solved in Period'] || a['Register Number'].localeCompare(b['Register Number'], undefined, { numeric: true }));
+    auditRows.sort((a, b) => (b['Flagged Solves (🔴)'] - a['Flagged Solves (🔴)']) || (b['Problems Solved in Period'] - a['Problems Solved in Period']));
+    cleanTopCoders.sort((a, b) => b.solved - a.solved);
+
+    return {
+      section: sec,
+      from,
+      to,
+      students,
+      summaryRows,
+      auditRows,
+      dailyRows,
+      actionRequiredStudents,
+      cleanTopCoders
+    };
+  }
+
+  async function updateAdvisorPreview() {
+    const sec = els.advisorSectionSelect?.value || 'ECE A';
+    const advisorEmail = els.advisorEmailInput?.value || DEFAULT_SECTION_ADVISORS[sec]?.email;
+    const advisorName = els.advisorNameInput?.value || DEFAULT_SECTION_ADVISORS[sec]?.name;
+    const from = els.advisorReportFrom?.value || reportOffsetDate(-7);
+    const to = els.advisorReportTo?.value || reportISODate();
+
+    if (els.advisorReportPreview) els.advisorReportPreview.value = 'Compiling section analytics & anti-cheat audit...';
+
+    try {
+      const data = await compileAdvisorReport(sec, from, to);
+      currentAdvisorData = { ...data, advisorEmail, advisorName };
+
+      const totalStudents = data.students.length;
+      const activeStudents = data.summaryRows.filter(r => r['Problems Solved in Period'] > 0).length;
+      const totalSolved = data.summaryRows.reduce((acc, r) => acc + r['Problems Solved in Period'], 0);
+      const totalClean = data.auditRows.reduce((acc, r) => acc + r['Clean Solves (🟢)'], 0);
+      const totalFlagged = data.auditRows.reduce((acc, r) => acc + r['Flagged Solves (🔴)'], 0);
+
+      let actionListText = '';
+      if (data.actionRequiredStudents.length > 0) {
+        actionListText = data.actionRequiredStudents.map((st, idx) => {
+          const pasteNote = st.pasteRatio >= 100 ? '100% Pasted' : `${st.pasteRatio}% Pasted`;
+          return `${idx + 1}. ${st.reg} - ${st.name} (${st.section}): ${st.solved} Solved | ${st.flagged} FLAGGED (${pasteNote}) -> [TAKE ACTION]`;
+        }).join('\n');
+      } else {
+        actionListText = '✅ None! All active student submissions passed the anti-cheat telemetry checks cleanly.';
+      }
+
+      let topCleanText = '';
+      if (data.cleanTopCoders.length > 0) {
+        topCleanText = data.cleanTopCoders.slice(0, 5).map((st, idx) => {
+          return `${idx + 1}. ${st.reg} - ${st.name} (${st.section}): ${st.solved} Solved (🟢 Verified Clean)`;
+        }).join('\n');
+      } else {
+        topCleanText = '—';
+      }
+
+      const emailSubject = `[ECE CodeMetrix] LeetCode Weekly Progress & Integrity Audit - Section ${sec} (${from} to ${to})`;
+      const emailBody = `Dear ${advisorName},
+
+Here is the official LeetCode coding progress and anti-plagiarism integrity audit for Section ${sec} (${from} to ${to}):
+
+📊 SECTION OVERVIEW:
+- Total Students: ${totalStudents}
+- Active Students in Period: ${activeStudents}
+- Total Solved Problems: ${totalSolved}
+- 🟢 Clean Verified Solutions: ${totalClean}
+- 🔴 Flagged / Suspected Plagiarism: ${totalFlagged}
+
+🚨 ACTION REQUIRED / HIGH PLAGIARISM FLAGGED STUDENTS:
+${actionListText}
+
+🏆 TOP VERIFIED CLEAN CODERS:
+${topCleanText}
+
+📎 ATTACHED / EXPORTED AUDIT SHEET:
+A detailed multi-tab Excel workbook containing:
+1. Summary (Individual student counts & ranks)
+2. Copy-Paste & Integrity Audit (Per-student clean vs flagged counts, typing ratios, and action flags)
+3. Daily Activity log
+has been generated. Please review flagged candidates and take necessary counselling or disciplinary action.
+
+Best regards,
+ECE CodeMetrix Automated Department Tracker
+Bannari Amman Institute of Technology`;
+
+      currentAdvisorData.emailSubject = emailSubject;
+      currentAdvisorData.emailBody = emailBody;
+
+      if (els.advisorReportPreview) els.advisorReportPreview.value = emailBody;
+
+      if (els.advisorIntegritySummaryBadge) {
+        if (data.actionRequiredStudents.length > 0) {
+          els.advisorIntegritySummaryBadge.className = 'integrity-badge flagged';
+          els.advisorIntegritySummaryBadge.textContent = `🔴 ${data.actionRequiredStudents.length} Students Flagged [TAKE ACTION]`;
+        } else {
+          els.advisorIntegritySummaryBadge.className = 'integrity-badge clean';
+          els.advisorIntegritySummaryBadge.textContent = `🟢 All Clean (${activeStudents} Active)`;
+        }
+      }
+    } catch (err) {
+      if (els.advisorReportPreview) els.advisorReportPreview.value = `Failed to generate report preview: ${err.message}`;
+    }
+  }
+
+  function sendAdvisorMailClient() {
+    if (!currentAdvisorData) {
+      if (els.advisorDispatchMsg) {
+        els.advisorDispatchMsg.textContent = 'Please wait for report data to compile.';
+        els.advisorDispatchMsg.className = 'form-message error';
+      }
+      return;
+    }
+    const toEmail = els.advisorEmailInput?.value || currentAdvisorData.advisorEmail || '';
+    const subject = encodeURIComponent(currentAdvisorData.emailSubject);
+    const body = encodeURIComponent(currentAdvisorData.emailBody);
+    const mailtoUrl = `mailto:${toEmail}?subject=${subject}&body=${body}`;
+    window.location.href = mailtoUrl;
+
+    if (els.advisorDispatchMsg) {
+      els.advisorDispatchMsg.textContent = `Default email client launched for ${toEmail}. Don't forget to attach the downloaded Excel audit report!`;
+      els.advisorDispatchMsg.className = 'form-message success';
+    }
+  }
+
+  function downloadAdvisorExcel() {
+    if (!currentAdvisorData) throw new Error('Report data is still compiling.');
+    if (typeof XLSX === 'undefined') throw new Error('Excel library is unavailable. Please reload the page.');
+
+    const wb = XLSX.utils.book_new();
+    const wsSummary = XLSX.utils.json_to_sheet(currentAdvisorData.summaryRows);
+    const wsAudit = XLSX.utils.json_to_sheet(currentAdvisorData.auditRows);
+    const wsDaily = XLSX.utils.json_to_sheet(currentAdvisorData.dailyRows || []);
+
+    XLSX.utils.book_append_sheet(wb, wsSummary, "Section Summary");
+    XLSX.utils.book_append_sheet(wb, wsAudit, "Copy-Paste & Integrity Audit");
+    XLSX.utils.book_append_sheet(wb, wsDaily, "Daily Activity");
+
+    const safeSec = currentAdvisorData.section.replace(/\s+/g, '_');
+    XLSX.writeFile(wb, `ECE_Advisor_Report_${safeSec}_${currentAdvisorData.from}_to_${currentAdvisorData.to}.xlsx`);
+
+    if (els.advisorDispatchMsg) {
+      els.advisorDispatchMsg.textContent = `Excel audit report downloaded successfully with 'Copy-Paste & Integrity Audit' sheet.`;
+      els.advisorDispatchMsg.className = 'form-message success';
+    }
+  }
+
+  async function copyAdvisorText() {
+    const text = els.advisorReportPreview?.value || currentAdvisorData?.emailBody || '';
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      if (els.copyAdvisorTextBtn) {
+        const orig = els.copyAdvisorTextBtn.textContent;
+        els.copyAdvisorTextBtn.textContent = '✅ Copied!';
+        setTimeout(() => { if (els.copyAdvisorTextBtn) els.copyAdvisorTextBtn.textContent = orig; }, 2000);
+      }
+      if (els.advisorDispatchMsg) {
+        els.advisorDispatchMsg.textContent = 'Report text copied to clipboard.';
+        els.advisorDispatchMsg.className = 'form-message success';
+      }
+    } catch {
+      if (els.advisorDispatchMsg) {
+        els.advisorDispatchMsg.textContent = 'Failed to copy text to clipboard.';
+        els.advisorDispatchMsg.className = 'form-message error';
+      }
+    }
   }
 
   // ============================================================
@@ -1005,6 +1521,13 @@
   els.closeSolutionModal?.addEventListener('click', closeSolutionCodeModal);
   els.solutionModal?.addEventListener('click', e => { if (e.target.matches('[data-close-solution-code]')) closeSolutionCodeModal(); });
 
+  els.downloadSolvedHistoryExcelBtn?.addEventListener('click', () => {
+    try { downloadCurrentStudentSolvedExcel(); } catch (e) { setMessage(e.message, true); }
+  });
+  els.downloadSolvedHistoryPdfBtn?.addEventListener('click', () => {
+    try { downloadCurrentStudentSolvedPdf(); } catch (e) { setMessage(e.message, true); }
+  });
+
   els.copySolutionCodeBtn?.addEventListener('click', async () => {
     const code = els.solutionCodeContent?.textContent || '';
     if (!code) return;
@@ -1018,10 +1541,33 @@
     }
   });
 
+  // Advisor Dispatch Listeners
+  els.advisorDispatchBtn?.addEventListener('click', openAdvisorDispatch);
+  els.sectionAdvisorDispatchBtn?.addEventListener('click', openAdvisorDispatch);
+  els.closeAdvisorModal?.addEventListener('click', closeAdvisorDispatch);
+  els.cancelAdvisorModal?.addEventListener('click', closeAdvisorDispatch);
+  els.advisorModal?.addEventListener('click', e => {
+    if (e.target.matches('[data-close-advisor-dispatch]')) closeAdvisorDispatch();
+  });
+  els.advisorSectionSelect?.addEventListener('change', onAdvisorSectionOrDateChange);
+  els.advisorReportFrom?.addEventListener('change', updateAdvisorPreview);
+  els.advisorReportTo?.addEventListener('change', updateAdvisorPreview);
+  els.sendAdvisorMailClientBtn?.addEventListener('click', sendAdvisorMailClient);
+  els.downloadAdvisorExcelBtn?.addEventListener('click', () => {
+    try { downloadAdvisorExcel(); } catch (e) {
+      if (els.advisorDispatchMsg) {
+        els.advisorDispatchMsg.textContent = e.message;
+        els.advisorDispatchMsg.className = 'form-message error';
+      }
+    }
+  });
+  els.copyAdvisorTextBtn?.addEventListener('click', copyAdvisorText);
+
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){
       if(!els.solutionModal?.hidden) closeSolutionCodeModal();
       else if(!els.solvedModal?.hidden) closeSolvedProblemsModal();
+      else if(!els.advisorModal?.hidden) closeAdvisorDispatch();
       else if(!els.modal?.hidden) closeDashboard();
       if(!els.adminLoginModal?.hidden) closeAdminLoginModal();
       if(!els.unifiedModal?.hidden) closeAddProfileModal();
