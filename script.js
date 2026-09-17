@@ -4039,6 +4039,28 @@ async function openStudentProfile(registerNumber) {
     student["LeetCode Link"]
     || `https://leetcode.com/u/${encodeURIComponent(student["LeetCode Username"] || "")}/`;
 
+  const viewProblemsBtn = document.getElementById("profileViewProblemsButton");
+  if (viewProblemsBtn) {
+    viewProblemsBtn.onclick = () => {
+      openStudentSolvedProblems(
+        student["Register Number"],
+        student["Student Name"] || "Student",
+        student.Section || "ECE",
+        student["LeetCode Username"] || ""
+      );
+    };
+  }
+
+  const integrityBadge = document.getElementById("profileIntegrityBadge");
+  if (integrityBadge) {
+    integrityBadge.className = "integrity-badge unverified";
+    integrityBadge.textContent = "Checking...";
+    checkStudentIntegrity(student["Register Number"]).then(status => {
+      integrityBadge.className = `integrity-badge ${status.cls}`;
+      integrityBadge.innerHTML = status.html;
+    }).catch(() => {});
+  }
+
   renderDifficultyChart(student);
 
   document.getElementById("profileProgressChart").innerHTML =
@@ -4062,6 +4084,252 @@ async function openStudentProfile(registerNumber) {
   }
 }
 
+let currentScriptSolvedSubmissions = [];
+
+function getSupabaseClient() {
+  if (supabaseClient) return supabaseClient;
+  if (window.supabase && typeof window.supabase.createClient === "function" && cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY) {
+    supabaseClient = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+    return supabaseClient;
+  }
+  return null;
+}
+
+async function checkStudentIntegrity(reg) {
+  try {
+    const client = getSupabaseClient();
+    if (!client) return { cls: 'unverified', html: '⚪ Not Synced' };
+    const { data } = await client.from('student_leetcode_submissions').select('plagiarism_verdict').eq('register_number', reg);
+    if (!data || !data.length) {
+      return { cls: 'unverified', html: '⚪ No Synced Code' };
+    }
+    const hasFlagged = data.some(d => d.plagiarism_verdict === 'FLAGGED' || d.plagiarism_verdict === 'SUSPICIOUS');
+    if (hasFlagged) {
+      return { cls: 'flagged', html: '🔴 Flagged' };
+    }
+    return { cls: 'clean', html: `🟢 Clean (${data.length} verified)` };
+  } catch {
+    return { cls: 'unverified', html: '⚪ Not Synced' };
+  }
+}
+
+async function openStudentSolvedProblems(reg, name, section, lcUser) {
+  if (!reg) return;
+  const modal = document.getElementById("solvedProblemsModal");
+  const title = document.getElementById("solvedProblemsTitle");
+  const subtitle = document.getElementById("solvedProblemsSubtitle");
+  const summaryTotal = document.getElementById("summaryTotalSynced");
+  const summaryClean = document.getElementById("summaryCleanCount");
+  const summaryFlagged = document.getElementById("summaryFlaggedCount");
+  const summaryExt = document.getElementById("summaryExtStatus");
+  const tbody = document.getElementById("solvedProblemsTableBody");
+
+  if (title) title.textContent = `${name} · Solved Problems`;
+  if (subtitle) subtitle.textContent = `Register: ${reg} · ${section} · @${lcUser || 'leetcode'}`;
+  if (summaryTotal) summaryTotal.textContent = '...';
+  if (summaryClean) summaryClean.textContent = '...';
+  if (summaryFlagged) summaryFlagged.textContent = '...';
+  if (summaryExt) summaryExt.innerHTML = '<span style="color:var(--muted)">Checking...</span>';
+  if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted);">Loading synced submissions from Supabase...</td></tr>`;
+
+  if (modal) {
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+  }
+
+  try {
+    const client = getSupabaseClient();
+    if (!client) throw new Error("Supabase is not configured.");
+    const [subRes, extRes] = await Promise.all([
+      client.from('student_leetcode_submissions').select('*').eq('register_number', reg).order('submitted_at', { ascending: false }),
+      client.from('extension_installed_students').select('*').eq('register_number', reg).maybeSingle()
+    ]);
+
+    const subs = subRes.data || [];
+    currentScriptSolvedSubmissions = subs;
+
+    if (extRes.data) {
+      if (summaryExt) summaryExt.innerHTML = `<span style="color:#34d399">🟢 Extension Active</span>`;
+    } else {
+      if (summaryExt) summaryExt.innerHTML = `<span style="color:#94a3b8">⚪ Not Installed</span>`;
+    }
+
+    const cleanCount = subs.filter(s => s.plagiarism_verdict === 'CLEAN' || !s.plagiarism_verdict).length;
+    const flaggedCount = subs.filter(s => s.plagiarism_verdict === 'FLAGGED' || s.plagiarism_verdict === 'SUSPICIOUS').length;
+
+    if (summaryTotal) summaryTotal.textContent = String(subs.length);
+    if (summaryClean) summaryClean.textContent = String(cleanCount);
+    if (summaryFlagged) summaryFlagged.textContent = String(flaggedCount);
+
+    if (!subs.length) {
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align:center;padding:36px;color:var(--muted);">
+              <div style="font-size:1.1rem;margin-bottom:6px;color:var(--text);">No synced solutions yet</div>
+              <div>Make sure the student has installed the <strong>CodeMetrix Chrome Extension</strong> and solved problems on LeetCode.</div>
+            </td>
+          </tr>`;
+      }
+      return;
+    }
+
+    if (tbody) {
+      tbody.innerHTML = subs.map((sub, idx) => {
+        const timeSec = Number(sub.time_spent_seconds || 0);
+        const mins = Math.floor(timeSec / 60);
+        const secs = timeSec % 60;
+        const timeStr = timeSec > 0 ? `${mins}m ${secs}s` : (sub.is_pasted ? '⚡ 0s (Paste)' : '—');
+        const keys = Number(sub.keystrokes_count || 0);
+        const pastes = Number(sub.paste_count || 0);
+        const ratio = Math.round(Number(sub.keystroke_ratio || 0) * 100);
+        const typingStr = `⌨️ ${keys} · 📋 ${pastes} (${ratio}% typed)`;
+        const dateStr = sub.submitted_at ? new Date(sub.submitted_at).toLocaleString() : '—';
+        const verdict = sub.plagiarism_verdict || 'CLEAN';
+        const verdictClass = verdict === 'FLAGGED' ? 'flagged' : (verdict === 'SUSPICIOUS' ? 'suspicious' : 'clean');
+        const verdictLabel = verdict === 'FLAGGED' ? '🔴 Flagged' : (verdict === 'SUSPICIOUS' ? '⚠️ Suspicious' : '🟢 Clean');
+
+        return `
+          <tr>
+            <td><strong>#${idx + 1}</strong></td>
+            <td>
+              <button type="button" class="problem-link-btn" data-script-sub-index="${idx}">
+                ⚡ ${escapeHTML(sub.problem_title)} ↗
+              </button>
+            </td>
+            <td><span class="diff-badge ${escapeHTML(sub.problem_difficulty || 'Medium')}">${escapeHTML(sub.problem_difficulty || 'Medium')}</span></td>
+            <td><span style="font-weight:600;font-size:0.8rem;text-transform:uppercase;color:#93c5fd;">${escapeHTML(sub.language)}</span></td>
+            <td><small style="color:var(--muted);">${escapeHTML(dateStr)}</small></td>
+            <td><strong>${escapeHTML(timeStr)}</strong></td>
+            <td><small>${escapeHTML(typingStr)}</small></td>
+            <td><span class="integrity-badge ${verdictClass}">${escapeHTML(verdictLabel)}</span></td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('[data-script-sub-index]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sub = currentScriptSolvedSubmissions[Number(btn.dataset.scriptSubIndex)];
+          if (sub) openSolutionCodeViewer(sub, name, reg);
+        });
+      });
+    }
+  } catch (err) {
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:#fca5a5;">Failed to load solutions: ${escapeHTML(err.message)}</td></tr>`;
+    }
+  }
+}
+
+function closeSolvedProblemsModal() {
+  const modal = document.getElementById("solvedProblemsModal");
+  if (modal) modal.hidden = true;
+  const solModal = document.getElementById("solutionCodeModal");
+  if (!solModal || solModal.hidden) {
+    const studentProfile = document.getElementById("studentProfileModal");
+    if (!studentProfile || studentProfile.hidden) {
+      document.body.classList.remove("modal-open");
+    }
+  }
+}
+
+function openSolutionCodeViewer(submission, studentName, reg) {
+  if (!submission) return;
+  const modal = document.getElementById("solutionCodeModal");
+  const title = document.getElementById("solutionProblemName");
+  const diffBadge = document.getElementById("solutionDifficultyBadge");
+  const meta = document.getElementById("solutionMetadata");
+  const actTime = document.getElementById("telemetryActiveTime");
+  const keysEl = document.getElementById("telemetryKeystrokes");
+  const pasteEl = document.getElementById("telemetryPastes");
+  const tabEl = document.getElementById("telemetryTabSwitches");
+  const riskEl = document.getElementById("telemetryRiskScore");
+  const verdEl = document.getElementById("telemetryVerdict");
+  const alertBanner = document.getElementById("solutionAlertBanner");
+  const alertText = document.getElementById("solutionAlertText");
+  const langTag = document.getElementById("solutionCodeLang");
+  const codeContent = document.getElementById("solutionCodeContent");
+
+  if (title) title.textContent = submission.problem_title || 'Solution';
+  if (diffBadge) {
+    const diff = submission.problem_difficulty || 'Medium';
+    diffBadge.textContent = diff;
+    diffBadge.className = `diff-badge ${diff}`;
+  }
+  if (meta) {
+    const dStr = submission.submitted_at ? new Date(submission.submitted_at).toLocaleString() : '—';
+    meta.textContent = `${studentName} (${reg}) · Solved on ${dStr} · Runtime: ${submission.runtime_ms || 0}ms`;
+  }
+
+  const timeSec = Number(submission.time_spent_seconds || 0);
+  const mins = Math.floor(timeSec / 60);
+  const secs = timeSec % 60;
+  if (actTime) actTime.textContent = timeSec > 0 ? `${mins}m ${secs}s` : '0s (Instant Paste)';
+  if (keysEl) keysEl.textContent = `${submission.keystrokes_count || 0} keys`;
+  const ratio = Math.round(Number(submission.keystroke_ratio || 0) * 100);
+  if (pasteEl) pasteEl.textContent = `${submission.paste_count || 0} (Typed: ${ratio}%)`;
+  if (tabEl) tabEl.textContent = `${submission.tab_switch_count || 0}`;
+  if (riskEl) riskEl.textContent = `${submission.plagiarism_risk_score || 0} / 100`;
+
+  const verdict = submission.plagiarism_verdict || 'CLEAN';
+  if (verdEl) {
+    const verdictClass = verdict === 'FLAGGED' ? 'flagged' : (verdict === 'SUSPICIOUS' ? 'suspicious' : 'clean');
+    const verdictLabel = verdict === 'FLAGGED' ? '🔴 Flagged' : (verdict === 'SUSPICIOUS' ? '⚠️ Suspicious' : '🟢 Clean');
+    verdEl.innerHTML = `<span class="integrity-badge ${verdictClass}">${verdictLabel}</span>`;
+  }
+
+  if (submission.has_prompt_comments || (submission.ai_comment_flags && submission.ai_comment_flags.length > 0) || verdict === 'FLAGGED') {
+    if (alertBanner) {
+      alertBanner.hidden = false;
+      const alerts = [];
+      if (submission.has_prompt_comments || submission.ai_comment_flags?.length) {
+        alerts.push(`AI Comment Patterns: ${(submission.ai_comment_flags || []).join(', ')}`);
+      }
+      if (submission.is_pasted) alerts.push('Full code paste detected with minimal keystrokes');
+      if (alertText) alertText.textContent = alerts.join(' | ') || 'Flagged for plagiarism inspection.';
+    }
+  } else {
+    if (alertBanner) alertBanner.hidden = true;
+  }
+
+  if (langTag) langTag.textContent = (submission.language || 'CODE').toUpperCase();
+  if (codeContent) codeContent.textContent = submission.source_code || '// No source code recorded';
+
+  if (modal) {
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+  }
+}
+
+function closeSolutionCodeModal() {
+  const modal = document.getElementById("solutionCodeModal");
+  if (modal) modal.hidden = true;
+}
+
+// Attach Solved Problems & Solution Code listeners
+document.getElementById("closeSolvedProblems")?.addEventListener("click", closeSolvedProblemsModal);
+document.getElementById("solvedProblemsModal")?.addEventListener("click", (e) => {
+  if (e.target.matches("[data-close-solved-problems]")) closeSolvedProblemsModal();
+});
+document.getElementById("closeSolutionCode")?.addEventListener("click", closeSolutionCodeModal);
+document.getElementById("solutionCodeModal")?.addEventListener("click", (e) => {
+  if (e.target.matches("[data-close-solution-code]")) closeSolutionCodeModal();
+});
+
+document.getElementById("copySolutionCodeBtn")?.addEventListener("click", async () => {
+  const btn = document.getElementById("copySolutionCodeBtn");
+  const code = document.getElementById("solutionCodeContent")?.textContent || "";
+  if (!code) return;
+  try {
+    await navigator.clipboard.writeText(code);
+    const orig = btn.textContent;
+    btn.textContent = "✅ Copied!";
+    setTimeout(() => { if (btn) btn.textContent = orig; }, 2000);
+  } catch (e) {
+    console.error("Failed to copy code", e);
+  }
+});
+
 function closeStudentProfile() {
   studentProfileModal.hidden = true;
 
@@ -4070,7 +4338,9 @@ function closeStudentProfile() {
     adminLoginModal,
     profileModal,
     manageStudentsModal,
-    deleteModal
+    deleteModal,
+    document.getElementById("solvedProblemsModal"),
+    document.getElementById("solutionCodeModal")
   ].some((modal) => modal && !modal.hidden);
 
   if (!anotherModalOpen) {
@@ -5171,6 +5441,18 @@ confirmDeleteButton.addEventListener("click", confirmDelete);
 
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
+
+  const solModal = document.getElementById("solutionCodeModal");
+  if (solModal && !solModal.hidden) {
+    solModal.hidden = true;
+    return;
+  }
+
+  const solvedModal = document.getElementById("solvedProblemsModal");
+  if (solvedModal && !solvedModal.hidden) {
+    solvedModal.hidden = true;
+    return;
+  }
 
   adminLoginModal.hidden = true;
   profileModal.hidden = true;

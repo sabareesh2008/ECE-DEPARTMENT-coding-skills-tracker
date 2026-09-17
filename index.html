@@ -298,6 +298,126 @@
     </section>
   </div>
 
+  <!-- =======================================================
+       STUDENT SOLVED PROBLEMS & ACTIVITY MODAL
+       ======================================================= -->
+  <div id="solvedProblemsModal" class="profile-modal" hidden>
+    <div class="profile-modal-backdrop" data-close-solved-problems></div>
+    <section class="solved-problems-modal-card" role="dialog" aria-modal="true" aria-labelledby="solvedProblemsTitle">
+      <div class="solved-problems-head">
+        <div>
+          <div class="eyebrow">LEETCODE FORENSICS &amp; ACTIVITY</div>
+          <h2 id="solvedProblemsTitle">Solved Problems Activity</h2>
+          <p id="solvedProblemsSubtitle" style="color:var(--muted);font-size:13px;margin-top:4px;">Viewing synced solutions and anti-cheat forensics</p>
+        </div>
+        <button id="closeSolvedProblems" class="modal-close" type="button" aria-label="Close">×</button>
+      </div>
+
+      <div class="solved-problems-summary">
+        <div class="summary-pill-card active">
+          <span>Total Synced</span>
+          <strong id="summaryTotalSynced">0</strong>
+        </div>
+        <div class="summary-pill-card clean">
+          <span>Clean Submissions</span>
+          <strong id="summaryCleanCount">0</strong>
+        </div>
+        <div class="summary-pill-card flagged">
+          <span>Flagged Alerts</span>
+          <strong id="summaryFlaggedCount">0</strong>
+        </div>
+        <div class="summary-pill-card">
+          <span>Extension Status</span>
+          <strong id="summaryExtStatus" style="font-size:1rem;">Checking...</strong>
+        </div>
+      </div>
+
+      <div class="solved-problems-table-wrap">
+        <table class="solved-problems-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Problem Name</th>
+              <th>Difficulty</th>
+              <th>Language</th>
+              <th>Solved Timing</th>
+              <th>Active Time</th>
+              <th>Keystrokes / Pastes</th>
+              <th>Integrity Status</th>
+            </tr>
+          </thead>
+          <tbody id="solvedProblemsTableBody">
+            <tr>
+              <td colspan="8" style="text-align:center;padding:24px;color:var(--muted);">
+                Loading submissions...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- =======================================================
+       SOLUTION CODE VIEWER MODAL
+       ======================================================= -->
+  <div id="solutionCodeModal" class="profile-modal" hidden>
+    <div class="profile-modal-backdrop" data-close-solution-code></div>
+    <section class="solution-code-modal-card" role="dialog" aria-modal="true" aria-labelledby="solutionCodeTitle">
+      <div class="solution-code-head">
+        <div>
+          <div class="eyebrow">SOURCE CODE &amp; TELEMETRY</div>
+          <h2 id="solutionCodeTitle">
+            <span id="solutionProblemName">Problem Solution</span>
+            <span id="solutionDifficultyBadge" class="diff-badge Medium">Medium</span>
+          </h2>
+          <p id="solutionMetadata" style="color:var(--muted);font-size:13px;margin-top:4px;">Submitted by student</p>
+        </div>
+        <button id="closeSolutionCode" class="modal-close" type="button" aria-label="Close">×</button>
+      </div>
+
+      <div class="solution-telemetry-grid">
+        <div class="telemetry-item">
+          <span>Active Time</span>
+          <strong id="telemetryActiveTime">—</strong>
+        </div>
+        <div class="telemetry-item">
+          <span>Keystrokes</span>
+          <strong id="telemetryKeystrokes">—</strong>
+        </div>
+        <div class="telemetry-item">
+          <span>Pastes / Ratio</span>
+          <strong id="telemetryPastes">—</strong>
+        </div>
+        <div class="telemetry-item">
+          <span>Tab Switches</span>
+          <strong id="telemetryTabSwitches">—</strong>
+        </div>
+        <div class="telemetry-item">
+          <span>Plagiarism Risk</span>
+          <strong id="telemetryRiskScore">—</strong>
+        </div>
+        <div class="telemetry-item">
+          <span>Verdict</span>
+          <strong id="telemetryVerdict">—</strong>
+        </div>
+      </div>
+
+      <div id="solutionAlertBanner" class="solution-alert-box" hidden>
+        <span>⚠️</span>
+        <span id="solutionAlertText">AI / Paste anomalies detected in this submission.</span>
+      </div>
+
+      <div class="code-viewer-container">
+        <div class="code-viewer-topbar">
+          <span id="solutionCodeLang" class="code-lang-tag">PYTHON3</span>
+          <button id="copySolutionCodeBtn" class="copy-code-btn" type="button">📋 Copy Code</button>
+        </div>
+        <pre class="code-content-pre"><code id="solutionCodeContent">// Code will appear here</code></pre>
+      </div>
+    </section>
+  </div>
+
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="home-dashboard.js"></script>
