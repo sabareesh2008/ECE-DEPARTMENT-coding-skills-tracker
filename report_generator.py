@@ -335,6 +335,167 @@ def fetch_report_activity(username: str, start_time: datetime, end_time: datetim
     return {"status":last_error or "LeetCode fetch failed","solved":0,"solved_coverage":"ERROR","recent_attempts":0,"attempt_coverage":"ERROR","current_total_submissions":None}
 
 
+def get_effective_verdict(sub: dict[str, Any]) -> str:
+    if not sub:
+        return "CLEAN"
+    v = str(sub.get("plagiarism_verdict") or "").strip().upper()
+    if v == "FLAGGED":
+        return "FLAGGED"
+    if v == "SUSPICIOUS":
+        return "SUSPICIOUS"
+
+    keys = safe_int(sub.get("keystrokes_count", 0))
+    pastes = safe_int(sub.get("paste_count", 0))
+    ratio = float(sub.get("keystroke_ratio", 0) or 0)
+    is_pasted = bool(sub.get("is_pasted"))
+    risk_score = safe_int(sub.get("plagiarism_risk_score", 0))
+    has_ai = bool(sub.get("has_prompt_comments") or sub.get("ai_comment_flags"))
+
+    # Direct paste or 0% typing with low keystrokes -> FLAGGED
+    if is_pasted and keys < 40:
+        return "FLAGGED"
+    if pastes > 0 and (keys < 30 or ratio <= 0.20):
+        return "FLAGGED"
+    if ratio <= 0.15 and keys < 60:
+        return "FLAGGED"
+    if risk_score >= 70 or has_ai:
+        return "FLAGGED"
+    if risk_score >= 45 or (pastes > 0 and ratio <= 0.35):
+        return "SUSPICIOUS"
+
+    return v or "CLEAN"
+
+
+def fetch_supabase_submissions_for_window(
+    config: Config,
+    start_time: datetime,
+    end_time: datetime,
+    section: str | None = None,
+) -> list[dict[str, Any]]:
+    if not config.supabase_url or not config.supabase_key:
+        return []
+    try:
+        start_iso = start_time.astimezone(timezone.utc).isoformat()
+        end_iso = end_time.astimezone(timezone.utc).isoformat()
+        params = {
+            "select": "register_number,student_name,section,problem_title,language,keystrokes_count,paste_count,keystroke_ratio,is_pasted,plagiarism_risk_score,plagiarism_verdict,has_prompt_comments,ai_comment_flags,submitted_at",
+            "submitted_at": f"gte.{start_iso}",
+            "and": f"(submitted_at.lte.{end_iso})",
+        }
+        if section and section.upper() not in {"OVERALL", "ALL"}:
+            params["section"] = f"eq.{section.strip()}"
+
+        rows = supabase_get(config, "student_leetcode_submissions", params=params)
+        return rows if isinstance(rows, list) else []
+    except Exception as exc:
+        print(f"[WARN] Failed to fetch Supabase submissions for audit: {exc}", file=sys.stderr)
+        return []
+
+
+def build_integrity_audit(
+    live: pd.DataFrame,
+    submissions: list[dict[str, Any]],
+) -> dict[str, Any]:
+    sub_map: dict[str, list[dict[str, Any]]] = {}
+    for sub in submissions or []:
+        reg = str(sub.get("register_number") or "").strip()
+        if reg:
+            sub_map.setdefault(reg, []).append(sub)
+
+    audit_rows = []
+    all_copied_students = []
+    total_clean = 0
+    total_flagged = 0
+
+    for _, r in live.iterrows():
+        reg = str(r.get("Register Number", "")).strip()
+        name = str(r.get("Student Name", "Student")).strip()
+        sec = str(r.get("Section", "")).strip()
+        lc_user = str(r.get("LeetCode Username", "")).strip()
+        solved_in_window = safe_int(r.get("Report Window Solved", 0))
+
+        student_subs = sub_map.get(reg, [])
+        clean_count = 0
+        flagged_count = 0
+        copied_titles = []
+
+        for sub in student_subs:
+            v = get_effective_verdict(sub)
+            if v in {"FLAGGED", "SUSPICIOUS"}:
+                flagged_count += 1
+                title = str(sub.get("problem_title") or "Problem").strip()
+                if title and title not in copied_titles:
+                    copied_titles.append(title)
+            else:
+                clean_count += 1
+
+        total_clean += clean_count
+        total_flagged += flagged_count
+
+        total_tracked = clean_count + flagged_count
+        effective_solved = solved_in_window if solved_in_window > 0 else total_tracked
+        paste_ratio = round((flagged_count / max(1, total_tracked)) * 100) if total_tracked > 0 else (100 if flagged_count > 0 else 0)
+
+        is_all_copied = False
+        if (effective_solved > 0 or total_tracked > 0):
+            if flagged_count > 0 and (clean_count == 0 or flagged_count >= effective_solved):
+                is_all_copied = True
+                action_status = "🚨 [TAKE ACTION - 100% COPY-PASTED]"
+            elif flagged_count > 0:
+                action_status = "⚠️ [SUSPICIOUS - Plagiarism Detected]"
+            elif clean_count > 0:
+                action_status = "🟢 [CLEAN - Verified Code]"
+            else:
+                action_status = "⚪ Not Synced via Extension"
+        else:
+            action_status = "⚪ No Synced Activity"
+
+        st_data = {
+            "name": name,
+            "register": reg,
+            "section": sec,
+            "leetcode_user": lc_user,
+            "solved": effective_solved,
+            "clean": clean_count,
+            "flagged": flagged_count,
+            "paste_ratio": paste_ratio,
+            "action_status": action_status,
+            "copied_problems": ", ".join(copied_titles) if copied_titles else "—",
+            "is_all_copied": is_all_copied,
+        }
+
+        if is_all_copied:
+            all_copied_students.append(st_data)
+
+        audit_rows.append(st_data)
+
+    # Sort audit rows: flagged students at the top, then by solved count
+    audit_rows.sort(
+        key=lambda x: (
+            -x["flagged"],
+            -x["solved"],
+            x["section"],
+            x["register"]
+        )
+    )
+
+    all_copied_students.sort(
+        key=lambda x: (
+            -x["solved"],
+            -x["flagged"],
+            x["section"],
+            x["register"]
+        )
+    )
+
+    return {
+        "audit_rows": audit_rows,
+        "all_copied_students": all_copied_students,
+        "total_clean": total_clean,
+        "total_flagged": total_flagged,
+    }
+
+
 def supabase_report_snapshot_get(config: Config, boundary: datetime, register_numbers: list[str]) -> dict[str,int]:
     if not config.supabase_url or not config.supabase_key or not register_numbers: return {}
     boundary_text=boundary.astimezone(timezone.utc).isoformat()
@@ -918,30 +1079,138 @@ def report_shell(title: str, subtitle: str, content: str) -> str:
 
 
 
-def build_daily_report(live: pd.DataFrame,report_date:str,report_window:str,scope_label:str="ECE") -> tuple[str,str]:
-    total=len(live); active,inactive,unknown=report_window_masks(live); top=report_window_students(live,10,False); zeros=inactive_students(live); sections=section_report_summary(live)
-    solved=int(live["Report Window Solved"].sum()); subs=int(live["Report Window Submissions"].sum())
-    top_rows=[[n,x["name"],x["register"],x["section"],x["value"],_display_submission(x["window_submissions"],x["submission_coverage"]),x["week"],x["fortnight"],x["month"],x["total"]] for n,x in enumerate(top,1)]
-    zero_rows=[[n,x["name"],x["register"],x["section"],0,0,x["week"],x["fortnight"],x["month"],x["total"]] for n,x in enumerate(zeros,1)]
-    content=f'''<div class="card"><h2>LeetCode Daily Summary</h2><p class="muted"><strong>Report Window:</strong> {esc(report_window)}</p><div class="kpis"><div class="kpi"><span>Total Students</span><strong>{total}</strong></div><div class="kpi"><span>Active Today</span><strong>{int(active.sum())}</strong></div><div class="kpi"><span>0 Solved / 0 Submission</span><strong>{int(inactive.sum())}</strong></div><div class="kpi"><span>Problems Solved Today</span><strong>{solved}</strong></div><div class="kpi"><span>Today Submissions</span><strong>{subs}</strong></div><div class="kpi"><span>Unverified Profiles</span><strong>{int(unknown.sum())}</strong></div></div></div>
+def build_daily_report(live: pd.DataFrame, report_date: str, report_window: str, scope_label: str = "ECE", integrity: dict[str, Any] | None = None) -> tuple[str, str]:
+    total = len(live)
+    active, inactive, unknown = report_window_masks(live)
+    top = report_window_students(live, 10, False)
+    zeros = inactive_students(live)
+    sections = section_report_summary(live)
+    solved = int(live["Report Window Solved"].sum())
+    subs = int(live["Report Window Submissions"].sum())
+
+    top_rows = [[n, x["name"], x["register"], x["section"], x["value"], _display_submission(x["window_submissions"], x["submission_coverage"]), x["week"], x["fortnight"], x["month"], x["total"]] for n, x in enumerate(top, 1)]
+    zero_rows = [[n, x["name"], x["register"], x["section"], 0, 0, x["week"], x["fortnight"], x["month"], x["total"]] for n, x in enumerate(zeros, 1)]
+
+    # Plagiarism / Copy-paste action section
+    all_copied = (integrity or {}).get("all_copied_students", [])
+    total_clean = (integrity or {}).get("total_clean", 0)
+    total_flagged = (integrity or {}).get("total_flagged", 0)
+
+    if all_copied:
+        copied_rows = []
+        for n, x in enumerate(all_copied, 1):
+            copied_rows.append([
+                n,
+                x["name"],
+                x["register"],
+                x["section"],
+                x["solved"],
+                f"{x['flagged']} (100% Pasted)",
+                x["copied_problems"],
+                "🚨 [TAKE ACTION]"
+            ])
+        integrity_section = f'''
+        <div class="card" style="border: 2px solid #ef4444; background: #fff5f5; border-radius: 16px; padding: 20px; margin-bottom: 16px;">
+          <h2 style="color: #dc2626; margin: 0 0 10px; font-size: 18px;">
+            🚨 Action Required: Students Who Copied All Solved Problems ({len(all_copied)})
+          </h2>
+          <p style="color: #991b1b; font-size: 13px; margin: 0 0 14px; line-height: 1.5;">
+            The following student(s) solved problems today but <strong>copy-pasted 100% of their solutions</strong> (0% typing / direct paste detected). Immediate faculty follow-up is required:
+          </p>
+          {table_html(["#", "Student Name", "Register No.", "Section", "Solved Today", "Flagged / Copied", "Copied Problems", "Action Required"], copied_rows)}
+          <p style="margin: 12px 0 0; font-size: 12px; color: #7f1d1d;">
+            📎 <em>Full list of all flagged, suspicious, and clean students is available in the attached Excel report under the <strong>"Flagged Students & Integrity"</strong> sheet.</em>
+          </p>
+        </div>
+        '''
+    else:
+        integrity_section = f'''
+        <div class="card" style="border: 1px solid #bbf7d0; background: #f0fdf4; border-radius: 16px; padding: 16px 20px; margin-bottom: 16px;">
+          <h3 style="color: #166534; margin: 0 0 4px; font-size: 15px;">
+            ✅ Anti-Cheat Integrity: All Solvers Clear
+          </h3>
+          <p style="color: #15803d; font-size: 13px; margin: 0;">
+            No students copied 100% of their solved problems in this reporting window. (Full audit metrics available in the attached Excel <strong>"Flagged Students & Integrity"</strong> sheet).
+          </p>
+        </div>
+        '''
+
+    content = f'''<div class="card"><h2>LeetCode Daily Summary</h2><p class="muted"><strong>Report Window:</strong> {esc(report_window)}</p><div class="kpis"><div class="kpi"><span>Total Students</span><strong>{total}</strong></div><div class="kpi"><span>Active Today</span><strong>{int(active.sum())}</strong></div><div class="kpi"><span>0 Solved / 0 Submission</span><strong>{int(inactive.sum())}</strong></div><div class="kpi"><span>Problems Solved Today</span><strong>{solved}</strong></div><div class="kpi"><span>🟢 Clean Solves</span><strong style="color:#16a34a">{total_clean}</strong></div><div class="kpi"><span>🔴 Flagged / Copied</span><strong style="color:#dc2626">{total_flagged}</strong></div></div></div>
+    {integrity_section}
     <div class="card"><h2>Top 10 Students - Today</h2>{table_html(["#","Student","Register No.","Section","Today Solved","Today Submissions","7 Days","14 Days","30 Days","Total Solved"],top_rows)}</div>
     <div class="card"><h2>0 Solved Today Students</h2><p class="muted">Only students with 0 solved AND 0 submissions in the complete 07:00 AM to 07:00 AM window are listed. Students who submitted code today are excluded.</p>{table_html(["#","Student","Register No.","Section","Today Solved","Today Submissions","7 Days","14 Days","30 Days","Total Solved"],zero_rows)}</div>
     <div class="card"><h2>Section Summary</h2>{table_html(["Section","Students","Active","0 Solved / 0 Submission","Today Solved","Today Submissions","7 Days","14 Days","30 Days"],[[x["section"],x["students"],x["active"],x["inactive"],x["window_solved"],x["window_submissions"],x["week"],x["fortnight"],x["month"]] for x in sections])}</div>'''
-    subject=f"{scope_label} LeetCode Daily Report - {report_date}"; return subject,report_shell(f"{scope_label} LeetCode Daily Report",f"Reporting Date: {report_date} | {report_window}",content)
+    subject = f"{scope_label} LeetCode Daily Report - {report_date}"
+    return subject, report_shell(f"{scope_label} LeetCode Daily Report", f"Reporting Date: {report_date} | {report_window}", content)
 
 
 
-def build_weekly_report(live: pd.DataFrame,start_date:str,end_date:str,report_window:str,scope_label:str="ECE") -> tuple[str,str]:
-    total=len(live); active,inactive,unknown=report_window_masks(live); top=report_window_students(live,10,False); zeros=inactive_students(live); bottom=report_window_students(live,10,True,True); sections=section_report_summary(live)
-    solved=int(live["Report Window Solved"].sum()); subs=int(live["Report Window Submissions"].sum())
-    def rows(items): return [[n,x["name"],x["register"],x["section"],x.get("value",x.get("solved",0)),_display_submission(x["window_submissions"],x["submission_coverage"]),x["fortnight"],x["month"],x["total"]] for n,x in enumerate(items,1)]
-    headers=["#","Student","Register No.","Section","Week Solved","Week Submissions","14 Days","30 Days","Total Solved"]
-    content=f'''<div class="card"><h2>LeetCode Weekly Summary</h2><p class="muted"><strong>Report Window:</strong> {esc(report_window)}</p><div class="kpis"><div class="kpi"><span>Total Students</span><strong>{total}</strong></div><div class="kpi"><span>Active This Week</span><strong>{int(active.sum())}</strong></div><div class="kpi"><span>0 Solved / 0 Submission</span><strong>{int(inactive.sum())}</strong></div><div class="kpi"><span>Problems Solved This Week</span><strong>{solved}</strong></div><div class="kpi"><span>Weekly Submissions</span><strong>{subs}</strong></div><div class="kpi"><span>Unverified Profiles</span><strong>{int(unknown.sum())}</strong></div></div></div>
-    <div class="card"><h2>Top 10 Students - This Week</h2>{table_html(headers,rows(top))}</div>
-    <div class="card"><h2>0 Solved This Week Students</h2><p class="muted">Only students with 0 solved AND 0 submissions in the complete weekly report window are listed.</p>{table_html(headers,rows(zeros))}</div>
-    <div class="card"><h2>Bottom 10 Students - This Week</h2><p class="muted">Completely inactive 0/0 students are shown separately above and are excluded here.</p>{table_html(headers,rows(bottom))}</div>
+def build_weekly_report(live: pd.DataFrame, start_date: str, end_date: str, report_window: str, scope_label: str = "ECE", integrity: dict[str, Any] | None = None) -> tuple[str, str]:
+    total = len(live)
+    active, inactive, unknown = report_window_masks(live)
+    top = report_window_students(live, 10, False)
+    zeros = inactive_students(live)
+    bottom = report_window_students(live, 10, True, True)
+    sections = section_report_summary(live)
+    solved = int(live["Report Window Solved"].sum())
+    subs = int(live["Report Window Submissions"].sum())
+
+    def rows(items):
+        return [[n, x["name"], x["register"], x["section"], x.get("value", x.get("solved", 0)), _display_submission(x["window_submissions"], x["submission_coverage"]), x["fortnight"], x["month"], x["total"]] for n, x in enumerate(items, 1)]
+    headers = ["#", "Student", "Register No.", "Section", "Week Solved", "Week Submissions", "14 Days", "30 Days", "Total Solved"]
+
+    # Plagiarism / Copy-paste action section
+    all_copied = (integrity or {}).get("all_copied_students", [])
+    total_clean = (integrity or {}).get("total_clean", 0)
+    total_flagged = (integrity or {}).get("total_flagged", 0)
+
+    if all_copied:
+        copied_rows = []
+        for n, x in enumerate(all_copied, 1):
+            copied_rows.append([
+                n,
+                x["name"],
+                x["register"],
+                x["section"],
+                x["solved"],
+                f"{x['flagged']} (100% Pasted)",
+                x["copied_problems"],
+                "🚨 [TAKE ACTION]"
+            ])
+        integrity_section = f'''
+        <div class="card" style="border: 2px solid #ef4444; background: #fff5f5; border-radius: 16px; padding: 20px; margin-bottom: 16px;">
+          <h2 style="color: #dc2626; margin: 0 0 10px; font-size: 18px;">
+            🚨 Action Required: Students Who Copied All Solved Problems ({len(all_copied)})
+          </h2>
+          <p style="color: #991b1b; font-size: 13px; margin: 0 0 14px; line-height: 1.5;">
+            The following student(s) solved problems this week but <strong>copy-pasted 100% of their solutions</strong> (0% typing / direct paste detected). Immediate faculty follow-up is required:
+          </p>
+          {table_html(["#", "Student Name", "Register No.", "Section", "Solved This Week", "Flagged / Copied", "Copied Problems", "Action Required"], copied_rows)}
+          <p style="margin: 12px 0 0; font-size: 12px; color: #7f1d1d;">
+            📎 <em>Full list of all flagged, suspicious, and clean students is available in the attached Excel report under the <strong>"Flagged Students & Integrity"</strong> sheet.</em>
+          </p>
+        </div>
+        '''
+    else:
+        integrity_section = f'''
+        <div class="card" style="border: 1px solid #bbf7d0; background: #f0fdf4; border-radius: 16px; padding: 16px 20px; margin-bottom: 16px;">
+          <h3 style="color: #166534; margin: 0 0 4px; font-size: 15px;">
+            ✅ Anti-Cheat Integrity: All Solvers Clear
+          </h3>
+          <p style="color: #15803d; font-size: 13px; margin: 0;">
+            No students copied 100% of their solved problems in this weekly report window. (Full audit metrics available in the attached Excel <strong>"Flagged Students & Integrity"</strong> sheet).
+          </p>
+        </div>
+        '''
+
+    content = f'''<div class="card"><h2>LeetCode Weekly Summary</h2><p class="muted"><strong>Report Window:</strong> {esc(report_window)}</p><div class="kpis"><div class="kpi"><span>Total Students</span><strong>{total}</strong></div><div class="kpi"><span>Active This Week</span><strong>{int(active.sum())}</strong></div><div class="kpi"><span>0 Solved / 0 Submission</span><strong>{int(inactive.sum())}</strong></div><div class="kpi"><span>Problems Solved This Week</span><strong>{solved}</strong></div><div class="kpi"><span>🟢 Clean Solves</span><strong style="color:#16a34a">{total_clean}</strong></div><div class="kpi"><span>🔴 Flagged / Copied</span><strong style="color:#dc2626">{total_flagged}</strong></div></div></div>
+    {integrity_section}
+    <div class="card"><h2>Top 10 Students - This Week</h2>{table_html(headers, rows(top))}</div>
+    <div class="card"><h2>0 Solved This Week Students</h2><p class="muted">Only students with 0 solved AND 0 submissions in the complete weekly report window are listed.</p>{table_html(headers, rows(zeros))}</div>
+    <div class="card"><h2>Bottom 10 Students - This Week</h2><p class="muted">Completely inactive 0/0 students are shown separately above and are excluded here.</p>{table_html(headers, rows(bottom))}</div>
     <div class="card"><h2>Section Performance</h2>{table_html(["Section","Students","Active","0 Solved / 0 Submission","Week Solved","Week Submissions","14 Days","30 Days"],[[x["section"],x["students"],x["active"],x["inactive"],x["window_solved"],x["window_submissions"],x["fortnight"],x["month"]] for x in sections])}</div>'''
-    subject=f"{scope_label} LeetCode Weekly Report - {start_date} to {end_date}"; return subject,report_shell(f"{scope_label} LeetCode Weekly Report",report_window,content)
+    subject = f"{scope_label} LeetCode Weekly Report - {start_date} to {end_date}"
+    return subject, report_shell(f"{scope_label} LeetCode Weekly Report", report_window, content)
 
 
 
@@ -1024,30 +1293,146 @@ def _write_dataframe_sheet(
 
 
 
-def generate_daily_excel(live:pd.DataFrame,report_date:str,report_window:str,scope_label:str="ECE") -> Path:
-    REPORT_DIR.mkdir(parents=True,exist_ok=True); path=REPORT_DIR/f"{scope_slug(scope_label)}_Daily_Report_{report_date}.xlsx"; active,inactive,unknown=report_window_masks(live); top=report_window_students(live,10,False); zeros=inactive_students(live); sections=section_report_summary(live)
-    summary_rows=[["Reporting Date",report_date],["Report Window",report_window],["Total Students",len(live)],["Active Today",int(active.sum())],["0 Solved / 0 Submission",int(inactive.sum())],["Problems Solved Today",int(live["Report Window Solved"].sum())],["Today Submissions",int(live["Report Window Submissions"].sum())],["Unverified Profiles",int(unknown.sum())]]
-    def frame(items): return pd.DataFrame([{"Rank":n,"Student":x["name"],"Register Number":x["register"],"Section":x["section"],"Today Solved":x.get("value",x.get("solved",0)),"Today Submissions":_display_submission(x["window_submissions"],x["submission_coverage"]),"7 Days":x["week"],"14 Days":x["fortnight"],"30 Days":x["month"],"Total Solved":x["total"],"E / M / H":f'{x["easy"]} / {x["medium"]} / {x["hard"]}'} for n,x in enumerate(items,1)])
-    sec=pd.DataFrame([{"Section":x["section"],"Students":x["students"],"Active":x["active"],"0 Solved / 0 Submission":x["inactive"],"Today Solved":x["window_solved"],"Today Submissions":x["window_submissions"],"7 Days":x["week"],"14 Days":x["fortnight"],"30 Days":x["month"]} for x in sections])
-    cols=[c for c in ["Register Number","Student Name","Section","Report Window Solved","Report Window Submissions","Last 7 Days","Last 14 Days","Last 30 Days","Problems Solved","Easy","Medium","Hard","Report Window Coverage","Report Submission Coverage","Status"] if c in live.columns]; students=live[cols].copy().rename(columns={"Report Window Solved":"Today Solved","Report Window Submissions":"Today Submissions","Problems Solved":"Total Solved"})
-    with pd.ExcelWriter(path,engine="xlsxwriter") as writer:
-        wb=writer.book; sh=wb.add_worksheet("Summary"); writer.sheets["Summary"]=sh; sh.merge_range("A1:B1",f"{scope_label} LeetCode Daily Report",_xlsx_title_format(wb)); sh.set_column("A:A",32); sh.set_column("B:B",52)
-        for n,(label,value) in enumerate(summary_rows,start=2): sh.write(n-1,0,label,_xlsx_kpi_label(wb)); sh.write(n-1,1,value,_xlsx_kpi_value(wb))
-        _write_dataframe_sheet(writer,"Top 10 Today",frame(top),"Top 10 Students - Today"); _write_dataframe_sheet(writer,"0 Solved Today",frame(zeros),"0 Solved Today - Also 0 Today Submissions"); _write_dataframe_sheet(writer,"Section Summary",sec,"Section Summary"); _write_dataframe_sheet(writer,"Student Data",students,"Student LeetCode Daily Data")
+def generate_daily_excel(live: pd.DataFrame, report_date: str, report_window: str, scope_label: str = "ECE", integrity: dict[str, Any] | None = None) -> Path:
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    path = REPORT_DIR / f"{scope_slug(scope_label)}_Daily_Report_{report_date}.xlsx"
+    active, inactive, unknown = report_window_masks(live)
+    top = report_window_students(live, 10, False)
+    zeros = inactive_students(live)
+    sections = section_report_summary(live)
+    total_clean = (integrity or {}).get("total_clean", 0)
+    total_flagged = (integrity or {}).get("total_flagged", 0)
+
+    summary_rows = [
+        ["Reporting Date", report_date],
+        ["Report Window", report_window],
+        ["Total Students", len(live)],
+        ["Active Today", int(active.sum())],
+        ["0 Solved / 0 Submission", int(inactive.sum())],
+        ["Problems Solved Today", int(live["Report Window Solved"].sum())],
+        ["🟢 Clean Verified Solves", total_clean],
+        ["🔴 Flagged / Copied Solves", total_flagged],
+        ["Today Submissions", int(live["Report Window Submissions"].sum())],
+        ["Unverified Profiles", int(unknown.sum())]
+    ]
+
+    def frame(items):
+        return pd.DataFrame([{"Rank": n, "Student": x["name"], "Register Number": x["register"], "Section": x["section"], "Today Solved": x.get("value", x.get("solved", 0)), "Today Submissions": _display_submission(x["window_submissions"], x["submission_coverage"]), "7 Days": x["week"], "14 Days": x["fortnight"], "30 Days": x["month"], "Total Solved": x["total"], "E / M / H": f'{x["easy"]} / {x["medium"]} / {x["hard"]}'} for n, x in enumerate(items, 1)])
+
+    def frame_integrity(items):
+        return pd.DataFrame([
+            {
+                "Rank": n,
+                "Student Name": x["name"],
+                "Register Number": x["register"],
+                "Section": x["section"],
+                "LeetCode Username": x["leetcode_user"],
+                "Problems Solved in Period": x["solved"],
+                "Clean Solves (🟢)": x["clean"],
+                "Flagged Solves (🔴)": x["flagged"],
+                "Copy-Paste %": f"{x['paste_ratio']}%",
+                "Action Status": x["action_status"],
+                "Copied Problem Titles": x["copied_problems"],
+            }
+            for n, x in enumerate(items, 1)
+        ])
+
+    sec = pd.DataFrame([{"Section": x["section"], "Students": x["students"], "Active": x["active"], "0 Solved / 0 Submission": x["inactive"], "Today Solved": x["window_solved"], "Today Submissions": x["window_submissions"], "7 Days": x["week"], "14 Days": x["fortnight"], "30 Days": x["month"]} for x in sections])
+    cols = [c for c in ["Register Number", "Student Name", "Section", "Report Window Solved", "Report Window Submissions", "Last 7 Days", "Last 14 Days", "Last 30 Days", "Problems Solved", "Easy", "Medium", "Hard", "Report Window Coverage", "Report Submission Coverage", "Status"] if c in live.columns]
+    students = live[cols].copy().rename(columns={"Report Window Solved": "Today Solved", "Report Window Submissions": "Today Submissions", "Problems Solved": "Total Solved"})
+
+    with pd.ExcelWriter(path, engine="xlsxwriter") as writer:
+        wb = writer.book
+        sh = wb.add_worksheet("Summary")
+        writer.sheets["Summary"] = sh
+        sh.merge_range("A1:B1", f"{scope_label} LeetCode Daily Report", _xlsx_title_format(wb))
+        sh.set_column("A:A", 32)
+        sh.set_column("B:B", 52)
+        for n, (label, value) in enumerate(summary_rows, start=2):
+            sh.write(n - 1, 0, label, _xlsx_kpi_label(wb))
+            sh.write(n - 1, 1, value, _xlsx_kpi_value(wb))
+
+        if integrity and integrity.get("audit_rows"):
+            _write_dataframe_sheet(writer, "Flagged Students & Integrity", frame_integrity(integrity["audit_rows"]), "Flagged Students & Plagiarism Integrity Audit")
+
+        _write_dataframe_sheet(writer, "Top 10 Today", frame(top), "Top 10 Students - Today")
+        _write_dataframe_sheet(writer, "0 Solved Today", frame(zeros), "0 Solved Today - Also 0 Today Submissions")
+        _write_dataframe_sheet(writer, "Section Summary", sec, "Section Summary")
+        _write_dataframe_sheet(writer, "Student Data", students, "Student LeetCode Daily Data")
+
     return path
 
 
 
-def generate_weekly_excel(live:pd.DataFrame,start_date:str,end_date:str,report_window:str,scope_label:str="ECE") -> Path:
-    REPORT_DIR.mkdir(parents=True,exist_ok=True); path=REPORT_DIR/f"{scope_slug(scope_label)}_Weekly_Report_{start_date}_to_{end_date}.xlsx"; active,inactive,unknown=report_window_masks(live); top=report_window_students(live,10,False); zeros=inactive_students(live); bottom=report_window_students(live,10,True,True); sections=section_report_summary(live)
-    summary_rows=[["Period",f"{start_date} to {end_date}"],["Report Window",report_window],["Total Students",len(live)],["Active This Week",int(active.sum())],["0 Solved / 0 Submission",int(inactive.sum())],["Problems Solved This Week",int(live["Report Window Solved"].sum())],["Weekly Submissions",int(live["Report Window Submissions"].sum())],["Unverified Profiles",int(unknown.sum())]]
-    def frame(items): return pd.DataFrame([{"Rank":n,"Student":x["name"],"Register Number":x["register"],"Section":x["section"],"Week Solved":x.get("value",x.get("solved",0)),"Week Submissions":_display_submission(x["window_submissions"],x["submission_coverage"]),"14 Days":x["fortnight"],"30 Days":x["month"],"Total Solved":x["total"],"E / M / H":f'{x["easy"]} / {x["medium"]} / {x["hard"]}'} for n,x in enumerate(items,1)])
-    sec=pd.DataFrame([{"Section":x["section"],"Students":x["students"],"Active":x["active"],"0 Solved / 0 Submission":x["inactive"],"Week Solved":x["window_solved"],"Week Submissions":x["window_submissions"],"14 Days":x["fortnight"],"30 Days":x["month"]} for x in sections])
-    cols=[c for c in ["Register Number","Student Name","Section","Report Window Solved","Report Window Submissions","Last 14 Days","Last 30 Days","Problems Solved","Easy","Medium","Hard","Report Window Coverage","Report Submission Coverage","Status"] if c in live.columns]; students=live[cols].copy().rename(columns={"Report Window Solved":"Week Solved","Report Window Submissions":"Week Submissions","Problems Solved":"Total Solved"})
-    with pd.ExcelWriter(path,engine="xlsxwriter") as writer:
-        wb=writer.book; sh=wb.add_worksheet("Summary"); writer.sheets["Summary"]=sh; sh.merge_range("A1:B1",f"{scope_label} LeetCode Weekly Report",_xlsx_title_format(wb)); sh.set_column("A:A",32); sh.set_column("B:B",52)
-        for n,(label,value) in enumerate(summary_rows,start=2): sh.write(n-1,0,label,_xlsx_kpi_label(wb)); sh.write(n-1,1,value,_xlsx_kpi_value(wb))
-        _write_dataframe_sheet(writer,"Top 10",frame(top),"Top 10 Students - This Week"); _write_dataframe_sheet(writer,"0 Solved Week",frame(zeros),"0 Solved This Week - Also 0 Weekly Submissions"); _write_dataframe_sheet(writer,"Bottom 10",frame(bottom),"Bottom 10 Students - This Week"); _write_dataframe_sheet(writer,"Section Summary",sec,"Section Weekly Summary"); _write_dataframe_sheet(writer,"Student Data",students,"Student LeetCode Weekly Data")
+def generate_weekly_excel(live: pd.DataFrame, start_date: str, end_date: str, report_window: str, scope_label: str = "ECE", integrity: dict[str, Any] | None = None) -> Path:
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    path = REPORT_DIR / f"{scope_slug(scope_label)}_Weekly_Report_{start_date}_to_{end_date}.xlsx"
+    active, inactive, unknown = report_window_masks(live)
+    top = report_window_students(live, 10, False)
+    zeros = inactive_students(live)
+    bottom = report_window_students(live, 10, True, True)
+    sections = section_report_summary(live)
+    total_clean = (integrity or {}).get("total_clean", 0)
+    total_flagged = (integrity or {}).get("total_flagged", 0)
+
+    summary_rows = [
+        ["Period", f"{start_date} to {end_date}"],
+        ["Report Window", report_window],
+        ["Total Students", len(live)],
+        ["Active This Week", int(active.sum())],
+        ["0 Solved / 0 Submission", int(inactive.sum())],
+        ["Problems Solved This Week", int(live["Report Window Solved"].sum())],
+        ["🟢 Clean Verified Solves", total_clean],
+        ["🔴 Flagged / Copied Solves", total_flagged],
+        ["Weekly Submissions", int(live["Report Window Submissions"].sum())],
+        ["Unverified Profiles", int(unknown.sum())]
+    ]
+
+    def frame(items):
+        return pd.DataFrame([{"Rank": n, "Student": x["name"], "Register Number": x["register"], "Section": x["section"], "Week Solved": x.get("value", x.get("solved", 0)), "Week Submissions": _display_submission(x["window_submissions"], x["submission_coverage"]), "14 Days": x["fortnight"], "30 Days": x["month"], "Total Solved": x["total"], "E / M / H": f'{x["easy"]} / {x["medium"]} / {x["hard"]}'} for n, x in enumerate(items, 1)])
+
+    def frame_integrity(items):
+        return pd.DataFrame([
+            {
+                "Rank": n,
+                "Student Name": x["name"],
+                "Register Number": x["register"],
+                "Section": x["section"],
+                "LeetCode Username": x["leetcode_user"],
+                "Problems Solved in Period": x["solved"],
+                "Clean Solves (🟢)": x["clean"],
+                "Flagged Solves (🔴)": x["flagged"],
+                "Copy-Paste %": f"{x['paste_ratio']}%",
+                "Action Status": x["action_status"],
+                "Copied Problem Titles": x["copied_problems"],
+            }
+            for n, x in enumerate(items, 1)
+        ])
+
+    sec = pd.DataFrame([{"Section": x["section"], "Students": x["students"], "Active": x["active"], "0 Solved / 0 Submission": x["inactive"], "Week Solved": x["window_solved"], "Week Submissions": x["window_submissions"], "14 Days": x["fortnight"], "30 Days": x["month"]} for x in sections])
+    cols = [c for c in ["Register Number", "Student Name", "Section", "Report Window Solved", "Report Window Submissions", "Last 14 Days", "Last 30 Days", "Problems Solved", "Easy", "Medium", "Hard", "Report Window Coverage", "Report Submission Coverage", "Status"] if c in live.columns]
+    students = live[cols].copy().rename(columns={"Report Window Solved": "Week Solved", "Report Window Submissions": "Week Submissions", "Problems Solved": "Total Solved"})
+
+    with pd.ExcelWriter(path, engine="xlsxwriter") as writer:
+        wb = writer.book
+        sh = wb.add_worksheet("Summary")
+        writer.sheets["Summary"] = sh
+        sh.merge_range("A1:B1", f"{scope_label} LeetCode Weekly Report", _xlsx_title_format(wb))
+        sh.set_column("A:A", 32)
+        sh.set_column("B:B", 52)
+        for n, (label, value) in enumerate(summary_rows, start=2):
+            sh.write(n - 1, 0, label, _xlsx_kpi_label(wb))
+            sh.write(n - 1, 1, value, _xlsx_kpi_value(wb))
+
+        if integrity and integrity.get("audit_rows"):
+            _write_dataframe_sheet(writer, "Flagged Students & Integrity", frame_integrity(integrity["audit_rows"]), "Flagged Students & Plagiarism Integrity Audit")
+
+        _write_dataframe_sheet(writer, "Top 10", frame(top), "Top 10 Students - This Week")
+        _write_dataframe_sheet(writer, "0 Solved Week", frame(zeros), "0 Solved This Week - Also 0 Weekly Submissions")
+        _write_dataframe_sheet(writer, "Bottom 10", frame(bottom), "Bottom 10 Students - This Week")
+        _write_dataframe_sheet(writer, "Section Summary", sec, "Section Weekly Summary")
+        _write_dataframe_sheet(writer, "Student Data", students, "Student LeetCode Weekly Data")
+
     return path
 
 
@@ -1313,11 +1698,15 @@ def build_report(mode:str,config:Config,offline:bool=False,section:str|None=None
     if mode=="daily":
         report_start=report_end-timedelta(days=1); live=refresh_report_window_activity(live,report_start,report_end,config,offline)
         if not offline: supabase_report_snapshot_upsert(config,live,report_end)
+        submissions = fetch_supabase_submissions_for_window(config, report_start, report_end, section) if not offline else []
+        integrity = build_integrity_audit(live, submissions)
         display=report_start.strftime("%d %b %Y"); file_date=report_start.date().isoformat(); window=format_window(report_start,report_end); print(f"Daily report window: {report_start.isoformat()} -> {report_end.isoformat()}")
-        subject,body=build_daily_report(live,display,window,scope_label); return subject,body,[generate_daily_excel(live,file_date,window,scope_label),generate_daily_pdf(live,file_date,window,scope_label)]
+        subject,body=build_daily_report(live,display,window,scope_label,integrity); return subject,body,[generate_daily_excel(live,file_date,window,scope_label,integrity),generate_daily_pdf(live,file_date,window,scope_label)]
     if mode=="weekly":
         report_start=report_end-timedelta(days=7); live=refresh_report_window_activity(live,report_start,report_end,config,offline); start_iso=report_start.date().isoformat(); end_iso=report_end.date().isoformat(); window=format_window(report_start,report_end); print(f"Weekly report window: {report_start.isoformat()} -> {report_end.isoformat()}")
-        subject,body=build_weekly_report(live,report_start.strftime("%d %b %Y"),report_end.strftime("%d %b %Y"),window,scope_label); return subject,body,[generate_weekly_excel(live,start_iso,end_iso,window,scope_label),generate_weekly_pdf(live,start_iso,end_iso,window,scope_label)]
+        submissions = fetch_supabase_submissions_for_window(config, report_start, report_end, section) if not offline else []
+        integrity = build_integrity_audit(live, submissions)
+        subject,body=build_weekly_report(live,report_start.strftime("%d %b %Y"),report_end.strftime("%d %b %Y"),window,scope_label,integrity); return subject,body,[generate_weekly_excel(live,start_iso,end_iso,window,scope_label,integrity),generate_weekly_pdf(live,start_iso,end_iso,window,scope_label)]
     raise ValueError(f"Unknown report mode: {mode}")
 
 
