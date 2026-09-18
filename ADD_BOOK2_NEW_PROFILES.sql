@@ -1,8 +1,22 @@
 -- ==========================================================================
--- Supabase SQL Script: Upsert All Non-Duplicate / Updated Profiles from Book 2
+-- Supabase SQL Script: Upsert All 93 Student Profiles from Book 2
 -- Run this query directly in your Supabase SQL Editor
 -- ==========================================================================
 
+-- 1. Ensure columns exist and nullable constraints are safe
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS github_username TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS department TEXT DEFAULT 'ECE';
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS year INTEGER DEFAULT 2;
+ALTER TABLE public.students ALTER COLUMN leetcode_username DROP NOT NULL;
+ALTER TABLE public.students ALTER COLUMN github_username DROP NOT NULL;
+
+-- 2. Drop obsolete unique constraints so register_number is the sole primary key
+ALTER TABLE public.students DROP CONSTRAINT IF EXISTS students_leetcode_username_key;
+ALTER TABLE public.students DROP CONSTRAINT IF EXISTS students_github_username_key;
+DROP INDEX IF EXISTS public.students_leetcode_username_key;
+DROP INDEX IF EXISTS public.students_github_username_key;
+
+-- 3. Insert and update 93 student profiles
 INSERT INTO public.students (register_number, student_name, section, leetcode_username, github_username, year, department, updated_at)
 VALUES
   ('922525106008', 'Ahelesh G S', 'ECE A', 'ahelesh_10_', 'ahelesh4-design', 2, 'E', NOW()),
@@ -14,7 +28,7 @@ VALUES
   ('922525106025', 'Arsatha Begam M S', 'ECE A', 'arsatha-', 'arsa17112007-a11y', 2, 'E', NOW()),
   ('922525106027', 'Arulesh K', 'ECE A', 'arul2008', 'aruleshk', 2, 'E', NOW()),
   ('922525106379', 'ARUN KUMAR', 'ECE E', 'arunkumar1004', 'arunkumarmani78-dotcom', 2, 'E', NOW()),
-  ('922525106032', 'ARVINSHANKARA V', 'ECE A', NULL, 'Arvin2597', 2, 'E', NOW()),
+  ('922525106032', 'ARVINSHANKARA V', 'ECE A', 'Arvin', 'Arvin2597', 2, 'E', NOW()),
   ('922525106035', 'BALAJI C', 'ECE A', 'Balajichandrasekaran', 'balajicv2007-ai', 2, 'E', NOW()),
   ('922525106036', 'BALARITHISH S', 'ECE A', 'IOu1mvgrJS', 'rajii444v-lgtm', 2, 'E', NOW()),
   ('922525106038', 'Bavitha T', 'ECE A', '3gvYU1AYWX', 'bavithathangavel-cell', 2, 'E', NOW()),
@@ -44,14 +58,14 @@ VALUES
   ('922525106093', 'GIRIVASH P', 'ECE B', '922525106093', 'Giri-922525106093', 2, 'E', NOW()),
   ('922525106096', 'GOPALA KRISHNAN C', 'ECE B', '922525106096', 'Gopal-922525106096', 2, 'E', NOW()),
   ('922525106101', 'GOWRISANKAR S', 'ECE B', '922525106101', 'gowrisankarselvakumar-art', 2, 'E', NOW()),
-  ('922525106104', 'Gowtham R', 'ECE B', '922525106104', NULL, 2, 'E', NOW()),
-  ('922525106110', 'HARI HARAN R', 'ECE B', NULL, 'hariharanr1205-cloud', 2, 'E', NOW()),
-  ('922525106116', 'HARISH MS', 'ECE B', NULL, 'HARISH-0616', 2, 'E', NOW()),
+  ('922525106104', 'Gowtham R', 'ECE B', '922525106104', 'gowtham0518629', 2, 'E', NOW()),
+  ('922525106110', 'HARI HARAN R', 'ECE B', '922525106110', 'hariharanr1205-cloud', 2, 'E', NOW()),
+  ('922525106116', 'HARISH MS', 'ECE B', '922525106116', 'HARISH-0616', 2, 'E', NOW()),
   ('922525106380', 'HARJIT VASAN SV', 'ECE E', 'Harjit_Vasan', 'HarjitVasan2007', 2, 'E', NOW()),
   ('922525106119', 'HAVISHMATHI S', 'ECE B', '922525106119', 'havishmathi31-lab', 2, 'E', NOW()),
   ('922525106129', 'JASVANTHRAM SP', 'ECE C', 'jasvanthram', 'jasvanthrampalanivel-bit', 2, 'E', NOW()),
   ('922525106131', 'JAYASURYA R', 'ECE C', 'Jayasuryaraja', 'jayasuryaraja08-wq', 2, 'E', NOW()),
-  ('922525106133', 'JEEVADHARSHAN R R', 'ECE C', NULL, 'jeevadharshan888-ai', 2, 'E', NOW()),
+  ('922525106133', 'JEEVADHARSHAN R R', 'ECE C', 'dharshanjeeva', 'jeevadharshan888-ai', 2, 'E', NOW()),
   ('922525106137', 'JOTHI HARSHAN D K', 'ECE C', 'Jothiharshan16', 'Jothiharshan', 2, 'E', NOW()),
   ('922525106141', 'KANISHKUMAR M', 'ECE C', 'kanishkumar2008', 'kanishm0204-ui', 2, 'E', NOW()),
   ('922525106159', 'KISHOREKUMAR B', 'ECE C', 'Kishore9225', 'kishorebala159-maker', 2, 'E', NOW()),
@@ -72,7 +86,7 @@ VALUES
   ('922525106229', 'Pranesh Y', 'ECE D', 'Pranesh_Y', 'Pranesh08-Tech', 2, 'E', NOW()),
   ('922525106238', 'Priyanka A', 'ECE D', 'Priyankaashok1201', 'Priyanka12010708', 2, 'E', NOW()),
   ('922525106245', 'Ranjith K', 'ECE D', 'ranjithkannan', 'ranjithkannan210', 2, 'E', NOW()),
-  ('922525106251', 'Rethanya S', 'ECE D', 'SekarRethanya', NULL, 2, 'E', NOW()),
+  ('922525106251', 'Rethanya S', 'ECE D', 'SekarRethanya', 'RethanyaSekar', 2, 'E', NOW()),
   ('922525106255', 'Rithik I', 'ECE E', 'Rithik2008', 'iyappanrithik2008-del', 2, 'E', NOW()),
   ('922525106256', 'Rithik p', 'ECE E', 'Rithik_78', 'rithikprakash78-design', 2, 'E', NOW()),
   ('922525106258', 'Rithish R', 'ECE E', 'Rithish_', 'rithishrithish05715', 2, 'E', NOW()),
