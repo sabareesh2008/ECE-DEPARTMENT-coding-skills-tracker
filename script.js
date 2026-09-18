@@ -4183,15 +4183,40 @@ function getSupabaseClient() {
   return null;
 }
 
+function getEffectiveVerdict(sub) {
+  if (!sub) return 'CLEAN';
+  if (sub.plagiarism_verdict === 'FLAGGED') return 'FLAGGED';
+  if (sub.plagiarism_verdict === 'SUSPICIOUS') return 'SUSPICIOUS';
+
+  const keys = Number(sub.keystrokes_count || 0);
+  const pastes = Number(sub.paste_count || 0);
+  const ratio = Number(sub.keystroke_ratio || 0);
+  const isPasted = Boolean(sub.is_pasted);
+  const riskScore = Number(sub.plagiarism_risk_score || 0);
+  const hasAi = Boolean(sub.has_prompt_comments || (sub.ai_comment_flags && sub.ai_comment_flags.length > 0));
+
+  // If direct paste or 0% typing with low keystrokes -> FLAGGED
+  if (isPasted && keys < 40) return 'FLAGGED';
+  if (pastes > 0 && (keys < 30 || ratio <= 0.20)) return 'FLAGGED';
+  if (ratio <= 0.15 && keys < 60) return 'FLAGGED';
+  if (riskScore >= 70 || hasAi) return 'FLAGGED';
+  if (riskScore >= 45 || (pastes > 0 && ratio <= 0.35)) return 'SUSPICIOUS';
+
+  return sub.plagiarism_verdict || 'CLEAN';
+}
+
 async function checkStudentIntegrity(reg) {
   try {
     const client = getSupabaseClient();
     if (!client) return { cls: 'unverified', html: '⚪ Not Synced' };
-    const { data } = await client.from('student_leetcode_submissions').select('plagiarism_verdict').eq('register_number', reg);
+    const { data } = await client.from('student_leetcode_submissions').select('*').eq('register_number', reg);
     if (!data || !data.length) {
       return { cls: 'unverified', html: '⚪ No Synced Code' };
     }
-    const hasFlagged = data.some(d => d.plagiarism_verdict === 'FLAGGED' || d.plagiarism_verdict === 'SUSPICIOUS');
+    const hasFlagged = data.some(d => {
+      const v = getEffectiveVerdict(d);
+      return v === 'FLAGGED' || v === 'SUSPICIOUS';
+    });
     if (hasFlagged) {
       return { cls: 'flagged', html: '🔴 Flagged' };
     }
@@ -4243,8 +4268,14 @@ async function openStudentSolvedProblems(reg, name, section, lcUser) {
       if (summaryExt) summaryExt.innerHTML = `<span style="color:#94a3b8">⚪ Not Installed</span>`;
     }
 
-    const cleanCount = subs.filter(s => s.plagiarism_verdict === 'CLEAN' || !s.plagiarism_verdict).length;
-    const flaggedCount = subs.filter(s => s.plagiarism_verdict === 'FLAGGED' || s.plagiarism_verdict === 'SUSPICIOUS').length;
+    const cleanCount = subs.filter(s => {
+      const v = getEffectiveVerdict(s);
+      return v === 'CLEAN' || v === 'LOW_RISK';
+    }).length;
+    const flaggedCount = subs.filter(s => {
+      const v = getEffectiveVerdict(s);
+      return v === 'FLAGGED' || v === 'SUSPICIOUS';
+    }).length;
 
     if (summaryTotal) summaryTotal.textContent = String(subs.length);
     if (summaryClean) summaryClean.textContent = String(cleanCount);
@@ -4274,7 +4305,7 @@ async function openStudentSolvedProblems(reg, name, section, lcUser) {
         const ratio = Math.round(Number(sub.keystroke_ratio || 0) * 100);
         const typingStr = `⌨️ ${keys} · 📋 ${pastes} (${ratio}% typed)`;
         const dateStr = sub.submitted_at ? new Date(sub.submitted_at).toLocaleString() : '—';
-        const verdict = sub.plagiarism_verdict || 'CLEAN';
+        const verdict = getEffectiveVerdict(sub);
         const verdictClass = verdict === 'FLAGGED' ? 'flagged' : (verdict === 'SUSPICIOUS' ? 'suspicious' : 'clean');
         const verdictLabel = verdict === 'FLAGGED' ? '🔴 Flagged' : (verdict === 'SUSPICIOUS' ? '⚠️ Suspicious' : '🟢 Clean');
 
@@ -4360,7 +4391,7 @@ function openSolutionCodeViewer(submission, studentName, reg) {
   if (tabEl) tabEl.textContent = `${submission.tab_switch_count || 0}`;
   if (riskEl) riskEl.textContent = `${submission.plagiarism_risk_score || 0} / 100`;
 
-  const verdict = submission.plagiarism_verdict || 'CLEAN';
+  const verdict = getEffectiveVerdict(submission);
   if (verdEl) {
     const verdictClass = verdict === 'FLAGGED' ? 'flagged' : (verdict === 'SUSPICIOUS' ? 'suspicious' : 'clean');
     const verdictLabel = verdict === 'FLAGGED' ? '🔴 Flagged' : (verdict === 'SUSPICIOUS' ? '⚠️ Suspicious' : '🟢 Clean');

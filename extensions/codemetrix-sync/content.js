@@ -151,71 +151,74 @@
   // --- COMPOSITE PLAGIARISM RISK SCORING ---
   function calculatePlagiarismRisk(code, difficulty, timeSpentSeconds, keystrokes, pasted, numPastes, switches, aiScanResult) {
     let score = 0;
-    const finalFlags = [...aiScanResult.flags];
+    const finalFlags = [...(aiScanResult?.flags || [])];
     const codeLen = (code || '').trim().length;
-    const ratio = codeLen > 0 ? (keystrokes / codeLen) : 1;
-    const hasAiComments = aiScanResult.hasPromptComments;
+    const ratio = codeLen > 0 ? (keystrokes / codeLen) : (keystrokes > 0 ? 1 : 0);
+    const hasAiComments = Boolean(aiScanResult?.hasPromptComments);
+    const hasPasteAction = Boolean(pasted || numPastes > 0);
 
-    // DIRECT FLAGGING RULES (100% Guaranteed Plagiarism Catch):
-    // 1. Direct Full Paste with minimal typing (< 30 keystrokes for code > 50 characters)
-    if (pasted && keystrokes < 30 && codeLen > 50) {
-      score = Math.max(score, 95);
-      finalFlags.push(`Direct Full Paste Detected (${keystrokes} Keystrokes / ${codeLen} chars)`);
+    // DIRECT 100% FLAGGING RULES:
+    // Rule 1: Any paste with minimal typing (< 40 keystrokes) OR low typed ratio (<= 20%)
+    if (hasPasteAction && (keystrokes < 40 || ratio <= 0.20)) {
+      score = 98;
+      finalFlags.push(`Direct Code Paste Detected (${keystrokes} keys typed / ${numPastes} pastes / ${Math.round(ratio * 100)}% typed)`);
     }
 
-    // 2. AI Prompt Signature / Comment Header + (Pasted or Low Typing Ratio)
-    if (hasAiComments && (pasted || ratio < 0.40)) {
+    // Rule 2: 0% to 15% typing ratio on any substantive code
+    if (ratio <= 0.15 && codeLen > 20) {
       score = Math.max(score, 95);
-      finalFlags.push('AI-Generated Solution Detected with Low Typing Activity');
+      finalFlags.push(`Extreme Keystroke Deficit (${keystrokes} Keystrokes for ${codeLen} chars, ${Math.round(ratio * 100)}% typed)`);
     }
 
-    // 3. Extreme Typing Deficit / Direct Code Injection (< 15 keystrokes on substantive code)
-    if (keystrokes < 15 && codeLen > 60) {
+    // Rule 3: Direct paste with keystrokes < 60
+    if (hasPasteAction && keystrokes < 60) {
       score = Math.max(score, 90);
-      finalFlags.push(`Extreme Keystroke Deficit (${keystrokes} Keystrokes)`);
+      finalFlags.push(`Pasted Code Insertion (${numPastes} pastes, ${keystrokes} keystrokes)`);
     }
 
-    // Additional Forensic Scoring (Accumulative if not already flagged)
-    if (score < 90) {
-      if (pasted && ratio < 0.25 && codeLen > 150) {
+    // Rule 4: AI Prompt signature / comments
+    if (hasAiComments) {
+      score = Math.max(score, (hasPasteAction || ratio < 0.5) ? 98 : 85);
+      finalFlags.push('AI Generated Solution Signature / Header Comments');
+    }
+
+    // Rule 5: Low keystrokes (< 15) regardless of anything
+    if (keystrokes < 15) {
+      score = Math.max(score, 95);
+      finalFlags.push(`Unverified / Low Keystroke Count (${keystrokes} keys)`);
+    }
+
+    // Secondary accumulative checks
+    if (score < 80) {
+      if (hasPasteAction && ratio < 0.35) {
+        score += 45;
+        finalFlags.push(`High Paste Ratio (${Math.round(ratio * 100)}% typed)`);
+      } else if (ratio < 0.30) {
         score += 35;
-        finalFlags.push(`High Paste-to-Type Ratio (${Math.round(ratio * 100)}%)`);
-      } else if (!pasted && ratio < 0.15 && codeLen > 150) {
-        score += 30;
-        finalFlags.push('Low Keystroke Count vs Code Length');
+        finalFlags.push('Low Typing Activity');
       }
 
-      // Solving Speed Anomaly
-      const diff = (difficulty || 'Medium').toLowerCase();
-      if (diff === 'hard' && timeSpentSeconds < 90) {
-        score += 25;
-        finalFlags.push(`Suspicious Hard Solve Time (${timeSpentSeconds}s < 90s)`);
-      } else if (diff === 'medium' && timeSpentSeconds < 45) {
+      if (timeSpentSeconds < 20) {
+        score += 30;
+        finalFlags.push('Instant Solve Time (<20s)');
+      }
+
+      if (switches >= 3 && hasPasteAction) {
         score += 20;
-        finalFlags.push(`Suspicious Medium Solve Time (${timeSpentSeconds}s < 45s)`);
-      } else if (timeSpentSeconds < 15) {
-        score += 30;
-        finalFlags.push('Instant Solve (<15s)');
-      }
-
-      // AI Comments detected without paste
-      if (hasAiComments) {
-        score += 35;
-      }
-
-      // External Tab Switch Anomaly Prior to Paste
-      if (switches >= 3 && pasted) {
-        score += 15;
-        finalFlags.push(`Multiple Tab Switches Before Paste (${switches} switches)`);
+        finalFlags.push(`Tab Switching Pre-Paste (${switches} switches)`);
       }
     }
 
     score = Math.min(100, Math.max(0, score));
 
     let verdict = 'CLEAN';
-    if (score >= 75) verdict = 'FLAGGED';
-    else if (score >= 50) verdict = 'SUSPICIOUS';
-    else if (score >= 25) verdict = 'LOW_RISK';
+    if (score >= 70 || (hasPasteAction && keystrokes < 40) || ratio <= 0.15) {
+      verdict = 'FLAGGED';
+    } else if (score >= 45 || (hasPasteAction && ratio < 0.40)) {
+      verdict = 'SUSPICIOUS';
+    } else if (score >= 20) {
+      verdict = 'LOW_RISK';
+    }
 
     return {
       score: score,
