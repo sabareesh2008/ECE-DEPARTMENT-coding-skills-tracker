@@ -1,7 +1,7 @@
-﻿Overall Rank,Section Rank,Section,Register Number,Student Name,LeetCode Username,LeetCode Link,Problems Solved,Solved Today,Last 7 Days,Last 14 Days,Last 30 Days,Last 7 Days Submissions,Total Submissions,Easy,Medium,Hard,Last Problem,Last Solved,Status,Updated At
+Overall Rank,Section Rank,Section,Register Number,Student Name,LeetCode Username,LeetCode Link,Problems Solved,Solved Today,Last 7 Days,Last 14 Days,Last 30 Days,Last 7 Days Submissions,Total Submissions,Easy,Medium,Hard,Last Problem,Last Solved,Status,Updated At
 1,1,ECE C,922525106153,KAVIYARASU K,kavi12d,https://leetcode.com/u/kavi12d/,175,0,21,21,40,22,193,40,104,31,Rotate Array,2026-09-15 19:19:38 IST,Success,2026-09-18 19:17:01 IST
 2,1,ECE F,922525106349,THAMEEM FARSHITHA A,Thameem_786,https://leetcode.com/u/Thameem_786/,195,0,7,20,38,10,231,70,95,30,Find Two Non-overlapping Sub-arrays Each With Target Sum,2026-09-17 19:49:12 IST,Success,2026-09-18 19:17:01 IST
-3,2,ECE F,922525106329,SRINITHE T,srinithe_1401,https://leetcode.com/u/srinithe_1401/,187,0,0,5,37,0,312,45,111,31,Shuffle the Array,2026-09-09 15:43:14 IST,Success,2026-09-18 19:17:01 IST
+3,2,ECE F,922525106329,Srinithe T,srinithe_1401,https://leetcode.com/u/srinithe_1401/,187,0,0,5,37,0,312,45,111,31,Shuffle the Array,2026-09-09 15:43:14 IST,Success,2026-09-18 19:17:01 IST
 4,1,ECE E,922525106256,Rithik p,Rithik_78,https://leetcode.com/u/Rithik_78/,61,0,24,36,36,32,86,20,31,10,"Pow(x, n)",2026-09-17 10:19:12 IST,Success,2026-09-18 19:17:01 IST
 5,1,ECE A,922525106046,BOOMIKA T,boomikat1206,https://leetcode.com/u/boomikat1206/,72,0,2,2,36,45,117,15,43,14,Minimum Size Subarray Sum,2026-09-17 20:25:51 IST,Success,2026-09-18 19:17:01 IST
 6,2,ECE A,922525106004,Abirami R,abirami8072,https://leetcode.com/u/abirami8072/,86,0,4,12,32,9,159,44,32,10,Minimum Size Subarray Sum,2026-09-17 20:41:37 IST,Success,2026-09-18 19:17:01 IST
@@ -133,7 +133,7 @@
 132,29,ECE E,922525106306,SHARUKESH,sharukesh2008,https://leetcode.com/u/sharukesh2008/,42,0,0,6,6,0,62,33,8,1,Shuffle the Array,2026-09-10 23:12:19 IST,Success,2026-09-18 19:17:01 IST
 133,25,ECE C,922525106181,MADHUMITHA B,Madhumitha42,https://leetcode.com/u/Madhumitha42/,187,0,2,5,6,2,234,55,102,30,To Lower Case,2026-09-12 10:48:39 IST,Success,2026-09-18 19:17:01 IST
 134,26,ECE C,922525106180,MADHUDHARA P,madhudhara,https://leetcode.com/u/madhudhara/,112,0,0,4,6,0,134,10,96,6,Regular Expression Matching,2026-09-06 08:14:36 IST,Success,2026-09-18 19:17:01 IST
-135,27,ECE C,922525106161,kowshik m,kowshikm23,https://leetcode.com/u/kowshikm23/,90,0,2,3,6,4,140,46,33,11,To Lower Case,2026-09-12 10:34:16 IST,Success,2026-09-18 19:17:01 IST
+135,27,ECE c,922525106161,kowshik m,kowshikm23,https://leetcode.com/u/kowshikm23/,90,0,2,3,6,4,140,46,33,11,To Lower Case,2026-09-12 10:34:16 IST,Success,2026-09-18 19:17:01 IST
 136,32,ECE F,922525106363,VIGNESH M,O8bYDSRUbE,https://leetcode.com/u/O8bYDSRUbE/,61,0,2,3,6,2,73,16,33,12,Jewels and Stones,2026-09-16 16:23:59 IST,Success,2026-09-18 19:17:01 IST
 137,28,ECE C,922525106139,KAMALINI G,_kamalini_,https://leetcode.com/u/_kamalini_/,106,0,2,2,6,2,122,36,52,18,To Lower Case,2026-09-12 10:46:15 IST,Success,2026-09-18 19:17:01 IST
 138,29,ECE C,922525106150,KAVINKUMAR M,kavinleet,https://leetcode.com/u/kavinleet/,93,0,0,1,6,0,115,26,50,17,How Many Numbers Are Smaller Than the Current Number,2026-09-08 11:02:18 IST,Success,2026-09-18 19:17:01 IST
@@ -175,7 +175,7 @@
 174,35,ECE C,922525106177,MADELIN JENITA M,jenita0206,https://leetcode.com/u/jenita0206/,118,0,1,1,4,1,125,41,72,5,Jewels and Stones,2026-09-12 10:23:34 IST,Success,2026-09-18 19:17:01 IST
 175,39,ECE F,922525106319,SIVATHARUN C,sivatharun22,https://leetcode.com/u/sivatharun22/,155,0,0,1,4,1,186,41,87,27,Length of Last Word,2026-09-13 15:00:54 IST,Success,2026-09-18 19:17:01 IST
 176,26,ECE B,922525106111,HARIS S,922525106111,https://leetcode.com/u/922525106111/,181,0,0,0,4,0,231,45,106,30,Missing Number,2026-08-25 12:06:05 IST,Success,2026-09-18 19:17:01 IST
-177,44,ECE E,922525106293,SASWIN D,saswin_88,https://leetcode.com/u/saswin_88/,94,0,2,3,3,3,124,30,50,14,First Unique Character in a String,2026-09-16 12:19:24 IST,Success,2026-09-18 19:17:01 IST
+177,44,ECE E,922525106293,saswin D,saswin_88,https://leetcode.com/u/saswin_88/,94,0,2,3,3,3,124,30,50,14,First Unique Character in a String,2026-09-16 12:19:24 IST,Success,2026-09-18 19:17:01 IST
 178,31,ECE A,922525106055,Darshan C,922525106055,https://leetcode.com/u/922525106055/,110,0,0,3,3,0,143,31,62,17,Richest Customer Wealth,2026-09-08 11:56:12 IST,Success,2026-09-18 19:17:01 IST
 179,27,ECE B,922525106124,INDHIRAJITH K,922525106124,https://leetcode.com/u/922525106124/,78,0,0,3,3,0,132,16,46,16,Symmetric Tree,2026-09-08 16:34:42 IST,Success,2026-09-18 19:17:01 IST
 180,45,ECE E,922525106262,ROSHIKA V,roshikaveeramalai,https://leetcode.com/u/roshikaveeramalai/,75,0,0,3,3,0,111,29,42,4,Richest Customer Wealth,2026-09-07 12:24:59 IST,Success,2026-09-18 19:17:01 IST
@@ -362,7 +362,7 @@
 361,60,ECE F,922525106335,SUDHARSAN S,Sudharsan,https://leetcode.com/u/Sudharsan/,1,0,0,0,0,0,2,1,0,0,,,Success,2026-09-18 19:17:01 IST
 362,59,ECE A,922525106019,ANBARASU S,Anbarasu28122007,https://leetcode.com/u/Anbarasu28122007/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-18 19:17:01 IST
 363,60,ECE A,922525106020,ANJITHAA N,Anjithaa2006,https://leetcode.com/u/Anjithaa2006/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-18 19:17:01 IST
-364,61,ECE A,922525106025,ARSATHA BEGAM M S,jakabesj,https://leetcode.com/u/jakabesj/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-18 19:17:01 IST
+364,61,ECE A,922525106025,Arsatha Begam M S,arsatha-,https://leetcode.com/u/arsatha-/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-18 19:17:01 IST
 365,62,ECE A,922525106050,CHARUDESNA S,charu120108,https://leetcode.com/u/charu120108/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-18 19:17:01 IST
 366,61,ECE B,922525106074,DHARSHINI P,Dharshini_74,https://leetcode.com/u/Dharshini_74/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-18 19:17:01 IST
 367,62,ECE B,922525106113,HARIS M,922525106113,https://leetcode.com/u/922525106113/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-18 19:17:01 IST
@@ -374,4 +374,5 @@
 373,63,ECE A,922525106027,Arulesh K,arul2008,https://leetcode.com/u/arul2008/,44,0,0,0,0,0,56,21,19,4,,,User not found | Previous data kept,2026-09-18 19:17:01 IST
 374,59,ECE D,922525106193,MATHESHKUMAR S,mathesh25,https://leetcode.com/u/mathesh25/,0,0,0,0,0,0,0,0,0,0,,,User not found,2026-09-18 19:17:01 IST
 375,60,ECE D,922525106198,MOHAMMED ABUTHARIK S,tharik25,https://leetcode.com/u/tharik25/,0,0,0,0,0,0,0,0,0,0,,,User not found,2026-09-18 19:17:01 IST
-376,61,ECE D,922525106217,NITHISHWARAN D,nithishwaran25,https://leetcode.com/u/nithishwaran25/,0,0,0,0,0,0,0,0,0,0,,,User not found,2026-09-18 19:17:01 IST
+376,61,ECE D,922525106217,Nithishwaran D,nithishwaran-D,https://leetcode.com/u/nithishwaran-D/,0,0,0,0,0,0,0,0,0,0,,,User not found,2026-09-18 19:17:01 IST
+377,1,ECE D,922525106207,Nandhana R,Nandhu_4,https://leetcode.com/u/Nandhu_4/,0,0,0,0,0,0,0,0,0,0,None,None,Active,2026-09-18 20:25:37

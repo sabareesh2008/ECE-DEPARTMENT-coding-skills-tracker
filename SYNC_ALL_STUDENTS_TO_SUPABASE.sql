@@ -1,5 +1,5 @@
 -- ============================================================
--- SYNC ALL 376 ECE STUDENTS INTO SUPABASE TABLE public.students
+-- SYNC ALL 377 ECE STUDENTS INTO SUPABASE TABLE public.students
 -- ============================================================
 
 -- 1. Ensure columns exist safely
@@ -41,7 +41,7 @@ values
   ('922525106022', 'Anuja S', 'anuja008', 'anujasathies008', 'ECE A'),
   ('922525106023', 'ANUSRI R', 'Anusri_2008', 'anusrirajendran', 'ECE A'),
   ('922525106024', 'ANUSYA B', 'ANUSYA_30', 'anusyabalraj86-source', 'ECE A'),
-  ('922525106025', 'ARSATHA BEGAM M S', 'jakabesj', null, 'ECE A'),
+  ('922525106025', 'Arsatha Begam M S', 'arsatha-', 'arsa17112007-a11y', 'ECE A'),
   ('922525106026', 'ARUL S.T.', 'S_T_Arul', 'arulst2008-spec', 'ECE A'),
   ('922525106027', 'Arulesh K', 'arul2008', 'aruleshk', 'ECE A'),
   ('922525106028', 'ARUN C', 'AGmXRQ1yTe', null, 'ECE A'),
@@ -65,7 +65,7 @@ values
   ('922525106046', 'BOOMIKA T', 'boomikat1206', 'boomikathangaraj', 'ECE A'),
   ('922525106047', 'BOSVIYA P', 'BosviyaBSV', 'bosviya710-BSV', 'ECE A'),
   ('922525106048', 'Brindha S', 'BrindhaSakthi', 'brindhasakthi608', 'ECE A'),
-  ('922525106049', 'BUVNESH N', '922525106049', null, 'ECE A'),
+  ('922525106049', 'BUVNESH N', '922525106049', 'buvnesh05', 'ECE A'),
   ('922525106050', 'CHARUDESNA S', 'charu120108', null, 'ECE A'),
   ('922525106051', 'Charunethra S', 'charunethra07', 'charunethra77', 'ECE A'),
   ('922525106052', 'Chinmayasri K', '922525106052', 'chinmaya-sri', 'ECE A'),
@@ -177,7 +177,6 @@ values
   ('922525106158', 'KIRUTHIKA S', 'kiruthika_selvanathan05092007', 'selvanathankiruthika', 'ECE C'),
   ('922525106159', 'KISHOREKUMAR B', 'Kishore9225', 'kishorebala159-maker', 'ECE C'),
   ('922525106160', 'KOHUL V', 'kohul_v', 'Kohul-V', 'ECE C'),
-  ('922525106161', 'kowshik m', 'kowshikm23', 'kowshikmahalingam23-lang', 'ECE C'),
   ('922525106162', 'KOWSHIK R', 'kowshik_rk_', 'kowshik93', 'ECE C'),
   ('922525106163', 'KOWSHIKA B', 'Kowshika08', 'kowshika036-create', 'ECE C'),
   ('922525106164', 'KOWSHIKA M S', 'kowshika_moorthi', 'Kowshikamoorthi', 'ECE C'),
@@ -223,6 +222,7 @@ values
   ('922525106204', 'MOUSHMI P N', 'Moushmi_20', 'moushminavaladi729-tech', 'ECE D'),
   ('922525106205', 'MYTHILI M', 'mythilimurugesan', 'mythilimurugesan84', 'ECE D'),
   ('922525106206', 'NAFREEN J M', 'NafreenJohnbasha', 'nafreenjm2007-maker', 'ECE D'),
+  ('922525106207', 'Nandhana R', 'Nandhu_4', 'nandhana8thaanoor-web', 'ECE D'),
   ('922525106208', 'NANDHINI D', 'nandhini546', 'Nadhini17', 'ECE D'),
   ('922525106210', 'NAVANEETHAN L', 'lnavaneethan08', 'lnavaneethan08-madrid', 'ECE D'),
   ('922525106211', 'Naveetha N', 'NAVEETHAN', 'naveethan16', 'ECE D'),
@@ -231,7 +231,7 @@ values
   ('922525106214', 'NITHISH C T', 'Nithishct123', 'nithishthirumoorthy07-tech', 'ECE D'),
   ('922525106215', 'NITHISH P', 'Nithish_P_CS', 'nithish-ece', 'ECE D'),
   ('922525106216', 'Nithish R', 'nithishramalingam007', 'nithish-216', 'ECE D'),
-  ('922525106217', 'NITHISHWARAN D', 'nithishwaran25', 'nithishwaran- student monitoring', 'ECE D'),
+  ('922525106217', 'Nithishwaran D', 'nithishwaran-D', 'nithishwaranmohanasundari-hash', 'ECE D'),
   ('922525106218', 'NITHYASHREE G', 'NithyashreeG10', 'NithyashreeGunasekaran', 'ECE D'),
   ('922525106219', 'NITHYASHREE P', 'Nithyashree273', 'Nithyashree273', 'ECE D'),
   ('922525106220', 'NITHYASRI M', 'Nithyasri2008', 'nithyasri7908', 'ECE D'),
@@ -344,7 +344,7 @@ values
   ('922525106326', 'SRI VARSHAN B P', 'srivarshan_B_P', 'srivarshan3005-oss', 'ECE F'),
   ('922525106327', 'SRINATH V', 'V_SRINATH', 'vsrinath502-sys', 'ECE F'),
   ('922525106328', 'SRINIRANJAN S', 'SRINIRANJAN2008', 'Sriniranjan109', 'ECE F'),
-  ('922525106329', 'SRINITHE T', 'srinithe_1401', 'sessions', 'ECE F'),
+  ('922525106329', 'Srinithe T', 'srinithe_1401', 'srinithemuthu-cell', 'ECE F'),
   ('922525106330', 'SRINITHI S', 'Srinithi24_', 'srinithisengottuvelu24-cyber', 'ECE F'),
   ('922525106331', 'SRISAMAYA R', 'mahi', 'srisamaya', 'ECE F'),
   ('922525106332', 'SUBARNA V', 'Subarna_17', 'subarna1017', 'ECE F'),
@@ -392,12 +392,11 @@ values
   ('922525106375', 'YAZHINI M', 'yazhini2007', 'yazhiniii368-jpg', 'ECE F'),
   ('922525106376', 'YAZHINI S', 'yazhini__1234', 'yazhini98948-lgtm', 'ECE F'),
   ('922525106377', 'YAZHINI V', 'YAZH_RUBA', 'yazhu0619', 'ECE F'),
-  ('922525106378', 'YOKESWARAN S', 'syokeswaran', 'syokeswaran95-droid', 'ECE F')
+  ('922525106378', 'YOKESWARAN S', 'syokeswaran', 'syokeswaran95-droid', 'ECE F'),
+  ('922525106161', 'kowshik m', 'kowshikm23', 'kowshikmahalingam23-lang', 'ECE c')
 on conflict (register_number) do update set
   student_name = excluded.student_name,
   leetcode_username = coalesce(excluded.leetcode_username, public.students.leetcode_username),
   github_username = coalesce(excluded.github_username, public.students.github_username),
-  section = excluded.section;
-
--- Verify total count and distribution:
-select section, count(*) as student_count from public.students group by section order by section;
+  section = excluded.section,
+  updated_at = now();
