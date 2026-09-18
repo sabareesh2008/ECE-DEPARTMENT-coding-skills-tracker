@@ -1,4 +1,4 @@
-﻿-- =====================================================================
+-- =====================================================================
 -- CODEMETRIX LEETCODE SYNC - SUPABASE DATABASE MIGRATION
 -- With 1-Email-1-Extension Lock, Deduplication, 50-Problem Rolling Limit,
 -- and Section Advisors Registry for Automated Email Dispatch
@@ -127,7 +127,7 @@ create or replace function public.prune_student_excess_submissions()
 returns trigger
 language plpgsql
 security definer
-as 
+as $$
 declare
   v_count integer;
 begin
@@ -146,7 +146,7 @@ begin
   end if;
   return new;
 end;
-;
+$$;
 
 drop trigger if exists trg_prune_submissions on public.student_leetcode_submissions;
 create trigger trg_prune_submissions
