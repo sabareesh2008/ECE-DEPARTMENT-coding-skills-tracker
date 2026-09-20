@@ -3,7 +3,6 @@ const SUPABASE_ANON_KEY = "sb_publishable_mhASvZVhm997qjKiVb15LQ_MiLPXsRl";
 
 document.addEventListener('DOMContentLoaded', () => {
   const regInput = document.getElementById('regNumber');
-  const emailInput = document.getElementById('emailInput');
   const leetcodeInput = document.getElementById('leetcodeInput');
   const autoSyncToggle = document.getElementById('autoSyncToggle');
   const saveBtn = document.getElementById('saveBtn');
@@ -73,43 +72,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function verifyAndRegisterInstall(reg, email, name, section, lcUser, autoSync) {
-    if (!reg || !email) throw new Error('Register number and student email are required.');
+  async function verifyAndRegisterInstall(reg, name, section, lcUser, autoSync) {
+    if (!reg) throw new Error('Register number is required.');
 
-    // 1. Check if email is already registered to a DIFFERENT register number
-    const emailCheckResp = await fetch(`${SUPABASE_URL}/rest/v1/extension_installed_students?student_email=eq.${encodeURIComponent(email)}&select=register_number,student_name`, {
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-      }
-    });
-    const emailData = await emailCheckResp.json();
-    if (Array.isArray(emailData) && emailData.length > 0) {
-      const existing = emailData[0];
-      if (existing.register_number && existing.register_number.toUpperCase() !== reg.toUpperCase()) {
-        throw new Error(`This email (${email}) is already linked to register number ${existing.register_number}. Only 1 extension per email is allowed!`);
-      }
-    }
-
-    // 2. Check if register number is already locked to a DIFFERENT email
-    const regCheckResp = await fetch(`${SUPABASE_URL}/rest/v1/extension_installed_students?register_number=eq.${encodeURIComponent(reg)}&select=student_email`, {
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-      }
-    });
-    const regData = await regCheckResp.json();
-    if (Array.isArray(regData) && regData.length > 0) {
-      const existing = regData[0];
-      if (existing.student_email && existing.student_email.toLowerCase() !== email.toLowerCase()) {
-        throw new Error(`Register number ${reg} is already registered with email ${existing.student_email}.`);
-      }
-    }
-
-    // 3. Upsert into extension_installed_students
     const payload = {
       register_number: reg,
-      student_email: email,
       student_name: name || reg,
       section: section || 'ECE',
       leetcode_username: lcUser || '',
@@ -136,27 +103,23 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Load saved configuration
-  chrome.storage.local.get(['registerNumber', 'studentEmail', 'studentName', 'leetcodeUsername', 'autoSync'], (data) => {
+  chrome.storage.local.get(['registerNumber', 'studentName', 'leetcodeUsername', 'autoSync'], (data) => {
     if (data.registerNumber) {
       regInput.value = data.registerNumber;
-      if (emailInput) emailInput.value = data.studentEmail || '';
       leetcodeInput.value = data.leetcodeUsername || '';
       const stInfo = validateRegister(data.registerNumber);
       statusPill.className = 'status-indicator';
       statusText.textContent = 'Active';
       fetchLiveCount(data.registerNumber);
 
-      // Heartbeat
-      if (data.studentEmail) {
-        verifyAndRegisterInstall(
-          data.registerNumber,
-          data.studentEmail,
-          data.studentName || stInfo?.name,
-          stInfo?.section,
-          data.leetcodeUsername,
-          data.autoSync
-        ).catch(() => {});
-      }
+      // Heartbeat on popup open
+      verifyAndRegisterInstall(
+        data.registerNumber,
+        data.studentName || stInfo?.name,
+        stInfo?.section,
+        data.leetcodeUsername,
+        data.autoSync
+      ).catch(() => {});
     } else {
       statusPill.className = 'status-indicator not-ready';
       statusText.textContent = 'Setup Needed';
@@ -212,7 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   saveBtn.addEventListener('click', async () => {
     const regVal = regInput.value.trim().toUpperCase();
-    const emailVal = (emailInput?.value || '').trim().toLowerCase();
     const lcVal = leetcodeInput.value.trim();
     const autoSyncVal = autoSyncToggle.checked;
 
@@ -222,28 +184,21 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (!emailVal || !emailVal.includes('@')) {
-      saveMsg.className = 'msg error';
-      saveMsg.textContent = 'Please enter a valid Student Email.';
-      return;
-    }
-
     const stInfo = validateRegister(regVal);
     const studentName = stInfo?.name || regVal;
     const finalLcUser = lcVal || stInfo?.leetcode_username || regVal;
     const section = stInfo?.section || 'ECE';
 
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Verifying Email Lock...';
+    saveBtn.textContent = 'Saving Profile...';
 
     try {
-      // 1. Verify 1-Email-1-Extension & Register in Supabase
-      await verifyAndRegisterInstall(regVal, emailVal, studentName, section, finalLcUser, autoSyncVal);
+      // 1. Upsert into Supabase
+      await verifyAndRegisterInstall(regVal, studentName, section, finalLcUser, autoSyncVal);
 
       // 2. Save locally in Chrome Storage
       chrome.storage.local.set({
         registerNumber: regVal,
-        studentEmail: emailVal,
         studentName: studentName,
         leetcodeUsername: finalLcUser,
         autoSync: autoSyncVal,
@@ -251,9 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
         supabaseAnonKey: SUPABASE_ANON_KEY
       }, () => {
         saveBtn.disabled = false;
-        saveBtn.textContent = 'Save Student Profile';
+        saveBtn.textContent = 'Save Profile';
         saveMsg.className = 'msg success';
-        saveMsg.textContent = '✓ Profile verified & locked to email!';
+        saveMsg.textContent = '✓ Profile saved & active!';
         statusPill.className = 'status-indicator';
         statusText.textContent = 'Active';
         fetchLiveCount(regVal);
@@ -264,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     } catch (err) {
       saveBtn.disabled = false;
-      saveBtn.textContent = 'Save Student Profile';
+      saveBtn.textContent = 'Save Profile';
       saveMsg.className = 'msg error';
       saveMsg.textContent = err.message || 'Registration failed.';
     }
@@ -274,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
   resetBtn?.addEventListener('click', () => {
     chrome.storage.local.clear(() => {
       regInput.value = '';
-      if (emailInput) emailInput.value = '';
       leetcodeInput.value = '';
       hintEl.textContent = '';
       syncCountEl.textContent = '0';
