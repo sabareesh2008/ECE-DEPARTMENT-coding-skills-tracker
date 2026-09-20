@@ -35,7 +35,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "santhiya0202"
   },
   "922525106312": {
-    "name": "Sivadharshini D",
+    "name": "SIVADHARSHINI D",
     "section": "ECE E",
     "leetcode_username": "dharshinideivasigamani"
   },
@@ -45,7 +45,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "sivagnanam3344"
   },
   "922525106314": {
-    "name": "sivanesh D",
+    "name": "SIVANESH D",
     "section": "ECE E",
     "leetcode_username": "sivanesh2007"
   },
@@ -65,12 +65,12 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "8925787430"
   },
   "922525106283": {
-    "name": "santhosh s",
+    "name": "SANTHOSH S",
     "section": "ECE E",
     "leetcode_username": "santhoshsathya260"
   },
   "922525106284": {
-    "name": "Santhosh S",
+    "name": "SANTHOSH S",
     "section": "ECE E",
     "leetcode_username": "santhosh2407"
   },
@@ -105,7 +105,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "sarika_5408"
   },
   "922525106291": {
-    "name": "Sarveswaran R",
+    "name": "SARVESWARAN R",
     "section": "ECE E",
     "leetcode_username": "sarvesh312008"
   },
@@ -120,7 +120,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "roshikaveeramalai"
   },
   "922525106269": {
-    "name": "sakthivel. M",
+    "name": "SAKTHIVEL. M",
     "section": "ECE E",
     "leetcode_username": "sakthivel23116"
   },
@@ -145,7 +145,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "Senthamizh08"
   },
   "922525106300": {
-    "name": "Senthil.S",
+    "name": "SENTHIL.S",
     "section": "ECE E",
     "leetcode_username": "Jna76WrjNd"
   },
@@ -165,7 +165,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "ShanthiniChelladurai"
   },
   "922525106261": {
-    "name": "Roshan M",
+    "name": "ROSHAN M",
     "section": "ECE E",
     "leetcode_username": "roshan2403"
   },
@@ -200,7 +200,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "9043374912"
   },
   "922525106256": {
-    "name": "Rithik p",
+    "name": "RITHIK P",
     "section": "ECE E",
     "leetcode_username": "Rithik_78"
   },
@@ -215,7 +215,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "saswin_88"
   },
   "922525106258": {
-    "name": "Rithish R",
+    "name": "RITHISH R",
     "section": "ECE E",
     "leetcode_username": "Rithish_"
   },
@@ -225,7 +225,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "RohithrohiV"
   },
   "922525106266": {
-    "name": "sahana.v",
+    "name": "SAHANA.V",
     "section": "ECE E",
     "leetcode_username": "Sahanavijayakumar_0033"
   },
@@ -245,7 +245,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "SabarivasanP"
   },
   "922525106275": {
-    "name": "Sanjay U",
+    "name": "SANJAY U",
     "section": "ECE E",
     "leetcode_username": "SanjayUdayan"
   },
@@ -270,7 +270,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "_vasanth_s_"
   },
   "922525106356": {
-    "name": "vasanthkumar C",
+    "name": "VASANTHKUMAR C",
     "section": "ECE F",
     "leetcode_username": "VASANTH2007"
   },
@@ -335,7 +335,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "thiru0211_"
   },
   "922525106353": {
-    "name": "Thirisha C",
+    "name": "THIRISHA C",
     "section": "ECE F",
     "leetcode_username": "thirishavsb"
   },
@@ -525,7 +525,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "_swathi_3366"
   },
   "922525106346": {
-    "name": "swetha E",
+    "name": "SWETHA E",
     "section": "ECE F",
     "leetcode_username": "Swetha_20_1"
   },
@@ -575,12 +575,12 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "zklXTc9UAp"
   },
   "922525106276": {
-    "name": "Sanjayan S",
+    "name": "SANJAYAN S",
     "section": "ECE E",
     "leetcode_username": "sanjayan31"
   },
   "922525106294": {
-    "name": "Sathana Sri S K",
+    "name": "SATHANA SRI S K",
     "section": "ECE E",
     "leetcode_username": "Sathana-1267"
   },
@@ -595,7 +595,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "sharukesh2008"
   },
   "922525106182": {
-    "name": "Madhup Kishor G S",
+    "name": "MADHUP KISHOR G S",
     "section": "ECE C",
     "leetcode_username": "Madhupkishor_20"
   },
@@ -610,7 +610,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "maha_lakh_20"
   },
   "922525106027": {
-    "name": "Arulesh K",
+    "name": "ARULESH K",
     "section": "ECE A",
     "leetcode_username": "arul2008"
   },
@@ -630,7 +630,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "Mahinabhishek0411"
   },
   "922525106189": {
-    "name": "Manisha D",
+    "name": "MANISHA D",
     "section": "ECE C",
     "leetcode_username": "manishaa_20"
   },
@@ -640,7 +640,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "Manoj_1319"
   },
   "922525106191": {
-    "name": "Manoj Kumar V",
+    "name": "MANOJ KUMAR V",
     "section": "ECE D",
     "leetcode_username": "m____a____n____o____"
   },
@@ -660,7 +660,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "Mayuka_M"
   },
   "922525106196": {
-    "name": "Milan D",
+    "name": "MILAN D",
     "section": "ECE D",
     "leetcode_username": "milan190308"
   },
@@ -685,7 +685,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "Monishav2007"
   },
   "922525106202": {
-    "name": "Morrish D",
+    "name": "MORRISH D",
     "section": "ECE D",
     "leetcode_username": "morrishd"
   },
@@ -720,7 +720,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "lnavaneethan08"
   },
   "922525106211": {
-    "name": "Naveetha N",
+    "name": "NAVEETHA N",
     "section": "ECE D",
     "leetcode_username": "NAVEETHAN"
   },
@@ -740,7 +740,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "Nithish_P_CS"
   },
   "922525106216": {
-    "name": "Nithish R",
+    "name": "NITHISH R",
     "section": "ECE D",
     "leetcode_username": "nithishramalingam007"
   },
@@ -800,7 +800,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "pragalathan070108"
   },
   "922525106229": {
-    "name": "Pranesh Y",
+    "name": "PRANESH Y",
     "section": "ECE D",
     "leetcode_username": "Pranesh_Y"
   },
@@ -810,7 +810,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "pranithaashree"
   },
   "922525106011": {
-    "name": "ajayKrishna R",
+    "name": "AJAYKRISHNA R",
     "section": "ECE A",
     "leetcode_username": "922525106011"
   },
@@ -835,12 +835,12 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "afton_2008"
   },
   "922525106008": {
-    "name": "Ahelesh G S",
+    "name": "AHELESH G S",
     "section": "ECE A",
     "leetcode_username": "ahelesh_10_"
   },
   "922525106013": {
-    "name": "Ajith Kumar M",
+    "name": "AJITH KUMAR M",
     "section": "ECE A",
     "leetcode_username": "ajit_kumar_23"
   },
@@ -860,7 +860,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "anoop_appuz"
   },
   "922525106022": {
-    "name": "Anuja S",
+    "name": "ANUJA S",
     "section": "ECE A",
     "leetcode_username": "anuja008"
   },
@@ -880,17 +880,17 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "Benov_18"
   },
   "922525106041": {
-    "name": "Bharath Kumar E",
+    "name": "BHARATH KUMAR E",
     "section": "ECE A",
     "leetcode_username": "BK5226221"
   },
   "922525106044": {
-    "name": "Bhavan bala N",
+    "name": "BHAVAN BALA N",
     "section": "ECE A",
     "leetcode_username": "BhavanBala"
   },
   "922525106045": {
-    "name": "Boobase R",
+    "name": "BOOBASE R",
     "section": "ECE A",
     "leetcode_username": "Boobase"
   },
@@ -905,17 +905,17 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "922525106049"
   },
   "922525106052": {
-    "name": "Chinmayasri K",
+    "name": "CHINMAYASRI K",
     "section": "ECE A",
     "leetcode_username": "922525106052"
   },
   "922525106055": {
-    "name": "Darshan C",
+    "name": "DARSHAN C",
     "section": "ECE A",
     "leetcode_username": "922525106055"
   },
   "922525106056": {
-    "name": "Darshan manish A",
+    "name": "DARSHAN MANISH A",
     "section": "ECE A",
     "leetcode_username": "Darshan_manish08"
   },
@@ -995,7 +995,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "Abinaya7095"
   },
   "922525106004": {
-    "name": "Abirami R",
+    "name": "ABIRAMI R",
     "section": "ECE A",
     "leetcode_username": "abirami8072"
   },
@@ -1070,7 +1070,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "reshmi2008"
   },
   "922525106251": {
-    "name": "Rethanya S",
+    "name": "RETHANYA S",
     "section": "ECE D",
     "leetcode_username": "SekarRethanya"
   },
@@ -1080,7 +1080,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "Rethish_R"
   },
   "922525106034": {
-    "name": "Asmitha E",
+    "name": "ASMITHA E",
     "section": "ECE A",
     "leetcode_username": "1"
   },
@@ -1095,7 +1095,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "priyadharshini1551"
   },
   "922525106238": {
-    "name": "Priyanka A",
+    "name": "PRIYANKA A",
     "section": "ECE D",
     "leetcode_username": "Priyankaashok1201"
   },
@@ -1130,7 +1130,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "922525106103"
   },
   "922525106104": {
-    "name": "Gowtham R",
+    "name": "GOWTHAM R",
     "section": "ECE B",
     "leetcode_username": "922525106104"
   },
@@ -1200,7 +1200,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "codewithaish"
   },
   "922525106010": {
-    "name": "AjaiRajan SR",
+    "name": "AJAIRAJAN SR",
     "section": "ECE A",
     "leetcode_username": "UJw4zUNnJJ"
   },
@@ -1390,22 +1390,22 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "jayasakthi_25"
   },
   "922525106132": {
-    "name": "Jeevan bala G",
+    "name": "JEEVAN BALA G",
     "section": "ECE C",
     "leetcode_username": "jeevanbala142008"
   },
   "922525106014": {
-    "name": "Akash.R",
+    "name": "AKASH.R",
     "section": "ECE A",
     "leetcode_username": "AkashRajaram"
   },
   "922525106015": {
-    "name": "Akshara KR",
+    "name": "AKSHARA KR",
     "section": "ECE A",
     "leetcode_username": "Akshara015"
   },
   "922525106016": {
-    "name": "Akshaya S",
+    "name": "AKSHAYA S",
     "section": "ECE A",
     "leetcode_username": "codewithakshaya77"
   },
@@ -1415,7 +1415,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "Alageshwaran2008"
   },
   "922525106018": {
-    "name": "Amirdavarsini K S",
+    "name": "AMIRDAVARSINI K S",
     "section": "ECE A",
     "leetcode_username": "amirda_varsini_2007"
   },
@@ -1465,7 +1465,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "IOu1mvgrJS"
   },
   "922525106038": {
-    "name": "Bavitha T",
+    "name": "BAVITHA T",
     "section": "ECE A",
     "leetcode_username": "3gvYU1AYWX"
   },
@@ -1520,7 +1520,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "KAVI_RAVI"
   },
   "922525106161": {
-    "name": "kowshik m",
+    "name": "KOWSHIK M",
     "section": "ECE C",
     "leetcode_username": "kowshikm23"
   },
@@ -1560,7 +1560,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "BosviyaBSV"
   },
   "922525106048": {
-    "name": "Brindha S",
+    "name": "BRINDHA S",
     "section": "ECE A",
     "leetcode_username": "BrindhaSakthi"
   },
@@ -1570,7 +1570,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "charu120108"
   },
   "922525106051": {
-    "name": "Charunethra S",
+    "name": "CHARUNETHRA S",
     "section": "ECE A",
     "leetcode_username": "charunethra07"
   },
@@ -1580,32 +1580,32 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "chinnappanrajniselvi"
   },
   "922525106054": {
-    "name": "Dakshinya R",
+    "name": "DAKSHINYA R",
     "section": "ECE A",
     "leetcode_username": "Dakshinya555"
   },
   "922525106057": {
-    "name": "Darshan V V",
+    "name": "DARSHAN V V",
     "section": "ECE A",
     "leetcode_username": "2007darshan"
   },
   "922525106058": {
-    "name": "Deeksha k",
+    "name": "DEEKSHA K",
     "section": "ECE A",
     "leetcode_username": "Deeksha0721"
   },
   "922525106059": {
-    "name": "Dejasri M",
+    "name": "DEJASRI M",
     "section": "ECE A",
     "leetcode_username": "dejasri"
   },
   "922525106060": {
-    "name": "Desma shalini K",
+    "name": "DESMA SHALINI K",
     "section": "ECE A",
     "leetcode_username": "desmashalini"
   },
   "922525106061": {
-    "name": "Deva V",
+    "name": "DEVA V",
     "section": "ECE A",
     "leetcode_username": "DevaECE"
   },
@@ -1750,7 +1750,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "Loga07"
   },
   "922525106172": {
-    "name": "logavardhan M",
+    "name": "LOGAVARDHAN M",
     "section": "ECE C",
     "leetcode_username": "loga16"
   },
@@ -1820,12 +1820,12 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "Kishore9225"
   },
   "922525106212": {
-    "name": "Nethra.S",
+    "name": "NETHRA.S",
     "section": "ECE D",
     "leetcode_username": "Nethra777"
   },
   "922525106277": {
-    "name": "Sanjevi P",
+    "name": "SANJEVI P",
     "section": "ECE E",
     "leetcode_username": "sanjevi007"
   },
@@ -1835,7 +1835,7 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "arunkumar1004"
   },
   "922525106255": {
-    "name": "Rithik I",
+    "name": "RITHIK I",
     "section": "ECE E",
     "leetcode_username": "Rithik2008"
   },
@@ -1845,12 +1845,12 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "Jayasuryaraja"
   },
   "922525106245": {
-    "name": "Ranjith K",
+    "name": "RANJITH K",
     "section": "ECE D",
     "leetcode_username": "ranjithkannan"
   },
   "922525106192": {
-    "name": "Mathansurya S",
+    "name": "MATHANSURYA S",
     "section": "ECE D",
     "leetcode_username": "Mathansurya"
   },
@@ -1860,12 +1860,12 @@ window.STUDENTS_ROSTER = {
     "leetcode_username": "NIVETHA_THANGARAJ07"
   },
   "922525106197": {
-    "name": "Mithan P",
+    "name": "MITHAN P",
     "section": "ECE D",
     "leetcode_username": "Mithan_6"
   },
   "922525106188": {
-    "name": "Malini S",
+    "name": "MALINI S",
     "section": "ECE C",
     "leetcode_username": "MaliniSenthil"
   },
