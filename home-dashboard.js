@@ -442,7 +442,12 @@
       currentSolvedSubmissions = subs;
 
       if (extRes.data) {
-        if (els.summaryExtStatus) els.summaryExtStatus.innerHTML = `<span style="color:#34d399">🟢 Extension Active</span>`;
+        const ext = extRes.data;
+        if (ext.auto_sync_enabled === false) {
+          if (els.summaryExtStatus) els.summaryExtStatus.innerHTML = `<span style="color:#f87171;font-weight:600;">🔴 Extension Turned Off (Disabled in Popup)</span>`;
+        } else {
+          if (els.summaryExtStatus) els.summaryExtStatus.innerHTML = `<span style="color:#34d399">🟢 Extension Active & Verified</span>`;
+        }
       } else {
         if (els.summaryExtStatus) els.summaryExtStatus.innerHTML = `<span style="color:#94a3b8">⚪ Not Installed</span>`;
       }

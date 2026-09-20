@@ -4263,7 +4263,12 @@ async function openStudentSolvedProblems(reg, name, section, lcUser) {
     currentScriptSolvedSubmissions = subs;
 
     if (extRes.data) {
-      if (summaryExt) summaryExt.innerHTML = `<span style="color:#34d399">🟢 Extension Active</span>`;
+      const ext = extRes.data;
+      if (ext.auto_sync_enabled === false) {
+        if (summaryExt) summaryExt.innerHTML = `<span style="color:#f87171;font-weight:600;">🔴 Extension Turned Off (Disabled in Popup)</span>`;
+      } else {
+        if (summaryExt) summaryExt.innerHTML = `<span style="color:#34d399">🟢 Extension Active & Verified</span>`;
+      }
     } else {
       if (summaryExt) summaryExt.innerHTML = `<span style="color:#94a3b8">⚪ Not Installed</span>`;
     }

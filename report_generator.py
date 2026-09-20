@@ -392,9 +392,30 @@ def fetch_supabase_submissions_for_window(
         return []
 
 
+def fetch_supabase_extension_installs(
+    config: Config,
+    section: str | None = None,
+) -> list[dict[str, Any]]:
+    if not config.supabase_url or not config.supabase_key:
+        return []
+    try:
+        params = {
+            "select": "register_number,student_email,student_name,section,auto_sync_enabled,last_active_at,extension_version",
+        }
+        if section and section.upper() not in {"OVERALL", "ALL"}:
+            params["section"] = f"eq.{section.strip()}"
+
+        rows = supabase_get(config, "extension_installed_students", params=params)
+        return rows if isinstance(rows, list) else []
+    except Exception as exc:
+        print(f"[WARN] Failed to fetch Supabase extension installs: {exc}", file=sys.stderr)
+        return []
+
+
 def build_integrity_audit(
     live: pd.DataFrame,
     submissions: list[dict[str, Any]],
+    extension_installs: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     sub_map: dict[str, list[dict[str, Any]]] = {}
     for sub in submissions or []:
@@ -402,10 +423,19 @@ def build_integrity_audit(
         if reg:
             sub_map.setdefault(reg, []).append(sub)
 
+    inst_map: dict[str, dict[str, Any]] = {}
+    for inst in extension_installs or []:
+        reg = str(inst.get("register_number") or "").strip()
+        if reg:
+            inst_map[reg] = inst
+
     audit_rows = []
     all_copied_students = []
+    bypassed_students = []
     total_clean = 0
     total_flagged = 0
+    total_bypassed = 0
+    total_installed = len(inst_map)
 
     for _, r in live.iterrows():
         reg = str(r.get("Register Number", "")).strip()
@@ -432,23 +462,72 @@ def build_integrity_audit(
         total_clean += clean_count
         total_flagged += flagged_count
 
+        inst_info = inst_map.get(reg)
+        is_installed = inst_info is not None
+        auto_sync_enabled = bool(inst_info.get("auto_sync_enabled", True)) if is_installed else False
+        last_active = inst_info.get("last_active_at") if is_installed else None
+
+        last_active_str = "Never"
+        if last_active:
+            try:
+                dt = parse_datetime(last_active)
+                if dt:
+                    last_active_str = dt.astimezone(IST).strftime("%d %b %I:%M %p")
+            except Exception:
+                last_active_str = str(last_active)[:16]
+
         total_tracked = clean_count + flagged_count
         effective_solved = solved_in_window if solved_in_window > 0 else total_tracked
         paste_ratio = round((flagged_count / max(1, total_tracked)) * 100) if total_tracked > 0 else (100 if flagged_count > 0 else 0)
 
         is_all_copied = False
-        if (effective_solved > 0 or total_tracked > 0):
-            if flagged_count > 0 and (clean_count == 0 or flagged_count >= effective_solved):
-                is_all_copied = True
-                action_status = "🚨 [TAKE ACTION - 100% COPY-PASTED]"
-            elif flagged_count > 0:
-                action_status = "⚠️ [SUSPICIOUS - Plagiarism Detected]"
-            elif clean_count > 0:
-                action_status = "🟢 [CLEAN - Verified Code]"
+        is_bypassed = False
+
+        if effective_solved > 0:
+            if total_tracked > 0:
+                if flagged_count > 0 and (clean_count == 0 or flagged_count >= effective_solved):
+                    is_all_copied = True
+                    action_status = "🚨 [TAKE ACTION - 100% COPY-PASTED]"
+                    status_badge = "🔴 100% Copied"
+                elif flagged_count > 0:
+                    action_status = "⚠️ [SUSPICIOUS - Plagiarism Detected]"
+                    status_badge = "🟡 Suspicious"
+                else:
+                    action_status = "🟢 [CLEAN - Extension Verified]"
+                    status_badge = "🟢 Verified Clean"
             else:
-                action_status = "⚪ Not Synced via Extension"
+                # Solved on LeetCode publicly, but NO extension telemetry was sent!
+                is_bypassed = True
+                total_bypassed += 1
+                if is_installed:
+                    if not auto_sync_enabled:
+                        action_status = "🔴 [EXTENSION TURNED OFF] - Disabled in Extension Popup"
+                        status_badge = "🔴 Extension Turned Off"
+                    else:
+                        action_status = "🔴 [EXTENSION BYPASSED] - Solved on LeetCode without Extension"
+                        status_badge = "🔴 Extension Bypassed"
+                else:
+                    action_status = "⚪ [NOT INSTALLED] - Solved on LeetCode without Extension"
+                    status_badge = "⚪ Not Installed"
         else:
-            action_status = "⚪ No Synced Activity"
+            if total_tracked > 0:
+                if flagged_count > 0:
+                    action_status = "⚠️ [SUSPICIOUS - Flagged Telemetry]"
+                    status_badge = "🟡 Flagged"
+                else:
+                    action_status = "🟢 [CLEAN - Synced Solution]"
+                    status_badge = "🟢 Clean"
+            else:
+                if is_installed:
+                    if not auto_sync_enabled:
+                        action_status = "🟡 [INSTALLED - TURNED OFF] (0 Solved)"
+                        status_badge = "🟡 Turned Off (Idle)"
+                    else:
+                        action_status = "🟢 [INSTALLED & READY] (0 Solved)"
+                        status_badge = "🟢 Active (Idle)"
+                else:
+                    action_status = "⚪ [NOT INSTALLED] (0 Solved)"
+                    status_badge = "⚪ Not Installed"
 
         st_data = {
             "name": name,
@@ -460,19 +539,28 @@ def build_integrity_audit(
             "flagged": flagged_count,
             "paste_ratio": paste_ratio,
             "action_status": action_status,
+            "status_badge": status_badge,
             "copied_problems": ", ".join(copied_titles) if copied_titles else "—",
             "is_all_copied": is_all_copied,
+            "is_bypassed": is_bypassed,
+            "is_installed": is_installed,
+            "auto_sync_enabled": auto_sync_enabled,
+            "last_active_str": last_active_str,
         }
 
         if is_all_copied:
             all_copied_students.append(st_data)
 
+        if is_bypassed and is_installed:
+            bypassed_students.append(st_data)
+
         audit_rows.append(st_data)
 
-    # Sort audit rows: flagged students at the top, then by solved count
+    # Sort audit rows: flagged first, then bypassed, then solved count
     audit_rows.sort(
         key=lambda x: (
             -x["flagged"],
+            -int(x["is_bypassed"]),
             -x["solved"],
             x["section"],
             x["register"]
@@ -488,11 +576,22 @@ def build_integrity_audit(
         )
     )
 
+    bypassed_students.sort(
+        key=lambda x: (
+            -x["solved"],
+            x["section"],
+            x["register"]
+        )
+    )
+
     return {
         "audit_rows": audit_rows,
         "all_copied_students": all_copied_students,
+        "bypassed_students": bypassed_students,
         "total_clean": total_clean,
         "total_flagged": total_flagged,
+        "total_bypassed": total_bypassed,
+        "total_installed": total_installed,
     }
 
 
@@ -1093,8 +1192,10 @@ def build_daily_report(live: pd.DataFrame, report_date: str, report_window: str,
 
     # Plagiarism / Copy-paste action section
     all_copied = (integrity or {}).get("all_copied_students", [])
+    bypassed_list = (integrity or {}).get("bypassed_students", [])
     total_clean = (integrity or {}).get("total_clean", 0)
     total_flagged = (integrity or {}).get("total_flagged", 0)
+    total_bypassed = (integrity or {}).get("total_bypassed", 0)
 
     if all_copied:
         copied_rows = []
@@ -1135,8 +1236,36 @@ def build_daily_report(live: pd.DataFrame, report_date: str, report_window: str,
         </div>
         '''
 
-    content = f'''<div class="card"><h2>LeetCode Daily Summary</h2><p class="muted"><strong>Report Window:</strong> {esc(report_window)}</p><div class="kpis"><div class="kpi"><span>Total Students</span><strong>{total}</strong></div><div class="kpi"><span>Active Today</span><strong>{int(active.sum())}</strong></div><div class="kpi"><span>0 Solved / 0 Submission</span><strong>{int(inactive.sum())}</strong></div><div class="kpi"><span>Problems Solved Today</span><strong>{solved}</strong></div><div class="kpi"><span>🟢 Clean Solves</span><strong style="color:#16a34a">{total_clean}</strong></div><div class="kpi"><span>🔴 Flagged / Copied</span><strong style="color:#dc2626">{total_flagged}</strong></div></div></div>
+    bypassed_section = ""
+    if bypassed_list:
+        bypassed_rows = []
+        for n, x in enumerate(bypassed_list, 1):
+            state_text = "🔴 Turned Off (Popup Toggle)" if not x.get("auto_sync_enabled", True) else "🔴 Solved without Extension"
+            bypassed_rows.append([
+                n,
+                x["name"],
+                x["register"],
+                x["section"],
+                x["solved"],
+                state_text,
+                x.get("last_active_str", "—"),
+                "⚠️ [WARN - Re-enable Extension]"
+            ])
+        bypassed_section = f'''
+        <div class="card" style="border: 2px solid #f97316; background: #fffaf0; border-radius: 16px; padding: 20px; margin-bottom: 16px;">
+          <h2 style="color: #c2410c; margin: 0 0 10px; font-size: 18px;">
+            ⚠️ Notice: Solved with Extension Turned Off / Bypassed ({len(bypassed_list)})
+          </h2>
+          <p style="color: #9a3412; font-size: 13px; margin: 0 0 14px; line-height: 1.5;">
+            The following student(s) have registered the CodeMetrix Extension, but <strong>solved problems today without active extension telemetry</strong> (extension disabled, turned off in popup, or submitted via unmonitored browser/incognito):
+          </p>
+          {table_html(["#", "Student Name", "Register No.", "Section", "Solved Today", "Extension State", "Last Extension Ping", "Action Required"], bypassed_rows)}
+        </div>
+        '''
+
+    content = f'''<div class="card"><h2>LeetCode Daily Summary</h2><p class="muted"><strong>Report Window:</strong> {esc(report_window)}</p><div class="kpis"><div class="kpi"><span>Total Students</span><strong>{total}</strong></div><div class="kpi"><span>Active Today</span><strong>{int(active.sum())}</strong></div><div class="kpi"><span>0 Solved / 0 Submission</span><strong>{int(inactive.sum())}</strong></div><div class="kpi"><span>Problems Solved Today</span><strong>{solved}</strong></div><div class="kpi"><span>🟢 Clean Solves</span><strong style="color:#16a34a">{total_clean}</strong></div><div class="kpi"><span>🔴 Flagged / Copied</span><strong style="color:#dc2626">{total_flagged}</strong></div><div class="kpi"><span>⚠️ Turned Off / Bypassed</span><strong style="color:#ea580c">{len(bypassed_list)}</strong></div></div></div>
     {integrity_section}
+    {bypassed_section}
     <div class="card"><h2>Top 10 Students - Today</h2>{table_html(["#","Student","Register No.","Section","Today Solved","Today Submissions","7 Days","14 Days","30 Days","Total Solved"],top_rows)}</div>
     <div class="card"><h2>0 Solved Today Students</h2><p class="muted">Only students with 0 solved AND 0 submissions in the complete 07:00 AM to 07:00 AM window are listed. Students who submitted code today are excluded.</p>{table_html(["#","Student","Register No.","Section","Today Solved","Today Submissions","7 Days","14 Days","30 Days","Total Solved"],zero_rows)}</div>
     <div class="card"><h2>Section Summary</h2>{table_html(["Section","Students","Active","0 Solved / 0 Submission","Today Solved","Today Submissions","7 Days","14 Days","30 Days"],[[x["section"],x["students"],x["active"],x["inactive"],x["window_solved"],x["window_submissions"],x["week"],x["fortnight"],x["month"]] for x in sections])}</div>'''
@@ -1161,8 +1290,10 @@ def build_weekly_report(live: pd.DataFrame, start_date: str, end_date: str, repo
 
     # Plagiarism / Copy-paste action section
     all_copied = (integrity or {}).get("all_copied_students", [])
+    bypassed_list = (integrity or {}).get("bypassed_students", [])
     total_clean = (integrity or {}).get("total_clean", 0)
     total_flagged = (integrity or {}).get("total_flagged", 0)
+    total_bypassed = (integrity or {}).get("total_bypassed", 0)
 
     if all_copied:
         copied_rows = []
@@ -1203,14 +1334,43 @@ def build_weekly_report(live: pd.DataFrame, start_date: str, end_date: str, repo
         </div>
         '''
 
-    content = f'''<div class="card"><h2>LeetCode Weekly Summary</h2><p class="muted"><strong>Report Window:</strong> {esc(report_window)}</p><div class="kpis"><div class="kpi"><span>Total Students</span><strong>{total}</strong></div><div class="kpi"><span>Active This Week</span><strong>{int(active.sum())}</strong></div><div class="kpi"><span>0 Solved / 0 Submission</span><strong>{int(inactive.sum())}</strong></div><div class="kpi"><span>Problems Solved This Week</span><strong>{solved}</strong></div><div class="kpi"><span>🟢 Clean Solves</span><strong style="color:#16a34a">{total_clean}</strong></div><div class="kpi"><span>🔴 Flagged / Copied</span><strong style="color:#dc2626">{total_flagged}</strong></div></div></div>
+    bypassed_section = ""
+    if bypassed_list:
+        bypassed_rows = []
+        for n, x in enumerate(bypassed_list, 1):
+            state_text = "🔴 Turned Off (Popup Toggle)" if not x.get("auto_sync_enabled", True) else "🔴 Solved without Extension"
+            bypassed_rows.append([
+                n,
+                x["name"],
+                x["register"],
+                x["section"],
+                x["solved"],
+                state_text,
+                x.get("last_active_str", "—"),
+                "⚠️ [WARN - Re-enable Extension]"
+            ])
+        bypassed_section = f'''
+        <div class="card" style="border: 2px solid #f97316; background: #fffaf0; border-radius: 16px; padding: 20px; margin-bottom: 16px;">
+          <h2 style="color: #c2410c; margin: 0 0 10px; font-size: 18px;">
+            ⚠️ Notice: Solved with Extension Turned Off / Bypassed ({len(bypassed_list)})
+          </h2>
+          <p style="color: #9a3412; font-size: 13px; margin: 0 0 14px; line-height: 1.5;">
+            The following student(s) have registered the CodeMetrix Extension, but <strong>solved problems this week without active extension telemetry</strong> (extension disabled, turned off in popup, or submitted via unmonitored browser/incognito):
+          </p>
+          {table_html(["#", "Student Name", "Register No.", "Section", "Solved This Week", "Extension State", "Last Extension Ping", "Action Required"], bypassed_rows)}
+        </div>
+        '''
+
+    content = f'''<div class="card"><h2>LeetCode Weekly Summary</h2><p class="muted"><strong>Report Window:</strong> {esc(report_window)}</p><div class="kpis"><div class="kpi"><span>Total Students</span><strong>{total}</strong></div><div class="kpi"><span>Active This Week</span><strong>{int(active.sum())}</strong></div><div class="kpi"><span>0 Solved / 0 Submission</span><strong>{int(inactive.sum())}</strong></div><div class="kpi"><span>Problems Solved This Week</span><strong>{solved}</strong></div><div class="kpi"><span>🟢 Clean Solves</span><strong style="color:#16a34a">{total_clean}</strong></div><div class="kpi"><span>🔴 Flagged / Copied</span><strong style="color:#dc2626">{total_flagged}</strong></div><div class="kpi"><span>⚠️ Turned Off / Bypassed</span><strong style="color:#ea580c">{len(bypassed_list)}</strong></div></div></div>
     {integrity_section}
+    {bypassed_section}
     <div class="card"><h2>Top 10 Students - This Week</h2>{table_html(headers, rows(top))}</div>
     <div class="card"><h2>0 Solved This Week Students</h2><p class="muted">Only students with 0 solved AND 0 submissions in the complete weekly report window are listed.</p>{table_html(headers, rows(zeros))}</div>
     <div class="card"><h2>Bottom 10 Students - This Week</h2><p class="muted">Completely inactive 0/0 students are shown separately above and are excluded here.</p>{table_html(headers, rows(bottom))}</div>
     <div class="card"><h2>Section Performance</h2>{table_html(["Section","Students","Active","0 Solved / 0 Submission","Week Solved","Week Submissions","14 Days","30 Days"],[[x["section"],x["students"],x["active"],x["inactive"],x["window_solved"],x["window_submissions"],x["fortnight"],x["month"]] for x in sections])}</div>'''
     subject = f"{scope_label} LeetCode Weekly Report - {start_date} to {end_date}"
     return subject, report_shell(f"{scope_label} LeetCode Weekly Report", report_window, content)
+
 
 
 
@@ -1312,6 +1472,7 @@ def generate_daily_excel(live: pd.DataFrame, report_date: str, report_window: st
         ["Problems Solved Today", int(live["Report Window Solved"].sum())],
         ["🟢 Clean Verified Solves", total_clean],
         ["🔴 Flagged / Copied Solves", total_flagged],
+        ["⚠️ Extension Turned Off / Bypassed", (integrity or {}).get("total_bypassed", 0)],
         ["Today Submissions", int(live["Report Window Submissions"].sum())],
         ["Unverified Profiles", int(unknown.sum())]
     ]
@@ -1331,6 +1492,9 @@ def generate_daily_excel(live: pd.DataFrame, report_date: str, report_window: st
                 "Clean Solves (🟢)": x["clean"],
                 "Flagged Solves (🔴)": x["flagged"],
                 "Copy-Paste %": f"{x['paste_ratio']}%",
+                "Extension Status": x.get("status_badge", "—"),
+                "Auto-Sync Setting": "Enabled" if x.get("auto_sync_enabled", True) else "Disabled (Turned Off)",
+                "Last Extension Ping": x.get("last_active_str", "—"),
                 "Action Status": x["action_status"],
                 "Copied Problem Titles": x["copied_problems"],
             }
@@ -1384,6 +1548,7 @@ def generate_weekly_excel(live: pd.DataFrame, start_date: str, end_date: str, re
         ["Problems Solved This Week", int(live["Report Window Solved"].sum())],
         ["🟢 Clean Verified Solves", total_clean],
         ["🔴 Flagged / Copied Solves", total_flagged],
+        ["⚠️ Extension Turned Off / Bypassed", (integrity or {}).get("total_bypassed", 0)],
         ["Weekly Submissions", int(live["Report Window Submissions"].sum())],
         ["Unverified Profiles", int(unknown.sum())]
     ]
@@ -1403,6 +1568,9 @@ def generate_weekly_excel(live: pd.DataFrame, start_date: str, end_date: str, re
                 "Clean Solves (🟢)": x["clean"],
                 "Flagged Solves (🔴)": x["flagged"],
                 "Copy-Paste %": f"{x['paste_ratio']}%",
+                "Extension Status": x.get("status_badge", "—"),
+                "Auto-Sync Setting": "Enabled" if x.get("auto_sync_enabled", True) else "Disabled (Turned Off)",
+                "Last Extension Ping": x.get("last_active_str", "—"),
                 "Action Status": x["action_status"],
                 "Copied Problem Titles": x["copied_problems"],
             }
@@ -1699,13 +1867,15 @@ def build_report(mode:str,config:Config,offline:bool=False,section:str|None=None
         report_start=report_end-timedelta(days=1); live=refresh_report_window_activity(live,report_start,report_end,config,offline)
         if not offline: supabase_report_snapshot_upsert(config,live,report_end)
         submissions = fetch_supabase_submissions_for_window(config, report_start, report_end, section) if not offline else []
-        integrity = build_integrity_audit(live, submissions)
+        extension_installs = fetch_supabase_extension_installs(config, section) if not offline else []
+        integrity = build_integrity_audit(live, submissions, extension_installs)
         display=report_start.strftime("%d %b %Y"); file_date=report_start.date().isoformat(); window=format_window(report_start,report_end); print(f"Daily report window: {report_start.isoformat()} -> {report_end.isoformat()}")
         subject,body=build_daily_report(live,display,window,scope_label,integrity); return subject,body,[generate_daily_excel(live,file_date,window,scope_label,integrity),generate_daily_pdf(live,file_date,window,scope_label)]
     if mode=="weekly":
         report_start=report_end-timedelta(days=7); live=refresh_report_window_activity(live,report_start,report_end,config,offline); start_iso=report_start.date().isoformat(); end_iso=report_end.date().isoformat(); window=format_window(report_start,report_end); print(f"Weekly report window: {report_start.isoformat()} -> {report_end.isoformat()}")
         submissions = fetch_supabase_submissions_for_window(config, report_start, report_end, section) if not offline else []
-        integrity = build_integrity_audit(live, submissions)
+        extension_installs = fetch_supabase_extension_installs(config, section) if not offline else []
+        integrity = build_integrity_audit(live, submissions, extension_installs)
         subject,body=build_weekly_report(live,report_start.strftime("%d %b %Y"),report_end.strftime("%d %b %Y"),window,scope_label,integrity); return subject,body,[generate_weekly_excel(live,start_iso,end_iso,window,scope_label,integrity),generate_weekly_pdf(live,start_iso,end_iso,window,scope_label)]
     raise ValueError(f"Unknown report mode: {mode}")
 

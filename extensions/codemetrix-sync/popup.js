@@ -165,7 +165,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (typeof data.autoSync !== 'undefined') {
       autoSyncToggle.checked = data.autoSync;
+      if (!data.autoSync && data.registerNumber) {
+        statusPill.className = 'status-indicator not-ready';
+        statusText.textContent = 'Disabled (Turned Off)';
+      }
     }
+  });
+
+  autoSyncToggle.addEventListener('change', async (e) => {
+    const isEnabled = e.target.checked;
+    chrome.storage.local.set({ autoSync: isEnabled });
+    chrome.storage.local.get(['registerNumber'], (data) => {
+      if (data.registerNumber) {
+        if (isEnabled) {
+          statusPill.className = 'status-indicator';
+          statusText.textContent = 'Active';
+        } else {
+          statusPill.className = 'status-indicator not-ready';
+          statusText.textContent = 'Disabled (Turned Off)';
+        }
+
+        fetch(`${SUPABASE_URL}/rest/v1/extension_installed_students?register_number=eq.${encodeURIComponent(data.registerNumber)}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            auto_sync_enabled: isEnabled,
+            last_active_at: new Date().toISOString()
+          })
+        }).catch(() => {});
+      }
+    });
   });
 
   regInput.addEventListener('input', () => {

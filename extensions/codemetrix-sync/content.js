@@ -658,12 +658,49 @@
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
+  // --- EXTENSION LIVENESS & HEARTBEAT ENGINE ---
+  function sendLivenessHeartbeat() {
+    if (!isContextValid()) return;
+    try {
+      chrome.storage.local.get(['registerNumber', 'studentEmail', 'autoSync'], (data) => {
+        const regNumber = data.registerNumber;
+        if (!regNumber || data.autoSync === false) return;
+        const supabaseUrl = DEFAULT_SUPABASE_URL;
+        const supabaseKey = DEFAULT_SUPABASE_ANON_KEY;
+
+        fetch(`${supabaseUrl}/rest/v1/extension_installed_students?register_number=eq.${encodeURIComponent(regNumber)}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            last_active_at: new Date().toISOString(),
+            auto_sync_enabled: true
+          })
+        }).catch(() => {});
+      });
+    } catch (e) {}
+  }
+
+  function startHeartbeatEngine() {
+    sendLivenessHeartbeat();
+    // Ping every 15 minutes while active on problem tab
+    setInterval(sendLivenessHeartbeat, 15 * 60 * 1000);
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initStrictObserver);
+    document.addEventListener('DOMContentLoaded', () => {
+      initStrictObserver();
+      startHeartbeatEngine();
+    });
   } else {
     initStrictObserver();
+    startHeartbeatEngine();
   }
 
   console.log('⚡ CodeMetrix Anti-Cheating & LeetCode Sync Engine Active.');
 })();
+
 
