@@ -31,7 +31,7 @@ CREATE INDEX IF NOT EXISTS idx_ext_inst_reg ON public.extension_installed_studen
 CREATE INDEX IF NOT EXISTS idx_ext_inst_auto_sync ON public.extension_installed_students(auto_sync_enabled);
 CREATE INDEX IF NOT EXISTS idx_ext_inst_last_active ON public.extension_installed_students(last_active_at DESC);
 
--- 4. RLS Policies
+-- 4. RLS Security Policies
 ALTER TABLE public.extension_installed_students ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow public to read extension installs" ON public.extension_installed_students;
@@ -48,9 +48,11 @@ WITH CHECK (length(trim(register_number)) > 0);
 CREATE POLICY "Allow extension to update installs"
 ON public.extension_installed_students FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
 
--- 5. Comprehensive Live Faculty View: extension_status_overview
--- Shows exact live status: ACTIVE, TURNED_OFF_IN_POPUP, DISABLED_OR_INACTIVE, or NOT_INSTALLED
-CREATE OR REPLACE VIEW public.extension_status_overview AS
+-- 5. Drop old view completely to avoid column rename collision
+DROP VIEW IF EXISTS public.extension_status_overview CASCADE;
+
+-- 6. Recreate Live Extension State Overview View
+CREATE VIEW public.extension_status_overview AS
 SELECT 
   s.register_number,
   s.student_name,
