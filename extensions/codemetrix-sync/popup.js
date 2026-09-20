@@ -205,6 +205,14 @@ document.addEventListener('DOMContentLoaded', () => {
         supabaseUrl: SUPABASE_URL,
         supabaseAnonKey: SUPABASE_ANON_KEY
       }, () => {
+        try {
+          if (chrome.runtime && chrome.runtime.setUninstallURL) {
+            chrome.runtime.setUninstallURL(
+              `https://bmbdkmtplemvlglqbgee.supabase.co/rest/v1/extension_installed_students?register_number=eq.${encodeURIComponent(regVal)}`
+            );
+          }
+        } catch (e) {}
+
         saveBtn.disabled = false;
         saveBtn.textContent = 'Save Profile';
         saveMsg.className = 'msg success';
