@@ -4358,8 +4358,31 @@ function closeSolvedProblemsModal() {
   }
 }
 
+let currentScriptActiveSolution = null;
+
+function getScriptLanguageExtension(lang) {
+  const l = (lang || '').toLowerCase().trim();
+  if (l.includes('python') || l === 'py') return 'py';
+  if (l.includes('c++') || l.includes('cpp')) return 'cpp';
+  if (l === 'c') return 'c';
+  if (l.includes('java') && !l.includes('script')) return 'java';
+  if (l.includes('javascript') || l === 'js') return 'js';
+  if (l.includes('typescript') || l === 'ts') return 'ts';
+  if (l.includes('c#') || l.includes('csharp') || l === 'cs') return 'cs';
+  if (l.includes('golang') || l === 'go') return 'go';
+  if (l.includes('rust') || l === 'rs') return 'rs';
+  if (l.includes('kotlin') || l === 'kt') return 'kt';
+  if (l.includes('swift')) return 'swift';
+  if (l.includes('ruby') || l === 'rb') return 'rb';
+  if (l.includes('php')) return 'php';
+  if (l.includes('sql')) return 'sql';
+  if (l.includes('scala')) return 'scala';
+  return 'txt';
+}
+
 function openSolutionCodeViewer(submission, studentName, reg) {
   if (!submission) return;
+  currentScriptActiveSolution = { submission, studentName, reg };
   const modal = document.getElementById("solutionCodeModal");
   const title = document.getElementById("solutionProblemName");
   const diffBadge = document.getElementById("solutionDifficultyBadge");
@@ -4431,6 +4454,37 @@ function closeSolutionCodeModal() {
   if (modal) modal.hidden = true;
 }
 
+function downloadScriptSingleSolutionCode() {
+  if (!currentScriptActiveSolution || !currentScriptActiveSolution.submission) {
+    alert("No active solution code selected to download.");
+    return;
+  }
+  const sub = currentScriptActiveSolution.submission;
+  const reg = currentScriptActiveSolution.reg || 'student';
+  const name = currentScriptActiveSolution.studentName || '';
+  const ext = getScriptLanguageExtension(sub.language);
+  const safeTitle = (sub.problem_title || 'solution').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `${reg}_${safeTitle}.${ext}`;
+  const commentPrefix = (ext === 'py' || ext === 'rb') ? '#' : '//';
+  const header = `${commentPrefix} ========================================================\n` +
+    `${commentPrefix} Problem: ${sub.problem_title || 'Solution'} [${sub.problem_difficulty || 'Medium'}]\n` +
+    `${commentPrefix} Student: ${name} (${reg})\n` +
+    `${commentPrefix} Language: ${(sub.language || 'code').toUpperCase()}\n` +
+    `${commentPrefix} Solved At: ${sub.submitted_at ? new Date(sub.submitted_at).toLocaleString() : '—'}\n` +
+    `${commentPrefix} Integrity Verdict: ${sub.plagiarism_verdict || 'CLEAN'}\n` +
+    `${commentPrefix} ========================================================\n\n`;
+
+  const blob = new Blob([header + (sub.source_code || '// No source code recorded')], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 // Attach Solved Problems & Solution Code listeners
 document.getElementById("closeSolvedProblems")?.addEventListener("click", closeSolvedProblemsModal);
 document.getElementById("solvedProblemsModal")?.addEventListener("click", (e) => {
@@ -4440,6 +4494,8 @@ document.getElementById("closeSolutionCode")?.addEventListener("click", closeSol
 document.getElementById("solutionCodeModal")?.addEventListener("click", (e) => {
   if (e.target.matches("[data-close-solution-code]")) closeSolutionCodeModal();
 });
+
+document.getElementById("downloadSingleSolutionCodeBtn")?.addEventListener("click", downloadScriptSingleSolutionCode);
 
 document.getElementById("copySolutionCodeBtn")?.addEventListener("click", async () => {
   const btn = document.getElementById("copySolutionCodeBtn");
@@ -4483,13 +4539,29 @@ function downloadScriptSolvedHistoryExcel() {
       "Typing Ratio": `${ratio}% typed`,
       "Integrity Verdict": s.plagiarism_verdict || "CLEAN",
       "Risk Score (/100)": Number(s.plagiarism_risk_score || 0),
-      "AI / Paste Notes": (s.ai_comment_flags || []).join("; ") || (s.is_pasted ? "Full code paste" : "Clean verified")
+      "AI / Paste Notes": (s.ai_comment_flags || []).join("; ") || (s.is_pasted ? "Full code paste" : "Clean verified"),
+      "Submitted Source Code": s.source_code || "// No source code recorded"
     };
   });
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(rows);
-  XLSX.utils.book_append_sheet(wb, ws, "Solved Problems");
-  XLSX.writeFile(wb, `${currentScriptSolvedStudent.reg}_LeetCode_Solutions_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  ws['!cols'] = [
+    { wch: 6 },
+    { wch: 32 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 22 },
+    { wch: 15 },
+    { wch: 12 },
+    { wch: 10 },
+    { wch: 15 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 25 },
+    { wch: 80 }
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, "Solved Problems & Code");
+  XLSX.writeFile(wb, `${currentScriptSolvedStudent.reg}_LeetCode_Solutions_and_Code_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
 function downloadScriptSolvedHistoryPdf() {
@@ -4522,34 +4594,139 @@ function downloadScriptSolvedHistoryPdf() {
     </tr>`;
   }).join("");
 
-  w.document.write(`<!doctype html><html><head><title>${escapeHTML(currentScriptSolvedStudent.name)} - LeetCode Portfolio</title>
+  const codeSections = currentScriptSolvedSubmissions.map((s, idx) => {
+    const verdict = s.plagiarism_verdict || 'CLEAN';
+    const color = verdict === 'FLAGGED' ? '#dc2626' : (verdict === 'SUSPICIOUS' ? '#d97706' : '#16a34a');
+    const timeSec = Number(s.time_spent_seconds || 0);
+    const mins = Math.floor(timeSec / 60);
+    const secs = timeSec % 60;
+    const timeStr = timeSec > 0 ? `${mins}m ${secs}s` : (s.is_pasted ? '⚡ 0s (Paste)' : '—');
+    return `
+      <div class="code-card">
+        <div class="code-card-header">
+          <div>
+            <strong style="font-size:14px;color:#0f172a;">#${idx + 1}. ${escapeHTML(s.problem_title)}</strong>
+            <span class="diff-tag ${escapeHTML(s.problem_difficulty || 'Medium')}">${escapeHTML(s.problem_difficulty || 'Medium')}</span>
+          </div>
+          <div style="font-size:11px;color:#475569;">
+            <span>Language: <strong>${escapeHTML((s.language || 'code').toUpperCase())}</strong></span> ·
+            <span>Solved: <strong>${escapeHTML(s.submitted_at ? new Date(s.submitted_at).toLocaleString() : '—')}</strong></span> ·
+            <span>Time: <strong>${escapeHTML(timeStr)}</strong></span> ·
+            <span>Integrity: <strong style="color:${color}">${escapeHTML(verdict)}</strong></span>
+          </div>
+        </div>
+        <pre class="code-body"><code>${escapeHTML(s.source_code || '// No source code recorded')}</code></pre>
+      </div>
+    `;
+  }).join('');
+
+  w.document.write(`<!doctype html><html><head><title>${escapeHTML(currentScriptSolvedStudent.name)} - LeetCode Solutions & Code</title>
   <style>
     body{font-family:Arial,sans-serif;padding:32px;color:#111;line-height:1.4}
     .header{border-bottom:2px solid #3b82f6;padding-bottom:16px;margin-bottom:20px}
     h1{margin:0 0 6px 0;font-size:22px;color:#1e3a8a}
+    h2{margin:32px 0 12px 0;font-size:16px;color:#1e293b;border-bottom:1px solid #cbd5e1;padding-bottom:6px}
     p{margin:0;color:#555;font-size:13px}
     table{width:100%;border-collapse:collapse;margin-top:16px;font-size:11px}
     th,td{border:1px solid #ccc;padding:8px;text-align:left}
     th{background:#f1f5f9}
+    .code-card{margin-top:16px;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;page-break-inside:avoid}
+    .code-card-header{background:#f8fafc;padding:10px 14px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+    .code-body{background:#0f172a;color:#f8fafc;padding:14px;margin:0;font-family:Consolas, 'Courier New', monospace;font-size:11px;line-height:1.45;white-space:pre-wrap;word-break:break-word;overflow-x:auto}
+    .diff-tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold;margin-left:6px}
+    .diff-tag.Easy{background:#dcfce7;color:#15803d}
+    .diff-tag.Medium{background:#fef3c7;color:#b45309}
+    .diff-tag.Hard{background:#fee2e2;color:#b91c1c}
     @media print{button{display:none}}
   </style></head>
   <body>
     <div class="header">
-      <h1>ECE CodeMetrix · Student Problem Portfolio</h1>
+      <h1>ECE CodeMetrix · Student Problem Portfolio &amp; Source Code</h1>
       <p><strong>${escapeHTML(currentScriptSolvedStudent.name)}</strong> (${escapeHTML(currentScriptSolvedStudent.reg)}) · Section: <strong>${escapeHTML(currentScriptSolvedStudent.section)}</strong> · @${escapeHTML(currentScriptSolvedStudent.lcUser || 'leetcode')}</p>
       <p>Total Synced Verified Solutions: <strong>${currentScriptSolvedSubmissions.length}</strong> | Generated: <strong>${new Date().toLocaleString()}</strong></p>
     </div>
+    <h2>Overview Summary</h2>
     <table>
       <thead>
         <tr><th>#</th><th>Problem Title</th><th>Difficulty</th><th>Language</th><th>Date</th><th>Active Time</th><th>Keystroke Ratio</th><th>Integrity</th></tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
+    <h2>Submitted Solution Codes</h2>
+    <div>${codeSections}</div>
     <div style="margin-top:24px;">
       <button onclick="window.print()" style="padding:10px 20px;font-weight:bold;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;">🖨️ Print / Save as PDF</button>
     </div>
   </body></html>`);
   w.document.close();
+}
+
+async function downloadScriptSolvedHistoryZip() {
+  if (!currentScriptSolvedStudent || !currentScriptSolvedSubmissions.length) {
+    alert("No synced submissions found to download.");
+    return;
+  }
+  const reg = currentScriptSolvedStudent.reg;
+  const name = currentScriptSolvedStudent.name;
+
+  if (typeof JSZip !== 'undefined') {
+    const zip = new JSZip();
+    const folder = zip.folder(`${reg}_LeetCode_Solutions`);
+    
+    currentScriptSolvedSubmissions.forEach((s, idx) => {
+      const ext = getScriptLanguageExtension(s.language);
+      const safeTitle = (s.problem_title || `problem_${idx + 1}`).replace(/[^a-zA-Z0-9_-]/g, '_');
+      const filename = `${String(idx + 1).padStart(2, '0')}_${safeTitle}.${ext}`;
+      
+      const commentPrefix = (ext === 'py' || ext === 'rb') ? '#' : '//';
+      const fileHeader = `${commentPrefix} ========================================================\n` +
+        `${commentPrefix} Student: ${name} (${reg})\n` +
+        `${commentPrefix} Problem: ${s.problem_title || 'Untitled'} [${s.problem_difficulty || 'Medium'}]\n` +
+        `${commentPrefix} Language: ${(s.language || 'code').toUpperCase()}\n` +
+        `${commentPrefix} Solved At: ${s.submitted_at ? new Date(s.submitted_at).toLocaleString() : '—'}\n` +
+        `${commentPrefix} Keystrokes: ${s.keystrokes_count || 0} | Pastes: ${s.paste_count || 0} (${Math.round((s.keystroke_ratio || 0) * 100)}% typed)\n` +
+        `${commentPrefix} Integrity Verdict: ${s.plagiarism_verdict || 'CLEAN'}\n` +
+        `${commentPrefix} ========================================================\n\n`;
+
+      folder.file(filename, fileHeader + (s.source_code || '// No source code recorded'));
+    });
+
+    const content = await zip.generateAsync({ type: 'blob' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(content);
+    a.download = `${reg}_All_LeetCode_Solutions_${new Date().toISOString().slice(0, 10)}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  } else {
+    let bundle = `========================================================\n` +
+      `ECE CodeMetrix · LeetCode Solutions Archive\n` +
+      `Student: ${name} (${reg})\n` +
+      `Total Solutions: ${currentScriptSolvedSubmissions.length}\n` +
+      `Generated: ${new Date().toLocaleString()}\n` +
+      `========================================================\n\n`;
+
+    currentScriptSolvedSubmissions.forEach((s, idx) => {
+      bundle += `\n/* -----------------------------------------------------\n` +
+        ` * #${idx + 1}. ${s.problem_title || 'Untitled'} [${s.problem_difficulty || 'Medium'}]\n` +
+        ` * Language: ${(s.language || 'code').toUpperCase()}\n` +
+        ` * Solved At: ${s.submitted_at ? new Date(s.submitted_at).toLocaleString() : '—'}\n` +
+        ` * Integrity: ${s.plagiarism_verdict || 'CLEAN'}\n` +
+        ` * ----------------------------------------------------- */\n\n` +
+        `${s.source_code || '// No source code recorded'}\n\n`;
+    });
+
+    const blob = new Blob([bundle], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${reg}_All_LeetCode_Solutions_${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 }
 
 // ============================================================
@@ -4933,6 +5110,7 @@ async function copyScriptAdvisorText() {
 // Attach Solved History & Advisor Dispatch listeners
 document.getElementById("downloadSolvedHistoryExcelBtn")?.addEventListener("click", downloadScriptSolvedHistoryExcel);
 document.getElementById("downloadSolvedHistoryPdfBtn")?.addEventListener("click", downloadScriptSolvedHistoryPdf);
+document.getElementById("downloadSolvedHistoryZipBtn")?.addEventListener("click", downloadScriptSolvedHistoryZip);
 
 document.getElementById("advisorDispatchButton")?.addEventListener("click", openScriptAdvisorDispatch);
 document.getElementById("homeAdvisorDispatchButton")?.addEventListener("click", openScriptAdvisorDispatch);

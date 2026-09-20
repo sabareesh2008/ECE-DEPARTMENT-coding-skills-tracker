@@ -2143,8 +2143,9 @@ public class Main {
           <p id="solvedProblemsSubtitle" style="color:var(--muted);font-size:13px;margin-top:4px;">Viewing synced solutions and anti-cheat forensics</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <button id="downloadSolvedHistoryExcelBtn" class="action-button primary" type="button" style="padding:8px 14px;font-size:12px;">📥 Download History (Excel)</button>
+          <button id="downloadSolvedHistoryExcelBtn" class="action-button primary" type="button" style="padding:8px 14px;font-size:12px;">📥 Download History &amp; Code (Excel)</button>
           <button id="downloadSolvedHistoryPdfBtn" class="action-button secondary" type="button" style="padding:8px 14px;font-size:12px;">📄 Download Portfolio (PDF)</button>
+          <button id="downloadSolvedHistoryZipBtn" class="action-button secondary" type="button" style="padding:8px 14px;font-size:12px;background:#1e293b;border:1px solid #475569;color:#e2e8f0;">📦 Download All Codes (.zip)</button>
           <button id="closeSolvedProblems" class="modal-close" type="button" aria-label="Close">×</button>
         </div>
       </div>
@@ -2249,7 +2250,10 @@ public class Main {
       <div class="code-viewer-container">
         <div class="code-viewer-topbar">
           <span id="solutionCodeLang" class="code-lang-tag">PYTHON3</span>
-          <button id="copySolutionCodeBtn" class="copy-code-btn" type="button">📋 Copy Code</button>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button id="downloadSingleSolutionCodeBtn" class="copy-code-btn" type="button" style="background:#2563eb;color:#fff;border-color:#3b82f6;">💾 Download Code</button>
+            <button id="copySolutionCodeBtn" class="copy-code-btn" type="button">📋 Copy Code</button>
+          </div>
         </div>
         <pre class="code-content-pre"><code id="solutionCodeContent">// Code will appear here</code></pre>
       </div>
@@ -2259,6 +2263,8 @@ public class Main {
   <!-- Scripts MUST stay at the end so Coding Test buttons/forms exist before JS binds events -->
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="script.js"></script>
 
 </body>
