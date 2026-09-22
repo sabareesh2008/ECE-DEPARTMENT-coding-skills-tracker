@@ -493,7 +493,7 @@
         };
 
         try {
-          const resp = await fetch(`${supabaseUrl}/rest/v1/student_leetcode_submissions`, {
+          const resp = await fetch(`${supabaseUrl}/rest/v1/student_leetcode_submissions?on_conflict=register_number,problem_slug`, {
             method: 'POST',
             headers: {
               'apikey': supabaseKey,

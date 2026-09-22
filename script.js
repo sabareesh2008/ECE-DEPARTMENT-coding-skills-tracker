@@ -4259,7 +4259,18 @@ async function openStudentSolvedProblems(reg, name, section, lcUser) {
       client.from('extension_installed_students').select('*').eq('register_number', reg).maybeSingle()
     ]);
 
-    const subs = subRes.data || [];
+    const rawSubs = subRes.data || [];
+    const seenSlugs = new Set();
+    const subs = [];
+    for (const s of rawSubs) {
+      const key = (s.problem_slug || s.problem_title || '').trim().toLowerCase();
+      if (key && !seenSlugs.has(key)) {
+        seenSlugs.add(key);
+        subs.push(s);
+      } else if (!key) {
+        subs.push(s);
+      }
+    }
     currentScriptSolvedSubmissions = subs;
 
     if (extRes.data) {
