@@ -1,378 +1,378 @@
 ﻿Overall Rank,Section Rank,Section,Register Number,Student Name,LeetCode Username,LeetCode Link,Problems Solved,Solved Today,Last 7 Days,Last 14 Days,Last 30 Days,Last 7 Days Submissions,Total Submissions,Easy,Medium,Hard,Last Problem,Last Solved,Status,Updated At
-1,1,ECE A,922525106002,AAZHIGA N,AAZHIGA,https://leetcode.com/u/AAZHIGA/,121,21,92,98,100,109,188,30,70,21,Same Tree,2026-09-22 12:31:16 IST,Success,2026-09-22 15:41:40 IST
-2,1,ECE F,922525106349,THAMEEM FARSHITHA A,Thameem_786,https://leetcode.com/u/Thameem_786/,204,0,13,21,44,20,247,76,97,31,Middle of the Linked List,2026-09-21 21:13:00 IST,Success,2026-09-22 15:41:40 IST
-3,1,ECE C,922525106153,KAVIYARASU K,kavi12d,https://leetcode.com/u/kavi12d/,175,0,0,21,40,0,193,40,104,31,Rotate Array,2026-09-15 19:19:38 IST,Success,2026-09-22 15:41:40 IST
-4,2,ECE C,922525106167,LAKSHETHA V,itz_lakshe,https://leetcode.com/u/itz_lakshe/,148,0,12,20,37,13,310,32,90,26,Recover Binary Search Tree,2026-09-21 22:42:28 IST,Success,2026-09-22 15:41:40 IST
-5,2,ECE A,922525106046,BOOMIKA T,boomikat1206,https://leetcode.com/u/boomikat1206/,73,0,3,3,37,6,119,15,43,15,Maximize the Number of Partitions After Operations,2026-09-21 20:43:24 IST,Success,2026-09-22 15:41:40 IST
-6,2,ECE F,922525106329,SRINITHE T,srinithe_1401,https://leetcode.com/u/srinithe_1401/,187,0,0,1,37,0,312,45,111,31,Shuffle the Array,2026-09-09 15:43:14 IST,Success,2026-09-22 15:41:40 IST
-7,1,ECE E,922525106256,RITHIK P,Rithik_78,https://leetcode.com/u/Rithik_78/,61,0,24,32,36,32,86,20,31,10,"Pow(x, n)",2026-09-17 10:19:12 IST,Success,2026-09-22 15:41:40 IST
-8,3,ECE A,922525106004,ABIRAMI R,abirami8072,https://leetcode.com/u/abirami8072/,95,5,13,17,34,18,168,51,32,12,Find the Index of the First Occurrence in a String,2026-09-22 12:29:58 IST,Success,2026-09-22 15:41:40 IST
-9,4,ECE A,922525106025,ARSATHA BEGAM M S,arsatha-,https://leetcode.com/u/arsatha-/,104,0,33,33,33,42,139,46,42,16,Maximize the Number of Partitions After Operations,2026-09-21 19:43:21 IST,Success,2026-09-22 15:41:40 IST
-10,3,ECE F,922525106324,SRI KANTH R,kanth2008,https://leetcode.com/u/kanth2008/,36,0,29,29,29,34,46,12,21,3,Length of Last Word,2026-09-21 16:31:46 IST,Success,2026-09-22 15:41:40 IST
-11,5,ECE A,922525106047,BOSVIYA P,BosviyaBSV,https://leetcode.com/u/BosviyaBSV/,160,5,5,11,29,6,250,83,61,16,Lexicographically Smallest Palindrome,2026-09-22 12:30:54 IST,Success,2026-09-22 15:41:40 IST
-12,6,ECE A,922525106063,DHANASRI R,Dhanasri_r,https://leetcode.com/u/Dhanasri_r/,196,3,14,21,28,20,310,50,113,33,Create Hello World Function,2026-09-22 12:27:35 IST,Success,2026-09-22 15:41:40 IST
-13,7,ECE A,922525106018,AMIRDAVARSINI K S,amirda_varsini_2007,https://leetcode.com/u/amirda_varsini_2007/,78,4,7,13,28,9,104,43,29,6,Check if the Sentence Is Pangram,2026-09-22 12:26:28 IST,Success,2026-09-22 15:41:40 IST
-14,8,ECE A,922525106001,AASHIFA SAHANAJ M,aashifasahanaj,https://leetcode.com/u/aashifasahanaj/,87,3,16,27,27,16,95,30,47,10,Isomorphic Strings,2026-09-22 12:30:05 IST,Success,2026-09-22 15:41:40 IST
-15,4,ECE F,922525106360,VASUDEVAN G,GTVASU2008,https://leetcode.com/u/GTVASU2008/,148,0,6,9,24,6,254,63,65,20,Reverse String,2026-09-21 22:34:18 IST,Success,2026-09-22 15:41:40 IST
-16,1,ECE B,922525106120,HEMAA SRI A,922525106120,https://leetcode.com/u/922525106120/,70,0,0,20,23,0,101,15,40,15,Minimum Path Sum,2026-09-13 14:13:19 IST,Success,2026-09-22 15:41:40 IST
-17,2,ECE E,922525106264,SABAREESH,sabareesh_karikalan,https://leetcode.com/u/sabareesh_karikalan/,97,0,11,13,23,30,193,83,14,0,Sum of Left Leaves,2026-09-21 18:15:34 IST,Success,2026-09-22 15:41:40 IST
-18,9,ECE A,922525106003,ABINAYA N,Abinaya7095,https://leetcode.com/u/Abinaya7095/,190,6,8,12,23,12,357,55,105,30,Reverse String,2026-09-22 12:26:49 IST,Success,2026-09-22 15:41:40 IST
-19,1,ECE D,922525106191,MANOJ KUMAR V,m____a____n____o____,https://leetcode.com/u/m____a____n____o____/,154,0,4,9,23,4,205,54,100,0,Defanging an IP Address,2026-09-20 13:12:42 IST,Success,2026-09-22 15:41:40 IST
-20,3,ECE C,922525106166,KRISH R,krish-2007,https://leetcode.com/u/krish-2007/,167,0,6,14,22,7,188,54,100,13,Check if the Sentence Is Pangram,2026-09-16 20:37:37 IST,Success,2026-09-22 15:41:40 IST
-21,4,ECE C,922525106133,JEEVADHARSHAN R R,dharshanjeeva,https://leetcode.com/u/dharshanjeeva/,92,2,2,9,22,3,164,46,35,11,Ransom Note,2026-09-22 11:56:36 IST,Success,2026-09-22 15:41:40 IST
-22,5,ECE F,922525106356,VASANTHKUMAR C,VASANTH2007,https://leetcode.com/u/VASANTH2007/,142,0,2,3,21,5,181,38,82,22,Reverse Degree of a String,2026-09-21 01:06:12 IST,Success,2026-09-22 15:41:40 IST
-23,6,ECE F,922525106346,SWETHA E,Swetha_20_1,https://leetcode.com/u/Swetha_20_1/,103,0,0,1,21,0,204,30,62,11,Largest Rectangle in Histogram,2026-09-09 15:44:21 IST,Success,2026-09-22 15:41:40 IST
-24,10,ECE A,922525106022,ANUJA S,anuja008,https://leetcode.com/u/anuja008/,212,1,20,20,20,23,231,54,122,36,Defanging an IP Address,2026-09-22 12:24:37 IST,Success,2026-09-22 15:41:40 IST
-25,7,ECE F,922525106353,THIRISHA C,thirishavsb,https://leetcode.com/u/thirishavsb/,195,2,7,7,20,12,300,68,99,28,3Sum,2026-09-22 12:13:20 IST,Success,2026-09-22 15:41:40 IST
-26,5,ECE C,922525106185,MAHALAKSHMI P,maha_lakh_20,https://leetcode.com/u/maha_lakh_20/,148,0,4,6,20,5,195,35,86,27,Sum of Distances in Tree,2026-09-17 20:49:04 IST,Success,2026-09-22 15:41:40 IST
-27,8,ECE F,922525106326,SRI VARSHAN B P,srivarshan_B_P,https://leetcode.com/u/srivarshan_B_P/,144,0,2,2,20,2,182,56,69,19,Jewels and Stones,2026-09-17 20:30:47 IST,Success,2026-09-22 15:41:40 IST
-28,6,ECE C,922525106145,KARSHANA SRI V,karshana_234,https://leetcode.com/u/karshana_234/,127,0,19,19,19,21,150,32,74,21,Valid Palindrome,2026-09-18 14:36:58 IST,Success,2026-09-22 15:41:40 IST
-29,2,ECE D,922525106251,RETHANYA S,SekarRethanya,https://leetcode.com/u/SekarRethanya/,23,0,16,16,19,18,29,19,3,1,Summary Ranges,2026-09-20 23:03:32 IST,Success,2026-09-22 15:41:40 IST
-30,11,ECE A,922525106016,AKSHAYA S,codewithakshaya77,https://leetcode.com/u/codewithakshaya77/,137,4,7,14,19,10,292,36,79,22,Check if the Sentence Is Pangram,2026-09-22 12:24:57 IST,Success,2026-09-22 15:41:40 IST
-31,2,ECE B,922525106065,DHANUSHRI D,922525106065,https://leetcode.com/u/922525106065/,147,0,0,9,19,0,252,54,71,22,Sum of Left Leaves,2026-09-14 21:50:21 IST,Success,2026-09-22 15:41:40 IST
-32,3,ECE B,922525106071,DHARANI V,922525106071,https://leetcode.com/u/922525106071/,189,0,2,8,19,3,352,50,107,32,Validate Binary Search Tree,2026-09-17 20:31:47 IST,Success,2026-09-22 15:41:40 IST
-33,12,ECE A,922525106024,ANUSYA B,ANUSYA_30,https://leetcode.com/u/ANUSYA_30/,75,0,7,13,18,7,103,37,33,5,Minimum Depth of Binary Tree,2026-09-19 12:30:28 IST,Success,2026-09-22 15:41:40 IST
-34,4,ECE B,922525106095,GOMATHI R,gomathi_0709,https://leetcode.com/u/gomathi_0709/,88,0,6,10,18,7,133,25,47,16,Search a 2D Matrix,2026-09-17 21:29:59 IST,Success,2026-09-22 15:41:40 IST
-35,5,ECE B,922525106108,GURUSARAN R,922525106108,https://leetcode.com/u/922525106108/,138,0,1,7,18,2,217,52,79,7,Container With Most Water,2026-09-17 23:31:01 IST,Success,2026-09-22 15:41:40 IST
-36,6,ECE B,922525106087,DIVYADHARSHINI G,922525106087,https://leetcode.com/u/922525106087/,95,0,1,4,18,3,264,44,40,11,Remove Element,2026-09-20 21:46:48 IST,Success,2026-09-22 15:41:40 IST
-37,7,ECE C,922525106140,KANISHKA A R,26kanishka,https://leetcode.com/u/26kanishka/,145,1,5,11,17,6,174,51,74,20,Ransom Note,2026-09-22 11:58:40 IST,Success,2026-09-22 15:41:40 IST
-38,13,ECE A,922525106009,AISHWARYA G,codewithaish,https://leetcode.com/u/codewithaish/,162,5,5,7,17,5,211,43,92,27,Middle of the Linked List,2026-09-22 12:27:45 IST,Success,2026-09-22 15:41:40 IST
-39,9,ECE F,922525106316,SIVARANJAN M P,SIVARANJAN_MP,https://leetcode.com/u/SIVARANJAN_MP/,129,0,2,6,17,3,305,86,41,2,Sum of Unique Elements,2026-09-21 15:20:41 IST,Success,2026-09-22 15:41:40 IST
-40,14,ECE A,922525106054,DAKSHINYA R,Dakshinya555,https://leetcode.com/u/Dakshinya555/,42,3,3,3,17,3,58,28,11,3,Middle of the Linked List,2026-09-22 12:27:11 IST,Success,2026-09-22 15:41:40 IST
-41,7,ECE B,922525106064,DHANIKA S,922525106064,https://leetcode.com/u/922525106064/,226,0,2,11,16,3,273,83,114,29,Is Subsequence,2026-09-17 15:03:38 IST,Success,2026-09-22 15:41:40 IST
-42,8,ECE B,922525106119,HAVISHMATHI S,922525106119,https://leetcode.com/u/922525106119/,30,0,0,10,16,0,59,26,3,1,Roman to Integer,2026-09-10 08:38:07 IST,Success,2026-09-22 15:41:40 IST
-43,9,ECE B,922525106100,GOWRIKA K P,922525106100,https://leetcode.com/u/922525106100/,117,0,0,0,16,0,208,51,64,2,Richest Customer Wealth,2026-09-08 22:45:43 IST,Success,2026-09-22 15:41:40 IST
-44,10,ECE B,922525106069,DHARANESH S,922525106069,https://leetcode.com/u/922525106069/,80,0,0,0,16,0,111,9,52,19,String to Integer (atoi),2026-08-26 21:31:40 IST,Success,2026-09-22 15:41:40 IST
-45,8,ECE C,922525106147,KATHIR E,kathir__21,https://leetcode.com/u/kathir__21/,29,0,13,15,15,48,87,7,19,3,Unique Paths,2026-09-21 21:17:05 IST,Success,2026-09-22 15:41:40 IST
-46,15,ECE A,922525106035,BALAJI C,Balajichandrasekaran,https://leetcode.com/u/Balajichandrasekaran/,121,1,3,9,15,6,142,29,67,25,Defanging an IP Address,2026-09-22 12:09:48 IST,Success,2026-09-22 15:41:40 IST
-47,11,ECE B,922525106085,DIVYA ROJA R,922525106085,https://leetcode.com/u/922525106085/,66,0,1,2,15,5,188,29,26,11,Merge Strings Alternately,2026-09-19 20:45:41 IST,Success,2026-09-22 15:41:40 IST
-48,16,ECE A,922525106059,DEJASRI M,dejasri,https://leetcode.com/u/dejasri/,115,3,13,14,14,19,136,31,62,22,First Unique Character in a String,2026-09-22 12:30:41 IST,Success,2026-09-22 15:41:40 IST
-49,10,ECE F,922525106327,SRINATH V,V_SRINATH,https://leetcode.com/u/V_SRINATH/,102,0,3,10,14,3,111,23,59,20,Find Two Non-overlapping Sub-arrays Each With Target Sum,2026-09-17 22:20:45 IST,Success,2026-09-22 15:41:40 IST
-50,9,ECE C,922525106155,KAYALVIZHI S,27kayalvizhi,https://leetcode.com/u/27kayalvizhi/,125,2,4,8,14,6,152,43,63,19,Ransom Note,2026-09-22 12:10:38 IST,Success,2026-09-22 15:41:40 IST
-51,11,ECE F,922525106345,SWATHI S,_swathi_3366,https://leetcode.com/u/_swathi_3366/,144,0,4,7,14,4,186,49,73,22,Robot Return to Origin,2026-09-16 08:06:29 IST,Success,2026-09-22 15:41:40 IST
-52,12,ECE B,922525106121,HEMAVARSHINI S,922525106121,https://leetcode.com/u/922525106121/,100,0,2,6,14,4,146,42,46,12,To Lower Case,2026-09-21 20:18:45 IST,Success,2026-09-22 15:41:40 IST
-53,3,ECE E,922525106290,SARIKA M P,sarika_5408,https://leetcode.com/u/sarika_5408/,141,0,5,5,14,7,163,71,58,12,Reverse String,2026-09-16 12:31:44 IST,Success,2026-09-22 15:41:40 IST
-54,4,ECE E,922525106278,SANMATHI R,sanmathi06,https://leetcode.com/u/sanmathi06/,116,0,4,5,14,7,158,46,59,11,Find the Index of the First Occurrence in a String,2026-09-21 19:21:19 IST,Success,2026-09-22 15:41:40 IST
-55,12,ECE F,922525106337,SUGIDHARSHINI T,Sugi_07,https://leetcode.com/u/Sugi_07/,115,0,2,4,14,3,178,63,49,3,Jewels and Stones,2026-09-16 16:35:38 IST,Success,2026-09-22 15:41:40 IST
-56,10,ECE C,922525106134,JEEVANAA S,jeevanaa_174_,https://leetcode.com/u/jeevanaa_174_/,178,0,0,3,14,0,210,46,102,30,To Lower Case,2026-09-12 10:41:35 IST,Success,2026-09-22 15:41:40 IST
-57,13,ECE F,922525106352,THIRINESH KUMAR S,THIRINESHKUMAR0608,https://leetcode.com/u/THIRINESHKUMAR0608/,134,0,0,0,14,0,168,40,72,22,Reverse String,2026-09-01 19:24:34 IST,Success,2026-09-22 15:41:40 IST
-58,3,ECE D,922525106245,RANJITH K,ranjithkannan,https://leetcode.com/u/ranjithkannan/,185,0,7,13,13,8,232,56,96,33,Same Tree,2026-09-21 22:29:24 IST,Success,2026-09-22 15:41:40 IST
-59,5,ECE E,922525106311,SIVA PRAKASH M,sivaprakash_0406,https://leetcode.com/u/sivaprakash_0406/,104,0,6,9,13,13,214,48,36,20,Minimize String Length,2026-09-17 09:55:44 IST,Success,2026-09-22 15:41:40 IST
-60,6,ECE E,922525106313,SIVAGNANAM M,sivagnanam3344,https://leetcode.com/u/sivagnanam3344/,78,0,6,9,13,9,122,46,25,7,Minimize String Length,2026-09-17 09:55:21 IST,Success,2026-09-22 15:41:40 IST
-61,13,ECE B,922525106125,JAI GANESH I,Jai_Ganesh_I,https://leetcode.com/u/Jai_Ganesh_I/,37,0,0,4,13,0,101,31,6,0,Shuffle the Array,2026-09-11 17:53:21 IST,Success,2026-09-22 15:41:40 IST
-62,11,ECE C,922525106183,MAHALAKSHMI B,mahalakshmi182025,https://leetcode.com/u/mahalakshmi182025/,103,3,3,3,13,4,134,32,53,18,To Lower Case,2026-09-22 12:29:03 IST,Success,2026-09-22 15:41:40 IST
-63,14,ECE B,922525106099,GOVARTHAN K S,922525106099,https://leetcode.com/u/922525106099/,90,0,0,3,13,0,118,36,44,10,Single Number II,2026-09-13 13:50:10 IST,Success,2026-09-22 15:41:40 IST
-64,14,ECE F,922525106344,SWATHI M,Swathimanivel_1234,https://leetcode.com/u/Swathimanivel_1234/,138,0,0,0,13,0,204,34,79,25,Clone Graph,2026-09-07 20:29:09 IST,Success,2026-09-22 15:41:40 IST
-65,12,ECE C,922525106148,KAVIMALAR A,kavimalar08,https://leetcode.com/u/kavimalar08/,114,0,0,0,13,0,172,26,69,19,Pascal's Triangle,2026-09-07 08:02:11 IST,Success,2026-09-22 15:41:40 IST
-66,17,ECE A,922525106007,AGATHEESWARAN K,agatheeswarank,https://leetcode.com/u/agatheeswarank/,99,0,8,12,12,13,159,46,43,10,Merge Sorted Array,2026-09-19 17:27:53 IST,Success,2026-09-22 15:41:40 IST
-67,15,ECE F,922525106377,YAZHINI V,YAZH_RUBA,https://leetcode.com/u/YAZH_RUBA/,146,0,4,12,12,5,199,51,73,22,Defanging an IP Address,2026-09-21 19:01:34 IST,Success,2026-09-22 15:41:40 IST
-68,18,ECE A,922525106048,BRINDHA S,BrindhaSakthi,https://leetcode.com/u/BrindhaSakthi/,146,4,6,10,12,10,201,54,82,10,Check if the Sentence Is Pangram,2026-09-22 12:24:45 IST,Success,2026-09-22 15:41:40 IST
-69,13,ECE C,922525106177,MADELIN JENITA M,jenita0206,https://leetcode.com/u/jenita0206/,126,3,8,9,12,8,133,49,72,5,Ransom Note,2026-09-22 12:00:07 IST,Success,2026-09-22 15:41:40 IST
-70,7,ECE E,922525106315,SIVANESH G,GSIVANESH,https://leetcode.com/u/GSIVANESH/,35,0,5,7,12,11,48,25,7,3,Minimize String Length,2026-09-17 09:55:36 IST,Success,2026-09-22 15:41:40 IST
-71,14,ECE C,922525106179,MADHANKUMAR S,Madhankumar861053,https://leetcode.com/u/Madhankumar861053/,156,0,0,6,12,1,228,71,68,17,Reverse String,2026-09-22 10:41:26 IST,Success,2026-09-22 15:41:40 IST
-72,15,ECE C,922525106189,MANISHA D,manishaa_20,https://leetcode.com/u/manishaa_20/,124,4,4,5,12,7,269,33,71,20,Ransom Note,2026-09-22 11:51:45 IST,Success,2026-09-22 15:41:40 IST
-73,15,ECE B,922525106112,HARINI S,922525106112,https://leetcode.com/u/922525106112/,111,0,0,4,12,0,248,65,40,6,Shuffle the Array,2026-09-11 21:25:47 IST,Success,2026-09-22 15:41:40 IST
-74,16,ECE F,922525106318,SIVASUBRAMANI A,AK_Siva,https://leetcode.com/u/AK_Siva/,146,0,2,2,12,2,168,55,73,18,Jewels and Stones,2026-09-17 13:34:38 IST,Success,2026-09-22 15:41:40 IST
-75,16,ECE C,922525106154,KAVYA A,itzz__kavya02,https://leetcode.com/u/itzz__kavya02/,125,1,1,1,12,2,316,38,66,21,Reverse String,2026-09-22 10:41:56 IST,Success,2026-09-22 15:41:40 IST
-76,19,ECE A,922525106015,AKSHARA KR,Akshara015,https://leetcode.com/u/Akshara015/,71,2,5,8,11,6,104,20,40,11,Defanging an IP Address,2026-09-22 12:21:20 IST,Success,2026-09-22 15:41:40 IST
-77,20,ECE A,922525106031,ARUNPRASANTH T,arunprasanth6435,https://leetcode.com/u/arunprasanth6435/,138,1,1,7,11,1,165,40,77,21,Defanging an IP Address,2026-09-22 12:21:01 IST,Success,2026-09-22 15:41:40 IST
-78,8,ECE E,922525106259,ROHITH V,RohithrohiV,https://leetcode.com/u/RohithrohiV/,99,0,3,6,11,4,140,44,46,9,First Unique Character in a String,2026-09-16 12:22:50 IST,Success,2026-09-22 15:41:40 IST
-79,9,ECE E,922525106291,SARVESWARAN R,sarvesh312008,https://leetcode.com/u/sarvesh312008/,127,0,5,5,11,6,201,43,63,21,Reverse String,2026-09-17 09:38:57 IST,Success,2026-09-22 15:41:40 IST
-80,17,ECE C,922525106169,LINGESHWARAN K,LING2007,https://leetcode.com/u/LING2007/,114,0,1,5,11,9,190,47,51,16,Valid Anagram,2026-09-21 23:06:15 IST,Success,2026-09-22 15:41:40 IST
-81,18,ECE C,922525106182,MADHUP KISHOR G S,Madhupkishor_20,https://leetcode.com/u/Madhupkishor_20/,221,1,3,4,11,5,252,77,144,0,Reverse String,2026-09-22 10:41:56 IST,Success,2026-09-22 15:41:40 IST
-82,17,ECE F,922525106375,YAZHINI M,yazhini2007,https://leetcode.com/u/yazhini2007/,72,0,1,3,11,5,135,25,34,13,Binary Tree Level Order Traversal,2026-09-16 16:26:32 IST,Success,2026-09-22 15:41:40 IST
-83,18,ECE F,922525106328,SRINIRANJAN S,SRINIRANJAN2008,https://leetcode.com/u/SRINIRANJAN2008/,126,0,1,2,11,1,140,39,68,19,To Lower Case,2026-09-16 16:19:46 IST,Success,2026-09-22 15:41:40 IST
-84,19,ECE F,922525106370,VISHNUHARAN V S,Vishnuharan082007,https://leetcode.com/u/Vishnuharan082007/,72,0,0,0,11,0,93,47,22,3,Path Sum,2026-09-05 14:07:39 IST,Success,2026-09-22 15:41:40 IST
-85,21,ECE A,922525106058,DEEKSHA K,Deeksha0721,https://leetcode.com/u/Deeksha0721/,37,3,3,7,10,4,82,22,12,3,Valid Anagram,2026-09-22 12:19:49 IST,Success,2026-09-22 15:41:40 IST
-86,19,ECE C,922525106181,MADHUMITHA B,Madhumitha42,https://leetcode.com/u/Madhumitha42/,191,3,4,6,10,4,238,59,102,30,Contains Duplicate,2026-09-22 12:14:23 IST,Success,2026-09-22 15:41:40 IST
-87,10,ECE E,922525106289,SARAVANAN S,Saravanan_7525,https://leetcode.com/u/Saravanan_7525/,116,0,4,6,10,7,136,88,23,5,First Unique Character in a String,2026-09-16 12:22:57 IST,Success,2026-09-22 15:41:40 IST
-88,20,ECE F,922525106348,THAMARAI SELVI D,thamarai_04,https://leetcode.com/u/thamarai_04/,181,0,2,6,10,2,265,103,67,11,Jewels and Stones,2026-09-17 21:33:32 IST,Success,2026-09-22 15:41:40 IST
-89,21,ECE F,922525106374,YASWANTH V,yaswanth_2008,https://leetcode.com/u/yaswanth_2008/,127,0,2,6,10,2,150,39,69,19,Jewels and Stones,2026-09-16 16:39:52 IST,Success,2026-09-22 15:41:40 IST
-90,11,ECE E,922525106268,SAKTHI S,Sakthisaro08,https://leetcode.com/u/Sakthisaro08/,126,0,1,6,10,1,151,47,60,19,Jewels and Stones,2026-09-16 11:33:16 IST,Success,2026-09-22 15:41:40 IST
-91,12,ECE E,922525106302,SHAHANA S,shahana_pandiraj04,https://leetcode.com/u/shahana_pandiraj04/,127,0,3,5,10,6,199,45,63,19,Reverse String,2026-09-16 23:50:25 IST,Success,2026-09-22 15:41:40 IST
-92,22,ECE F,922525106334,SUBIKA T,subika1112,https://leetcode.com/u/subika1112/,103,0,3,5,10,3,125,27,58,18,Same Tree,2026-09-17 14:13:04 IST,Success,2026-09-22 15:41:40 IST
-93,13,ECE E,922525106288,SARAVANAN K,saravanan__k__,https://leetcode.com/u/saravanan__k__/,79,0,3,5,10,3,164,45,25,9,First Unique Character in a String,2026-09-17 09:55:40 IST,Success,2026-09-22 15:41:40 IST
-94,14,ECE E,922525106287,SARAVANAN K,X01u2FNNX4,https://leetcode.com/u/X01u2FNNX4/,29,0,3,5,10,3,35,20,7,2,Reverse String,2026-09-17 09:46:12 IST,Success,2026-09-22 15:41:40 IST
-95,15,ECE E,922525106312,SIVADHARSHINI D,dharshinideivasigamani,https://leetcode.com/u/dharshinideivasigamani/,121,0,2,5,10,2,182,50,63,8,Reverse String,2026-09-17 09:38:43 IST,Success,2026-09-22 15:41:40 IST
-96,23,ECE F,922525106323,SRI HEERA J,sriheera03,https://leetcode.com/u/sriheera03/,138,0,1,3,10,1,224,45,78,15,To Lower Case,2026-09-16 16:17:55 IST,Success,2026-09-22 15:41:40 IST
-97,24,ECE F,922525106320,SOBIKA R,_sobika_R,https://leetcode.com/u/_sobika_R/,120,0,2,2,10,3,204,47,64,9,To Lower Case,2026-09-16 16:19:25 IST,Success,2026-09-22 15:41:40 IST
-98,16,ECE E,922525106266,SAHANA.V,Sahanavijayakumar_0033,https://leetcode.com/u/Sahanavijayakumar_0033/,22,0,2,2,10,4,31,20,2,0,Length of Last Word,2026-09-21 22:32:04 IST,Success,2026-09-22 15:41:40 IST
-99,16,ECE B,922525106076,DHARSINI V S,vsdharsini,https://leetcode.com/u/vsdharsini/,21,0,0,1,10,0,42,9,10,2,Longest Common Prefix,2026-09-10 23:01:47 IST,Success,2026-09-22 15:41:40 IST
-100,22,ECE A,922525106029,R ARUN PRASATH,Arunravi1810,https://leetcode.com/u/Arunravi1810/,130,0,8,8,9,9,245,29,80,21,Count Primes,2026-09-18 07:10:16 IST,Success,2026-09-22 15:41:40 IST
-101,20,ECE C,922525106142,KANITHRA R,kanithraakila,https://leetcode.com/u/kanithraakila/,119,4,4,7,9,4,143,36,66,17,Reverse Words in a String,2026-09-22 12:17:04 IST,Success,2026-09-22 15:41:40 IST
-102,23,ECE A,922525106060,DESMA SHALINI K,desmashalini,https://leetcode.com/u/desmashalini/,113,1,3,7,9,8,149,27,66,20,Check if the Sentence Is Pangram,2026-09-22 12:16:47 IST,Success,2026-09-22 15:41:40 IST
-103,21,ECE C,922525106163,KOWSHIKA B,Kowshika08,https://leetcode.com/u/Kowshika08/,130,0,0,7,9,0,273,32,76,22,Gas Station,2026-09-15 09:04:24 IST,Success,2026-09-22 15:41:40 IST
-104,17,ECE E,922525106379,ARUN KUMAR,arunkumar1004,https://leetcode.com/u/arunkumar1004/,12,0,3,6,9,3,14,11,1,0,Reverse String,2026-09-17 09:34:40 IST,Success,2026-09-22 15:41:40 IST
-105,18,ECE E,922525106279,SANTHIYA T,santhiya0202,https://leetcode.com/u/santhiya0202/,60,0,4,5,9,5,79,37,20,3,Reverse String,2026-09-16 12:29:02 IST,Success,2026-09-22 15:41:40 IST
-106,19,ECE E,922525106269,SAKTHIVEL. M,sakthivel23116,https://leetcode.com/u/sakthivel23116/,118,0,4,4,9,8,198,37,62,19,First Unique Character in a String,2026-09-16 12:29:03 IST,Success,2026-09-22 15:41:40 IST
-107,20,ECE E,922525106265,SABARIVASAN P,SabarivasanP,https://leetcode.com/u/SabarivasanP/,157,0,2,4,9,9,279,55,79,23,First Unique Character in a String,2026-09-17 10:19:27 IST,Success,2026-09-22 15:41:40 IST
-108,25,ECE F,922525106365,VIGNESHWAR U,VIGNESHWAR0221,https://leetcode.com/u/VIGNESHWAR0221/,134,0,2,4,9,2,189,48,67,19,Jewels and Stones,2026-09-16 16:39:05 IST,Success,2026-09-22 15:41:40 IST
-109,22,ECE C,922525106150,KAVINKUMAR M,kavinleet,https://leetcode.com/u/kavinleet/,96,3,3,3,9,3,118,29,50,17,Ransom Note,2026-09-22 11:58:37 IST,Success,2026-09-22 15:41:40 IST
-110,26,ECE F,922525106371,VISHNUPRIYA S,vishnupriyamaran,https://leetcode.com/u/vishnupriyamaran/,120,0,0,3,9,0,160,39,64,17,Contains Duplicate,2026-09-09 16:19:41 IST,Success,2026-09-22 15:41:40 IST
-111,23,ECE C,922525106176,LOKRAJI R,LOKRAJI6793,https://leetcode.com/u/LOKRAJI6793/,121,0,0,1,9,0,162,57,54,10,Jewels and Stones,2026-09-12 10:32:45 IST,Success,2026-09-22 15:41:40 IST
-112,17,ECE B,922525106068,DHARANEESH K,dharaneeshk,https://leetcode.com/u/dharaneeshk/,120,0,0,1,9,2,164,41,63,16,Combination Sum,2026-09-18 22:34:25 IST,Success,2026-09-22 15:41:40 IST
-113,24,ECE C,922525106168,LAVANYA V,lavilavanya,https://leetcode.com/u/lavilavanya/,119,8,8,8,8,8,169,33,67,19,Binary Tree Paths,2026-09-22 12:17:20 IST,Success,2026-09-22 15:41:40 IST
-114,24,ECE A,922525106023,ANUSRI R,Anusri_2008,https://leetcode.com/u/Anusri_2008/,83,4,6,6,8,11,114,51,32,0,Length of Last Word,2026-09-22 12:36:24 IST,Success,2026-09-22 15:41:40 IST
-115,21,ECE E,922525106380,HARJIT VASAN SV,Harjit_Vasan,https://leetcode.com/u/Harjit_Vasan/,12,0,5,6,8,8,27,10,2,0,Detect Capital,2026-09-16 11:50:06 IST,Success,2026-09-22 15:41:40 IST
-116,25,ECE A,922525106010,AJAIRAJAN SR,UJw4zUNnJJ,https://leetcode.com/u/UJw4zUNnJJ/,27,1,4,4,8,12,46,11,14,2,Find the Index of the First Occurrence in a String,2026-09-22 12:25:18 IST,Success,2026-09-22 15:41:40 IST
-117,27,ECE F,922525106350,THARANISH R,THARANISH2008,https://leetcode.com/u/THARANISH2008/,131,0,1,3,8,1,168,43,71,17,To Lower Case,2026-09-16 16:36:42 IST,Success,2026-09-22 15:41:40 IST
-118,18,ECE B,922525106090,ELAKKIYA N,922525106090,https://leetcode.com/u/922525106090/,63,0,2,2,8,4,123,20,40,3,Richest Customer Wealth,2026-09-21 21:11:49 IST,Success,2026-09-22 15:41:40 IST
-119,22,ECE E,922525106307,SHIVANI B,shivani208,https://leetcode.com/u/shivani208/,78,0,1,2,8,2,115,33,39,6,Jewels and Stones,2026-09-16 11:43:20 IST,Success,2026-09-22 15:41:40 IST
-120,25,ECE C,922525106156,KEERTHANA S,keerthana_19selvam,https://leetcode.com/u/keerthana_19selvam/,102,0,0,2,8,0,154,42,57,3,Two Sum,2026-09-13 08:42:54 IST,Success,2026-09-22 15:41:40 IST
-121,28,ECE F,922525106341,SURYA PRABHU S,SURYA_FOUNDER,https://leetcode.com/u/SURYA_FOUNDER/,78,0,0,2,8,0,91,26,38,14,Shuffle the Array,2026-09-09 15:40:13 IST,Success,2026-09-22 15:41:40 IST
-122,26,ECE A,922525106014,AKASH.R,AkashRajaram,https://leetcode.com/u/AkashRajaram/,98,1,1,1,8,1,120,47,45,6,Defanging an IP Address,2026-09-22 12:23:28 IST,Success,2026-09-22 15:41:40 IST
-123,23,ECE E,922525106303,SHANTHINI C,ShanthiniChelladurai,https://leetcode.com/u/ShanthiniChelladurai/,116,0,0,0,8,0,135,21,73,22,Remove Duplicates from Sorted List II,2026-08-24 11:55:43 IST,Success,2026-09-22 15:41:40 IST
-124,27,ECE A,922525106040,BHARANIDHARAN S,Bharanidharan_2007,https://leetcode.com/u/Bharanidharan_2007/,51,7,7,7,7,7,100,38,9,4,Valid Palindrome,2026-09-22 12:31:12 IST,Success,2026-09-22 15:41:40 IST
-125,26,ECE C,922525106178,MADHAN VELU G,madhan_1234,https://leetcode.com/u/madhan_1234/,150,1,7,7,7,9,183,36,87,27,Detect Capital,2026-09-22 09:59:50 IST,Success,2026-09-22 15:41:40 IST
-126,28,ECE A,922525106013,AJITH KUMAR M,ajit_kumar_23,https://leetcode.com/u/ajit_kumar_23/,168,4,4,6,7,6,428,54,91,23,Populating Next Right Pointers in Each Node II,2026-09-22 12:17:10 IST,Success,2026-09-22 15:41:40 IST
-127,29,ECE A,922525106039,BENOV NAVIN V,Benov_18,https://leetcode.com/u/Benov_18/,60,0,5,5,7,9,95,23,27,10,Cheapest Flights Within K Stops,2026-09-17 20:28:02 IST,Success,2026-09-22 15:41:40 IST
-128,27,ECE C,922525106130,JAYASAKTHI V,jayasakthi_25,https://leetcode.com/u/jayasakthi_25/,111,2,2,5,7,3,133,33,60,18,Ransom Note,2026-09-22 11:58:00 IST,Success,2026-09-22 15:41:40 IST
-129,24,ECE E,922525106277,SANJEVI P,sanjevi007,https://leetcode.com/u/sanjevi007/,34,0,3,3,7,4,68,22,11,1,First Unique Character in a String,2026-09-16 12:24:17 IST,Success,2026-09-22 15:41:40 IST
-130,28,ECE C,922525106160,KOHUL V,kohul_v,https://leetcode.com/u/kohul_v/,108,2,2,3,7,2,122,31,57,20,Reverse String,2026-09-22 10:42:25 IST,Success,2026-09-22 15:41:40 IST
-131,29,ECE C,922525106161,KOWSHIK M,kowshikm23,https://leetcode.com/u/kowshikm23/,91,1,1,3,7,1,141,46,33,12,Find X Value of Array II,2026-09-22 11:59:31 IST,Success,2026-09-22 15:41:40 IST
-132,25,ECE E,922525106285,SANTHOSH V,santhosh8760,https://leetcode.com/u/santhosh8760/,64,0,2,2,7,4,113,33,24,7,Detect Capital,2026-09-16 12:02:48 IST,Success,2026-09-22 15:41:40 IST
-133,30,ECE C,922525106158,KIRUTHIKA S,kiruthika_selvanathan05092007,https://leetcode.com/u/kiruthika_selvanathan05092007/,131,0,0,2,7,0,268,40,72,19,Jewels and Stones,2026-09-12 10:28:22 IST,Success,2026-09-22 15:41:40 IST
-134,29,ECE F,922525106378,YOKESWARAN S,syokeswaran,https://leetcode.com/u/syokeswaran/,123,0,0,2,7,1,171,40,64,19,Same Tree,2026-09-21 23:02:44 IST,Success,2026-09-22 15:41:40 IST
-135,26,ECE E,922525106260,ROOBAGAPRIYA R,Roobagapriya,https://leetcode.com/u/Roobagapriya/,69,0,1,1,7,2,81,27,33,9,Jewels and Stones,2026-09-16 11:43:40 IST,Success,2026-09-22 15:41:40 IST
-136,27,ECE E,922525106284,SANTHOSH S,santhosh2407,https://leetcode.com/u/santhosh2407/,138,0,0,1,7,0,161,42,74,22,How Many Numbers Are Smaller Than the Current Number,2026-09-09 11:20:52 IST,Success,2026-09-22 15:41:40 IST
-137,31,ECE C,922525106188,MALINI S,MaliniSenthil,https://leetcode.com/u/MaliniSenthil/,128,0,0,0,7,0,163,46,71,11,Running Sum of 1d Array,2026-09-05 23:23:47 IST,Success,2026-09-22 15:41:40 IST
-138,32,ECE C,922525106136,JOSHITHA KANNAN SUDHA,Joshi_666,https://leetcode.com/u/Joshi_666/,113,0,0,0,7,0,213,32,62,19,Binary Search Tree Iterator,2026-09-04 19:12:56 IST,Success,2026-09-22 15:41:40 IST
-139,33,ECE C,922525106173,LOGESH H,logesh2008,https://leetcode.com/u/logesh2008/,106,0,6,6,6,7,132,39,49,18,Valid Anagram,2026-09-20 15:16:44 IST,Success,2026-09-22 15:41:40 IST
-140,4,ECE D,922525106207,NANDHANA R,Nandhu_4,https://leetcode.com/u/Nandhu_4/,9,0,6,6,6,10,18,4,5,0,Longest Common Prefix,2026-09-18 19:31:22 IST,Success,2026-09-22 15:41:40 IST
-141,5,ECE D,922525106229,PRANESH Y,Pranesh_Y,https://leetcode.com/u/Pranesh_Y/,16,0,3,6,6,8,27,12,3,1,Missing Number,2026-09-18 20:33:42 IST,Success,2026-09-22 15:41:40 IST
-142,19,ECE B,922525106079,DHINAKAR A,922525106079,https://leetcode.com/u/922525106079/,118,0,0,6,6,0,137,90,22,6,How Many Numbers Are Smaller Than the Current Number,2026-09-13 20:52:57 IST,Success,2026-09-22 15:41:40 IST
-143,30,ECE A,922525106008,AHELESH G S,ahelesh_10_,https://leetcode.com/u/ahelesh_10_/,58,0,0,6,6,0,65,11,35,12,Unique 3-Digit Even Numbers,2026-09-11 19:28:20 IST,Success,2026-09-22 15:41:40 IST
-144,30,ECE F,922525106359,VASANTHKUMAR R,VasanthKumar008,https://leetcode.com/u/VasanthKumar008/,104,1,5,5,6,13,165,46,44,14,Isomorphic Strings,2026-09-22 07:06:48 IST,Success,2026-09-22 15:41:40 IST
-145,20,ECE B,922525106101,GOWRISANKAR S,922525106101,https://leetcode.com/u/922525106101/,107,0,0,4,6,0,165,29,60,18,Check if Matrix Is X-Matrix,2026-09-10 22:20:13 IST,Success,2026-09-22 15:41:40 IST
-146,34,ECE C,922525106186,MAHIBALAN .A,mahi20_,https://leetcode.com/u/mahi20_/,165,1,1,3,6,10,251,42,94,29,Ransom Note,2026-09-22 12:15:29 IST,Success,2026-09-22 15:41:40 IST
-147,31,ECE F,922525106325,SRI SASTIKA G,Srisastika_1401,https://leetcode.com/u/Srisastika_1401/,124,0,1,3,6,1,141,37,68,19,To Lower Case,2026-09-16 16:18:34 IST,Success,2026-09-22 15:41:40 IST
-148,35,ECE C,922525106139,KAMALINI G,_kamalini_,https://leetcode.com/u/_kamalini_/,106,0,0,2,6,0,122,36,52,18,To Lower Case,2026-09-12 10:46:15 IST,Success,2026-09-22 15:41:40 IST
-149,28,ECE E,922525106282,SANTHOSH PRIYAN S,8925787430,https://leetcode.com/u/8925787430/,106,0,0,1,6,0,170,30,56,20,Shuffle the Array,2026-09-09 11:33:15 IST,Success,2026-09-22 15:41:40 IST
-150,29,ECE E,922525106306,SHARUKESH,sharukesh2008,https://leetcode.com/u/sharukesh2008/,42,0,0,1,6,0,62,33,8,1,Shuffle the Array,2026-09-10 23:12:19 IST,Success,2026-09-22 15:41:40 IST
-151,36,ECE C,922525106180,MADHUDHARA P,madhudhara,https://leetcode.com/u/madhudhara/,112,0,0,0,6,0,134,10,96,6,Regular Expression Matching,2026-09-06 08:14:36 IST,Success,2026-09-22 15:41:40 IST
-152,32,ECE F,922525106330,SRINITHI S,Srinithi24_,https://leetcode.com/u/Srinithi24_/,77,0,0,0,6,0,118,56,20,1,Transpose Matrix,2026-09-07 16:00:41 IST,Success,2026-09-22 15:41:40 IST
-153,37,ECE C,922525106138,JOTHISHA K S,Jothi-,https://leetcode.com/u/Jothi-/,113,0,5,5,5,6,161,27,67,19,Minimum Depth of Binary Tree,2026-09-20 20:12:11 IST,Success,2026-09-22 15:41:40 IST
-154,30,ECE E,922525106280,SANTHOSH D,santhosh7811,https://leetcode.com/u/santhosh7811/,114,0,4,5,5,12,150,31,62,21,Middle of the Linked List,2026-09-21 12:30:33 IST,Success,2026-09-22 15:41:40 IST
-155,33,ECE F,922525106357,VASANTH S,_vasanth_s_,https://leetcode.com/u/_vasanth_s_/,67,0,2,5,5,3,126,66,1,0,Jewels and Stones,2026-09-18 11:49:38 IST,Success,2026-09-22 15:41:40 IST
-156,38,ECE C,922525106171,LOGASRI.A,Loga07,https://leetcode.com/u/Loga07/,208,0,2,3,5,2,256,87,96,25,Maximum Gap,2026-09-20 10:06:34 IST,Success,2026-09-22 15:41:40 IST
-157,31,ECE E,922525106381,LOHITH T S,LOHITH1206,https://leetcode.com/u/LOHITH1206/,7,0,2,3,5,2,14,6,1,0,First Unique Character in a String,2026-09-16 12:26:01 IST,Success,2026-09-22 15:41:40 IST
-158,39,ECE C,922525106152,KAVIPRIYA R,KAVI_RAVI,https://leetcode.com/u/KAVI_RAVI/,64,2,2,2,5,2,75,22,29,13,Ransom Note,2026-09-22 12:04:12 IST,Success,2026-09-22 15:41:40 IST
-159,32,ECE E,922525106298,SELVA RAGAVAN,Selvax07,https://leetcode.com/u/Selvax07/,7,0,2,2,5,2,9,7,0,0,Detect Capital,2026-09-16 12:05:25 IST,Success,2026-09-22 15:41:40 IST
-160,34,ECE F,922525106366,VIJAYARAGAVAN R,vijayaragavan1216,https://leetcode.com/u/vijayaragavan1216/,115,0,1,2,5,1,172,32,63,20,To Lower Case,2026-09-16 16:17:25 IST,Success,2026-09-22 15:41:40 IST
-161,40,ECE C,922525106170,LOGADHARSHINI T,LogadharshiniT,https://leetcode.com/u/LogadharshiniT/,134,0,0,2,5,0,216,47,68,19,To Lower Case,2026-09-12 10:46:22 IST,Success,2026-09-22 15:41:40 IST
-162,31,ECE A,922525106052,CHINMAYASRI K,922525106052,https://leetcode.com/u/922525106052/,64,1,1,1,5,7,126,21,35,8,Find the Index of the First Occurrence in a String,2026-09-22 12:21:28 IST,Success,2026-09-22 15:41:40 IST
-163,33,ECE E,922525106297,SELVAPRAGADEESH S,Selvapragadeesh,https://leetcode.com/u/Selvapragadeesh/,75,0,1,1,5,1,115,50,25,0,Detect Capital,2026-09-16 12:09:55 IST,Success,2026-09-22 15:41:40 IST
-164,34,ECE E,922525106273,SANJAY P,sanjay00675,https://leetcode.com/u/sanjay00675/,39,0,0,1,5,0,73,23,15,1,Contains Duplicate,2026-09-09 11:40:04 IST,Success,2026-09-22 15:41:40 IST
-165,32,ECE A,922525106051,CHARUNETHRA S,charunethra07,https://leetcode.com/u/charunethra07/,258,0,0,0,5,0,391,68,146,44,Richest Customer Wealth,2026-09-08 11:53:52 IST,Success,2026-09-22 15:41:40 IST
-166,21,ECE B,922525106105,GOWTHAM S,Gowtham_080,https://leetcode.com/u/Gowtham_080/,115,0,0,0,5,0,160,70,44,1,Matrix Diagonal Sum,2026-09-08 16:33:21 IST,Success,2026-09-22 15:41:40 IST
-167,35,ECE E,922525106271,SANDHOSH KUMAR R,sandhosh_30_R,https://leetcode.com/u/sandhosh_30_R/,80,0,0,0,5,0,107,33,38,9,Running Sum of 1d Array,2026-09-09 10:46:26 IST,Success,2026-09-22 15:41:40 IST
-168,22,ECE B,922525106088,DIVYADHARSHINI S,922525106088,https://leetcode.com/u/922525106088/,47,0,0,0,5,0,69,12,25,10,Jump Game II,2026-09-01 13:12:21 IST,Success,2026-09-22 15:41:40 IST
-169,23,ECE B,922525106094,GOKUL D,Gokul_tamilan_india,https://leetcode.com/u/Gokul_tamilan_india/,45,0,0,0,5,0,88,41,4,0,Rotate List,2026-08-31 19:40:08 IST,Success,2026-09-22 15:41:40 IST
-170,36,ECE E,922525106309,SHREE CHARAN T,shreecharan22,https://leetcode.com/u/shreecharan22/,38,0,0,0,5,0,51,24,12,2,Richest Customer Wealth,2026-09-07 12:23:12 IST,Success,2026-09-22 15:41:40 IST
-171,37,ECE E,922525106270,SANDHIYA T,zklXTc9UAp,https://leetcode.com/u/zklXTc9UAp/,21,0,0,0,5,0,29,12,7,2,Toeplitz Matrix,2026-09-09 11:41:11 IST,Success,2026-09-22 15:41:40 IST
-172,41,ECE C,922525106159,KISHOREKUMAR B,Kishore9225,https://leetcode.com/u/Kishore9225/,14,4,4,4,4,5,23,8,6,0,Ransom Note,2026-09-22 12:05:44 IST,Success,2026-09-22 15:41:40 IST
-173,42,ECE C,922525106127,JANANI A,janani_asohkan,https://leetcode.com/u/janani_asohkan/,129,1,4,4,4,7,169,45,70,14,Reverse String,2026-09-22 10:27:00 IST,Success,2026-09-22 15:41:40 IST
-174,6,ECE D,922525106197,MITHAN P,Mithan_6,https://leetcode.com/u/Mithan_6/,7,0,4,4,4,8,11,4,3,0,Linked List Cycle II,2026-09-16 12:04:15 IST,Success,2026-09-22 15:41:40 IST
-175,38,ECE E,922525106294,SATHANA SRI S K,Sathana-1267,https://leetcode.com/u/Sathana-1267/,30,0,3,4,4,3,38,13,15,2,First Unique Character in a String,2026-09-16 12:20:07 IST,Success,2026-09-22 15:41:40 IST
-176,33,ECE A,922525106036,BALARITHISH S,IOu1mvgrJS,https://leetcode.com/u/IOu1mvgrJS/,23,0,0,4,4,0,59,7,11,5,Cheapest Flights Within K Stops,2026-09-15 08:39:07 IST,Success,2026-09-22 15:41:40 IST
-177,35,ECE F,922525106339,SUJITH RAJA B,sujith45,https://leetcode.com/u/sujith45/,59,0,0,3,4,0,78,30,23,6,Minimum Window Substring,2026-09-15 18:34:43 IST,Success,2026-09-22 15:41:40 IST
-178,36,ECE F,922525106363,VIGNESH M,O8bYDSRUbE,https://leetcode.com/u/O8bYDSRUbE/,61,0,2,2,4,2,73,16,33,12,Jewels and Stones,2026-09-16 16:23:59 IST,Success,2026-09-22 15:41:40 IST
-179,39,ECE E,922525106283,SANTHOSH S,santhoshsathya260,https://leetcode.com/u/santhoshsathya260/,181,0,1,2,4,1,274,49,102,30,Jewels and Stones,2026-09-16 11:39:38 IST,Success,2026-09-22 15:41:40 IST
-180,34,ECE A,922525106043,BHARGAVI K,bhargavi_332008,https://leetcode.com/u/bhargavi_332008/,24,0,0,2,4,0,34,9,14,1,Combination Sum,2026-09-11 09:45:28 IST,Success,2026-09-22 15:41:40 IST
-181,35,ECE A,922525106055,DARSHAN C,922525106055,https://leetcode.com/u/922525106055/,111,1,1,1,4,1,144,32,62,17,Defanging an IP Address,2026-09-22 12:19:48 IST,Success,2026-09-22 15:41:40 IST
-182,40,ECE E,922525106300,SENTHIL.S,Jna76WrjNd,https://leetcode.com/u/Jna76WrjNd/,120,0,1,1,4,2,248,35,66,19,Jewels and Stones,2026-09-16 11:23:55 IST,Success,2026-09-22 15:41:40 IST
-183,41,ECE E,922525106274,SANJAY P,Sanjay_Sakthivel-2,https://leetcode.com/u/Sanjay_Sakthivel-2/,68,0,1,1,4,2,97,21,36,11,Jewels and Stones,2026-09-16 11:40:45 IST,Success,2026-09-22 15:41:40 IST
-184,24,ECE B,922525106111,HARIS S,922525106111,https://leetcode.com/u/922525106111/,181,0,0,0,4,0,231,45,106,30,Missing Number,2026-08-25 12:06:05 IST,Success,2026-09-22 15:41:40 IST
-185,37,ECE F,922525106319,SIVATHARUN C,sivatharun22,https://leetcode.com/u/sivatharun22/,155,0,0,0,4,0,186,41,87,27,Length of Last Word,2026-09-13 15:00:54 IST,Success,2026-09-22 15:41:40 IST
-186,38,ECE F,922525106321,SREE DHARANI C,SREEDHARANI_14,https://leetcode.com/u/SREEDHARANI_14/,122,0,0,0,4,0,159,60,49,13,Missing Number,2026-09-04 18:27:47 IST,Success,2026-09-22 15:41:40 IST
-187,36,ECE A,922525106017,ALAGESHWARAN J,Alageshwaran2008,https://leetcode.com/u/Alageshwaran2008/,115,0,0,0,4,0,221,39,53,23,Transpose Matrix,2026-09-08 11:50:58 IST,Success,2026-09-22 15:41:40 IST
-188,42,ECE E,922525106253,RITHANYA KN,Rithanya12-3,https://leetcode.com/u/Rithanya12-3/,112,0,0,0,4,0,388,42,54,16,Richest Customer Wealth,2026-09-07 12:21:11 IST,Success,2026-09-22 15:41:40 IST
-189,39,ECE F,922525106351,THARUNIKA P,Tharunika_12,https://leetcode.com/u/Tharunika_12/,104,0,0,0,4,0,205,52,38,14,Unique Paths II,2026-08-28 08:33:32 IST,Success,2026-09-22 15:41:40 IST
-190,7,ECE D,922525106246,RASIKA S,RASIKA_2008,https://leetcode.com/u/RASIKA_2008/,124,0,3,3,3,3,166,15,85,24,Valid Anagram,2026-09-21 22:43:29 IST,Success,2026-09-22 15:41:40 IST
-191,25,ECE B,922525106073,DHARMENDRA M P,922525106073,https://leetcode.com/u/922525106073/,21,0,0,3,3,0,38,8,11,2,Remove Duplicates from Sorted Array,2026-09-10 07:36:44 IST,Success,2026-09-22 15:41:40 IST
-192,43,ECE E,922525106293,SASWIN D,saswin_88,https://leetcode.com/u/saswin_88/,94,0,2,2,3,3,124,30,50,14,First Unique Character in a String,2026-09-16 12:19:24 IST,Success,2026-09-22 15:41:40 IST
-193,37,ECE A,922525106028,ARUN C,AGmXRQ1yTe,https://leetcode.com/u/AGmXRQ1yTe/,23,0,0,1,3,0,39,11,10,2,Running Sum of 1d Array,2026-09-11 09:55:48 IST,Success,2026-09-22 15:41:40 IST
-194,26,ECE B,922525106070,DHARANI M,922525106070,https://leetcode.com/u/922525106070/,121,0,0,0,3,0,127,44,59,18,Toeplitz Matrix,2026-09-08 22:49:39 IST,Success,2026-09-22 15:41:40 IST
-195,27,ECE B,922525106097,GOPINATH R,922525106097,https://leetcode.com/u/922525106097/,116,0,0,0,3,0,141,39,59,18,Reverse Bits,2026-08-27 23:58:33 IST,Success,2026-09-22 15:41:40 IST
-196,44,ECE E,922525106310,SIVA MANIKANDAN K,9043374912,https://leetcode.com/u/9043374912/,111,0,0,0,3,1,134,27,65,19,Richest Customer Wealth,2026-09-07 12:26:11 IST,Success,2026-09-22 15:41:40 IST
-197,40,ECE F,922525106347,TAMIL SELVAN R,Kdmif0HMNm,https://leetcode.com/u/Kdmif0HMNm/,110,0,0,0,3,0,220,27,68,15,Pascal's Triangle II,2026-08-25 19:34:43 IST,Success,2026-09-22 15:41:40 IST
-198,41,ECE F,922525106336,SUGANTHAN K,SUGANTHKALAI,https://leetcode.com/u/SUGANTHKALAI/,90,0,0,0,3,0,97,19,52,19,Matrix Diagonal Sum,2026-09-07 15:50:02 IST,Success,2026-09-22 15:41:40 IST
-199,28,ECE B,922525106124,INDHIRAJITH K,922525106124,https://leetcode.com/u/922525106124/,78,0,0,0,3,0,132,16,46,16,Symmetric Tree,2026-09-08 16:34:42 IST,Success,2026-09-22 15:41:40 IST
-200,45,ECE E,922525106262,ROSHIKA V,roshikaveeramalai,https://leetcode.com/u/roshikaveeramalai/,75,0,0,0,3,0,111,29,42,4,Richest Customer Wealth,2026-09-07 12:24:59 IST,Success,2026-09-22 15:41:40 IST
-201,29,ECE B,922525106109,HANSHIKAVARSA K S,922525106109,https://leetcode.com/u/922525106109/,68,0,0,0,3,0,95,19,37,12,Power of Four,2026-08-29 06:47:22 IST,Success,2026-09-22 15:41:40 IST
-202,43,ECE C,922525106184,M. MAHALAKSHMI,K9gejZlwRP,https://leetcode.com/u/K9gejZlwRP/,64,0,0,0,3,0,128,14,37,13,Running Sum of 1d Array,2026-09-08 11:12:43 IST,Success,2026-09-22 15:41:40 IST
-203,46,ECE E,922525106261,ROSHAN M,roshan2403,https://leetcode.com/u/roshan2403/,53,0,0,0,3,2,76,49,4,0,Two Sum,2026-09-16 21:19:48 IST,Success,2026-09-22 15:41:40 IST
-204,47,ECE E,922525106314,SIVANESH D,sivanesh2007,https://leetcode.com/u/sivanesh2007/,46,0,0,0,3,0,53,25,17,4,Transpose Matrix,2026-09-07 12:02:36 IST,Success,2026-09-22 15:41:40 IST
-205,48,ECE E,922525106304,SHANTHOSH SHAI SIRIL R,shandoshsai,https://leetcode.com/u/shandoshsai/,22,0,0,0,3,0,29,14,8,0,Richest Customer Wealth,2026-09-07 12:24:58 IST,Success,2026-09-22 15:41:40 IST
-206,42,ECE F,922525106367,VIKRAM V,vikramvicky5678,https://leetcode.com/u/vikramvicky5678/,120,0,2,2,2,2,138,34,68,18,Jewels and Stones,2026-09-16 16:37:28 IST,Success,2026-09-22 15:41:40 IST
-207,38,ECE A,922525106011,AJAYKRISHNA R,922525106011,https://leetcode.com/u/922525106011/,112,0,2,2,2,2,134,23,70,19,Course Schedule,2026-09-20 09:36:35 IST,Success,2026-09-22 15:41:40 IST
-208,49,ECE E,922525106292,SASHMIKA P,sashmikaprabhu,https://leetcode.com/u/sashmikaprabhu/,64,0,2,2,2,2,80,33,23,8,Detect Capital,2026-09-16 11:53:56 IST,Success,2026-09-22 15:41:40 IST
-209,50,ECE E,922525106257,RITHIKA B,Rithika_Balakrishnan,https://leetcode.com/u/Rithika_Balakrishnan/,110,0,1,2,2,1,140,27,64,19,Jewels and Stones,2026-09-16 11:29:28 IST,Success,2026-09-22 15:41:40 IST
-210,30,ECE B,922525106123,INBNATHAN S,922525106123,https://leetcode.com/u/922525106123/,111,0,0,2,2,0,157,30,62,19,Contains Duplicate,2026-09-11 14:46:07 IST,Success,2026-09-22 15:41:40 IST
-211,44,ECE C,922525106128,JASHVANTH J S,jashvanth2007,https://leetcode.com/u/jashvanth2007/,109,1,1,1,2,3,133,33,76,0,Random Flip Matrix,2026-09-22 09:47:30 IST,Success,2026-09-22 15:41:40 IST
-212,39,ECE A,922525106062,DHAKSESH PRANAV P,Dhaksesh_Pranav_P,https://leetcode.com/u/Dhaksesh_Pranav_P/,108,1,1,1,2,2,151,32,57,19,Find the Index of the First Occurrence in a String,2026-09-22 12:25:25 IST,Success,2026-09-22 15:41:40 IST
-213,45,ECE C,922525106165,KOWSHIKAN P,KOWSHIKAN-PALANISAMY,https://leetcode.com/u/KOWSHIKAN-PALANISAMY/,104,1,1,1,2,1,166,23,62,19,Reverse Vowels of a String,2026-09-22 11:50:03 IST,Success,2026-09-22 15:41:40 IST
-214,40,ECE A,922525106045,BOOBASE R,Boobase,https://leetcode.com/u/Boobase/,60,0,1,1,2,5,89,13,34,13,Minimum Size Subarray Sum,2026-09-17 20:35:59 IST,Success,2026-09-22 15:41:40 IST
-215,51,ECE E,922525106255,RITHIK I,Rithik2008,https://leetcode.com/u/Rithik2008/,24,0,1,1,2,1,32,20,4,0,Jewels and Stones,2026-09-16 11:17:21 IST,Success,2026-09-22 15:41:40 IST
-216,31,ECE B,922525106084,DINESHKUMAR V,922525106084,https://leetcode.com/u/922525106084/,162,0,0,1,2,0,211,38,96,28,Shuffle the Array,2026-09-11 14:02:16 IST,Success,2026-09-22 15:41:40 IST
-217,46,ECE C,922525106141,KANISHKUMAR M,kanishkumar2008,https://leetcode.com/u/kanishkumar2008/,122,0,0,0,2,0,171,37,66,19,Count Commas in Range,2026-09-08 17:09:41 IST,Success,2026-09-22 15:41:40 IST
-218,41,ECE A,922525106042,BHARATHWAJ S,BharathwajX,https://leetcode.com/u/BharathwajX/,116,0,0,0,2,0,185,39,63,14,Check if Matrix Is X-Matrix,2026-09-08 11:54:37 IST,Success,2026-09-22 15:41:40 IST
-219,42,ECE A,922525106030,ARUNKUMAR K,Arunkumar2008,https://leetcode.com/u/Arunkumar2008/,112,0,0,0,2,0,137,61,43,8,Missing Number,2026-08-25 12:08:23 IST,Success,2026-09-22 15:41:40 IST
-220,43,ECE F,922525106342,SUSIDHARAN M,Susidharan147,https://leetcode.com/u/Susidharan147/,65,0,0,0,2,0,146,20,35,10,Spiral Matrix II,2026-09-01 22:56:12 IST,Success,2026-09-22 15:41:40 IST
-221,44,ECE F,922525106317,SIVASANJEEV P,Sivasanjeev16,https://leetcode.com/u/Sivasanjeev16/,47,0,0,0,2,0,64,28,16,3,Linked List Cycle,2026-08-24 07:55:49 IST,Success,2026-09-22 15:41:40 IST
-222,47,ECE C,922525106137,JOTHI HARSHAN D K,Jothiharshan16,https://leetcode.com/u/Jothiharshan16/,107,1,1,1,1,2,111,45,61,1,Detect Capital,2026-09-22 10:28:19 IST,Success,2026-09-22 15:41:40 IST
-223,48,ECE C,922525106135,JERSHITH J S,Jerry2008,https://leetcode.com/u/Jerry2008/,102,1,1,1,1,1,119,100,1,1,Find X Value of Array II,2026-09-22 10:31:14 IST,Success,2026-09-22 15:41:40 IST
-224,43,ECE A,922525106041,BHARATH KUMAR E,BK5226221,https://leetcode.com/u/BK5226221/,21,1,1,1,1,1,53,11,9,1,Middle of the Linked List,2026-09-22 12:28:26 IST,Success,2026-09-22 15:41:40 IST
-225,45,ECE F,922525106376,YAZHINI S,yazhini__1234,https://leetcode.com/u/yazhini__1234/,257,0,1,1,1,2,880,71,144,42,To Lower Case,2026-09-17 07:07:08 IST,Success,2026-09-22 15:41:40 IST
-226,46,ECE F,922525106355,VAISHNAVI U,vaish200,https://leetcode.com/u/vaish200/,122,0,1,1,1,1,152,34,69,19,To Lower Case,2026-09-16 16:23:55 IST,Success,2026-09-22 15:41:40 IST
-227,52,ECE E,922525106305,SHARATH P,sharath_1010,https://leetcode.com/u/sharath_1010/,108,0,1,1,1,1,206,104,4,0,Jewels and Stones,2026-09-16 11:40:38 IST,Success,2026-09-22 15:41:40 IST
-228,8,ECE D,922525106202,MORRISH D,morrishd,https://leetcode.com/u/morrishd/,105,0,1,1,1,1,144,23,63,19,Jewels and Stones,2026-09-16 11:42:01 IST,Success,2026-09-22 15:41:40 IST
-229,47,ECE F,922525106343,SUTHARSHANA S,sutharshana743,https://leetcode.com/u/sutharshana743/,102,0,1,1,1,1,113,28,72,2,Binary Tree Preorder Traversal,2026-09-21 06:50:49 IST,Success,2026-09-22 15:41:40 IST
-230,48,ECE F,922525106372,VISHWAJETH A M,vishwajeth,https://leetcode.com/u/vishwajeth/,78,0,1,1,1,2,171,37,33,8,To Lower Case,2026-09-16 16:14:29 IST,Success,2026-09-22 15:41:40 IST
-231,53,ECE E,922525106296,SELVAKUMAR K,Selvakumarsk-32,https://leetcode.com/u/Selvakumarsk-32/,61,0,1,1,1,2,103,22,30,9,Jewels and Stones,2026-09-16 11:42:08 IST,Success,2026-09-22 15:41:40 IST
-232,32,ECE B,922525106091,ELAVARASAN R,922525106091,https://leetcode.com/u/922525106091/,123,0,0,1,1,0,196,29,62,32,Count Nodes Equal to Average of Subtree,2026-09-10 19:22:37 IST,Success,2026-09-22 15:41:40 IST
-233,9,ECE D,922525106241,RAGUNATH M,ragunath24,https://leetcode.com/u/ragunath24/,121,0,0,1,1,0,169,21,65,35,Jewels and Stones,2026-09-12 14:42:38 IST,Success,2026-09-22 15:41:40 IST
-234,10,ECE D,922525106247,RATHISH R,Rathish2025,https://leetcode.com/u/Rathish2025/,115,0,0,1,1,0,139,15,77,23,Jewels and Stones,2026-09-12 14:29:00 IST,Success,2026-09-22 15:41:40 IST
-235,33,ECE B,922525106110,HARI HARAN R,922525106110,https://leetcode.com/u/922525106110/,108,0,0,1,1,0,138,32,65,11,Best Time to Buy and Sell Stock II,2026-09-13 14:44:59 IST,Success,2026-09-22 15:41:40 IST
-236,49,ECE C,922525106143,KARISHMA M,Karishma_m_08,https://leetcode.com/u/Karishma_m_08/,92,0,0,1,1,0,142,39,46,7,Jewels and Stones,2026-09-12 10:28:59 IST,Success,2026-09-22 15:41:40 IST
-237,49,ECE F,922525106364,VIGNESH VELAN M,Vicky_27_Velan,https://leetcode.com/u/Vicky_27_Velan/,68,0,0,1,1,0,73,13,41,14,Count Commas in Range II,2026-09-09 12:52:26 IST,Success,2026-09-22 15:41:40 IST
-238,11,ECE D,922525106192,MATHANSURYA S,Mathansurya,https://leetcode.com/u/Mathansurya/,2,0,0,1,1,0,4,2,0,0,Best Time to Buy and Sell Stock,2026-09-15 20:58:48 IST,Success,2026-09-22 15:41:40 IST
-239,50,ECE F,922525106362,VELLIANGIRI R,velliangiri_R,https://leetcode.com/u/velliangiri_R/,193,0,0,0,1,0,245,49,111,33,Basic Calculator,2026-08-31 12:46:20 IST,Success,2026-09-22 15:41:40 IST
-240,34,ECE B,922525106093,GIRIVASH P,922525106093,https://leetcode.com/u/922525106093/,137,0,0,0,1,0,180,29,79,29,Path Sum,2026-08-26 17:20:31 IST,Success,2026-09-22 15:41:40 IST
-241,50,ECE C,922525106132,JEEVAN BALA G,jeevanbala142008,https://leetcode.com/u/jeevanbala142008/,127,0,0,0,1,0,302,33,71,23,Split a String in Balanced Strings,2026-09-01 20:17:09 IST,Success,2026-09-22 15:41:40 IST
-242,35,ECE B,922525106104,GOWTHAM R,922525106104,https://leetcode.com/u/922525106104/,112,0,0,0,1,0,453,26,66,20,Word Ladder,2026-09-07 19:00:48 IST,Success,2026-09-22 15:41:40 IST
-243,51,ECE F,922525106322,SRI  T,Sri1540,https://leetcode.com/u/Sri1540/,112,0,0,0,1,0,141,57,53,2,Missing Number,2026-08-24 21:32:20 IST,Success,2026-09-22 15:41:40 IST
-244,44,ECE A,922525106049,BUVNESH N,922525106049,https://leetcode.com/u/922525106049/,103,0,0,0,1,1,130,20,64,19,Length of Last Word,2026-09-22 12:24:18 IST,Success,2026-09-22 15:41:40 IST
-245,36,ECE B,922525106102,GOWSICK S,922525106102,https://leetcode.com/u/922525106102/,101,0,0,0,1,0,236,22,61,18,Majority Element,2026-09-01 19:26:51 IST,Success,2026-09-22 15:41:40 IST
-246,54,ECE E,922525106263,RUBESH C,Rubesh_7,https://leetcode.com/u/Rubesh_7/,70,0,0,0,1,0,101,46,24,0,3Sum Closest,2026-08-25 14:49:54 IST,Success,2026-09-22 15:41:40 IST
-247,52,ECE F,922525106332,SUBARNA V,Subarna_17,https://leetcode.com/u/Subarna_17/,62,0,0,0,1,0,89,33,23,6,Transpose Matrix,2026-09-07 16:06:46 IST,Success,2026-09-22 15:41:40 IST
-248,37,ECE B,922525106114,HARIS RAGAVENDAR A,922525106114,https://leetcode.com/u/922525106114/,52,0,0,0,1,0,89,27,22,3,Power of Three,2026-08-26 21:53:33 IST,Success,2026-09-22 15:41:40 IST
-249,53,ECE F,922525106361,VASUKI K,vasuki,https://leetcode.com/u/vasuki/,452,0,0,0,0,0,1972,107,273,72,,,Success,2026-09-22 15:41:40 IST
-250,45,ECE A,922525106038,BAVITHA T,3gvYU1AYWX,https://leetcode.com/u/3gvYU1AYWX/,449,0,0,0,0,0,629,113,257,79,Game Play Analysis IV,2026-05-31 21:00:22 IST,Success,2026-09-22 15:41:40 IST
-251,12,ECE D,922525106250,RESMHI S,reshmi2008,https://leetcode.com/u/reshmi2008/,279,0,0,0,0,0,317,101,151,27,Number of Steps to Reduce a Number to Zero,2026-08-04 14:46:34 IST,Success,2026-09-22 15:41:40 IST
-252,13,ECE D,922525106205,MYTHILI M,mythilimurugesan,https://leetcode.com/u/mythilimurugesan/,211,0,0,0,0,0,228,31,140,40,Reverse Linked List,2026-08-03 21:19:18 IST,Success,2026-09-22 15:41:40 IST
-253,38,ECE B,922525106080,DHIVAKAR R,DhivakarR,https://leetcode.com/u/DhivakarR/,204,0,0,0,0,0,368,177,27,0,,,Success,2026-09-22 15:41:40 IST
-254,14,ECE D,922525106249,RENOFIYA HASIN A,Renofiya-2007,https://leetcode.com/u/Renofiya-2007/,202,0,0,0,0,0,371,29,132,41,Search Insert Position,2026-08-05 15:27:28 IST,Success,2026-09-22 15:41:40 IST
-255,15,ECE D,922525106242,RAHULKAJAN M,rahulkajan,https://leetcode.com/u/rahulkajan/,201,0,0,0,0,0,284,53,116,32,Course Schedule,2025-12-05 03:00:05 IST,Success,2026-09-22 15:41:40 IST
-256,16,ECE D,922525106223,PAVITHRA S,pavithra145,https://leetcode.com/u/pavithra145/,185,0,0,0,0,0,250,25,124,36,Number of Steps to Reduce a Number to Zero,2026-08-08 04:55:00 IST,Success,2026-09-22 15:41:40 IST
-257,17,ECE D,922525106226,PRABHAKARAN D,_d_Prabhakaran_,https://leetcode.com/u/_d_Prabhakaran_/,183,0,0,0,0,0,213,51,108,24,Actors and Directors Who Cooperated At Least Three Times,2026-07-29 20:25:24 IST,Success,2026-09-22 15:41:40 IST
-258,18,ECE D,922525106204,MOUSHMI P N,Moushmi_20,https://leetcode.com/u/Moushmi_20/,181,0,0,0,0,0,265,39,108,34,Best Time to Buy and Sell Stock IV,2026-08-09 08:20:13 IST,Success,2026-09-22 15:41:40 IST
-259,19,ECE D,922525106194,MAYAKANNAN K,Mayakannan129,https://leetcode.com/u/Mayakannan129/,166,0,0,0,0,0,257,33,102,31,Merge Two Sorted Lists,2026-04-08 18:28:45 IST,Success,2026-09-22 15:41:40 IST
-260,20,ECE D,922525106214,NITHISH C T,Nithishct123,https://leetcode.com/u/Nithishct123/,155,0,0,0,0,0,193,37,84,34,Valid Palindrome,2026-08-02 19:17:23 IST,Success,2026-09-22 15:41:40 IST
-261,21,ECE D,922525106230,PRANITHASREE SAMINATHAN,pranithaashree,https://leetcode.com/u/pranithaashree/,155,0,0,0,0,0,182,43,86,26,Sort List,2026-04-07 20:24:05 IST,Success,2026-09-22 15:41:40 IST
-262,51,ECE C,922525106175,LOHITH RAJ S,LOHITH012008,https://leetcode.com/u/LOHITH012008/,152,0,0,0,0,0,171,42,91,19,Remove K Digits,2026-07-22 19:38:43 IST,Success,2026-09-22 15:41:40 IST
-263,22,ECE D,922525106238,PRIYANKA A,Priyankaashok1201,https://leetcode.com/u/Priyankaashok1201/,151,0,0,0,0,0,207,50,98,3,Factorial Trailing Zeroes,2025-12-05 08:44:14 IST,Success,2026-09-22 15:41:40 IST
-264,23,ECE D,922525106239,PRIYANKA K R,priyankadhanush23,https://leetcode.com/u/priyankadhanush23/,147,0,0,0,0,0,183,35,83,29,Number of 1 Bits,2026-08-11 13:14:22 IST,Success,2026-09-22 15:41:40 IST
-265,39,ECE B,922525106116,HARISH MS,922525106116,https://leetcode.com/u/922525106116/,144,0,0,0,0,0,178,33,85,26,Binary Tree Postorder Traversal,2026-08-08 22:14:56 IST,Success,2026-09-22 15:41:40 IST
-266,52,ECE C,922525106187,MAHIN ABHISHEK VH,Mahinabhishek0411,https://leetcode.com/u/Mahinabhishek0411/,144,0,0,0,0,0,189,32,85,27,Binary Tree Preorder Traversal,2026-04-08 20:49:56 IST,Success,2026-09-22 15:41:40 IST
-267,24,ECE D,922525106220,NITHYASRI M,Nithyasri2008,https://leetcode.com/u/Nithyasri2008/,142,0,0,0,0,0,168,42,59,41,Unique Binary Search Trees,2025-12-04 21:39:04 IST,Success,2026-09-22 15:41:40 IST
-268,25,ECE D,922525106235,PREETHY M S,preethy2007,https://leetcode.com/u/preethy2007/,142,0,0,0,0,0,166,39,78,25,Rectangle Overlap,2026-07-26 15:21:18 IST,Success,2026-09-22 15:41:40 IST
-269,26,ECE D,922525106208,NANDHINI D,nandhini546,https://leetcode.com/u/nandhini546/,140,0,0,0,0,0,214,15,106,19,Split Strings by Separator,2026-04-08 19:54:29 IST,Success,2026-09-22 15:41:40 IST
-270,54,ECE F,922525106354,THIRUMURUGAN S,thiru0211_,https://leetcode.com/u/thiru0211_/,140,0,0,0,0,0,193,45,73,22,Palindrome Number,2026-08-09 12:00:13 IST,Success,2026-09-22 15:41:40 IST
-271,46,ECE A,922525106032,ARVINSHANKARA V,Arvin,https://leetcode.com/u/Arvin/,137,0,0,0,0,0,768,52,77,8,,,Success,2026-09-22 15:41:40 IST
-272,40,ECE B,922525106107,GUNA SHREE V,Gunashree20,https://leetcode.com/u/Gunashree20/,136,0,0,0,0,0,172,30,80,26,Perfect Number,2026-08-03 14:38:43 IST,Success,2026-09-22 15:41:40 IST
-273,27,ECE D,922525106203,MOULEESHWARI B,Mouleeshwari2008,https://leetcode.com/u/Mouleeshwari2008/,131,0,0,0,0,0,147,17,82,32,Perfect Number,2026-08-11 13:16:55 IST,Success,2026-09-22 15:41:40 IST
-274,55,ECE E,922525106308,SHREE HARINI L,Shree_Harini478,https://leetcode.com/u/Shree_Harini478/,130,0,0,0,0,0,210,46,71,13,Number of 1 Bits,2026-08-12 11:52:34 IST,Success,2026-09-22 15:41:40 IST
-275,28,ECE D,922525106244,RANJANA T,RANJANA_2007,https://leetcode.com/u/RANJANA_2007/,129,0,0,0,0,0,219,24,82,23,Linked List Cycle,2026-08-10 20:45:25 IST,Success,2026-09-22 15:41:40 IST
-276,29,ECE D,922525106222,PAARGAVI R,paargavi2007,https://leetcode.com/u/paargavi2007/,127,0,0,0,0,0,239,19,83,25,Majority Element,2026-07-26 19:41:54 IST,Success,2026-09-22 15:41:40 IST
-277,30,ECE D,922525106215,NITHISH P,Nithish_P_CS,https://leetcode.com/u/Nithish_P_CS/,126,0,0,0,0,0,139,25,64,37,Number of Steps to Reduce a Number to Zero,2026-08-04 14:52:19 IST,Success,2026-09-22 15:41:40 IST
-278,31,ECE D,922525106248,RAVIKUMAR S,Ravikumar_14,https://leetcode.com/u/Ravikumar_14/,125,0,0,0,0,0,165,19,84,22,Climbing Stairs,2026-04-08 17:22:58 IST,Success,2026-09-22 15:41:40 IST
-279,41,ECE B,922525106106,GOWTHAMAN N,922525106106,https://leetcode.com/u/922525106106/,124,0,0,0,0,0,143,33,68,23,Merge Two Sorted Lists,2026-08-23 10:47:18 IST,Success,2026-09-22 15:41:40 IST
-280,32,ECE D,922525106190,MANOJ A,Manoj_1319,https://leetcode.com/u/Manoj_1319/,124,0,0,0,0,0,178,21,69,34,Number of Steps to Reduce a Number to Zero,2026-08-04 14:50:52 IST,Success,2026-09-22 15:41:40 IST
-281,33,ECE D,922525106200,MONISHA R,itsmoni,https://leetcode.com/u/itsmoni/,124,0,0,0,0,0,153,23,85,16,Binary Search,2026-08-05 15:24:43 IST,Success,2026-09-22 15:41:40 IST
-282,34,ECE D,922525106218,NITHYASHREE G,NithyashreeG10,https://leetcode.com/u/NithyashreeG10/,124,0,0,0,0,0,203,22,78,24,Search Insert Position,2026-08-05 15:25:45 IST,Success,2026-09-22 15:41:40 IST
-283,35,ECE D,922525106232,PRAVEEN G,praveen_3208,https://leetcode.com/u/praveen_3208/,124,0,0,0,0,0,159,23,59,42,Running Sum of 1d Array,2026-08-05 14:44:41 IST,Success,2026-09-22 15:41:40 IST
-284,36,ECE D,922525106234,PRAVEENKUMAR R,itz_praveen_,https://leetcode.com/u/itz_praveen_/,124,0,0,0,0,0,211,22,77,25,Binary Tree Postorder Traversal,2026-04-08 17:38:57 IST,Success,2026-09-22 15:41:40 IST
-285,37,ECE D,922525106211,NAVEETHA N,NAVEETHAN,https://leetcode.com/u/NAVEETHAN/,123,0,0,0,0,0,221,22,95,6,Find the Maximum Achievable Number,2026-04-08 19:25:11 IST,Success,2026-09-22 15:41:40 IST
-286,38,ECE D,922525106216,NITHISH R,nithishramalingam007,https://leetcode.com/u/nithishramalingam007/,123,0,0,0,0,0,188,21,78,24,Palindrome Partitioning,2025-12-05 23:02:30 IST,Success,2026-09-22 15:41:40 IST
-287,47,ECE A,922525106053,CHINNAPPAN S,chinnappanrajniselvi,https://leetcode.com/u/chinnappanrajniselvi/,122,0,0,0,0,0,149,36,67,19,Number of Steps to Reduce a Number to Zero,2026-08-10 09:41:33 IST,Success,2026-09-22 15:41:40 IST
-288,39,ECE D,922525106199,MONISH S,smonish777,https://leetcode.com/u/smonish777/,122,0,0,0,0,0,189,21,78,23,Two Sum,2026-04-08 19:04:34 IST,Success,2026-09-22 15:41:40 IST
-289,40,ECE D,922525106201,MONISHA V,Monishav2007,https://leetcode.com/u/Monishav2007/,122,0,0,0,0,0,150,20,80,22,Merge Sorted Array,2026-04-08 20:11:40 IST,Success,2026-09-22 15:41:40 IST
-290,41,ECE D,922525106237,PRIYADHARSHINI V,priyadharshini1551,https://leetcode.com/u/priyadharshini1551/,120,0,0,0,0,0,202,20,80,20,Minimum Pair Removal to Sort Array I,2026-04-08 19:49:54 IST,Success,2026-09-22 15:41:40 IST
-291,42,ECE D,922525106217,NITHISHWARAN D,nithishwaran-D,https://leetcode.com/u/nithishwaran-D/,119,0,0,0,0,0,154,17,78,24,Running Sum of 1d Array,2026-08-05 16:03:57 IST,Success,2026-09-22 15:41:40 IST
-292,43,ECE D,922525106224,PAVITHRAN S,Pavithran_S_,https://leetcode.com/u/Pavithran_S_/,119,0,0,0,0,0,198,18,77,24,Surrounded Regions,2025-12-04 23:24:51 IST,Success,2026-09-22 15:41:40 IST
-293,44,ECE D,922525106236,PRITHIV S,prithiv16,https://leetcode.com/u/prithiv16/,119,0,0,0,0,0,155,19,75,25,Sqrt(x),2026-04-08 21:27:34 IST,Success,2026-09-22 15:41:40 IST
-294,45,ECE D,922525106210,NAVANEETHAN L,lnavaneethan08,https://leetcode.com/u/lnavaneethan08/,118,0,0,0,0,0,191,18,40,60,Running Sum of 1d Array,2026-08-05 15:24:24 IST,Success,2026-09-22 15:41:40 IST
-295,46,ECE D,922525106213,NIRANJANI D,niranjani_123,https://leetcode.com/u/niranjani_123/,117,0,0,0,0,0,200,12,96,9,Check If Two String Arrays are Equivalent,2026-04-08 19:54:49 IST,Success,2026-09-22 15:41:40 IST
-296,47,ECE D,922525106231,PRAVEEN D,praveen1247,https://leetcode.com/u/praveen1247/,117,0,0,0,0,0,163,16,78,23,LRU Cache,2025-12-15 20:36:58 IST,Success,2026-09-22 15:41:40 IST
-297,48,ECE D,922525106252,RETHISH,Rethish_R,https://leetcode.com/u/Rethish_R/,117,0,0,0,0,0,150,16,79,22,Interleaving String,2026-08-07 23:25:12 IST,Success,2026-09-22 15:41:40 IST
-298,49,ECE D,922525106195,MAYUKA M,Mayuka_M,https://leetcode.com/u/Mayuka_M/,116,0,0,0,0,0,138,16,81,19,Binary Tree Inorder Traversal,2026-04-08 21:39:27 IST,Success,2026-09-22 15:41:40 IST
-299,50,ECE D,922525106225,PIRAVEEN M,Piraveen2025,https://leetcode.com/u/Piraveen2025/,116,0,0,0,0,0,122,16,79,21,Pascal's Triangle,2026-04-07 16:23:19 IST,Success,2026-09-22 15:41:40 IST
-300,51,ECE D,922525106240,RAGADHARSHINI S,Ragadharshini_2181,https://leetcode.com/u/Ragadharshini_2181/,116,0,0,0,0,0,142,14,84,18,Ugly Number,2026-04-08 18:58:58 IST,Success,2026-09-22 15:41:40 IST
-301,52,ECE D,922525106196,MILAN D,milan190308,https://leetcode.com/u/milan190308/,115,0,0,0,0,0,133,15,78,22,Palindrome Partitioning,2025-12-09 19:26:41 IST,Success,2026-09-22 15:41:40 IST
-302,42,ECE B,922525106078,DHILIP P,922525106078,https://leetcode.com/u/922525106078/,112,0,0,0,0,0,135,26,69,17,Search Insert Position,2026-07-31 00:21:37 IST,Success,2026-09-22 15:41:40 IST
-303,53,ECE C,922525106149,KAVIN KUMAR S,KAVIN__26,https://leetcode.com/u/KAVIN__26/,112,0,0,0,0,0,124,23,69,20,Triangle,2026-08-07 06:59:17 IST,Success,2026-09-22 15:41:40 IST
-304,53,ECE D,922525106206,NAFREEN J M,NafreenJohnbasha,https://leetcode.com/u/NafreenJohnbasha/,112,0,0,0,0,0,126,10,91,11,Find Minimum in Rotated Sorted Array,2025-12-05 07:39:56 IST,Success,2026-09-22 15:41:40 IST
-305,54,ECE D,922525106212,NETHRA.S,Nethra777,https://leetcode.com/u/Nethra777/,112,0,0,0,0,1,180,9,83,20,Search Insert Position,2026-08-07 22:00:05 IST,Success,2026-09-22 15:41:40 IST
-306,55,ECE D,922525106233,PRAVEEN G,PRAVEENGANESAN,https://leetcode.com/u/PRAVEENGANESAN/,112,0,0,0,0,0,128,14,78,20,Largest Number,2025-12-06 07:58:20 IST,Success,2026-09-22 15:41:40 IST
-307,48,ECE A,922525106056,DARSHAN MANISH A,Darshan_manish08,https://leetcode.com/u/Darshan_manish08/,111,0,0,0,0,0,154,29,65,17,Perfect Number,2026-08-15 11:28:35 IST,Success,2026-09-22 15:41:40 IST
-308,56,ECE D,922525106219,NITHYASHREE P,Nithyashree273,https://leetcode.com/u/Nithyashree273/,111,0,0,0,0,0,133,9,78,24,Best Time to Buy and Sell Stock II,2025-12-07 21:27:25 IST,Success,2026-09-22 15:41:40 IST
-309,57,ECE D,922525106228,PRAGALATHAN T,pragalathan070108,https://leetcode.com/u/pragalathan070108/,111,0,0,0,0,0,125,11,77,23,Add Two Numbers,2026-04-07 15:23:27 IST,Success,2026-09-22 15:41:40 IST
-310,49,ECE A,922525106033,ASHOK KUMAR P,ASHOKKUMAR18,https://leetcode.com/u/ASHOKKUMAR18/,109,0,0,0,0,0,128,51,50,8,Majority Element,2026-07-23 18:45:35 IST,Success,2026-09-22 15:41:40 IST
-311,43,ECE B,922525106077,DHARUN T,922525106077,https://leetcode.com/u/922525106077/,108,0,0,0,0,0,130,22,67,19,Binary Search,2026-08-07 17:33:44 IST,Success,2026-09-22 15:41:40 IST
-312,56,ECE E,922525106272,SANJAY D,itsmesanjay007,https://leetcode.com/u/itsmesanjay007/,106,0,0,0,0,0,123,9,86,11,Sum Multiples,2026-08-12 12:12:46 IST,Success,2026-09-22 15:41:40 IST
-313,54,ECE C,922525106131,JAYASURYA R,Jayasuryaraja,https://leetcode.com/u/Jayasuryaraja/,105,0,0,0,0,0,141,57,46,2,Sum of Left Leaves,2026-04-08 17:51:54 IST,Success,2026-09-22 15:41:40 IST
-314,44,ECE B,922525106072,DHARANISH R,922525601072,https://leetcode.com/u/922525601072/,104,0,0,0,0,0,137,34,69,1,Perfect Number,2026-08-07 17:24:11 IST,Success,2026-09-22 15:41:40 IST
-315,45,ECE B,922525106122,HIRESH K,922525106122,https://leetcode.com/u/922525106122/,104,0,0,0,0,0,143,22,63,19,Find Missing Elements,2026-08-04 16:00:26 IST,Success,2026-09-22 15:41:40 IST
-316,55,ECE C,922525106144,KARMUKILAN J,karmukilan567,https://leetcode.com/u/karmukilan567/,104,0,0,0,0,0,123,26,56,22,Sqrt(x),2026-08-11 05:19:16 IST,Success,2026-09-22 15:41:40 IST
-317,46,ECE B,922525106092,ELAVARASU P,922525106092,https://leetcode.com/u/922525106092/,102,0,0,0,0,0,125,91,9,2,Sort Colors,2026-08-04 16:10:03 IST,Success,2026-09-22 15:41:40 IST
-318,56,ECE C,922525106146,KARTHIKA K,Karthi270827,https://leetcode.com/u/Karthi270827/,102,0,0,0,0,0,145,21,62,19,Reverse String,2026-08-07 08:30:01 IST,Success,2026-09-22 15:41:40 IST
-319,57,ECE C,922525106162,KOWSHIK R,kowshik_rk_,https://leetcode.com/u/kowshik_rk_/,102,0,0,0,0,0,129,24,61,17,Number of 1 Bits,2026-08-11 10:38:31 IST,Success,2026-09-22 15:41:40 IST
-320,50,ECE A,922525106026,ARUL S.T.,S_T_Arul,https://leetcode.com/u/S_T_Arul/,101,0,0,0,0,0,114,43,51,7,Find Minimum in Rotated Sorted Array II,2026-04-07 21:06:14 IST,Success,2026-09-22 15:41:40 IST
-321,47,ECE B,922525106081,DILIPKUMAR K,922525106081,https://leetcode.com/u/922525106081/,101,0,0,0,0,0,145,24,63,14,Single Number,2026-08-06 21:29:13 IST,Success,2026-09-22 15:41:40 IST
-322,55,ECE F,922525106340,SUMITHRA S,sumithra_16,https://leetcode.com/u/sumithra_16/,101,0,0,0,0,0,151,20,62,19,Same Tree,2025-10-21 16:14:05 IST,Success,2026-09-22 15:41:40 IST
-323,48,ECE B,922525106115,HARISH D,922525106115,https://leetcode.com/u/922525106115/,100,0,0,0,0,0,122,15,63,22,Compare Version Numbers,2025-12-16 20:52:10 IST,Success,2026-09-22 15:41:40 IST
-324,56,ECE F,922525106338,SUJEETH M,SUJEETH77,https://leetcode.com/u/SUJEETH77/,100,0,0,0,0,0,112,19,62,19,4Sum,2025-10-19 08:27:20 IST,Success,2026-09-22 15:41:40 IST
-325,51,ECE A,922525106061,DEVA V,DevaECE,https://leetcode.com/u/DevaECE/,96,0,0,0,0,0,115,18,59,19,Unique Binary Search Trees II,2025-12-11 17:35:24 IST,Success,2026-09-22 15:41:40 IST
-326,52,ECE A,922525106012,AJAYKUMAR A L,AjaykumarAL,https://leetcode.com/u/AjaykumarAL/,91,0,0,0,0,0,118,27,43,21,Minimum Number of Pushes to Type Word I,2026-07-30 21:38:37 IST,Success,2026-09-22 15:41:40 IST
-327,57,ECE F,922525106373,YASHNI S,Yashnisubramaniyan,https://leetcode.com/u/Yashnisubramaniyan/,91,0,0,0,0,0,307,67,21,3,Sum Multiples,2026-08-12 12:19:42 IST,Success,2026-09-22 15:41:40 IST
-328,49,ECE B,922525106083,DINESHKUMAR P,922525106083,https://leetcode.com/u/922525106083/,87,0,0,0,0,0,221,16,55,16,Power of Four,2026-08-06 20:28:58 IST,Success,2026-09-22 15:41:40 IST
-329,58,ECE F,922525106368,VISHNU B,VISHNU_B_2008,https://leetcode.com/u/VISHNU_B_2008/,87,0,0,0,0,0,127,20,51,16,Number of Good Pairs,2026-08-04 16:05:45 IST,Success,2026-09-22 15:41:40 IST
-330,58,ECE C,922525106129,JASVANTHRAM SP,jasvanthram,https://leetcode.com/u/jasvanthram/,85,0,0,0,0,0,108,16,51,18,Maximal Rectangle,2026-04-08 17:32:30 IST,Success,2026-09-22 15:41:40 IST
-331,59,ECE C,922525106151,KAVIPRIYA J,_kavipriya_16,https://leetcode.com/u/_kavipriya_16/,85,0,0,0,0,0,116,34,45,6,Smallest Divisible Digit Product I,2026-08-06 19:54:53 IST,Success,2026-09-22 15:41:40 IST
-332,59,ECE F,922525106369,VISHNU PRIYAN S,itz__priyan__,https://leetcode.com/u/itz__priyan__/,85,0,0,0,0,0,221,38,37,10,4Sum,2026-08-09 12:31:11 IST,Success,2026-09-22 15:41:40 IST
-333,53,ECE A,922525106021,ANOOP C,anoop_appuz,https://leetcode.com/u/anoop_appuz/,84,0,0,0,0,0,88,18,50,16,Remove Duplicates from Sorted Array II,2026-01-08 08:35:00 IST,Success,2026-09-22 15:41:40 IST
-334,54,ECE A,922525106006,AFTON AJ,afton_2008,https://leetcode.com/u/afton_2008/,78,0,0,0,0,0,89,14,41,23,Parsing A Boolean Expression,2026-08-07 19:14:48 IST,Success,2026-09-22 15:41:40 IST
-335,57,ECE E,922525106275,SANJAY U,SanjayUdayan,https://leetcode.com/u/SanjayUdayan/,76,0,0,0,0,0,104,49,24,3,Hamming Distance,2026-08-12 12:29:55 IST,Success,2026-09-22 15:41:40 IST
-336,60,ECE C,922525106164,KOWSHIKA M S,kowshika_moorthi,https://leetcode.com/u/kowshika_moorthi/,58,0,0,0,0,0,60,17,21,20,Add Binary,2026-08-08 10:47:41 IST,Success,2026-09-22 15:41:40 IST
-337,55,ECE A,922525106057,DARSHAN V V,2007darshan,https://leetcode.com/u/2007darshan/,57,0,0,0,0,0,62,13,30,14,N-Queens II,2026-03-26 09:54:01 IST,Success,2026-09-22 15:41:40 IST
-338,50,ECE B,922525106126,JANA S,922525106126,https://leetcode.com/u/922525106126/,56,0,0,0,0,0,69,25,24,7,Number of 1 Bits,2026-08-10 14:32:56 IST,Success,2026-09-22 15:41:40 IST
-339,51,ECE B,922525106089,DURAIMURUGAN K,922525106089,https://leetcode.com/u/922525106089/,55,0,0,0,0,0,75,15,28,12,N-Queens II,2026-02-02 17:43:22 IST,Success,2026-09-22 15:41:40 IST
-340,61,ECE C,922525106172,LOGAVARDHAN M,loga16,https://leetcode.com/u/loga16/,52,0,0,0,0,0,82,10,32,10,Merge Intervals,2026-08-14 17:26:53 IST,Success,2026-09-22 15:41:40 IST
-341,52,ECE B,922525106098,GOUTHAM R J,922525106098,https://leetcode.com/u/922525106098/,51,0,0,0,0,0,65,15,26,10,Number of 1 Bits,2026-08-10 15:07:21 IST,Success,2026-09-22 15:41:40 IST
-342,58,ECE E,922525106258,RITHISH R,Rithish_,https://leetcode.com/u/Rithish_/,50,0,0,0,0,0,64,15,35,0,Binary Tree Inorder Traversal,2025-11-21 21:03:36 IST,Success,2026-09-22 15:41:40 IST
-343,53,ECE B,922525106067,DHARAN.K,922525106067,https://leetcode.com/u/922525106067/,48,0,0,0,0,0,73,10,29,9,"Pow(x, n)",2026-07-28 17:23:27 IST,Success,2026-09-22 15:41:40 IST
-344,59,ECE E,922525106301,SETHUPATHI G,Sethupathi_1228,https://leetcode.com/u/Sethupathi_1228/,47,0,0,0,0,0,52,18,16,13,Two Sum,2026-08-06 17:48:33 IST,Success,2026-09-22 15:41:40 IST
-345,54,ECE B,922525106075,DHARSHINI S,922525106075,https://leetcode.com/u/922525106075/,45,0,0,0,0,0,107,19,22,4,First Missing Positive,2026-08-23 22:30:27 IST,Success,2026-09-22 15:41:40 IST
-346,60,ECE E,922525106276,SANJAYAN S,sanjayan31,https://leetcode.com/u/sanjayan31/,43,0,0,0,0,0,99,12,25,6,Permutations,2026-04-08 21:40:57 IST,Success,2026-09-22 15:41:40 IST
-347,55,ECE B,922525106082,DINESH P,Dinesh_106082,https://leetcode.com/u/Dinesh_106082/,40,0,0,0,0,0,55,11,21,8,Multiply Strings,2025-11-13 12:18:41 IST,Success,2026-09-22 15:41:40 IST
-348,56,ECE B,922525106096,GOPALA KRISHNAN C,922525106096,https://leetcode.com/u/922525106096/,40,0,0,0,0,0,105,10,23,7,Combination Sum II,2025-11-17 17:42:58 IST,Success,2026-09-22 15:41:40 IST
-349,56,ECE A,922525106005,ADHITHMITHRAN P,ADHITHMITHRAN,https://leetcode.com/u/ADHITHMITHRAN/,35,0,0,0,0,0,68,12,18,5,Average of Levels in Binary Tree,2026-08-02 21:04:44 IST,Success,2026-09-22 15:41:40 IST
-350,62,ECE C,922525106157,KESAVINI M,KESAVINI892,https://leetcode.com/u/KESAVINI892/,34,0,0,0,0,0,54,10,19,5,Combination Sum II,2026-07-19 12:08:06 IST,Success,2026-09-22 15:41:40 IST
-351,61,ECE E,922525106299,SENTHAMIZHSELVAN K,Senthamizh08,https://leetcode.com/u/Senthamizh08/,33,0,0,0,0,0,52,11,17,5,Fibonacci Number,2026-08-06 10:36:40 IST,Success,2026-09-22 15:41:40 IST
-352,57,ECE B,922525106066,DHANYA K,922525106066,https://leetcode.com/u/922525106066/,32,0,0,0,0,0,49,16,14,2,Sqrt(x),2026-08-18 20:07:29 IST,Success,2026-09-22 15:41:40 IST
-353,62,ECE E,922525106295,SATHYA PRAKASAM KANNAN,SATHYAPRAKASAM__7,https://leetcode.com/u/SATHYAPRAKASAM__7/,30,0,0,0,0,0,43,9,19,2,N-Queens II,2025-11-16 18:32:53 IST,Success,2026-09-22 15:41:40 IST
-354,63,ECE C,922525106174,LOGESHWARAN K,LOGESHWARAN2008,https://leetcode.com/u/LOGESHWARAN2008/,22,0,0,0,0,0,35,13,6,3,Happy Number,2026-08-11 11:30:12 IST,Success,2026-09-22 15:41:40 IST
-355,63,ECE E,922525106267,SAJISH R,SAJISH7,https://leetcode.com/u/SAJISH7/,17,0,0,0,0,0,21,9,8,0,Largest Number,2026-08-06 10:46:58 IST,Success,2026-09-22 15:41:40 IST
-356,58,ECE B,922525106103,GOWTHAM M,922525106103,https://leetcode.com/u/922525106103/,15,0,0,0,0,0,20,4,9,2,3Sum,2026-04-08 20:45:44 IST,Success,2026-09-22 15:41:40 IST
-357,59,ECE B,922525106086,DIVYA V,922525106086,https://leetcode.com/u/922525106086/,11,0,0,0,0,0,18,7,2,2,Triangle,2025-10-21 22:50:15 IST,Success,2026-09-22 15:41:40 IST
-358,57,ECE A,922525106044,BHAVAN BALA N,BhavanBala,https://leetcode.com/u/BhavanBala/,9,0,0,0,0,0,20,3,5,1,Palindrome Number,2025-10-17 08:21:57 IST,Success,2026-09-22 15:41:40 IST
-359,58,ECE A,922525106020,ANJITHAA N,Anjithaa2006,https://leetcode.com/u/Anjithaa2006/,8,0,0,0,0,24,24,2,5,1,Contiguous Array,2026-09-19 07:08:08 IST,Success,2026-09-22 15:41:40 IST
-360,64,ECE E,922525106286,SARAN K,saran32,https://leetcode.com/u/saran32/,6,0,0,0,0,0,7,5,1,0,Merge Sorted Array,2026-01-21 20:38:15 IST,Success,2026-09-22 15:41:40 IST
-361,58,ECE D,922525106221,NIVETHA T,NIVETHA_THANGARAJ07,https://leetcode.com/u/NIVETHA_THANGARAJ07/,5,0,0,0,0,0,7,5,0,0,Two Sum,2026-08-09 10:41:09 IST,Success,2026-09-22 15:41:40 IST
-362,59,ECE A,922525106037,BARANITHARAN V,barani_7,https://leetcode.com/u/barani_7/,4,0,0,0,0,0,5,4,0,0,Longest Common Prefix,2026-04-08 21:08:53 IST,Success,2026-09-22 15:41:40 IST
-363,60,ECE A,922525106034,ASMITHA E,1,https://leetcode.com/u/1/,2,0,0,0,0,0,7,1,1,0,,,Success,2026-09-22 15:41:40 IST
-364,60,ECE B,922525106118,HARISHANKAR R,922525106118,https://leetcode.com/u/922525106118/,1,0,0,0,0,0,1,0,1,0,Minimum Operations to Convert All Elements to Zero,2025-11-11 01:14:16 IST,Success,2026-09-22 15:41:40 IST
-365,60,ECE F,922525106335,SUDHARSAN S,Sudharsan,https://leetcode.com/u/Sudharsan/,1,0,0,0,0,0,2,1,0,0,,,Success,2026-09-22 15:41:40 IST
-366,61,ECE A,922525106019,ANBARASU S,Anbarasu28122007,https://leetcode.com/u/Anbarasu28122007/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 15:41:40 IST
-367,62,ECE A,922525106050,CHARUDESNA S,charu120108,https://leetcode.com/u/charu120108/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 15:41:40 IST
-368,61,ECE B,922525106074,DHARSHINI P,Dharshini_74,https://leetcode.com/u/Dharshini_74/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 15:41:40 IST
-369,62,ECE B,922525106113,HARIS M,922525106113,https://leetcode.com/u/922525106113/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 15:41:40 IST
-370,63,ECE B,922525106117,HARISH P,922525106117,https://leetcode.com/u/922525106117/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 15:41:40 IST
-371,59,ECE D,922525106227,PRADHOSH T,pradhosh,https://leetcode.com/u/pradhosh/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 15:41:40 IST
-372,60,ECE D,922525106243,RAJAPRAGADEESWARAN R,rajaprahadeeswaran,https://leetcode.com/u/rajaprahadeeswaran/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 15:41:40 IST
-373,61,ECE F,922525106331,SRISAMAYA R,mahi,https://leetcode.com/u/mahi/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 15:41:40 IST
-374,62,ECE F,922525106358,VASANTHA KUMAR D,Vasanthakumar12232,https://leetcode.com/u/Vasanthakumar12232/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 15:41:40 IST
-375,63,ECE A,922525106027,ARULESH K,arul2008,https://leetcode.com/u/arul2008/,44,0,0,0,0,0,56,21,19,4,,,User not found | Previous data kept,2026-09-22 15:41:40 IST
-376,61,ECE D,922525106193,MATHESHKUMAR S,mathesh25,https://leetcode.com/u/mathesh25/,0,0,0,0,0,0,0,0,0,0,,,User not found,2026-09-22 15:41:40 IST
-377,62,ECE D,922525106198,MOHAMMED ABUTHARIK S,tharik25,https://leetcode.com/u/tharik25/,0,0,0,0,0,0,0,0,0,0,,,User not found,2026-09-22 15:41:40 IST
+1,1,ECE A,922525106002,AAZHIGA N,AAZHIGA,https://leetcode.com/u/AAZHIGA/,121,21,92,98,100,109,188,30,70,21,Same Tree,2026-09-22 12:31:16 IST,Success,2026-09-22 20:19:27 IST
+2,1,ECE F,922525106349,THAMEEM FARSHITHA A,Thameem_786,https://leetcode.com/u/Thameem_786/,205,1,14,22,45,22,249,76,97,32,Find X Value of Array II,2026-09-22 19:43:42 IST,Success,2026-09-22 20:19:27 IST
+3,1,ECE C,922525106153,KAVIYARASU K,kavi12d,https://leetcode.com/u/kavi12d/,175,0,0,21,40,0,193,40,104,31,Rotate Array,2026-09-15 19:19:38 IST,Success,2026-09-22 20:19:27 IST
+4,2,ECE C,922525106167,LAKSHETHA V,itz_lakshe,https://leetcode.com/u/itz_lakshe/,149,2,13,21,38,15,312,33,90,26,Find the Index of the First Occurrence in a String,2026-09-22 16:17:38 IST,Success,2026-09-22 20:19:27 IST
+5,2,ECE A,922525106046,BOOMIKA T,boomikat1206,https://leetcode.com/u/boomikat1206/,73,0,3,3,37,6,119,15,43,15,Maximize the Number of Partitions After Operations,2026-09-21 20:43:24 IST,Success,2026-09-22 20:19:27 IST
+6,2,ECE F,922525106329,SRINITHE T,srinithe_1401,https://leetcode.com/u/srinithe_1401/,187,0,0,1,37,0,312,45,111,31,Shuffle the Array,2026-09-09 15:43:14 IST,Success,2026-09-22 20:19:27 IST
+7,1,ECE E,922525106256,RITHIK P,Rithik_78,https://leetcode.com/u/Rithik_78/,61,0,24,32,36,32,86,20,31,10,"Pow(x, n)",2026-09-17 10:19:12 IST,Success,2026-09-22 20:19:27 IST
+8,3,ECE A,922525106004,ABIRAMI R,abirami8072,https://leetcode.com/u/abirami8072/,95,5,13,17,34,18,168,51,32,12,Find the Index of the First Occurrence in a String,2026-09-22 12:29:58 IST,Success,2026-09-22 20:19:27 IST
+9,4,ECE A,922525106025,ARSATHA BEGAM M S,arsatha-,https://leetcode.com/u/arsatha-/,104,0,33,33,33,42,139,46,42,16,Maximize the Number of Partitions After Operations,2026-09-21 19:43:21 IST,Success,2026-09-22 20:19:27 IST
+10,3,ECE F,922525106324,SRI KANTH R,kanth2008,https://leetcode.com/u/kanth2008/,36,0,29,29,29,34,46,12,21,3,Length of Last Word,2026-09-21 16:31:46 IST,Success,2026-09-22 20:19:27 IST
+11,5,ECE A,922525106047,BOSVIYA P,BosviyaBSV,https://leetcode.com/u/BosviyaBSV/,160,5,5,11,29,6,250,83,61,16,Lexicographically Smallest Palindrome,2026-09-22 12:30:54 IST,Success,2026-09-22 20:19:27 IST
+12,6,ECE A,922525106063,DHANASRI R,Dhanasri_r,https://leetcode.com/u/Dhanasri_r/,196,3,14,21,28,20,310,50,113,33,Create Hello World Function,2026-09-22 12:27:35 IST,Success,2026-09-22 20:19:27 IST
+13,7,ECE A,922525106018,AMIRDAVARSINI K S,amirda_varsini_2007,https://leetcode.com/u/amirda_varsini_2007/,78,4,7,13,28,9,104,43,29,6,Check if the Sentence Is Pangram,2026-09-22 12:26:28 IST,Success,2026-09-22 20:19:27 IST
+14,8,ECE A,922525106001,AASHIFA SAHANAJ M,aashifasahanaj,https://leetcode.com/u/aashifasahanaj/,87,3,16,27,27,16,95,30,47,10,Isomorphic Strings,2026-09-22 12:30:05 IST,Success,2026-09-22 20:19:27 IST
+15,4,ECE F,922525106360,VASUDEVAN G,GTVASU2008,https://leetcode.com/u/GTVASU2008/,149,1,7,10,25,12,260,64,65,20,Detect Capital,2026-09-22 20:01:01 IST,Success,2026-09-22 20:19:27 IST
+16,1,ECE B,922525106065,DHANUSHRI D,922525106065,https://leetcode.com/u/922525106065/,152,5,5,14,24,9,261,59,71,22,First Unique Character in a String,2026-09-22 16:33:21 IST,Success,2026-09-22 20:19:27 IST
+17,2,ECE B,922525106120,HEMAA SRI A,922525106120,https://leetcode.com/u/922525106120/,70,0,0,20,23,0,101,15,40,15,Minimum Path Sum,2026-09-13 14:13:19 IST,Success,2026-09-22 20:19:27 IST
+18,2,ECE E,922525106264,SABAREESH,sabareesh_karikalan,https://leetcode.com/u/sabareesh_karikalan/,97,0,11,13,23,30,193,83,14,0,Sum of Left Leaves,2026-09-21 18:15:34 IST,Success,2026-09-22 20:19:27 IST
+19,9,ECE A,922525106003,ABINAYA N,Abinaya7095,https://leetcode.com/u/Abinaya7095/,190,6,8,12,23,12,357,55,105,30,Reverse String,2026-09-22 12:26:49 IST,Success,2026-09-22 20:19:27 IST
+20,3,ECE B,922525106087,DIVYADHARSHINI G,922525106087,https://leetcode.com/u/922525106087/,100,5,6,9,23,10,271,49,40,11,First Unique Character in a String,2026-09-22 16:39:20 IST,Success,2026-09-22 20:19:27 IST
+21,1,ECE D,922525106191,MANOJ KUMAR V,m____a____n____o____,https://leetcode.com/u/m____a____n____o____/,154,0,4,9,23,4,205,54,100,0,Defanging an IP Address,2026-09-20 13:12:42 IST,Success,2026-09-22 20:19:27 IST
+22,3,ECE C,922525106166,KRISH R,krish-2007,https://leetcode.com/u/krish-2007/,167,0,6,14,22,7,188,54,100,13,Check if the Sentence Is Pangram,2026-09-16 20:37:37 IST,Success,2026-09-22 20:19:27 IST
+23,4,ECE C,922525106133,JEEVADHARSHAN R R,dharshanjeeva,https://leetcode.com/u/dharshanjeeva/,92,2,2,9,22,3,164,46,35,11,Ransom Note,2026-09-22 11:56:36 IST,Success,2026-09-22 20:19:27 IST
+24,4,ECE B,922525106071,DHARANI V,922525106071,https://leetcode.com/u/922525106071/,191,2,4,10,21,6,355,52,107,32,Length of Last Word,2026-09-22 16:37:05 IST,Success,2026-09-22 20:19:27 IST
+25,5,ECE F,922525106356,VASANTHKUMAR C,VASANTH2007,https://leetcode.com/u/VASANTH2007/,142,0,2,3,21,5,181,38,82,22,Reverse Degree of a String,2026-09-21 01:06:12 IST,Success,2026-09-22 20:19:27 IST
+26,6,ECE F,922525106346,SWETHA E,Swetha_20_1,https://leetcode.com/u/Swetha_20_1/,103,0,0,1,21,0,204,30,62,11,Largest Rectangle in Histogram,2026-09-09 15:44:21 IST,Success,2026-09-22 20:19:27 IST
+27,10,ECE A,922525106022,ANUJA S,anuja008,https://leetcode.com/u/anuja008/,212,1,20,20,20,23,231,54,122,36,Defanging an IP Address,2026-09-22 12:24:37 IST,Success,2026-09-22 20:19:27 IST
+28,5,ECE B,922525106095,GOMATHI R,gomathi_0709,https://leetcode.com/u/gomathi_0709/,90,2,8,12,20,11,137,27,47,16,Valid Anagram,2026-09-22 16:19:44 IST,Success,2026-09-22 20:19:27 IST
+29,6,ECE B,922525106108,GURUSARAN R,922525106108,https://leetcode.com/u/922525106108/,140,2,3,9,20,4,219,54,79,7,Isomorphic Strings,2026-09-22 16:32:37 IST,Success,2026-09-22 20:19:27 IST
+30,7,ECE F,922525106353,THIRISHA C,thirishavsb,https://leetcode.com/u/thirishavsb/,195,2,7,7,20,12,300,68,99,28,3Sum,2026-09-22 12:13:20 IST,Success,2026-09-22 20:19:27 IST
+31,5,ECE C,922525106185,MAHALAKSHMI P,maha_lakh_20,https://leetcode.com/u/maha_lakh_20/,148,0,4,6,20,5,195,35,86,27,Sum of Distances in Tree,2026-09-17 20:49:04 IST,Success,2026-09-22 20:19:27 IST
+32,8,ECE F,922525106326,SRI VARSHAN B P,srivarshan_B_P,https://leetcode.com/u/srivarshan_B_P/,144,0,2,2,20,2,182,56,69,19,Jewels and Stones,2026-09-17 20:30:47 IST,Success,2026-09-22 20:19:27 IST
+33,6,ECE C,922525106145,KARSHANA SRI V,karshana_234,https://leetcode.com/u/karshana_234/,127,0,19,19,19,21,150,32,74,21,Valid Palindrome,2026-09-18 14:36:58 IST,Success,2026-09-22 20:19:27 IST
+34,11,ECE A,922525106016,AKSHAYA S,codewithakshaya77,https://leetcode.com/u/codewithakshaya77/,137,4,7,14,19,10,292,36,79,22,Check if the Sentence Is Pangram,2026-09-22 12:24:57 IST,Success,2026-09-22 20:19:27 IST
+35,2,ECE D,922525106251,RETHANYA S,SekarRethanya,https://leetcode.com/u/SekarRethanya/,25,2,18,18,18,20,31,21,3,1,Ransom Note,2026-09-22 16:36:20 IST,Success,2026-09-22 20:19:27 IST
+36,12,ECE A,922525106024,ANUSYA B,ANUSYA_30,https://leetcode.com/u/ANUSYA_30/,75,0,7,13,18,7,103,37,33,5,Minimum Depth of Binary Tree,2026-09-19 12:30:28 IST,Success,2026-09-22 20:19:27 IST
+37,7,ECE B,922525106064,DHANIKA S,922525106064,https://leetcode.com/u/922525106064/,228,2,4,13,18,5,275,85,114,29,Isomorphic Strings,2026-09-22 16:17:54 IST,Success,2026-09-22 20:19:27 IST
+38,7,ECE C,922525106140,KANISHKA A R,26kanishka,https://leetcode.com/u/26kanishka/,145,1,5,11,17,6,174,51,74,20,Ransom Note,2026-09-22 11:58:40 IST,Success,2026-09-22 20:19:27 IST
+39,13,ECE A,922525106009,AISHWARYA G,codewithaish,https://leetcode.com/u/codewithaish/,162,5,5,7,17,5,211,43,92,27,Middle of the Linked List,2026-09-22 12:27:45 IST,Success,2026-09-22 20:19:27 IST
+40,9,ECE F,922525106316,SIVARANJAN M P,SIVARANJAN_MP,https://leetcode.com/u/SIVARANJAN_MP/,129,0,2,6,17,3,305,86,41,2,Sum of Unique Elements,2026-09-21 15:20:41 IST,Success,2026-09-22 20:19:27 IST
+41,14,ECE A,922525106054,DAKSHINYA R,Dakshinya555,https://leetcode.com/u/Dakshinya555/,42,3,3,3,17,3,58,28,11,3,Middle of the Linked List,2026-09-22 12:27:11 IST,Success,2026-09-22 20:19:27 IST
+42,8,ECE B,922525106121,HEMAVARSHINI S,922525106121,https://leetcode.com/u/922525106121/,102,2,4,8,16,6,148,44,46,12,Check if the Sentence Is Pangram,2026-09-22 16:21:32 IST,Success,2026-09-22 20:19:27 IST
+43,9,ECE B,922525106099,GOVARTHAN K S,922525106099,https://leetcode.com/u/922525106099/,92,2,2,6,16,3,121,38,44,10,Check if the Sentence Is Pangram,2026-09-22 16:36:22 IST,Success,2026-09-22 20:19:27 IST
+44,10,ECE B,922525106069,DHARANESH S,922525106069,https://leetcode.com/u/922525106069/,80,0,0,0,16,0,111,9,52,19,String to Integer (atoi),2026-08-26 21:31:40 IST,Success,2026-09-22 20:19:27 IST
+45,8,ECE C,922525106147,KATHIR E,kathir__21,https://leetcode.com/u/kathir__21/,29,0,13,15,15,48,87,7,19,3,Unique Paths,2026-09-21 21:17:05 IST,Success,2026-09-22 20:19:27 IST
+46,15,ECE A,922525106035,BALAJI C,Balajichandrasekaran,https://leetcode.com/u/Balajichandrasekaran/,121,1,3,9,15,6,142,29,67,25,Defanging an IP Address,2026-09-22 12:09:48 IST,Success,2026-09-22 20:19:27 IST
+47,11,ECE B,922525106112,HARINI S,922525106112,https://leetcode.com/u/922525106112/,113,2,2,6,15,3,251,67,40,6,Reverse String,2026-09-22 16:38:44 IST,Success,2026-09-22 20:19:27 IST
+48,12,ECE B,922525106085,DIVYA ROJA R,922525106085,https://leetcode.com/u/922525106085/,66,0,1,2,15,5,188,29,26,11,Merge Strings Alternately,2026-09-19 20:45:41 IST,Success,2026-09-22 20:19:27 IST
+49,16,ECE A,922525106059,DEJASRI M,dejasri,https://leetcode.com/u/dejasri/,115,3,13,14,14,19,136,31,62,22,First Unique Character in a String,2026-09-22 12:30:41 IST,Success,2026-09-22 20:19:27 IST
+50,3,ECE D,922525106245,RANJITH K,ranjithkannan,https://leetcode.com/u/ranjithkannan/,186,1,8,14,14,9,233,57,96,33,Detect Capital,2026-09-22 19:57:57 IST,Success,2026-09-22 20:19:27 IST
+51,10,ECE F,922525106377,YAZHINI V,YAZH_RUBA,https://leetcode.com/u/YAZH_RUBA/,147,2,5,14,14,7,201,52,73,22,Reverse String,2026-09-22 18:57:55 IST,Success,2026-09-22 20:19:27 IST
+52,13,ECE B,922525106119,HAVISHMATHI S,922525106119,https://leetcode.com/u/922525106119/,34,4,4,14,14,4,63,30,3,1,First Unique Character in a String,2026-09-22 20:12:39 IST,Success,2026-09-22 20:19:27 IST
+53,11,ECE F,922525106327,SRINATH V,V_SRINATH,https://leetcode.com/u/V_SRINATH/,102,0,3,10,14,3,111,23,59,20,Find Two Non-overlapping Sub-arrays Each With Target Sum,2026-09-17 22:20:45 IST,Success,2026-09-22 20:19:27 IST
+54,9,ECE C,922525106155,KAYALVIZHI S,27kayalvizhi,https://leetcode.com/u/27kayalvizhi/,125,2,4,8,14,6,152,43,63,19,Ransom Note,2026-09-22 12:10:38 IST,Success,2026-09-22 20:19:27 IST
+55,12,ECE F,922525106345,SWATHI S,_swathi_3366,https://leetcode.com/u/_swathi_3366/,144,0,4,7,14,4,186,49,73,22,Robot Return to Origin,2026-09-16 08:06:29 IST,Success,2026-09-22 20:19:27 IST
+56,3,ECE E,922525106290,SARIKA M P,sarika_5408,https://leetcode.com/u/sarika_5408/,141,0,5,5,14,7,163,71,58,12,Reverse String,2026-09-16 12:31:44 IST,Success,2026-09-22 20:19:27 IST
+57,14,ECE B,922525106076,DHARSINI V S,vsdharsini,https://leetcode.com/u/vsdharsini/,25,4,4,5,14,4,46,13,10,2,Reverse String,2026-09-22 16:36:25 IST,Success,2026-09-22 20:19:27 IST
+58,4,ECE E,922525106278,SANMATHI R,sanmathi06,https://leetcode.com/u/sanmathi06/,116,0,4,5,14,7,158,46,59,11,Find the Index of the First Occurrence in a String,2026-09-21 19:21:19 IST,Success,2026-09-22 20:19:27 IST
+59,13,ECE F,922525106337,SUGIDHARSHINI T,Sugi_07,https://leetcode.com/u/Sugi_07/,115,0,2,4,14,3,178,63,49,3,Jewels and Stones,2026-09-16 16:35:38 IST,Success,2026-09-22 20:19:27 IST
+60,10,ECE C,922525106134,JEEVANAA S,jeevanaa_174_,https://leetcode.com/u/jeevanaa_174_/,178,0,0,3,14,0,210,46,102,30,To Lower Case,2026-09-12 10:41:35 IST,Success,2026-09-22 20:19:27 IST
+61,14,ECE F,922525106352,THIRINESH KUMAR S,THIRINESHKUMAR0608,https://leetcode.com/u/THIRINESHKUMAR0608/,134,0,0,0,14,0,168,40,72,22,Reverse String,2026-09-01 19:24:34 IST,Success,2026-09-22 20:19:27 IST
+62,5,ECE E,922525106311,SIVA PRAKASH M,sivaprakash_0406,https://leetcode.com/u/sivaprakash_0406/,104,0,6,9,13,13,214,48,36,20,Minimize String Length,2026-09-17 09:55:44 IST,Success,2026-09-22 20:19:27 IST
+63,6,ECE E,922525106313,SIVAGNANAM M,sivagnanam3344,https://leetcode.com/u/sivagnanam3344/,78,0,6,9,13,9,122,46,25,7,Minimize String Length,2026-09-17 09:55:21 IST,Success,2026-09-22 20:19:27 IST
+64,15,ECE B,922525106125,JAI GANESH I,Jai_Ganesh_I,https://leetcode.com/u/Jai_Ganesh_I/,37,0,0,4,13,0,101,31,6,0,Shuffle the Array,2026-09-11 17:53:21 IST,Success,2026-09-22 20:19:27 IST
+65,11,ECE C,922525106183,MAHALAKSHMI B,mahalakshmi182025,https://leetcode.com/u/mahalakshmi182025/,103,3,3,3,13,4,134,32,53,18,To Lower Case,2026-09-22 12:29:03 IST,Success,2026-09-22 20:19:27 IST
+66,15,ECE F,922525106344,SWATHI M,Swathimanivel_1234,https://leetcode.com/u/Swathimanivel_1234/,138,0,0,0,13,0,204,34,79,25,Clone Graph,2026-09-07 20:29:09 IST,Success,2026-09-22 20:19:27 IST
+67,12,ECE C,922525106148,KAVIMALAR A,kavimalar08,https://leetcode.com/u/kavimalar08/,114,0,0,0,13,0,172,26,69,19,Pascal's Triangle,2026-09-07 08:02:11 IST,Success,2026-09-22 20:19:27 IST
+68,17,ECE A,922525106007,AGATHEESWARAN K,agatheeswarank,https://leetcode.com/u/agatheeswarank/,99,0,8,12,12,13,159,46,43,10,Merge Sorted Array,2026-09-19 17:27:53 IST,Success,2026-09-22 20:19:27 IST
+69,18,ECE A,922525106048,BRINDHA S,BrindhaSakthi,https://leetcode.com/u/BrindhaSakthi/,146,4,6,10,12,10,201,54,82,10,Check if the Sentence Is Pangram,2026-09-22 12:24:45 IST,Success,2026-09-22 20:19:27 IST
+70,13,ECE C,922525106177,MADELIN JENITA M,jenita0206,https://leetcode.com/u/jenita0206/,126,3,8,9,12,8,133,49,72,5,Ransom Note,2026-09-22 12:00:07 IST,Success,2026-09-22 20:19:27 IST
+71,7,ECE E,922525106379,ARUN KUMAR,arunkumar1004,https://leetcode.com/u/arunkumar1004/,15,3,6,9,12,6,17,14,1,0,Middle of the Linked List,2026-09-22 19:46:10 IST,Success,2026-09-22 20:19:27 IST
+72,16,ECE B,922525106079,DHINAKAR A,922525106079,https://leetcode.com/u/922525106079/,120,2,2,8,12,12,149,92,22,6,Isomorphic Strings,2026-09-22 20:16:52 IST,Success,2026-09-22 20:19:27 IST
+73,8,ECE E,922525106315,SIVANESH G,GSIVANESH,https://leetcode.com/u/GSIVANESH/,35,0,5,7,12,11,48,25,7,3,Minimize String Length,2026-09-17 09:55:36 IST,Success,2026-09-22 20:19:27 IST
+74,14,ECE C,922525106179,MADHANKUMAR S,Madhankumar861053,https://leetcode.com/u/Madhankumar861053/,156,0,0,6,12,1,228,71,68,17,Reverse String,2026-09-22 10:41:26 IST,Success,2026-09-22 20:19:27 IST
+75,15,ECE C,922525106189,MANISHA D,manishaa_20,https://leetcode.com/u/manishaa_20/,124,4,4,5,12,7,269,33,71,20,Ransom Note,2026-09-22 11:51:45 IST,Success,2026-09-22 20:19:27 IST
+76,17,ECE B,922525106068,DHARANEESH K,dharaneeshk,https://leetcode.com/u/dharaneeshk/,123,3,3,4,12,6,168,44,63,16,Reverse String,2026-09-22 16:37:47 IST,Success,2026-09-22 20:19:27 IST
+77,16,ECE F,922525106318,SIVASUBRAMANI A,AK_Siva,https://leetcode.com/u/AK_Siva/,146,0,2,2,12,2,168,55,73,18,Jewels and Stones,2026-09-17 13:34:38 IST,Success,2026-09-22 20:19:27 IST
+78,16,ECE C,922525106154,KAVYA A,itzz__kavya02,https://leetcode.com/u/itzz__kavya02/,125,1,1,1,12,2,316,38,66,21,Reverse String,2026-09-22 10:41:56 IST,Success,2026-09-22 20:19:27 IST
+79,19,ECE A,922525106015,AKSHARA KR,Akshara015,https://leetcode.com/u/Akshara015/,71,2,5,8,11,6,104,20,40,11,Defanging an IP Address,2026-09-22 12:21:20 IST,Success,2026-09-22 20:19:27 IST
+80,20,ECE A,922525106031,ARUNPRASANTH T,arunprasanth6435,https://leetcode.com/u/arunprasanth6435/,138,1,1,7,11,1,165,40,77,21,Defanging an IP Address,2026-09-22 12:21:01 IST,Success,2026-09-22 20:19:27 IST
+81,9,ECE E,922525106259,ROHITH V,RohithrohiV,https://leetcode.com/u/RohithrohiV/,99,0,3,6,11,4,140,44,46,9,First Unique Character in a String,2026-09-16 12:22:50 IST,Success,2026-09-22 20:19:27 IST
+82,10,ECE E,922525106291,SARVESWARAN R,sarvesh312008,https://leetcode.com/u/sarvesh312008/,127,0,5,5,11,6,201,43,63,21,Reverse String,2026-09-17 09:38:57 IST,Success,2026-09-22 20:19:27 IST
+83,17,ECE C,922525106169,LINGESHWARAN K,LING2007,https://leetcode.com/u/LING2007/,114,0,1,5,11,9,190,47,51,16,Valid Anagram,2026-09-21 23:06:15 IST,Success,2026-09-22 20:19:27 IST
+84,18,ECE C,922525106182,MADHUP KISHOR G S,Madhupkishor_20,https://leetcode.com/u/Madhupkishor_20/,221,1,3,4,11,5,252,77,144,0,Reverse String,2026-09-22 10:41:56 IST,Success,2026-09-22 20:19:27 IST
+85,17,ECE F,922525106375,YAZHINI M,yazhini2007,https://leetcode.com/u/yazhini2007/,72,0,1,3,11,5,135,25,34,13,Binary Tree Level Order Traversal,2026-09-16 16:26:32 IST,Success,2026-09-22 20:19:27 IST
+86,18,ECE F,922525106328,SRINIRANJAN S,SRINIRANJAN2008,https://leetcode.com/u/SRINIRANJAN2008/,126,0,1,2,11,1,140,39,68,19,To Lower Case,2026-09-16 16:19:46 IST,Success,2026-09-22 20:19:27 IST
+87,19,ECE F,922525106370,VISHNUHARAN V S,Vishnuharan082007,https://leetcode.com/u/Vishnuharan082007/,72,0,0,0,11,0,93,47,22,3,Path Sum,2026-09-05 14:07:39 IST,Success,2026-09-22 20:19:27 IST
+88,21,ECE A,922525106058,DEEKSHA K,Deeksha0721,https://leetcode.com/u/Deeksha0721/,37,3,3,7,10,4,82,22,12,3,Valid Anagram,2026-09-22 12:19:49 IST,Success,2026-09-22 20:19:27 IST
+89,19,ECE C,922525106181,MADHUMITHA B,Madhumitha42,https://leetcode.com/u/Madhumitha42/,191,3,4,6,10,4,238,59,102,30,Contains Duplicate,2026-09-22 12:14:23 IST,Success,2026-09-22 20:19:27 IST
+90,11,ECE E,922525106289,SARAVANAN S,Saravanan_7525,https://leetcode.com/u/Saravanan_7525/,116,0,4,6,10,7,136,88,23,5,First Unique Character in a String,2026-09-16 12:22:57 IST,Success,2026-09-22 20:19:27 IST
+91,20,ECE F,922525106348,THAMARAI SELVI D,thamarai_04,https://leetcode.com/u/thamarai_04/,181,0,2,6,10,2,265,103,67,11,Jewels and Stones,2026-09-17 21:33:32 IST,Success,2026-09-22 20:19:27 IST
+92,21,ECE F,922525106374,YASWANTH V,yaswanth_2008,https://leetcode.com/u/yaswanth_2008/,127,0,2,6,10,2,150,39,69,19,Jewels and Stones,2026-09-16 16:39:52 IST,Success,2026-09-22 20:19:27 IST
+93,12,ECE E,922525106268,SAKTHI S,Sakthisaro08,https://leetcode.com/u/Sakthisaro08/,126,0,1,6,10,1,151,47,60,19,Jewels and Stones,2026-09-16 11:33:16 IST,Success,2026-09-22 20:19:27 IST
+94,13,ECE E,922525106302,SHAHANA S,shahana_pandiraj04,https://leetcode.com/u/shahana_pandiraj04/,127,0,3,5,10,6,199,45,63,19,Reverse String,2026-09-16 23:50:25 IST,Success,2026-09-22 20:19:27 IST
+95,22,ECE F,922525106334,SUBIKA T,subika1112,https://leetcode.com/u/subika1112/,103,0,3,5,10,3,125,27,58,18,Same Tree,2026-09-17 14:13:04 IST,Success,2026-09-22 20:19:27 IST
+96,14,ECE E,922525106288,SARAVANAN K,saravanan__k__,https://leetcode.com/u/saravanan__k__/,79,0,3,5,10,3,164,45,25,9,First Unique Character in a String,2026-09-17 09:55:40 IST,Success,2026-09-22 20:19:27 IST
+97,15,ECE E,922525106287,SARAVANAN K,X01u2FNNX4,https://leetcode.com/u/X01u2FNNX4/,29,0,3,5,10,3,35,20,7,2,Reverse String,2026-09-17 09:46:12 IST,Success,2026-09-22 20:19:27 IST
+98,16,ECE E,922525106312,SIVADHARSHINI D,dharshinideivasigamani,https://leetcode.com/u/dharshinideivasigamani/,121,0,2,5,10,2,182,50,63,8,Reverse String,2026-09-17 09:38:43 IST,Success,2026-09-22 20:19:27 IST
+99,23,ECE F,922525106323,SRI HEERA J,sriheera03,https://leetcode.com/u/sriheera03/,138,0,1,3,10,1,224,45,78,15,To Lower Case,2026-09-16 16:17:55 IST,Success,2026-09-22 20:19:27 IST
+100,18,ECE B,922525106100,GOWRIKA K P,922525106100,https://leetcode.com/u/922525106100/,119,2,2,2,10,4,212,53,64,2,Reverse String,2026-09-22 16:39:03 IST,Success,2026-09-22 20:19:27 IST
+101,24,ECE F,922525106320,SOBIKA R,_sobika_R,https://leetcode.com/u/_sobika_R/,120,0,2,2,10,3,204,47,64,9,To Lower Case,2026-09-16 16:19:25 IST,Success,2026-09-22 20:19:27 IST
+102,17,ECE E,922525106266,SAHANA.V,Sahanavijayakumar_0033,https://leetcode.com/u/Sahanavijayakumar_0033/,22,0,2,2,10,4,31,20,2,0,Length of Last Word,2026-09-21 22:32:04 IST,Success,2026-09-22 20:19:27 IST
+103,22,ECE A,922525106029,R ARUN PRASATH,Arunravi1810,https://leetcode.com/u/Arunravi1810/,130,0,8,8,9,9,245,29,80,21,Count Primes,2026-09-18 07:10:16 IST,Success,2026-09-22 20:19:27 IST
+104,20,ECE C,922525106142,KANITHRA R,kanithraakila,https://leetcode.com/u/kanithraakila/,119,4,4,7,9,4,143,36,66,17,Reverse Words in a String,2026-09-22 12:17:04 IST,Success,2026-09-22 20:19:27 IST
+105,23,ECE A,922525106060,DESMA SHALINI K,desmashalini,https://leetcode.com/u/desmashalini/,113,1,3,7,9,8,149,27,66,20,Check if the Sentence Is Pangram,2026-09-22 12:16:47 IST,Success,2026-09-22 20:19:27 IST
+106,21,ECE C,922525106163,KOWSHIKA B,Kowshika08,https://leetcode.com/u/Kowshika08/,130,0,0,7,9,0,273,32,76,22,Gas Station,2026-09-15 09:04:24 IST,Success,2026-09-22 20:19:27 IST
+107,18,ECE E,922525106279,SANTHIYA T,santhiya0202,https://leetcode.com/u/santhiya0202/,60,0,4,5,9,5,79,37,20,3,Reverse String,2026-09-16 12:29:02 IST,Success,2026-09-22 20:19:27 IST
+108,19,ECE E,922525106269,SAKTHIVEL. M,sakthivel23116,https://leetcode.com/u/sakthivel23116/,118,0,4,4,9,8,198,37,62,19,First Unique Character in a String,2026-09-16 12:29:03 IST,Success,2026-09-22 20:19:27 IST
+109,20,ECE E,922525106265,SABARIVASAN P,SabarivasanP,https://leetcode.com/u/SabarivasanP/,157,0,2,4,9,9,279,55,79,23,First Unique Character in a String,2026-09-17 10:19:27 IST,Success,2026-09-22 20:19:27 IST
+110,25,ECE F,922525106365,VIGNESHWAR U,VIGNESHWAR0221,https://leetcode.com/u/VIGNESHWAR0221/,134,0,2,4,9,2,189,48,67,19,Jewels and Stones,2026-09-16 16:39:05 IST,Success,2026-09-22 20:19:27 IST
+111,22,ECE C,922525106150,KAVINKUMAR M,kavinleet,https://leetcode.com/u/kavinleet/,96,3,3,3,9,3,118,29,50,17,Ransom Note,2026-09-22 11:58:37 IST,Success,2026-09-22 20:19:27 IST
+112,26,ECE F,922525106371,VISHNUPRIYA S,vishnupriyamaran,https://leetcode.com/u/vishnupriyamaran/,120,0,0,3,9,0,160,39,64,17,Contains Duplicate,2026-09-09 16:19:41 IST,Success,2026-09-22 20:19:27 IST
+113,23,ECE C,922525106176,LOKRAJI R,LOKRAJI6793,https://leetcode.com/u/LOKRAJI6793/,121,0,0,1,9,0,162,57,54,10,Jewels and Stones,2026-09-12 10:32:45 IST,Success,2026-09-22 20:19:27 IST
+114,24,ECE C,922525106168,LAVANYA V,lavilavanya,https://leetcode.com/u/lavilavanya/,119,8,8,8,8,8,169,33,67,19,Binary Tree Paths,2026-09-22 12:17:20 IST,Success,2026-09-22 20:19:27 IST
+115,24,ECE A,922525106023,ANUSRI R,Anusri_2008,https://leetcode.com/u/Anusri_2008/,83,4,6,6,8,11,114,51,32,0,Length of Last Word,2026-09-22 12:36:24 IST,Success,2026-09-22 20:19:27 IST
+116,21,ECE E,922525106380,HARJIT VASAN SV,Harjit_Vasan,https://leetcode.com/u/Harjit_Vasan/,12,0,5,6,8,8,27,10,2,0,Detect Capital,2026-09-16 11:50:06 IST,Success,2026-09-22 20:19:27 IST
+117,25,ECE A,922525106010,AJAIRAJAN SR,UJw4zUNnJJ,https://leetcode.com/u/UJw4zUNnJJ/,27,1,4,4,8,12,46,11,14,2,Find the Index of the First Occurrence in a String,2026-09-22 12:25:18 IST,Success,2026-09-22 20:19:27 IST
+118,27,ECE F,922525106350,THARANISH R,THARANISH2008,https://leetcode.com/u/THARANISH2008/,131,0,1,3,8,1,168,43,71,17,To Lower Case,2026-09-16 16:36:42 IST,Success,2026-09-22 20:19:27 IST
+119,19,ECE B,922525106090,ELAKKIYA N,922525106090,https://leetcode.com/u/922525106090/,63,0,2,2,8,4,123,20,40,3,Richest Customer Wealth,2026-09-21 21:11:49 IST,Success,2026-09-22 20:19:27 IST
+120,22,ECE E,922525106307,SHIVANI B,shivani208,https://leetcode.com/u/shivani208/,78,0,1,2,8,2,115,33,39,6,Jewels and Stones,2026-09-16 11:43:20 IST,Success,2026-09-22 20:19:27 IST
+121,25,ECE C,922525106156,KEERTHANA S,keerthana_19selvam,https://leetcode.com/u/keerthana_19selvam/,102,0,0,2,8,0,154,42,57,3,Two Sum,2026-09-13 08:42:54 IST,Success,2026-09-22 20:19:27 IST
+122,28,ECE F,922525106341,SURYA PRABHU S,SURYA_FOUNDER,https://leetcode.com/u/SURYA_FOUNDER/,78,0,0,2,8,0,91,26,38,14,Shuffle the Array,2026-09-09 15:40:13 IST,Success,2026-09-22 20:19:27 IST
+123,26,ECE A,922525106014,AKASH.R,AkashRajaram,https://leetcode.com/u/AkashRajaram/,98,1,1,1,8,1,120,47,45,6,Defanging an IP Address,2026-09-22 12:23:28 IST,Success,2026-09-22 20:19:27 IST
+124,23,ECE E,922525106303,SHANTHINI C,ShanthiniChelladurai,https://leetcode.com/u/ShanthiniChelladurai/,116,0,0,0,8,0,135,21,73,22,Remove Duplicates from Sorted List II,2026-08-24 11:55:43 IST,Success,2026-09-22 20:19:27 IST
+125,27,ECE A,922525106040,BHARANIDHARAN S,Bharanidharan_2007,https://leetcode.com/u/Bharanidharan_2007/,51,7,7,7,7,7,100,38,9,4,Valid Palindrome,2026-09-22 12:31:12 IST,Success,2026-09-22 20:19:27 IST
+126,26,ECE C,922525106178,MADHAN VELU G,madhan_1234,https://leetcode.com/u/madhan_1234/,150,1,7,7,7,9,183,36,87,27,Detect Capital,2026-09-22 09:59:50 IST,Success,2026-09-22 20:19:27 IST
+127,28,ECE A,922525106013,AJITH KUMAR M,ajit_kumar_23,https://leetcode.com/u/ajit_kumar_23/,168,4,4,6,7,6,428,54,91,23,Populating Next Right Pointers in Each Node II,2026-09-22 12:17:10 IST,Success,2026-09-22 20:19:27 IST
+128,29,ECE A,922525106039,BENOV NAVIN V,Benov_18,https://leetcode.com/u/Benov_18/,60,0,5,5,7,9,95,23,27,10,Cheapest Flights Within K Stops,2026-09-17 20:28:02 IST,Success,2026-09-22 20:19:27 IST
+129,27,ECE C,922525106130,JAYASAKTHI V,jayasakthi_25,https://leetcode.com/u/jayasakthi_25/,111,2,2,5,7,3,133,33,60,18,Ransom Note,2026-09-22 11:58:00 IST,Success,2026-09-22 20:19:27 IST
+130,24,ECE E,922525106277,SANJEVI P,sanjevi007,https://leetcode.com/u/sanjevi007/,34,0,3,3,7,4,68,22,11,1,First Unique Character in a String,2026-09-16 12:24:17 IST,Success,2026-09-22 20:19:27 IST
+131,28,ECE C,922525106160,KOHUL V,kohul_v,https://leetcode.com/u/kohul_v/,108,2,2,3,7,2,122,31,57,20,Reverse String,2026-09-22 10:42:25 IST,Success,2026-09-22 20:19:27 IST
+132,29,ECE C,922525106161,KOWSHIK M,kowshikm23,https://leetcode.com/u/kowshikm23/,91,1,1,3,7,1,141,46,33,12,Find X Value of Array II,2026-09-22 11:59:31 IST,Success,2026-09-22 20:19:27 IST
+133,20,ECE B,922525106105,GOWTHAM S,Gowtham_080,https://leetcode.com/u/Gowtham_080/,117,2,2,2,7,7,167,72,44,1,Valid Anagram,2026-09-22 16:36:04 IST,Success,2026-09-22 20:19:27 IST
+134,25,ECE E,922525106285,SANTHOSH V,santhosh8760,https://leetcode.com/u/santhosh8760/,64,0,2,2,7,4,113,33,24,7,Detect Capital,2026-09-16 12:02:48 IST,Success,2026-09-22 20:19:27 IST
+135,30,ECE C,922525106158,KIRUTHIKA S,kiruthika_selvanathan05092007,https://leetcode.com/u/kiruthika_selvanathan05092007/,131,0,0,2,7,0,268,40,72,19,Jewels and Stones,2026-09-12 10:28:22 IST,Success,2026-09-22 20:19:27 IST
+136,29,ECE F,922525106378,YOKESWARAN S,syokeswaran,https://leetcode.com/u/syokeswaran/,123,0,0,2,7,1,171,40,64,19,Same Tree,2026-09-21 23:02:44 IST,Success,2026-09-22 20:19:27 IST
+137,26,ECE E,922525106260,ROOBAGAPRIYA R,Roobagapriya,https://leetcode.com/u/Roobagapriya/,69,0,1,1,7,2,81,27,33,9,Jewels and Stones,2026-09-16 11:43:40 IST,Success,2026-09-22 20:19:27 IST
+138,27,ECE E,922525106284,SANTHOSH S,santhosh2407,https://leetcode.com/u/santhosh2407/,138,0,0,1,7,0,161,42,74,22,How Many Numbers Are Smaller Than the Current Number,2026-09-09 11:20:52 IST,Success,2026-09-22 20:19:27 IST
+139,31,ECE C,922525106188,MALINI S,MaliniSenthil,https://leetcode.com/u/MaliniSenthil/,128,0,0,0,7,0,163,46,71,11,Running Sum of 1d Array,2026-09-05 23:23:47 IST,Success,2026-09-22 20:19:27 IST
+140,32,ECE C,922525106136,JOSHITHA KANNAN SUDHA,Joshi_666,https://leetcode.com/u/Joshi_666/,113,0,0,0,7,0,213,32,62,19,Binary Search Tree Iterator,2026-09-04 19:12:56 IST,Success,2026-09-22 20:19:27 IST
+141,33,ECE C,922525106173,LOGESH H,logesh2008,https://leetcode.com/u/logesh2008/,106,0,6,6,6,7,132,39,49,18,Valid Anagram,2026-09-20 15:16:44 IST,Success,2026-09-22 20:19:27 IST
+142,4,ECE D,922525106207,NANDHANA R,Nandhu_4,https://leetcode.com/u/Nandhu_4/,9,0,6,6,6,10,18,4,5,0,Longest Common Prefix,2026-09-18 19:31:22 IST,Success,2026-09-22 20:19:27 IST
+143,5,ECE D,922525106229,PRANESH Y,Pranesh_Y,https://leetcode.com/u/Pranesh_Y/,16,0,3,6,6,8,27,12,3,1,Missing Number,2026-09-18 20:33:42 IST,Success,2026-09-22 20:19:27 IST
+144,30,ECE A,922525106008,AHELESH G S,ahelesh_10_,https://leetcode.com/u/ahelesh_10_/,58,0,0,6,6,0,65,11,35,12,Unique 3-Digit Even Numbers,2026-09-11 19:28:20 IST,Success,2026-09-22 20:19:27 IST
+145,30,ECE F,922525106359,VASANTHKUMAR R,VasanthKumar008,https://leetcode.com/u/VasanthKumar008/,104,1,5,5,6,13,165,46,44,14,Isomorphic Strings,2026-09-22 07:06:48 IST,Success,2026-09-22 20:19:27 IST
+146,21,ECE B,922525106101,GOWRISANKAR S,922525106101,https://leetcode.com/u/922525106101/,107,0,0,4,6,0,165,29,60,18,Check if Matrix Is X-Matrix,2026-09-10 22:20:13 IST,Success,2026-09-22 20:19:27 IST
+147,34,ECE C,922525106186,MAHIBALAN .A,mahi20_,https://leetcode.com/u/mahi20_/,165,1,1,3,6,10,251,42,94,29,Ransom Note,2026-09-22 12:15:29 IST,Success,2026-09-22 20:19:27 IST
+148,31,ECE F,922525106325,SRI SASTIKA G,Srisastika_1401,https://leetcode.com/u/Srisastika_1401/,124,0,1,3,6,1,141,37,68,19,To Lower Case,2026-09-16 16:18:34 IST,Success,2026-09-22 20:19:27 IST
+149,35,ECE C,922525106139,KAMALINI G,_kamalini_,https://leetcode.com/u/_kamalini_/,106,0,0,2,6,0,122,36,52,18,To Lower Case,2026-09-12 10:46:15 IST,Success,2026-09-22 20:19:27 IST
+150,22,ECE B,922525106088,DIVYADHARSHINI S,922525106088,https://leetcode.com/u/922525106088/,48,1,1,1,6,1,70,13,25,10,Middle of the Linked List,2026-09-22 16:16:19 IST,Success,2026-09-22 20:19:27 IST
+151,28,ECE E,922525106282,SANTHOSH PRIYAN S,8925787430,https://leetcode.com/u/8925787430/,106,0,0,1,6,0,170,30,56,20,Shuffle the Array,2026-09-09 11:33:15 IST,Success,2026-09-22 20:19:27 IST
+152,29,ECE E,922525106306,SHARUKESH,sharukesh2008,https://leetcode.com/u/sharukesh2008/,42,0,0,1,6,0,62,33,8,1,Shuffle the Array,2026-09-10 23:12:19 IST,Success,2026-09-22 20:19:27 IST
+153,36,ECE C,922525106180,MADHUDHARA P,madhudhara,https://leetcode.com/u/madhudhara/,112,0,0,0,6,0,134,10,96,6,Regular Expression Matching,2026-09-06 08:14:36 IST,Success,2026-09-22 20:19:27 IST
+154,32,ECE F,922525106330,SRINITHI S,Srinithi24_,https://leetcode.com/u/Srinithi24_/,77,0,0,0,6,0,118,56,20,1,Transpose Matrix,2026-09-07 16:00:41 IST,Success,2026-09-22 20:19:27 IST
+155,37,ECE C,922525106138,JOTHISHA K S,Jothi-,https://leetcode.com/u/Jothi-/,113,0,5,5,5,6,161,27,67,19,Minimum Depth of Binary Tree,2026-09-20 20:12:11 IST,Success,2026-09-22 20:19:27 IST
+156,30,ECE E,922525106280,SANTHOSH D,santhosh7811,https://leetcode.com/u/santhosh7811/,114,0,4,5,5,12,150,31,62,21,Middle of the Linked List,2026-09-21 12:30:33 IST,Success,2026-09-22 20:19:27 IST
+157,33,ECE F,922525106357,VASANTH S,_vasanth_s_,https://leetcode.com/u/_vasanth_s_/,67,0,2,5,5,3,126,66,1,0,Jewels and Stones,2026-09-18 11:49:38 IST,Success,2026-09-22 20:19:27 IST
+158,38,ECE C,922525106171,LOGASRI.A,Loga07,https://leetcode.com/u/Loga07/,208,0,2,3,5,2,256,87,96,25,Maximum Gap,2026-09-20 10:06:34 IST,Success,2026-09-22 20:19:27 IST
+159,31,ECE E,922525106381,LOHITH T S,LOHITH1206,https://leetcode.com/u/LOHITH1206/,7,0,2,3,5,2,14,6,1,0,First Unique Character in a String,2026-09-16 12:26:01 IST,Success,2026-09-22 20:19:27 IST
+160,23,ECE B,922525106070,DHARANI M,922525106070,https://leetcode.com/u/922525106070/,123,2,2,2,5,2,129,46,59,18,Check if the Sentence Is Pangram,2026-09-22 16:21:34 IST,Success,2026-09-22 20:19:27 IST
+161,39,ECE C,922525106152,KAVIPRIYA R,KAVI_RAVI,https://leetcode.com/u/KAVI_RAVI/,64,2,2,2,5,2,75,22,29,13,Ransom Note,2026-09-22 12:04:12 IST,Success,2026-09-22 20:19:27 IST
+162,32,ECE E,922525106298,SELVA RAGAVAN,Selvax07,https://leetcode.com/u/Selvax07/,7,0,2,2,5,2,9,7,0,0,Detect Capital,2026-09-16 12:05:25 IST,Success,2026-09-22 20:19:27 IST
+163,34,ECE F,922525106366,VIJAYARAGAVAN R,vijayaragavan1216,https://leetcode.com/u/vijayaragavan1216/,115,0,1,2,5,1,172,32,63,20,To Lower Case,2026-09-16 16:17:25 IST,Success,2026-09-22 20:19:27 IST
+164,40,ECE C,922525106170,LOGADHARSHINI T,LogadharshiniT,https://leetcode.com/u/LogadharshiniT/,134,0,0,2,5,0,216,47,68,19,To Lower Case,2026-09-12 10:46:22 IST,Success,2026-09-22 20:19:27 IST
+165,31,ECE A,922525106052,CHINMAYASRI K,922525106052,https://leetcode.com/u/922525106052/,64,1,1,1,5,7,126,21,35,8,Find the Index of the First Occurrence in a String,2026-09-22 12:21:28 IST,Success,2026-09-22 20:19:27 IST
+166,33,ECE E,922525106297,SELVAPRAGADEESH S,Selvapragadeesh,https://leetcode.com/u/Selvapragadeesh/,75,0,1,1,5,1,115,50,25,0,Detect Capital,2026-09-16 12:09:55 IST,Success,2026-09-22 20:19:27 IST
+167,34,ECE E,922525106273,SANJAY P,sanjay00675,https://leetcode.com/u/sanjay00675/,39,0,0,1,5,0,73,23,15,1,Contains Duplicate,2026-09-09 11:40:04 IST,Success,2026-09-22 20:19:27 IST
+168,32,ECE A,922525106051,CHARUNETHRA S,charunethra07,https://leetcode.com/u/charunethra07/,258,0,0,0,5,0,391,68,146,44,Richest Customer Wealth,2026-09-08 11:53:52 IST,Success,2026-09-22 20:19:27 IST
+169,35,ECE E,922525106271,SANDHOSH KUMAR R,sandhosh_30_R,https://leetcode.com/u/sandhosh_30_R/,80,0,0,0,5,0,107,33,38,9,Running Sum of 1d Array,2026-09-09 10:46:26 IST,Success,2026-09-22 20:19:27 IST
+170,24,ECE B,922525106094,GOKUL D,Gokul_tamilan_india,https://leetcode.com/u/Gokul_tamilan_india/,45,0,0,0,5,0,88,41,4,0,Rotate List,2026-08-31 19:40:08 IST,Success,2026-09-22 20:19:27 IST
+171,36,ECE E,922525106309,SHREE CHARAN T,shreecharan22,https://leetcode.com/u/shreecharan22/,38,0,0,0,5,0,51,24,12,2,Richest Customer Wealth,2026-09-07 12:23:12 IST,Success,2026-09-22 20:19:27 IST
+172,37,ECE E,922525106270,SANDHIYA T,zklXTc9UAp,https://leetcode.com/u/zklXTc9UAp/,21,0,0,0,5,0,29,12,7,2,Toeplitz Matrix,2026-09-09 11:41:11 IST,Success,2026-09-22 20:19:27 IST
+173,25,ECE B,922525106106,GOWTHAMAN N,922525106106,https://leetcode.com/u/922525106106/,128,4,4,4,4,4,147,36,68,24,Regular Expression Matching,2026-09-22 19:56:45 IST,Success,2026-09-22 20:19:27 IST
+174,41,ECE C,922525106159,KISHOREKUMAR B,Kishore9225,https://leetcode.com/u/Kishore9225/,14,4,4,4,4,5,23,8,6,0,Ransom Note,2026-09-22 12:05:44 IST,Success,2026-09-22 20:19:27 IST
+175,42,ECE C,922525106127,JANANI A,janani_asohkan,https://leetcode.com/u/janani_asohkan/,129,1,4,4,4,7,169,45,70,14,Reverse String,2026-09-22 10:27:00 IST,Success,2026-09-22 20:19:27 IST
+176,6,ECE D,922525106197,MITHAN P,Mithan_6,https://leetcode.com/u/Mithan_6/,7,0,4,4,4,8,11,4,3,0,Linked List Cycle II,2026-09-16 12:04:15 IST,Success,2026-09-22 20:19:27 IST
+177,38,ECE E,922525106294,SATHANA SRI S K,Sathana-1267,https://leetcode.com/u/Sathana-1267/,30,0,3,4,4,3,38,13,15,2,First Unique Character in a String,2026-09-16 12:20:07 IST,Success,2026-09-22 20:19:27 IST
+178,33,ECE A,922525106036,BALARITHISH S,IOu1mvgrJS,https://leetcode.com/u/IOu1mvgrJS/,23,0,0,4,4,0,59,7,11,5,Cheapest Flights Within K Stops,2026-09-15 08:39:07 IST,Success,2026-09-22 20:19:27 IST
+179,35,ECE F,922525106339,SUJITH RAJA B,sujith45,https://leetcode.com/u/sujith45/,59,0,0,3,4,0,78,30,23,6,Minimum Window Substring,2026-09-15 18:34:43 IST,Success,2026-09-22 20:19:27 IST
+180,36,ECE F,922525106363,VIGNESH M,O8bYDSRUbE,https://leetcode.com/u/O8bYDSRUbE/,61,0,2,2,4,2,73,16,33,12,Jewels and Stones,2026-09-16 16:23:59 IST,Success,2026-09-22 20:19:27 IST
+181,39,ECE E,922525106283,SANTHOSH S,santhoshsathya260,https://leetcode.com/u/santhoshsathya260/,181,0,1,2,4,1,274,49,102,30,Jewels and Stones,2026-09-16 11:39:38 IST,Success,2026-09-22 20:19:27 IST
+182,34,ECE A,922525106043,BHARGAVI K,bhargavi_332008,https://leetcode.com/u/bhargavi_332008/,24,0,0,2,4,0,34,9,14,1,Combination Sum,2026-09-11 09:45:28 IST,Success,2026-09-22 20:19:27 IST
+183,35,ECE A,922525106055,DARSHAN C,922525106055,https://leetcode.com/u/922525106055/,111,1,1,1,4,1,144,32,62,17,Defanging an IP Address,2026-09-22 12:19:48 IST,Success,2026-09-22 20:19:27 IST
+184,26,ECE B,922525106109,HANSHIKAVARSA K S,922525106109,https://leetcode.com/u/922525106109/,69,1,1,1,4,1,96,20,37,12,Defanging an IP Address,2026-09-22 16:06:04 IST,Success,2026-09-22 20:19:27 IST
+185,40,ECE E,922525106300,SENTHIL.S,Jna76WrjNd,https://leetcode.com/u/Jna76WrjNd/,120,0,1,1,4,2,248,35,66,19,Jewels and Stones,2026-09-16 11:23:55 IST,Success,2026-09-22 20:19:27 IST
+186,41,ECE E,922525106274,SANJAY P,Sanjay_Sakthivel-2,https://leetcode.com/u/Sanjay_Sakthivel-2/,68,0,1,1,4,2,97,21,36,11,Jewels and Stones,2026-09-16 11:40:45 IST,Success,2026-09-22 20:19:27 IST
+187,27,ECE B,922525106111,HARIS S,922525106111,https://leetcode.com/u/922525106111/,181,0,0,0,4,0,231,45,106,30,Missing Number,2026-08-25 12:06:05 IST,Success,2026-09-22 20:19:27 IST
+188,37,ECE F,922525106319,SIVATHARUN C,sivatharun22,https://leetcode.com/u/sivatharun22/,155,0,0,0,4,0,186,41,87,27,Length of Last Word,2026-09-13 15:00:54 IST,Success,2026-09-22 20:19:27 IST
+189,38,ECE F,922525106321,SREE DHARANI C,SREEDHARANI_14,https://leetcode.com/u/SREEDHARANI_14/,122,0,0,0,4,0,159,60,49,13,Missing Number,2026-09-04 18:27:47 IST,Success,2026-09-22 20:19:27 IST
+190,36,ECE A,922525106017,ALAGESHWARAN J,Alageshwaran2008,https://leetcode.com/u/Alageshwaran2008/,115,0,0,0,4,0,221,39,53,23,Transpose Matrix,2026-09-08 11:50:58 IST,Success,2026-09-22 20:19:27 IST
+191,42,ECE E,922525106253,RITHANYA KN,Rithanya12-3,https://leetcode.com/u/Rithanya12-3/,112,0,0,0,4,0,388,42,54,16,Richest Customer Wealth,2026-09-07 12:21:11 IST,Success,2026-09-22 20:19:27 IST
+192,39,ECE F,922525106351,THARUNIKA P,Tharunika_12,https://leetcode.com/u/Tharunika_12/,104,0,0,0,4,0,205,52,38,14,Unique Paths II,2026-08-28 08:33:32 IST,Success,2026-09-22 20:19:27 IST
+193,43,ECE C,922525106175,LOHITH RAJ S,LOHITH012008,https://leetcode.com/u/LOHITH012008/,155,3,3,3,3,3,174,42,94,19,Zigzag Conversion,2026-09-22 18:36:15 IST,Success,2026-09-22 20:19:27 IST
+194,28,ECE B,922525106098,GOUTHAM R J,922525106098,https://leetcode.com/u/922525106098/,54,3,3,3,3,4,69,18,26,10,Reverse String,2026-09-22 16:37:44 IST,Success,2026-09-22 20:19:27 IST
+195,29,ECE B,922525106075,DHARSHINI S,922525106075,https://leetcode.com/u/922525106075/,48,3,3,3,3,8,115,22,22,4,Defanging an IP Address,2026-09-22 16:19:47 IST,Success,2026-09-22 20:19:27 IST
+196,7,ECE D,922525106246,RASIKA S,RASIKA_2008,https://leetcode.com/u/RASIKA_2008/,124,0,3,3,3,3,166,15,85,24,Valid Anagram,2026-09-21 22:43:29 IST,Success,2026-09-22 20:19:27 IST
+197,30,ECE B,922525106072,DHARANISH R,922525601072,https://leetcode.com/u/922525601072/,106,2,2,3,3,4,141,36,69,1,Isomorphic Strings,2026-09-22 16:26:44 IST,Success,2026-09-22 20:19:27 IST
+198,31,ECE B,922525106073,DHARMENDRA M P,922525106073,https://leetcode.com/u/922525106073/,21,0,0,3,3,0,38,8,11,2,Remove Duplicates from Sorted Array,2026-09-10 07:36:44 IST,Success,2026-09-22 20:19:27 IST
+199,43,ECE E,922525106293,SASWIN D,saswin_88,https://leetcode.com/u/saswin_88/,94,0,2,2,3,3,124,30,50,14,First Unique Character in a String,2026-09-16 12:19:24 IST,Success,2026-09-22 20:19:27 IST
+200,37,ECE A,922525106028,ARUN C,AGmXRQ1yTe,https://leetcode.com/u/AGmXRQ1yTe/,23,0,0,1,3,0,39,11,10,2,Running Sum of 1d Array,2026-09-11 09:55:48 IST,Success,2026-09-22 20:19:27 IST
+201,32,ECE B,922525106097,GOPINATH R,922525106097,https://leetcode.com/u/922525106097/,116,0,0,0,3,0,141,39,59,18,Reverse Bits,2026-08-27 23:58:33 IST,Success,2026-09-22 20:19:27 IST
+202,44,ECE E,922525106310,SIVA MANIKANDAN K,9043374912,https://leetcode.com/u/9043374912/,111,0,0,0,3,1,134,27,65,19,Richest Customer Wealth,2026-09-07 12:26:11 IST,Success,2026-09-22 20:19:27 IST
+203,40,ECE F,922525106347,TAMIL SELVAN R,Kdmif0HMNm,https://leetcode.com/u/Kdmif0HMNm/,110,0,0,0,3,0,220,27,68,15,Pascal's Triangle II,2026-08-25 19:34:43 IST,Success,2026-09-22 20:19:27 IST
+204,41,ECE F,922525106336,SUGANTHAN K,SUGANTHKALAI,https://leetcode.com/u/SUGANTHKALAI/,90,0,0,0,3,0,97,19,52,19,Matrix Diagonal Sum,2026-09-07 15:50:02 IST,Success,2026-09-22 20:19:27 IST
+205,33,ECE B,922525106124,INDHIRAJITH K,922525106124,https://leetcode.com/u/922525106124/,78,0,0,0,3,0,132,16,46,16,Symmetric Tree,2026-09-08 16:34:42 IST,Success,2026-09-22 20:19:27 IST
+206,45,ECE E,922525106262,ROSHIKA V,roshikaveeramalai,https://leetcode.com/u/roshikaveeramalai/,75,0,0,0,3,0,111,29,42,4,Richest Customer Wealth,2026-09-07 12:24:59 IST,Success,2026-09-22 20:19:27 IST
+207,44,ECE C,922525106184,M. MAHALAKSHMI,K9gejZlwRP,https://leetcode.com/u/K9gejZlwRP/,64,0,0,0,3,0,128,14,37,13,Running Sum of 1d Array,2026-09-08 11:12:43 IST,Success,2026-09-22 20:19:27 IST
+208,46,ECE E,922525106261,ROSHAN M,roshan2403,https://leetcode.com/u/roshan2403/,53,0,0,0,3,2,76,49,4,0,Two Sum,2026-09-16 21:19:48 IST,Success,2026-09-22 20:19:27 IST
+209,47,ECE E,922525106314,SIVANESH D,sivanesh2007,https://leetcode.com/u/sivanesh2007/,46,0,0,0,3,0,53,25,17,4,Transpose Matrix,2026-09-07 12:02:36 IST,Success,2026-09-22 20:19:27 IST
+210,48,ECE E,922525106304,SHANTHOSH SHAI SIRIL R,shandoshsai,https://leetcode.com/u/shandoshsai/,22,0,0,0,3,0,29,14,8,0,Richest Customer Wealth,2026-09-07 12:24:58 IST,Success,2026-09-22 20:19:27 IST
+211,42,ECE F,922525106367,VIKRAM V,vikramvicky5678,https://leetcode.com/u/vikramvicky5678/,120,0,2,2,2,2,138,34,68,18,Jewels and Stones,2026-09-16 16:37:28 IST,Success,2026-09-22 20:19:27 IST
+212,38,ECE A,922525106011,AJAYKRISHNA R,922525106011,https://leetcode.com/u/922525106011/,112,0,2,2,2,2,134,23,70,19,Course Schedule,2026-09-20 09:36:35 IST,Success,2026-09-22 20:19:27 IST
+213,49,ECE E,922525106292,SASHMIKA P,sashmikaprabhu,https://leetcode.com/u/sashmikaprabhu/,64,0,2,2,2,2,80,33,23,8,Detect Capital,2026-09-16 11:53:56 IST,Success,2026-09-22 20:19:27 IST
+214,34,ECE B,922525106091,ELAVARASAN R,922525106091,https://leetcode.com/u/922525106091/,124,1,1,2,2,1,197,30,62,32,Middle of the Linked List,2026-09-22 16:21:10 IST,Success,2026-09-22 20:19:27 IST
+215,50,ECE E,922525106257,RITHIKA B,Rithika_Balakrishnan,https://leetcode.com/u/Rithika_Balakrishnan/,110,0,1,2,2,1,140,27,64,19,Jewels and Stones,2026-09-16 11:29:28 IST,Success,2026-09-22 20:19:27 IST
+216,35,ECE B,922525106123,INBNATHAN S,922525106123,https://leetcode.com/u/922525106123/,111,0,0,2,2,0,157,30,62,19,Contains Duplicate,2026-09-11 14:46:07 IST,Success,2026-09-22 20:19:27 IST
+217,45,ECE C,922525106128,JASHVANTH J S,jashvanth2007,https://leetcode.com/u/jashvanth2007/,109,1,1,1,2,3,133,33,76,0,Random Flip Matrix,2026-09-22 09:47:30 IST,Success,2026-09-22 20:19:27 IST
+218,39,ECE A,922525106062,DHAKSESH PRANAV P,Dhaksesh_Pranav_P,https://leetcode.com/u/Dhaksesh_Pranav_P/,108,1,1,1,2,2,151,32,57,19,Find the Index of the First Occurrence in a String,2026-09-22 12:25:25 IST,Success,2026-09-22 20:19:27 IST
+219,46,ECE C,922525106165,KOWSHIKAN P,KOWSHIKAN-PALANISAMY,https://leetcode.com/u/KOWSHIKAN-PALANISAMY/,104,1,1,1,2,1,166,23,62,19,Reverse Vowels of a String,2026-09-22 11:50:03 IST,Success,2026-09-22 20:19:27 IST
+220,36,ECE B,922525106102,GOWSICK S,922525106102,https://leetcode.com/u/922525106102/,102,1,1,1,2,1,237,23,61,18,Middle of the Linked List,2026-09-22 16:21:10 IST,Success,2026-09-22 20:19:27 IST
+221,40,ECE A,922525106045,BOOBASE R,Boobase,https://leetcode.com/u/Boobase/,60,0,1,1,2,5,89,13,34,13,Minimum Size Subarray Sum,2026-09-17 20:35:59 IST,Success,2026-09-22 20:19:27 IST
+222,51,ECE E,922525106255,RITHIK I,Rithik2008,https://leetcode.com/u/Rithik2008/,24,0,1,1,2,1,32,20,4,0,Jewels and Stones,2026-09-16 11:17:21 IST,Success,2026-09-22 20:19:27 IST
+223,37,ECE B,922525106084,DINESHKUMAR V,922525106084,https://leetcode.com/u/922525106084/,162,0,0,1,2,0,211,38,96,28,Shuffle the Array,2026-09-11 14:02:16 IST,Success,2026-09-22 20:19:27 IST
+224,47,ECE C,922525106141,KANISHKUMAR M,kanishkumar2008,https://leetcode.com/u/kanishkumar2008/,122,0,0,0,2,0,171,37,66,19,Count Commas in Range,2026-09-08 17:09:41 IST,Success,2026-09-22 20:19:27 IST
+225,41,ECE A,922525106042,BHARATHWAJ S,BharathwajX,https://leetcode.com/u/BharathwajX/,116,0,0,0,2,0,185,39,63,14,Check if Matrix Is X-Matrix,2026-09-08 11:54:37 IST,Success,2026-09-22 20:19:27 IST
+226,42,ECE A,922525106030,ARUNKUMAR K,Arunkumar2008,https://leetcode.com/u/Arunkumar2008/,112,0,0,0,2,0,137,61,43,8,Missing Number,2026-08-25 12:08:23 IST,Success,2026-09-22 20:19:27 IST
+227,43,ECE F,922525106342,SUSIDHARAN M,Susidharan147,https://leetcode.com/u/Susidharan147/,65,0,0,0,2,0,146,20,35,10,Spiral Matrix II,2026-09-01 22:56:12 IST,Success,2026-09-22 20:19:27 IST
+228,44,ECE F,922525106317,SIVASANJEEV P,Sivasanjeev16,https://leetcode.com/u/Sivasanjeev16/,47,0,0,0,2,0,64,28,16,3,Linked List Cycle,2026-08-24 07:55:49 IST,Success,2026-09-22 20:19:27 IST
+229,8,ECE D,922525106239,PRIYANKA K R,priyankadhanush23,https://leetcode.com/u/priyankadhanush23/,148,1,1,1,1,1,184,36,83,29,Ransom Note,2026-09-22 16:16:50 IST,Success,2026-09-22 20:19:27 IST
+230,9,ECE D,922525106233,PRAVEEN G,PRAVEENGANESAN,https://leetcode.com/u/PRAVEENGANESAN/,113,1,1,1,1,1,129,15,78,20,Ransom Note,2026-09-22 16:26:52 IST,Success,2026-09-22 20:19:27 IST
+231,48,ECE C,922525106137,JOTHI HARSHAN D K,Jothiharshan16,https://leetcode.com/u/Jothiharshan16/,107,1,1,1,1,2,111,45,61,1,Detect Capital,2026-09-22 10:28:19 IST,Success,2026-09-22 20:19:27 IST
+232,49,ECE C,922525106135,JERSHITH J S,Jerry2008,https://leetcode.com/u/Jerry2008/,102,1,1,1,1,1,119,100,1,1,Find X Value of Array II,2026-09-22 10:31:14 IST,Success,2026-09-22 20:19:27 IST
+233,43,ECE A,922525106041,BHARATH KUMAR E,BK5226221,https://leetcode.com/u/BK5226221/,21,1,1,1,1,1,53,11,9,1,Middle of the Linked List,2026-09-22 12:28:26 IST,Success,2026-09-22 20:19:27 IST
+234,38,ECE B,922525106086,DIVYA V,922525106086,https://leetcode.com/u/922525106086/,12,1,1,1,1,1,19,8,2,2,Middle of the Linked List,2026-09-22 16:16:44 IST,Success,2026-09-22 20:19:27 IST
+235,45,ECE F,922525106376,YAZHINI S,yazhini__1234,https://leetcode.com/u/yazhini__1234/,257,0,1,1,1,2,880,71,144,42,To Lower Case,2026-09-17 07:07:08 IST,Success,2026-09-22 20:19:27 IST
+236,46,ECE F,922525106355,VAISHNAVI U,vaish200,https://leetcode.com/u/vaish200/,122,0,1,1,1,1,152,34,69,19,To Lower Case,2026-09-16 16:23:55 IST,Success,2026-09-22 20:19:27 IST
+237,52,ECE E,922525106305,SHARATH P,sharath_1010,https://leetcode.com/u/sharath_1010/,108,0,1,1,1,1,206,104,4,0,Jewels and Stones,2026-09-16 11:40:38 IST,Success,2026-09-22 20:19:27 IST
+238,10,ECE D,922525106202,MORRISH D,morrishd,https://leetcode.com/u/morrishd/,105,0,1,1,1,1,144,23,63,19,Jewels and Stones,2026-09-16 11:42:01 IST,Success,2026-09-22 20:19:27 IST
+239,47,ECE F,922525106343,SUTHARSHANA S,sutharshana743,https://leetcode.com/u/sutharshana743/,102,0,1,1,1,1,113,28,72,2,Binary Tree Preorder Traversal,2026-09-21 06:50:49 IST,Success,2026-09-22 20:19:27 IST
+240,48,ECE F,922525106372,VISHWAJETH A M,vishwajeth,https://leetcode.com/u/vishwajeth/,78,0,1,1,1,2,171,37,33,8,To Lower Case,2026-09-16 16:14:29 IST,Success,2026-09-22 20:19:27 IST
+241,53,ECE E,922525106296,SELVAKUMAR K,Selvakumarsk-32,https://leetcode.com/u/Selvakumarsk-32/,61,0,1,1,1,2,103,22,30,9,Jewels and Stones,2026-09-16 11:42:08 IST,Success,2026-09-22 20:19:27 IST
+242,11,ECE D,922525106241,RAGUNATH M,ragunath24,https://leetcode.com/u/ragunath24/,121,0,0,1,1,0,169,21,65,35,Jewels and Stones,2026-09-12 14:42:38 IST,Success,2026-09-22 20:19:27 IST
+243,12,ECE D,922525106247,RATHISH R,Rathish2025,https://leetcode.com/u/Rathish2025/,115,0,0,1,1,0,139,15,77,23,Jewels and Stones,2026-09-12 14:29:00 IST,Success,2026-09-22 20:19:27 IST
+244,39,ECE B,922525106110,HARI HARAN R,922525106110,https://leetcode.com/u/922525106110/,108,0,0,1,1,0,138,32,65,11,Best Time to Buy and Sell Stock II,2026-09-13 14:44:59 IST,Success,2026-09-22 20:19:27 IST
+245,50,ECE C,922525106143,KARISHMA M,Karishma_m_08,https://leetcode.com/u/Karishma_m_08/,92,0,0,1,1,0,142,39,46,7,Jewels and Stones,2026-09-12 10:28:59 IST,Success,2026-09-22 20:19:27 IST
+246,49,ECE F,922525106364,VIGNESH VELAN M,Vicky_27_Velan,https://leetcode.com/u/Vicky_27_Velan/,68,0,0,1,1,0,73,13,41,14,Count Commas in Range II,2026-09-09 12:52:26 IST,Success,2026-09-22 20:19:27 IST
+247,13,ECE D,922525106192,MATHANSURYA S,Mathansurya,https://leetcode.com/u/Mathansurya/,2,0,0,1,1,0,4,2,0,0,Best Time to Buy and Sell Stock,2026-09-15 20:58:48 IST,Success,2026-09-22 20:19:27 IST
+248,50,ECE F,922525106362,VELLIANGIRI R,velliangiri_R,https://leetcode.com/u/velliangiri_R/,193,0,0,0,1,0,245,49,111,33,Basic Calculator,2026-08-31 12:46:20 IST,Success,2026-09-22 20:19:27 IST
+249,40,ECE B,922525106093,GIRIVASH P,922525106093,https://leetcode.com/u/922525106093/,137,0,0,0,1,0,180,29,79,29,Path Sum,2026-08-26 17:20:31 IST,Success,2026-09-22 20:19:27 IST
+250,51,ECE C,922525106132,JEEVAN BALA G,jeevanbala142008,https://leetcode.com/u/jeevanbala142008/,127,0,0,0,1,0,302,33,71,23,Split a String in Balanced Strings,2026-09-01 20:17:09 IST,Success,2026-09-22 20:19:27 IST
+251,41,ECE B,922525106104,GOWTHAM R,922525106104,https://leetcode.com/u/922525106104/,112,0,0,0,1,0,453,26,66,20,Word Ladder,2026-09-07 19:00:48 IST,Success,2026-09-22 20:19:27 IST
+252,51,ECE F,922525106322,SRI  T,Sri1540,https://leetcode.com/u/Sri1540/,112,0,0,0,1,0,141,57,53,2,Missing Number,2026-08-24 21:32:20 IST,Success,2026-09-22 20:19:27 IST
+253,44,ECE A,922525106049,BUVNESH N,922525106049,https://leetcode.com/u/922525106049/,103,0,0,0,1,1,130,20,64,19,Length of Last Word,2026-09-22 12:24:18 IST,Success,2026-09-22 20:19:27 IST
+254,54,ECE E,922525106263,RUBESH C,Rubesh_7,https://leetcode.com/u/Rubesh_7/,70,0,0,0,1,0,101,46,24,0,3Sum Closest,2026-08-25 14:49:54 IST,Success,2026-09-22 20:19:27 IST
+255,52,ECE F,922525106332,SUBARNA V,Subarna_17,https://leetcode.com/u/Subarna_17/,62,0,0,0,1,0,89,33,23,6,Transpose Matrix,2026-09-07 16:06:46 IST,Success,2026-09-22 20:19:27 IST
+256,42,ECE B,922525106114,HARIS RAGAVENDAR A,922525106114,https://leetcode.com/u/922525106114/,52,0,0,0,1,0,89,27,22,3,Power of Three,2026-08-26 21:53:33 IST,Success,2026-09-22 20:19:27 IST
+257,43,ECE B,922525106066,DHANYA K,922525106066,https://leetcode.com/u/922525106066/,32,0,0,0,1,4,53,16,14,2,Find the Index of the First Occurrence in a String,2026-09-22 16:19:50 IST,Success,2026-09-22 20:19:27 IST
+258,53,ECE F,922525106361,VASUKI K,vasuki,https://leetcode.com/u/vasuki/,452,0,0,0,0,0,1972,107,273,72,,,Success,2026-09-22 20:19:27 IST
+259,45,ECE A,922525106038,BAVITHA T,3gvYU1AYWX,https://leetcode.com/u/3gvYU1AYWX/,449,0,0,0,0,0,629,113,257,79,Game Play Analysis IV,2026-05-31 21:00:22 IST,Success,2026-09-22 20:19:27 IST
+260,14,ECE D,922525106250,RESMHI S,reshmi2008,https://leetcode.com/u/reshmi2008/,279,0,0,0,0,0,317,101,151,27,Number of Steps to Reduce a Number to Zero,2026-08-04 14:46:34 IST,Success,2026-09-22 20:19:27 IST
+261,15,ECE D,922525106205,MYTHILI M,mythilimurugesan,https://leetcode.com/u/mythilimurugesan/,211,0,0,0,0,0,228,31,140,40,Reverse Linked List,2026-08-03 21:19:18 IST,Success,2026-09-22 20:19:27 IST
+262,44,ECE B,922525106080,DHIVAKAR R,DhivakarR,https://leetcode.com/u/DhivakarR/,204,0,0,0,0,0,368,177,27,0,,,Success,2026-09-22 20:19:27 IST
+263,16,ECE D,922525106249,RENOFIYA HASIN A,Renofiya-2007,https://leetcode.com/u/Renofiya-2007/,202,0,0,0,0,0,371,29,132,41,Search Insert Position,2026-08-05 15:27:28 IST,Success,2026-09-22 20:19:27 IST
+264,17,ECE D,922525106242,RAHULKAJAN M,rahulkajan,https://leetcode.com/u/rahulkajan/,201,0,0,0,0,0,284,53,116,32,Course Schedule,2025-12-05 03:00:05 IST,Success,2026-09-22 20:19:27 IST
+265,18,ECE D,922525106223,PAVITHRA S,pavithra145,https://leetcode.com/u/pavithra145/,185,0,0,0,0,0,250,25,124,36,Number of Steps to Reduce a Number to Zero,2026-08-08 04:55:00 IST,Success,2026-09-22 20:19:27 IST
+266,19,ECE D,922525106226,PRABHAKARAN D,_d_Prabhakaran_,https://leetcode.com/u/_d_Prabhakaran_/,183,0,0,0,0,0,213,51,108,24,Actors and Directors Who Cooperated At Least Three Times,2026-07-29 20:25:24 IST,Success,2026-09-22 20:19:27 IST
+267,20,ECE D,922525106204,MOUSHMI P N,Moushmi_20,https://leetcode.com/u/Moushmi_20/,181,0,0,0,0,0,265,39,108,34,Best Time to Buy and Sell Stock IV,2026-08-09 08:20:13 IST,Success,2026-09-22 20:19:27 IST
+268,21,ECE D,922525106194,MAYAKANNAN K,Mayakannan129,https://leetcode.com/u/Mayakannan129/,166,0,0,0,0,0,257,33,102,31,Merge Two Sorted Lists,2026-04-08 18:28:45 IST,Success,2026-09-22 20:19:27 IST
+269,22,ECE D,922525106214,NITHISH C T,Nithishct123,https://leetcode.com/u/Nithishct123/,155,0,0,0,0,0,193,37,84,34,Valid Palindrome,2026-08-02 19:17:23 IST,Success,2026-09-22 20:19:27 IST
+270,23,ECE D,922525106230,PRANITHASREE SAMINATHAN,pranithaashree,https://leetcode.com/u/pranithaashree/,155,0,0,0,0,0,182,43,86,26,Sort List,2026-04-07 20:24:05 IST,Success,2026-09-22 20:19:27 IST
+271,24,ECE D,922525106238,PRIYANKA A,Priyankaashok1201,https://leetcode.com/u/Priyankaashok1201/,151,0,0,0,0,0,207,50,98,3,Factorial Trailing Zeroes,2025-12-05 08:44:14 IST,Success,2026-09-22 20:19:27 IST
+272,45,ECE B,922525106116,HARISH MS,922525106116,https://leetcode.com/u/922525106116/,144,0,0,0,0,0,178,33,85,26,Binary Tree Postorder Traversal,2026-08-08 22:14:56 IST,Success,2026-09-22 20:19:27 IST
+273,52,ECE C,922525106187,MAHIN ABHISHEK VH,Mahinabhishek0411,https://leetcode.com/u/Mahinabhishek0411/,144,0,0,0,0,0,189,32,85,27,Binary Tree Preorder Traversal,2026-04-08 20:49:56 IST,Success,2026-09-22 20:19:27 IST
+274,25,ECE D,922525106220,NITHYASRI M,Nithyasri2008,https://leetcode.com/u/Nithyasri2008/,142,0,0,0,0,0,168,42,59,41,Unique Binary Search Trees,2025-12-04 21:39:04 IST,Success,2026-09-22 20:19:27 IST
+275,26,ECE D,922525106235,PREETHY M S,preethy2007,https://leetcode.com/u/preethy2007/,142,0,0,0,0,0,166,39,78,25,Rectangle Overlap,2026-07-26 15:21:18 IST,Success,2026-09-22 20:19:27 IST
+276,27,ECE D,922525106208,NANDHINI D,nandhini546,https://leetcode.com/u/nandhini546/,140,0,0,0,0,0,214,15,106,19,Split Strings by Separator,2026-04-08 19:54:29 IST,Success,2026-09-22 20:19:27 IST
+277,54,ECE F,922525106354,THIRUMURUGAN S,thiru0211_,https://leetcode.com/u/thiru0211_/,140,0,0,0,0,0,193,45,73,22,Palindrome Number,2026-08-09 12:00:13 IST,Success,2026-09-22 20:19:27 IST
+278,46,ECE A,922525106032,ARVINSHANKARA V,Arvin,https://leetcode.com/u/Arvin/,137,0,0,0,0,0,768,52,77,8,,,Success,2026-09-22 20:19:27 IST
+279,46,ECE B,922525106107,GUNA SHREE V,Gunashree20,https://leetcode.com/u/Gunashree20/,136,0,0,0,0,0,172,30,80,26,Perfect Number,2026-08-03 14:38:43 IST,Success,2026-09-22 20:19:27 IST
+280,28,ECE D,922525106203,MOULEESHWARI B,Mouleeshwari2008,https://leetcode.com/u/Mouleeshwari2008/,131,0,0,0,0,0,147,17,82,32,Perfect Number,2026-08-11 13:16:55 IST,Success,2026-09-22 20:19:27 IST
+281,55,ECE E,922525106308,SHREE HARINI L,Shree_Harini478,https://leetcode.com/u/Shree_Harini478/,130,0,0,0,0,0,210,46,71,13,Number of 1 Bits,2026-08-12 11:52:34 IST,Success,2026-09-22 20:19:27 IST
+282,29,ECE D,922525106244,RANJANA T,RANJANA_2007,https://leetcode.com/u/RANJANA_2007/,129,0,0,0,0,0,219,24,82,23,Linked List Cycle,2026-08-10 20:45:25 IST,Success,2026-09-22 20:19:27 IST
+283,30,ECE D,922525106222,PAARGAVI R,paargavi2007,https://leetcode.com/u/paargavi2007/,127,0,0,0,0,0,239,19,83,25,Majority Element,2026-07-26 19:41:54 IST,Success,2026-09-22 20:19:27 IST
+284,31,ECE D,922525106215,NITHISH P,Nithish_P_CS,https://leetcode.com/u/Nithish_P_CS/,126,0,0,0,0,0,139,25,64,37,Number of Steps to Reduce a Number to Zero,2026-08-04 14:52:19 IST,Success,2026-09-22 20:19:27 IST
+285,32,ECE D,922525106248,RAVIKUMAR S,Ravikumar_14,https://leetcode.com/u/Ravikumar_14/,125,0,0,0,0,0,165,19,84,22,Climbing Stairs,2026-04-08 17:22:58 IST,Success,2026-09-22 20:19:27 IST
+286,33,ECE D,922525106190,MANOJ A,Manoj_1319,https://leetcode.com/u/Manoj_1319/,124,0,0,0,0,0,178,21,69,34,Number of Steps to Reduce a Number to Zero,2026-08-04 14:50:52 IST,Success,2026-09-22 20:19:27 IST
+287,34,ECE D,922525106200,MONISHA R,itsmoni,https://leetcode.com/u/itsmoni/,124,0,0,0,0,0,153,23,85,16,Binary Search,2026-08-05 15:24:43 IST,Success,2026-09-22 20:19:27 IST
+288,35,ECE D,922525106218,NITHYASHREE G,NithyashreeG10,https://leetcode.com/u/NithyashreeG10/,124,0,0,0,0,0,203,22,78,24,Search Insert Position,2026-08-05 15:25:45 IST,Success,2026-09-22 20:19:27 IST
+289,36,ECE D,922525106232,PRAVEEN G,praveen_3208,https://leetcode.com/u/praveen_3208/,124,0,0,0,0,0,159,23,59,42,Running Sum of 1d Array,2026-08-05 14:44:41 IST,Success,2026-09-22 20:19:27 IST
+290,37,ECE D,922525106234,PRAVEENKUMAR R,itz_praveen_,https://leetcode.com/u/itz_praveen_/,124,0,0,0,0,0,211,22,77,25,Binary Tree Postorder Traversal,2026-04-08 17:38:57 IST,Success,2026-09-22 20:19:27 IST
+291,38,ECE D,922525106211,NAVEETHA N,NAVEETHAN,https://leetcode.com/u/NAVEETHAN/,123,0,0,0,0,0,221,22,95,6,Find the Maximum Achievable Number,2026-04-08 19:25:11 IST,Success,2026-09-22 20:19:27 IST
+292,39,ECE D,922525106216,NITHISH R,nithishramalingam007,https://leetcode.com/u/nithishramalingam007/,123,0,0,0,0,0,188,21,78,24,Palindrome Partitioning,2025-12-05 23:02:30 IST,Success,2026-09-22 20:19:27 IST
+293,47,ECE A,922525106053,CHINNAPPAN S,chinnappanrajniselvi,https://leetcode.com/u/chinnappanrajniselvi/,122,0,0,0,0,0,149,36,67,19,Number of Steps to Reduce a Number to Zero,2026-08-10 09:41:33 IST,Success,2026-09-22 20:19:27 IST
+294,40,ECE D,922525106199,MONISH S,smonish777,https://leetcode.com/u/smonish777/,122,0,0,0,0,0,189,21,78,23,Two Sum,2026-04-08 19:04:34 IST,Success,2026-09-22 20:19:27 IST
+295,41,ECE D,922525106201,MONISHA V,Monishav2007,https://leetcode.com/u/Monishav2007/,122,0,0,0,0,0,150,20,80,22,Merge Sorted Array,2026-04-08 20:11:40 IST,Success,2026-09-22 20:19:27 IST
+296,42,ECE D,922525106237,PRIYADHARSHINI V,priyadharshini1551,https://leetcode.com/u/priyadharshini1551/,120,0,0,0,0,0,202,20,80,20,Minimum Pair Removal to Sort Array I,2026-04-08 19:49:54 IST,Success,2026-09-22 20:19:27 IST
+297,43,ECE D,922525106217,NITHISHWARAN D,nithishwaran-D,https://leetcode.com/u/nithishwaran-D/,119,0,0,0,0,0,154,17,78,24,Running Sum of 1d Array,2026-08-05 16:03:57 IST,Success,2026-09-22 20:19:27 IST
+298,44,ECE D,922525106224,PAVITHRAN S,Pavithran_S_,https://leetcode.com/u/Pavithran_S_/,119,0,0,0,0,0,198,18,77,24,Surrounded Regions,2025-12-04 23:24:51 IST,Success,2026-09-22 20:19:27 IST
+299,45,ECE D,922525106236,PRITHIV S,prithiv16,https://leetcode.com/u/prithiv16/,119,0,0,0,0,0,155,19,75,25,Sqrt(x),2026-04-08 21:27:34 IST,Success,2026-09-22 20:19:27 IST
+300,46,ECE D,922525106210,NAVANEETHAN L,lnavaneethan08,https://leetcode.com/u/lnavaneethan08/,118,0,0,0,0,0,191,18,40,60,Running Sum of 1d Array,2026-08-05 15:24:24 IST,Success,2026-09-22 20:19:27 IST
+301,47,ECE D,922525106213,NIRANJANI D,niranjani_123,https://leetcode.com/u/niranjani_123/,117,0,0,0,0,0,200,12,96,9,Check If Two String Arrays are Equivalent,2026-04-08 19:54:49 IST,Success,2026-09-22 20:19:27 IST
+302,48,ECE D,922525106231,PRAVEEN D,praveen1247,https://leetcode.com/u/praveen1247/,117,0,0,0,0,0,163,16,78,23,LRU Cache,2025-12-15 20:36:58 IST,Success,2026-09-22 20:19:27 IST
+303,49,ECE D,922525106252,RETHISH,Rethish_R,https://leetcode.com/u/Rethish_R/,117,0,0,0,0,0,150,16,79,22,Interleaving String,2026-08-07 23:25:12 IST,Success,2026-09-22 20:19:27 IST
+304,50,ECE D,922525106195,MAYUKA M,Mayuka_M,https://leetcode.com/u/Mayuka_M/,116,0,0,0,0,0,138,16,81,19,Binary Tree Inorder Traversal,2026-04-08 21:39:27 IST,Success,2026-09-22 20:19:27 IST
+305,51,ECE D,922525106225,PIRAVEEN M,Piraveen2025,https://leetcode.com/u/Piraveen2025/,116,0,0,0,0,0,122,16,79,21,Pascal's Triangle,2026-04-07 16:23:19 IST,Success,2026-09-22 20:19:27 IST
+306,52,ECE D,922525106240,RAGADHARSHINI S,Ragadharshini_2181,https://leetcode.com/u/Ragadharshini_2181/,116,0,0,0,0,0,142,14,84,18,Ugly Number,2026-04-08 18:58:58 IST,Success,2026-09-22 20:19:27 IST
+307,53,ECE D,922525106196,MILAN D,milan190308,https://leetcode.com/u/milan190308/,115,0,0,0,0,0,133,15,78,22,Palindrome Partitioning,2025-12-09 19:26:41 IST,Success,2026-09-22 20:19:27 IST
+308,47,ECE B,922525106078,DHILIP P,922525106078,https://leetcode.com/u/922525106078/,112,0,0,0,0,0,135,26,69,17,Search Insert Position,2026-07-31 00:21:37 IST,Success,2026-09-22 20:19:27 IST
+309,53,ECE C,922525106149,KAVIN KUMAR S,KAVIN__26,https://leetcode.com/u/KAVIN__26/,112,0,0,0,0,0,124,23,69,20,Triangle,2026-08-07 06:59:17 IST,Success,2026-09-22 20:19:27 IST
+310,54,ECE D,922525106206,NAFREEN J M,NafreenJohnbasha,https://leetcode.com/u/NafreenJohnbasha/,112,0,0,0,0,0,126,10,91,11,Find Minimum in Rotated Sorted Array,2025-12-05 07:39:56 IST,Success,2026-09-22 20:19:27 IST
+311,55,ECE D,922525106212,NETHRA.S,Nethra777,https://leetcode.com/u/Nethra777/,112,0,0,0,0,1,180,9,83,20,Search Insert Position,2026-08-07 22:00:05 IST,Success,2026-09-22 20:19:27 IST
+312,48,ECE A,922525106056,DARSHAN MANISH A,Darshan_manish08,https://leetcode.com/u/Darshan_manish08/,111,0,0,0,0,0,154,29,65,17,Perfect Number,2026-08-15 11:28:35 IST,Success,2026-09-22 20:19:27 IST
+313,56,ECE D,922525106219,NITHYASHREE P,Nithyashree273,https://leetcode.com/u/Nithyashree273/,111,0,0,0,0,0,133,9,78,24,Best Time to Buy and Sell Stock II,2025-12-07 21:27:25 IST,Success,2026-09-22 20:19:27 IST
+314,57,ECE D,922525106228,PRAGALATHAN T,pragalathan070108,https://leetcode.com/u/pragalathan070108/,111,0,0,0,0,0,125,11,77,23,Add Two Numbers,2026-04-07 15:23:27 IST,Success,2026-09-22 20:19:27 IST
+315,49,ECE A,922525106033,ASHOK KUMAR P,ASHOKKUMAR18,https://leetcode.com/u/ASHOKKUMAR18/,109,0,0,0,0,0,128,51,50,8,Majority Element,2026-07-23 18:45:35 IST,Success,2026-09-22 20:19:27 IST
+316,48,ECE B,922525106077,DHARUN T,922525106077,https://leetcode.com/u/922525106077/,108,0,0,0,0,0,130,22,67,19,Binary Search,2026-08-07 17:33:44 IST,Success,2026-09-22 20:19:27 IST
+317,56,ECE E,922525106272,SANJAY D,itsmesanjay007,https://leetcode.com/u/itsmesanjay007/,106,0,0,0,0,0,123,9,86,11,Sum Multiples,2026-08-12 12:12:46 IST,Success,2026-09-22 20:19:27 IST
+318,54,ECE C,922525106131,JAYASURYA R,Jayasuryaraja,https://leetcode.com/u/Jayasuryaraja/,105,0,0,0,0,0,141,57,46,2,Sum of Left Leaves,2026-04-08 17:51:54 IST,Success,2026-09-22 20:19:27 IST
+319,49,ECE B,922525106122,HIRESH K,922525106122,https://leetcode.com/u/922525106122/,104,0,0,0,0,0,143,22,63,19,Find Missing Elements,2026-08-04 16:00:26 IST,Success,2026-09-22 20:19:27 IST
+320,55,ECE C,922525106144,KARMUKILAN J,karmukilan567,https://leetcode.com/u/karmukilan567/,104,0,0,0,0,0,123,26,56,22,Sqrt(x),2026-08-11 05:19:16 IST,Success,2026-09-22 20:19:27 IST
+321,50,ECE B,922525106092,ELAVARASU P,922525106092,https://leetcode.com/u/922525106092/,102,0,0,0,0,0,125,91,9,2,Sort Colors,2026-08-04 16:10:03 IST,Success,2026-09-22 20:19:27 IST
+322,56,ECE C,922525106146,KARTHIKA K,Karthi270827,https://leetcode.com/u/Karthi270827/,102,0,0,0,0,0,145,21,62,19,Reverse String,2026-08-07 08:30:01 IST,Success,2026-09-22 20:19:27 IST
+323,57,ECE C,922525106162,KOWSHIK R,kowshik_rk_,https://leetcode.com/u/kowshik_rk_/,102,0,0,0,0,0,129,24,61,17,Number of 1 Bits,2026-08-11 10:38:31 IST,Success,2026-09-22 20:19:27 IST
+324,50,ECE A,922525106026,ARUL S.T.,S_T_Arul,https://leetcode.com/u/S_T_Arul/,101,0,0,0,0,0,114,43,51,7,Find Minimum in Rotated Sorted Array II,2026-04-07 21:06:14 IST,Success,2026-09-22 20:19:27 IST
+325,51,ECE B,922525106081,DILIPKUMAR K,922525106081,https://leetcode.com/u/922525106081/,101,0,0,0,0,0,145,24,63,14,Single Number,2026-08-06 21:29:13 IST,Success,2026-09-22 20:19:27 IST
+326,55,ECE F,922525106340,SUMITHRA S,sumithra_16,https://leetcode.com/u/sumithra_16/,101,0,0,0,0,0,151,20,62,19,Same Tree,2025-10-21 16:14:05 IST,Success,2026-09-22 20:19:27 IST
+327,52,ECE B,922525106115,HARISH D,922525106115,https://leetcode.com/u/922525106115/,100,0,0,0,0,0,122,15,63,22,Compare Version Numbers,2025-12-16 20:52:10 IST,Success,2026-09-22 20:19:27 IST
+328,56,ECE F,922525106338,SUJEETH M,SUJEETH77,https://leetcode.com/u/SUJEETH77/,100,0,0,0,0,0,112,19,62,19,4Sum,2025-10-19 08:27:20 IST,Success,2026-09-22 20:19:27 IST
+329,51,ECE A,922525106061,DEVA V,DevaECE,https://leetcode.com/u/DevaECE/,96,0,0,0,0,0,115,18,59,19,Unique Binary Search Trees II,2025-12-11 17:35:24 IST,Success,2026-09-22 20:19:27 IST
+330,52,ECE A,922525106012,AJAYKUMAR A L,AjaykumarAL,https://leetcode.com/u/AjaykumarAL/,91,0,0,0,0,0,118,27,43,21,Minimum Number of Pushes to Type Word I,2026-07-30 21:38:37 IST,Success,2026-09-22 20:19:27 IST
+331,57,ECE F,922525106373,YASHNI S,Yashnisubramaniyan,https://leetcode.com/u/Yashnisubramaniyan/,91,0,0,0,0,0,307,67,21,3,Sum Multiples,2026-08-12 12:19:42 IST,Success,2026-09-22 20:19:27 IST
+332,53,ECE B,922525106083,DINESHKUMAR P,922525106083,https://leetcode.com/u/922525106083/,87,0,0,0,0,0,221,16,55,16,Power of Four,2026-08-06 20:28:58 IST,Success,2026-09-22 20:19:27 IST
+333,58,ECE F,922525106368,VISHNU B,VISHNU_B_2008,https://leetcode.com/u/VISHNU_B_2008/,87,0,0,0,0,0,127,20,51,16,Number of Good Pairs,2026-08-04 16:05:45 IST,Success,2026-09-22 20:19:27 IST
+334,58,ECE C,922525106129,JASVANTHRAM SP,jasvanthram,https://leetcode.com/u/jasvanthram/,85,0,0,0,0,0,108,16,51,18,Maximal Rectangle,2026-04-08 17:32:30 IST,Success,2026-09-22 20:19:27 IST
+335,59,ECE C,922525106151,KAVIPRIYA J,_kavipriya_16,https://leetcode.com/u/_kavipriya_16/,85,0,0,0,0,0,116,34,45,6,Smallest Divisible Digit Product I,2026-08-06 19:54:53 IST,Success,2026-09-22 20:19:27 IST
+336,59,ECE F,922525106369,VISHNU PRIYAN S,itz__priyan__,https://leetcode.com/u/itz__priyan__/,85,0,0,0,0,0,221,38,37,10,4Sum,2026-08-09 12:31:11 IST,Success,2026-09-22 20:19:27 IST
+337,53,ECE A,922525106021,ANOOP C,anoop_appuz,https://leetcode.com/u/anoop_appuz/,84,0,0,0,0,0,88,18,50,16,Remove Duplicates from Sorted Array II,2026-01-08 08:35:00 IST,Success,2026-09-22 20:19:27 IST
+338,54,ECE A,922525106006,AFTON AJ,afton_2008,https://leetcode.com/u/afton_2008/,78,0,0,0,0,0,89,14,41,23,Parsing A Boolean Expression,2026-08-07 19:14:48 IST,Success,2026-09-22 20:19:27 IST
+339,57,ECE E,922525106275,SANJAY U,SanjayUdayan,https://leetcode.com/u/SanjayUdayan/,76,0,0,0,0,0,104,49,24,3,Hamming Distance,2026-08-12 12:29:55 IST,Success,2026-09-22 20:19:27 IST
+340,60,ECE C,922525106164,KOWSHIKA M S,kowshika_moorthi,https://leetcode.com/u/kowshika_moorthi/,58,0,0,0,0,0,60,17,21,20,Add Binary,2026-08-08 10:47:41 IST,Success,2026-09-22 20:19:27 IST
+341,55,ECE A,922525106057,DARSHAN V V,2007darshan,https://leetcode.com/u/2007darshan/,57,0,0,0,0,0,62,13,30,14,N-Queens II,2026-03-26 09:54:01 IST,Success,2026-09-22 20:19:27 IST
+342,54,ECE B,922525106126,JANA S,922525106126,https://leetcode.com/u/922525106126/,56,0,0,0,0,0,69,25,24,7,Number of 1 Bits,2026-08-10 14:32:56 IST,Success,2026-09-22 20:19:27 IST
+343,55,ECE B,922525106089,DURAIMURUGAN K,922525106089,https://leetcode.com/u/922525106089/,55,0,0,0,0,0,75,15,28,12,N-Queens II,2026-02-02 17:43:22 IST,Success,2026-09-22 20:19:27 IST
+344,61,ECE C,922525106172,LOGAVARDHAN M,loga16,https://leetcode.com/u/loga16/,52,0,0,0,0,0,82,10,32,10,Merge Intervals,2026-08-14 17:26:53 IST,Success,2026-09-22 20:19:27 IST
+345,58,ECE E,922525106258,RITHISH R,Rithish_,https://leetcode.com/u/Rithish_/,50,0,0,0,0,0,64,15,35,0,Binary Tree Inorder Traversal,2025-11-21 21:03:36 IST,Success,2026-09-22 20:19:27 IST
+346,56,ECE B,922525106067,DHARAN.K,922525106067,https://leetcode.com/u/922525106067/,48,0,0,0,0,0,73,10,29,9,"Pow(x, n)",2026-07-28 17:23:27 IST,Success,2026-09-22 20:19:27 IST
+347,59,ECE E,922525106301,SETHUPATHI G,Sethupathi_1228,https://leetcode.com/u/Sethupathi_1228/,47,0,0,0,0,0,52,18,16,13,Two Sum,2026-08-06 17:48:33 IST,Success,2026-09-22 20:19:27 IST
+348,60,ECE E,922525106276,SANJAYAN S,sanjayan31,https://leetcode.com/u/sanjayan31/,43,0,0,0,0,0,99,12,25,6,Permutations,2026-04-08 21:40:57 IST,Success,2026-09-22 20:19:27 IST
+349,57,ECE B,922525106082,DINESH P,Dinesh_106082,https://leetcode.com/u/Dinesh_106082/,40,0,0,0,0,0,55,11,21,8,Multiply Strings,2025-11-13 12:18:41 IST,Success,2026-09-22 20:19:27 IST
+350,58,ECE B,922525106096,GOPALA KRISHNAN C,922525106096,https://leetcode.com/u/922525106096/,40,0,0,0,0,0,105,10,23,7,Combination Sum II,2025-11-17 17:42:58 IST,Success,2026-09-22 20:19:27 IST
+351,56,ECE A,922525106005,ADHITHMITHRAN P,ADHITHMITHRAN,https://leetcode.com/u/ADHITHMITHRAN/,35,0,0,0,0,0,68,12,18,5,Average of Levels in Binary Tree,2026-08-02 21:04:44 IST,Success,2026-09-22 20:19:27 IST
+352,62,ECE C,922525106157,KESAVINI M,KESAVINI892,https://leetcode.com/u/KESAVINI892/,34,0,0,0,0,0,54,10,19,5,Combination Sum II,2026-07-19 12:08:06 IST,Success,2026-09-22 20:19:27 IST
+353,61,ECE E,922525106299,SENTHAMIZHSELVAN K,Senthamizh08,https://leetcode.com/u/Senthamizh08/,33,0,0,0,0,0,52,11,17,5,Fibonacci Number,2026-08-06 10:36:40 IST,Success,2026-09-22 20:19:27 IST
+354,62,ECE E,922525106295,SATHYA PRAKASAM KANNAN,SATHYAPRAKASAM__7,https://leetcode.com/u/SATHYAPRAKASAM__7/,30,0,0,0,0,0,43,9,19,2,N-Queens II,2025-11-16 18:32:53 IST,Success,2026-09-22 20:19:27 IST
+355,63,ECE C,922525106174,LOGESHWARAN K,LOGESHWARAN2008,https://leetcode.com/u/LOGESHWARAN2008/,22,0,0,0,0,0,35,13,6,3,Happy Number,2026-08-11 11:30:12 IST,Success,2026-09-22 20:19:27 IST
+356,63,ECE E,922525106267,SAJISH R,SAJISH7,https://leetcode.com/u/SAJISH7/,17,0,0,0,0,0,21,9,8,0,Largest Number,2026-08-06 10:46:58 IST,Success,2026-09-22 20:19:27 IST
+357,59,ECE B,922525106103,GOWTHAM M,922525106103,https://leetcode.com/u/922525106103/,15,0,0,0,0,0,20,4,9,2,3Sum,2026-04-08 20:45:44 IST,Success,2026-09-22 20:19:27 IST
+358,57,ECE A,922525106044,BHAVAN BALA N,BhavanBala,https://leetcode.com/u/BhavanBala/,9,0,0,0,0,0,20,3,5,1,Palindrome Number,2025-10-17 08:21:57 IST,Success,2026-09-22 20:19:27 IST
+359,58,ECE A,922525106020,ANJITHAA N,Anjithaa2006,https://leetcode.com/u/Anjithaa2006/,8,0,0,0,0,24,24,2,5,1,Contiguous Array,2026-09-19 07:08:08 IST,Success,2026-09-22 20:19:27 IST
+360,64,ECE E,922525106286,SARAN K,saran32,https://leetcode.com/u/saran32/,6,0,0,0,0,0,7,5,1,0,Merge Sorted Array,2026-01-21 20:38:15 IST,Success,2026-09-22 20:19:27 IST
+361,58,ECE D,922525106221,NIVETHA T,NIVETHA_THANGARAJ07,https://leetcode.com/u/NIVETHA_THANGARAJ07/,5,0,0,0,0,0,7,5,0,0,Two Sum,2026-08-09 10:41:09 IST,Success,2026-09-22 20:19:27 IST
+362,59,ECE A,922525106037,BARANITHARAN V,barani_7,https://leetcode.com/u/barani_7/,4,0,0,0,0,0,5,4,0,0,Longest Common Prefix,2026-04-08 21:08:53 IST,Success,2026-09-22 20:19:27 IST
+363,60,ECE A,922525106034,ASMITHA E,1,https://leetcode.com/u/1/,2,0,0,0,0,0,7,1,1,0,,,Success,2026-09-22 20:19:27 IST
+364,60,ECE B,922525106118,HARISHANKAR R,922525106118,https://leetcode.com/u/922525106118/,1,0,0,0,0,0,1,0,1,0,Minimum Operations to Convert All Elements to Zero,2025-11-11 01:14:16 IST,Success,2026-09-22 20:19:27 IST
+365,60,ECE F,922525106335,SUDHARSAN S,Sudharsan,https://leetcode.com/u/Sudharsan/,1,0,0,0,0,0,2,1,0,0,,,Success,2026-09-22 20:19:27 IST
+366,61,ECE A,922525106019,ANBARASU S,Anbarasu28122007,https://leetcode.com/u/Anbarasu28122007/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 20:19:27 IST
+367,62,ECE A,922525106050,CHARUDESNA S,charu120108,https://leetcode.com/u/charu120108/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 20:19:27 IST
+368,61,ECE B,922525106074,DHARSHINI P,Dharshini_74,https://leetcode.com/u/Dharshini_74/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 20:19:27 IST
+369,62,ECE B,922525106113,HARIS M,922525106113,https://leetcode.com/u/922525106113/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 20:19:27 IST
+370,63,ECE B,922525106117,HARISH P,922525106117,https://leetcode.com/u/922525106117/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 20:19:27 IST
+371,59,ECE D,922525106227,PRADHOSH T,pradhosh,https://leetcode.com/u/pradhosh/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 20:19:27 IST
+372,60,ECE D,922525106243,RAJAPRAGADEESWARAN R,rajaprahadeeswaran,https://leetcode.com/u/rajaprahadeeswaran/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 20:19:27 IST
+373,61,ECE F,922525106331,SRISAMAYA R,mahi,https://leetcode.com/u/mahi/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 20:19:27 IST
+374,62,ECE F,922525106358,VASANTHA KUMAR D,Vasanthakumar12232,https://leetcode.com/u/Vasanthakumar12232/,0,0,0,0,0,0,0,0,0,0,,,Success,2026-09-22 20:19:27 IST
+375,63,ECE A,922525106027,ARULESH K,arul2008,https://leetcode.com/u/arul2008/,44,0,0,0,0,0,56,21,19,4,,,User not found | Previous data kept,2026-09-22 20:19:27 IST
+376,61,ECE D,922525106193,MATHESHKUMAR S,mathesh25,https://leetcode.com/u/mathesh25/,0,0,0,0,0,0,0,0,0,0,,,User not found,2026-09-22 20:19:27 IST
+377,62,ECE D,922525106198,MOHAMMED ABUTHARIK S,tharik25,https://leetcode.com/u/tharik25/,0,0,0,0,0,0,0,0,0,0,,,User not found,2026-09-22 20:19:27 IST
