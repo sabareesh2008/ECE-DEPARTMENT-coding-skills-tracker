@@ -57,10 +57,35 @@ alter table public.student_leetcode_submissions add column if not exists plagiar
 alter table public.student_leetcode_submissions add column if not exists plagiarism_verdict text default 'CLEAN';
 alter table public.student_leetcode_submissions add column if not exists peer_similarity_pct numeric default 0;
 
--- Deduplication: Unique per (register_number, problem_slug) so resubmitting updates the latest code
+-- Deduplication: Delete existing duplicates and ensure strict unique constraint
+delete from public.student_leetcode_submissions a
+using public.student_leetcode_submissions b
+where a.id < b.id
+  and lower(trim(a.register_number)) = lower(trim(b.register_number))
+  and lower(trim(a.problem_slug)) = lower(trim(b.problem_slug));
+
 alter table public.student_leetcode_submissions drop constraint if exists uq_student_submission;
 alter table public.student_leetcode_submissions drop constraint if exists uq_student_problem;
 alter table public.student_leetcode_submissions add constraint uq_student_problem unique (register_number, problem_slug);
+
+-- Auto-replace trigger on insert
+create or replace function public.trg_fn_prevent_duplicate_submission()
+returns trigger
+language plpgsql
+as $$
+begin
+  delete from public.student_leetcode_submissions
+  where lower(trim(register_number)) = lower(trim(new.register_number))
+    and lower(trim(problem_slug)) = lower(trim(new.problem_slug));
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_prevent_duplicate_submission on public.student_leetcode_submissions;
+create trigger trg_prevent_duplicate_submission
+before insert on public.student_leetcode_submissions
+for each row
+execute function public.trg_fn_prevent_duplicate_submission();
 
 -- Indexes
 create index if not exists idx_submissions_register_number on public.student_leetcode_submissions(register_number);

@@ -4185,8 +4185,6 @@ function getSupabaseClient() {
 
 function getEffectiveVerdict(sub) {
   if (!sub) return 'CLEAN';
-  if (sub.plagiarism_verdict === 'FLAGGED') return 'FLAGGED';
-  if (sub.plagiarism_verdict === 'SUSPICIOUS') return 'SUSPICIOUS';
 
   const keys = Number(sub.keystrokes_count || 0);
   const pastes = Number(sub.paste_count || 0);
@@ -4194,13 +4192,24 @@ function getEffectiveVerdict(sub) {
   const isPasted = Boolean(sub.is_pasted);
   const riskScore = Number(sub.plagiarism_risk_score || 0);
   const hasAi = Boolean(sub.has_prompt_comments || (sub.ai_comment_flags && sub.ai_comment_flags.length > 0));
+  const codeLen = (sub.source_code || '').trim().length;
 
-  // If direct paste or 0% typing with low keystrokes -> FLAGGED
+  // AI prompt comments/header injection is always flagged
+  if (hasAi) return 'FLAGGED';
+
+  // ZERO-PASTE EXEMPTION FOR SHORT & ONE-LINE SOLUTIONS:
+  // If student typed directly with 0 pastes and no AI comments, it is completely authentic
+  if (!isPasted && pastes === 0) {
+    if (codeLen <= 220 && keys >= 8) return 'CLEAN';
+    if (keys >= 30) return 'CLEAN';
+  }
+
+  // Direct paste or high plagiarism risk flags
   if (isPasted && keys < 40) return 'FLAGGED';
   if (pastes > 0 && (keys < 30 || ratio <= 0.20)) return 'FLAGGED';
-  if (ratio <= 0.15 && keys < 60) return 'FLAGGED';
-  if (riskScore >= 70 || hasAi) return 'FLAGGED';
-  if (riskScore >= 45 || (pastes > 0 && ratio <= 0.35)) return 'SUSPICIOUS';
+  if (pastes > 0 && ratio <= 0.35) return 'SUSPICIOUS';
+  if (riskScore >= 70) return 'FLAGGED';
+  if (riskScore >= 45) return 'SUSPICIOUS';
 
   return sub.plagiarism_verdict || 'CLEAN';
 }

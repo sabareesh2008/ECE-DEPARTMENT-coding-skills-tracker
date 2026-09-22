@@ -157,35 +157,58 @@
     const hasAiComments = Boolean(aiScanResult?.hasPromptComments);
     const hasPasteAction = Boolean(pasted || numPastes > 0);
 
-    // DIRECT 100% FLAGGING RULES:
-    // Rule 1: Any paste with minimal typing (< 40 keystrokes) OR low typed ratio (<= 20%)
-    if (hasPasteAction && (keystrokes < 40 || ratio <= 0.20)) {
-      score = 98;
-      finalFlags.push(`Direct Code Paste Detected (${keystrokes} keys typed / ${numPastes} pastes / ${Math.round(ratio * 100)}% typed)`);
-    }
-
-    // Rule 2: 0% to 15% typing ratio on any substantive code
-    if (ratio <= 0.15 && codeLen > 20) {
-      score = Math.max(score, 95);
-      finalFlags.push(`Extreme Keystroke Deficit (${keystrokes} Keystrokes for ${codeLen} chars, ${Math.round(ratio * 100)}% typed)`);
-    }
-
-    // Rule 3: Direct paste with keystrokes < 60
-    if (hasPasteAction && keystrokes < 60) {
-      score = Math.max(score, 90);
-      finalFlags.push(`Pasted Code Insertion (${numPastes} pastes, ${keystrokes} keystrokes)`);
-    }
-
-    // Rule 4: AI Prompt signature / comments
+    // Rule 1: AI Prompt signature / header comments
     if (hasAiComments) {
       score = Math.max(score, (hasPasteAction || ratio < 0.5) ? 98 : 85);
       finalFlags.push('AI Generated Solution Signature / Header Comments');
     }
 
-    // Rule 5: Low keystrokes (< 15) regardless of anything
-    if (keystrokes < 15) {
+    // ZERO-PASTE EXEMPTION FOR SHORT & ONE-LINE SOLUTIONS:
+    // If student typed directly with 0 pastes and no AI comments:
+    if (!hasPasteAction && !hasAiComments) {
+      if (codeLen <= 220 && keystrokes >= 8) {
+        return {
+          score: 0,
+          verdict: 'CLEAN',
+          keystrokeRatio: parseFloat(ratio.toFixed(2)),
+          flags: [],
+          hasPromptComments: false
+        };
+      }
+      if (keystrokes >= 30) {
+        return {
+          score: 0,
+          verdict: 'CLEAN',
+          keystrokeRatio: parseFloat(ratio.toFixed(2)),
+          flags: [],
+          hasPromptComments: false
+        };
+      }
+    }
+
+    // DIRECT 100% FLAGGING RULES:
+    // Rule 2: Any paste with minimal typing (< 40 keystrokes) OR low typed ratio (<= 20%)
+    if (hasPasteAction && (keystrokes < 40 || ratio <= 0.20)) {
+      score = Math.max(score, 98);
+      finalFlags.push(`Direct Code Paste Detected (${keystrokes} keys typed / ${numPastes} pastes / ${Math.round(ratio * 100)}% typed)`);
+    }
+
+    // Rule 3: 0% to 15% typing ratio on long substantive code with paste
+    if (hasPasteAction && ratio <= 0.15 && codeLen > 40) {
       score = Math.max(score, 95);
-      finalFlags.push(`Unverified / Low Keystroke Count (${keystrokes} keys)`);
+      finalFlags.push(`Extreme Keystroke Deficit (${keystrokes} Keystrokes for ${codeLen} chars, ${Math.round(ratio * 100)}% typed)`);
+    }
+
+    // Rule 4: Direct paste with keystrokes < 60
+    if (hasPasteAction && keystrokes < 60) {
+      score = Math.max(score, 90);
+      finalFlags.push(`Pasted Code Insertion (${numPastes} pastes, ${keystrokes} keystrokes)`);
+    }
+
+    // Rule 5: 0 keystrokes on substantial code
+    if (keystrokes === 0 && codeLen > 50) {
+      score = Math.max(score, 95);
+      finalFlags.push(`Zero Keystroke Count (${codeLen} chars)`);
     }
 
     // Secondary accumulative checks
@@ -193,14 +216,14 @@
       if (hasPasteAction && ratio < 0.35) {
         score += 45;
         finalFlags.push(`High Paste Ratio (${Math.round(ratio * 100)}% typed)`);
-      } else if (ratio < 0.30) {
-        score += 35;
+      } else if (hasPasteAction && ratio < 0.50) {
+        score += 30;
         finalFlags.push('Low Typing Activity');
       }
 
-      if (timeSpentSeconds < 20) {
+      if (timeSpentSeconds < 15 && hasPasteAction) {
         score += 30;
-        finalFlags.push('Instant Solve Time (<20s)');
+        finalFlags.push('Instant Solve Time (<15s)');
       }
 
       if (switches >= 3 && hasPasteAction) {
@@ -212,9 +235,9 @@
     score = Math.min(100, Math.max(0, score));
 
     let verdict = 'CLEAN';
-    if (score >= 70 || (hasPasteAction && keystrokes < 40) || ratio <= 0.15) {
+    if (score >= 70 || (hasPasteAction && keystrokes < 40)) {
       verdict = 'FLAGGED';
-    } else if (score >= 45 || (hasPasteAction && ratio < 0.40)) {
+    } else if (score >= 45 || (hasPasteAction && ratio < 0.35)) {
       verdict = 'SUSPICIOUS';
     } else if (score >= 20) {
       verdict = 'LOW_RISK';
