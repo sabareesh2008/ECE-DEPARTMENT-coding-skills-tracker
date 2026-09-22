@@ -89,7 +89,14 @@
 
     downloadSolvedHistoryExcelBtn: document.getElementById('downloadSolvedHistoryExcelBtn'),
     downloadSolvedHistoryPdfBtn: document.getElementById('downloadSolvedHistoryPdfBtn'),
-    downloadSolvedHistoryZipBtn: document.getElementById('downloadSolvedHistoryZipBtn')
+    downloadSolvedHistoryZipBtn: document.getElementById('downloadSolvedHistoryZipBtn'),
+
+    solvedArchiveBanner: document.getElementById('solvedArchiveBanner'),
+    milestoneArchiveTitle: document.getElementById('milestoneArchiveTitle'),
+    milestoneArchiveDesc: document.getElementById('milestoneArchiveDesc'),
+    milestoneBadge: document.getElementById('milestoneBadge'),
+    archiveAndPurgeSolvedBtn: document.getElementById('archiveAndPurgeSolvedBtn'),
+    purgeOnlySolvedBtn: document.getElementById('purgeOnlySolvedBtn')
   };
 
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -487,6 +494,30 @@
       if (els.summaryCleanCount) els.summaryCleanCount.textContent = String(cleanCount);
       if (els.summaryFlaggedCount) els.summaryFlaggedCount.textContent = String(flaggedCount);
 
+      // 50-Problem Milestone Archive Banner Logic
+      if (els.solvedArchiveBanner) {
+        if (subs.length >= 45) {
+          els.solvedArchiveBanner.hidden = false;
+          if (subs.length >= 50) {
+            if (els.milestoneArchiveTitle) els.milestoneArchiveTitle.textContent = `🚨 50 Problems Capacity Reached (${subs.length}/50)`;
+            if (els.milestoneBadge) {
+              els.milestoneBadge.textContent = '50 Reached (Full)';
+              els.milestoneBadge.className = 'diff-badge Hard';
+            }
+            if (els.milestoneArchiveDesc) els.milestoneArchiveDesc.textContent = 'You have reached the 50-problem storage limit. Download your complete 50-solution archive package and reset database storage for the next 50 problems.';
+          } else {
+            if (els.milestoneArchiveTitle) els.milestoneArchiveTitle.textContent = `📦 Approaching 50 Problems Limit (${subs.length}/50 Solved)`;
+            if (els.milestoneBadge) {
+              els.milestoneBadge.textContent = `${subs.length}/50 Solved`;
+              els.milestoneBadge.className = 'diff-badge Medium';
+            }
+            if (els.milestoneArchiveDesc) els.milestoneArchiveDesc.textContent = 'You can archive and download all solutions anytime or clear database space for new problem solutions.';
+          }
+        } else {
+          els.solvedArchiveBanner.hidden = true;
+        }
+      }
+
       if (!subs.length) {
         if (els.solvedTableBody) {
           els.solvedTableBody.innerHTML = `
@@ -852,6 +883,77 @@
 
       downloadTextFile(`${reg}_All_LeetCode_Solutions_${reportISODate()}.txt`, bundle, 'text/plain;charset=utf-8');
     }
+  }
+
+  async function archiveAndPurgeCurrentStudentSolved() {
+    if (!currentSolvedStudent || !currentSolvedSubmissions.length) {
+      throw new Error('No synced submissions found to archive.');
+    }
+    const reg = currentSolvedStudent.reg;
+    const name = currentSolvedStudent.name;
+    const total = currentSolvedSubmissions.length;
+
+    // 1. Download full zip & excel
+    await downloadCurrentStudentSolvedZip();
+    setTimeout(() => {
+      try { downloadCurrentStudentSolvedExcel(); } catch(e) {}
+    }, 1000);
+
+    const proceed = confirm(`📥 Download initiated for all ${total} solutions!\n\nDo you want to clear these ${total} submissions from the database now to reset storage to 0 for the next batch?`);
+    if (!proceed) return;
+
+    const client = supabaseClient();
+    const { error } = await client.from('student_leetcode_submissions').delete().eq('register_number', reg);
+    if (error) throw error;
+
+    currentSolvedSubmissions = [];
+    if (els.summaryTotalSynced) els.summaryTotalSynced.textContent = '0';
+    if (els.summaryCleanCount) els.summaryCleanCount.textContent = '0';
+    if (els.summaryFlaggedCount) els.summaryFlaggedCount.textContent = '0';
+    if (els.solvedArchiveBanner) els.solvedArchiveBanner.hidden = true;
+
+    if (els.solvedTableBody) {
+      els.solvedTableBody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center;padding:36px;color:#34d399;">
+            <div style="font-size:1.15rem;font-weight:bold;margin-bottom:6px;">✅ Batch Archive Completed!</div>
+            <div style="color:var(--muted);">All ${total} solutions have been downloaded to your computer. Database storage is now reset to 0 for your next 50 problems.</div>
+          </td>
+        </tr>`;
+    }
+    setMessage(`✅ Successfully archived and cleared ${total} submissions for ${name} (${reg}).`, false);
+  }
+
+  async function purgeCurrentStudentSolvedOnly() {
+    if (!currentSolvedStudent || !currentSolvedSubmissions.length) {
+      throw new Error('No synced submissions found to clear.');
+    }
+    const reg = currentSolvedStudent.reg;
+    const total = currentSolvedSubmissions.length;
+
+    const proceed = confirm(`⚠️ Are you sure you want to permanently delete all ${total} stored submissions for ${currentSolvedStudent.name} (${reg}) from the database?\n\n(Make sure you have downloaded the solutions if you need them for records).`);
+    if (!proceed) return;
+
+    const client = supabaseClient();
+    const { error } = await client.from('student_leetcode_submissions').delete().eq('register_number', reg);
+    if (error) throw error;
+
+    currentSolvedSubmissions = [];
+    if (els.summaryTotalSynced) els.summaryTotalSynced.textContent = '0';
+    if (els.summaryCleanCount) els.summaryCleanCount.textContent = '0';
+    if (els.summaryFlaggedCount) els.summaryFlaggedCount.textContent = '0';
+    if (els.solvedArchiveBanner) els.solvedArchiveBanner.hidden = true;
+
+    if (els.solvedTableBody) {
+      els.solvedTableBody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center;padding:36px;color:var(--muted);">
+            <div style="font-size:1.1rem;margin-bottom:6px;color:var(--text);">Database Reset Complete (0 Submissions)</div>
+            <div>Fresh space ready for new LeetCode submissions.</div>
+          </td>
+        </tr>`;
+    }
+    setMessage(`Cleared submissions for ${currentSolvedStudent.name}.`, false);
   }
 
   function showSearchResults(results, query){
@@ -1384,6 +1486,14 @@
   });
   els.downloadSolvedHistoryZipBtn?.addEventListener('click', async () => {
     try { await downloadCurrentStudentSolvedZip(); } catch (e) { setMessage(e.message, true); }
+  });
+
+  els.archiveAndPurgeSolvedBtn?.addEventListener('click', async () => {
+    try { await archiveAndPurgeCurrentStudentSolved(); } catch (e) { setMessage(e.message, true); }
+  });
+
+  els.purgeOnlySolvedBtn?.addEventListener('click', async () => {
+    try { await purgeCurrentStudentSolvedOnly(); } catch (e) { setMessage(e.message, true); }
   });
 
   els.downloadSingleSolutionCodeBtn?.addEventListener('click', () => {

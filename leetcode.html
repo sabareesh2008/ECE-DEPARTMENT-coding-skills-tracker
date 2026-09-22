@@ -2169,6 +2169,30 @@ public class Main {
         </div>
       </div>
 
+      <!-- 50 Problems Milestone & Archive Banner -->
+      <div id="solvedArchiveBanner" class="milestone-archive-card" hidden>
+        <div class="milestone-archive-info">
+          <span style="font-size:1.4rem;">📦</span>
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <strong id="milestoneArchiveTitle" style="color:#f8fafc;font-size:0.95rem;">50 Problems Capacity Reached (50/50)</strong>
+              <span class="diff-badge Easy" id="milestoneBadge">50 Solved</span>
+            </div>
+            <p id="milestoneArchiveDesc" style="color:#94a3b8;font-size:0.8rem;margin:3px 0 0 0;">
+              Download and archive your complete 50-problem solutions portfolio before database auto-reset.
+            </p>
+          </div>
+        </div>
+        <div class="milestone-archive-actions">
+          <button id="archiveAndPurgeSolvedBtn" type="button" class="action-button primary" style="padding:7px 14px;font-size:12px;background:#10b981;border-color:#059669;font-weight:700;">
+            📦 Download Archive &amp; Clear Database (Reset to 0)
+          </button>
+          <button id="purgeOnlySolvedBtn" type="button" class="action-button secondary" style="padding:7px 12px;font-size:12px;color:#fca5a5;border-color:#ef4444;background:rgba(239,68,68,0.1);">
+            🗑️ Clear Database Only
+          </button>
+        </div>
+      </div>
+
       <div class="solved-problems-table-wrap">
         <table class="solved-problems-table">
           <thead>

@@ -69,6 +69,11 @@ CREATE TRIGGER trg_prune_submissions
 AFTER INSERT OR UPDATE ON public.student_leetcode_submissions
 FOR EACH ROW EXECUTE FUNCTION public.prune_student_excess_submissions();
 
+-- 5. ALLOW DELETE FOR DASHBOARD ARCHIVING & RESET
+DROP POLICY IF EXISTS "Allow public and extension to delete submissions" ON public.student_leetcode_submissions;
+CREATE POLICY "Allow public and extension to delete submissions"
+ON public.student_leetcode_submissions FOR DELETE TO anon, authenticated USING (true);
+
 COMMIT;
 
 -- VERIFICATION QUERY (Should return 0 rows):

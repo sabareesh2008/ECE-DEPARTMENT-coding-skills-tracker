@@ -4882,6 +4882,35 @@ body.modal-open {
 .summary-pill-card.flagged strong { color: #f87171; }
 .summary-pill-card.active strong { color: #38bdf8; }
 
+/* 50-Problem Milestone Archive Card */
+.milestone-archive-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(56, 189, 248, 0.1));
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  border-radius: 14px;
+  padding: 14px 18px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.3s ease;
+}
+
+.milestone-archive-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 320px;
+}
+
+.milestone-archive-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .solved-problems-table-wrap {
   overflow-y: auto;
   max-height: 480px;

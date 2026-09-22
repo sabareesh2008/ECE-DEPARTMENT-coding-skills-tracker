@@ -4306,6 +4306,35 @@ async function openStudentSolvedProblems(reg, name, section, lcUser) {
     if (summaryClean) summaryClean.textContent = String(cleanCount);
     if (summaryFlagged) summaryFlagged.textContent = String(flaggedCount);
 
+    // 50-Problem Milestone Archive Banner Logic
+    const archiveBanner = document.getElementById("solvedArchiveBanner");
+    const milestoneTitle = document.getElementById("milestoneArchiveTitle");
+    const milestoneDesc = document.getElementById("milestoneArchiveDesc");
+    const milestoneBadge = document.getElementById("milestoneBadge");
+
+    if (archiveBanner) {
+      if (subs.length >= 45) {
+        archiveBanner.hidden = false;
+        if (subs.length >= 50) {
+          if (milestoneTitle) milestoneTitle.textContent = `🚨 50 Problems Capacity Reached (${subs.length}/50)`;
+          if (milestoneBadge) {
+            milestoneBadge.textContent = '50 Reached (Full)';
+            milestoneBadge.className = 'diff-badge Hard';
+          }
+          if (milestoneDesc) milestoneDesc.textContent = 'You have reached the 50-problem storage limit. Download your complete 50-solution archive package and reset database storage for the next 50 problems.';
+        } else {
+          if (milestoneTitle) milestoneTitle.textContent = `📦 Approaching 50 Problems Limit (${subs.length}/50 Solved)`;
+          if (milestoneBadge) {
+            milestoneBadge.textContent = `${subs.length}/50 Solved`;
+            milestoneBadge.className = 'diff-badge Medium';
+          }
+          if (milestoneDesc) milestoneDesc.textContent = 'You can archive and download all solutions anytime or clear database space for new problem solutions.';
+        }
+      } else {
+        archiveBanner.hidden = true;
+      }
+    }
+
     if (!subs.length) {
       if (tbody) {
         tbody.innerHTML = `
@@ -4749,6 +4778,101 @@ async function downloadScriptSolvedHistoryZip() {
   }
 }
 
+async function archiveAndPurgeScriptStudentSolved() {
+  if (!currentScriptSolvedStudent || !currentScriptSolvedSubmissions.length) {
+    alert("No synced submissions found to archive.");
+    return;
+  }
+  const reg = currentScriptSolvedStudent.reg;
+  const name = currentScriptSolvedStudent.name;
+  const total = currentScriptSolvedSubmissions.length;
+
+  // 1. Download full zip & excel
+  await downloadScriptSolvedHistoryZip();
+  setTimeout(() => {
+    try { downloadScriptSolvedHistoryExcel(); } catch(e) {}
+  }, 1000);
+
+  const proceed = confirm(`📥 Download initiated for all ${total} solutions!\n\nDo you want to clear these ${total} submissions from the database now to reset storage to 0 for the next batch?`);
+  if (!proceed) return;
+
+  try {
+    const client = getSupabaseClient();
+    if (!client) throw new Error("Supabase is not configured.");
+    const { error } = await client.from('student_leetcode_submissions').delete().eq('register_number', reg);
+    if (error) throw error;
+
+    currentScriptSolvedSubmissions = [];
+    const summaryTotal = document.getElementById("summaryTotalSynced");
+    const summaryClean = document.getElementById("summaryCleanCount");
+    const summaryFlagged = document.getElementById("summaryFlaggedCount");
+    const archiveBanner = document.getElementById("solvedArchiveBanner");
+    const tbody = document.getElementById("solvedProblemsTableBody");
+
+    if (summaryTotal) summaryTotal.textContent = '0';
+    if (summaryClean) summaryClean.textContent = '0';
+    if (summaryFlagged) summaryFlagged.textContent = '0';
+    if (archiveBanner) archiveBanner.hidden = true;
+
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center;padding:36px;color:#34d399;">
+            <div style="font-size:1.15rem;font-weight:bold;margin-bottom:6px;">✅ Batch Archive Completed!</div>
+            <div style="color:var(--muted);">All ${total} solutions have been downloaded to your computer. Database storage is now reset to 0 for your next 50 problems.</div>
+          </td>
+        </tr>`;
+    }
+    alert(`✅ Successfully archived and cleared ${total} submissions for ${name} (${reg}).`);
+  } catch (err) {
+    alert(`Failed to reset database: ${err.message}`);
+  }
+}
+
+async function purgeScriptStudentSolvedOnly() {
+  if (!currentScriptSolvedStudent || !currentScriptSolvedSubmissions.length) {
+    alert("No synced submissions found to clear.");
+    return;
+  }
+  const reg = currentScriptSolvedStudent.reg;
+  const total = currentScriptSolvedSubmissions.length;
+
+  const proceed = confirm(`⚠️ Are you sure you want to permanently delete all ${total} stored submissions for ${currentScriptSolvedStudent.name} (${reg}) from the database?\n\n(Make sure you have downloaded the solutions if you need them for records).`);
+  if (!proceed) return;
+
+  try {
+    const client = getSupabaseClient();
+    if (!client) throw new Error("Supabase is not configured.");
+    const { error } = await client.from('student_leetcode_submissions').delete().eq('register_number', reg);
+    if (error) throw error;
+
+    currentScriptSolvedSubmissions = [];
+    const summaryTotal = document.getElementById("summaryTotalSynced");
+    const summaryClean = document.getElementById("summaryCleanCount");
+    const summaryFlagged = document.getElementById("summaryFlaggedCount");
+    const archiveBanner = document.getElementById("solvedArchiveBanner");
+    const tbody = document.getElementById("solvedProblemsTableBody");
+
+    if (summaryTotal) summaryTotal.textContent = '0';
+    if (summaryClean) summaryClean.textContent = '0';
+    if (summaryFlagged) summaryFlagged.textContent = '0';
+    if (archiveBanner) archiveBanner.hidden = true;
+
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center;padding:36px;color:var(--muted);">
+            <div style="font-size:1.1rem;margin-bottom:6px;color:var(--text);">Database Reset Complete (0 Submissions)</div>
+            <div>Fresh space ready for new LeetCode submissions.</div>
+          </td>
+        </tr>`;
+    }
+    alert(`Cleared submissions for ${currentScriptSolvedStudent.name}.`);
+  } catch (err) {
+    alert(`Failed to clear database: ${err.message}`);
+  }
+}
+
 // ============================================================
 // SECTION ADVISOR REPORT DISPATCH SYSTEM (SCRIPT.JS)
 // ============================================================
@@ -5131,6 +5255,9 @@ async function copyScriptAdvisorText() {
 document.getElementById("downloadSolvedHistoryExcelBtn")?.addEventListener("click", downloadScriptSolvedHistoryExcel);
 document.getElementById("downloadSolvedHistoryPdfBtn")?.addEventListener("click", downloadScriptSolvedHistoryPdf);
 document.getElementById("downloadSolvedHistoryZipBtn")?.addEventListener("click", downloadScriptSolvedHistoryZip);
+
+document.getElementById("archiveAndPurgeSolvedBtn")?.addEventListener("click", archiveAndPurgeScriptStudentSolved);
+document.getElementById("purgeOnlySolvedBtn")?.addEventListener("click", purgeScriptStudentSolvedOnly);
 
 document.getElementById("advisorDispatchButton")?.addEventListener("click", openScriptAdvisorDispatch);
 document.getElementById("homeAdvisorDispatchButton")?.addEventListener("click", openScriptAdvisorDispatch);

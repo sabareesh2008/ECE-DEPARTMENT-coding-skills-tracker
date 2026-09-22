@@ -201,6 +201,10 @@ with check (length(trim(register_number)) > 0 and length(trim(problem_title)) > 
 create policy "Allow public and extension to update submissions"
 on public.student_leetcode_submissions for update to anon, authenticated using (true) with check (true);
 
+drop policy if exists "Allow public and extension to delete submissions" on public.student_leetcode_submissions;
+create policy "Allow public and extension to delete submissions"
+on public.student_leetcode_submissions for delete to anon, authenticated using (true);
+
 create policy "Allow admins full access to submissions"
 on public.student_leetcode_submissions for all to authenticated
 using (coalesce((select (auth.jwt() ->> 'role') = 'authenticated'), false));
