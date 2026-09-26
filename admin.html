@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeMetrix · Unified Faculty &amp; Admin Command Center</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="style.css?v=7.0">
+  <link rel="stylesheet" href="css/assessment.css?v=7.0">
+  <link rel="stylesheet" href="css/tasks.css?v=7.0">
+  <link rel="stylesheet" href="css/admin.css?v=7.0">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Core Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    .unified-admin-header {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 18px 24px;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .unified-admin-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #f8fafc;
+    }
+    .unified-brand-badge {
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 1.1rem;
+      padding: 6px 12px;
+      border-radius: 8px;
+    }
+    .unified-nav-tabs {
+      display: flex;
+      gap: 6px;
+      background: #090d16;
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid #1e293b;
+      flex-wrap: wrap;
+    }
+    .unified-tab-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .unified-tab-btn:hover {
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .unified-tab-btn.active {
+      background: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    }
+    .admin-tab-pane {
+      display: none;
+      padding: 24px 0;
+    }
+    .admin-tab-pane.active {
+      display: block;
+    }
+    .admin-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+    .admin-stat-box {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .admin-stat-box h4 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      margin: 0 0 6px 0;
+    }
+    .admin-stat-box .stat-num {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .btn-portal-primary {
+      background: #2563eb;
+      color: #ffffff;
+      border: 1px solid #1d4ed8;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-portal-secondary {
+      background: #f8fafc;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+  </style>
+</head>
+<body style="background: #f8fafc; color: #0f172a; font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh;">
+
+  <!-- Master Top Navigation -->
+  <header class="unified-admin-header">
+    <a href="index.html" class="unified-admin-brand">
+      <div class="unified-brand-badge">CM</div>
+      <div>
+        <h1 style="font-size: 1.15rem; margin: 0; font-weight: 800; letter-spacing: -0.01em;">CODEMETRIX FACULTY CENTER</h1>
+        <p style="font-size: 0.78rem; color: #94a3b8; margin: 2px 0 0 0;">Unified Command &amp; Analytics Dashboard · ECE Department</p>
+      </div>
+    </a>
+
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      <a href="index.html" class="btn-portal-secondary" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #f8fafc; text-decoration: none;">
+        <span>🏠 Hub</span>
+      </a>
+      <a href="assessment.html" class="btn-portal-secondary" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #f8fafc; text-decoration: none;">
+        <span>📝 Student Test Portal</span>
+      </a>
+      <a href="tasks.html" class="btn-portal-secondary" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #f8fafc; text-decoration: none;">
+        <span>📋 Student Task Desk</span>
+      </a>
+      <button id="btnAdminLogout" class="btn-portal-secondary" style="background: #ef4444; border-color: #dc2626; color: #ffffff;">
+        <span>Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container" style="max-width: 1280px; margin: 24px auto; padding: 0 20px;">
+    
+    <!-- Navigation Tabs (4 Core Modules) -->
+    <nav class="unified-nav-tabs" role="tablist">
+      <button class="unified-tab-btn active" data-tab="tab-coding" role="tab">
+        <span>💻 Coding Analytics &amp; Reports</span>
+      </button>
+      <button class="unified-tab-btn" data-tab="tab-assessment" role="tab">
+        <span>📝 Technical Assessments (MCQ/FIB)</span>
+      </button>
+      <button class="unified-tab-btn" data-tab="tab-tasks" role="tab">
+        <span>📋 Task &amp; Proof Verification</span>
+      </button>
+      <button class="unified-tab-btn" data-tab="tab-students" role="tab">
+        <span>👥 Student Master Directory (372)</span>
+      </button>
+    </nav>
+
+    <!-- ============================================================
+         TAB 1: CODING ANALYTICS & REPORTS
+         ============================================================ -->
+    <section id="tab-coding" class="admin-tab-pane active" role="tabpanel">
+      <div class="admin-panel-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <h2 style="font-size: 1.3rem; margin: 0 0 4px 0; color: #0f172a;">Coding Tracker Intelligence &amp; Exports</h2>
+            <p style="color: #64748b; font-size: 0.88rem; margin: 0;">Generate instant Excel spreadsheets, faculty LeetCode reports, and custom date range summaries.</p>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="leetcode.html" class="btn-portal-primary" style="text-decoration: none;">Open LeetCode Leaderboard →</a>
+            <a href="github.html" class="btn-portal-secondary" style="text-decoration: none;">Open GitHub Leaderboard →</a>
+          </div>
+        </div>
+
+        <div class="admin-card-grid">
+          <div class="admin-stat-box">
+            <h4>LeetCode Tracked</h4>
+            <div class="stat-num" id="statLeetCount">372</div>
+            <p style="font-size: 0.8rem; color: #64748b; margin: 4px 0 0 0;">Students across Sections A–F</p>
+          </div>
+          <div class="admin-stat-box">
+            <h4>GitHub Profiles</h4>
+            <div class="stat-num" id="statGitCount">372</div>
+            <p style="font-size: 0.8rem; color: #64748b; margin: 4px 0 0 0;">Live commit &amp; deployment tracking</p>
+          </div>
+          <div class="admin-stat-box">
+            <h4>Automated Crawlers</h4>
+            <div class="stat-num" style="color: #10b981;">Active</div>
+            <p style="font-size: 0.8rem; color: #64748b; margin: 4px 0 0 0;">GitHub Actions workflows verified</p>
+          </div>
+        </div>
+
+        <!-- Action Export Grid -->
+        <h3 style="font-size: 1.05rem; margin: 20px 0 12px 0;">Official Department Spreadsheet Downloads</h3>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button id="adminDownloadTop50Leet" class="btn-portal-primary" style="background: #ea580c; border-color: #c2410c;">
+            <span>🏆 Download Top 50 LeetCode (.xlsx)</span>
+          </button>
+          <button id="adminDownloadTop50Git" class="btn-portal-primary" style="background: #1e293b; border-color: #0f172a;">
+            <span>🐙 Download Top 50 GitHub (.xlsx)</span>
+          </button>
+          <button id="adminDownloadFacultyLeet" class="btn-portal-primary" style="background: #2563eb; border-color: #1d4ed8;">
+            <span>👨‍🏫 Download Faculty LeetCode (.xlsx)</span>
+          </button>
+          <button id="adminDownloadAllMerged" class="btn-portal-secondary">
+            <span>📊 Download All Students Merged (.xlsx)</span>
+          </button>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+
+        <!-- Date Range Report Filter -->
+        <h3 style="font-size: 1.05rem; margin: 0 0 12px 0;">Custom Date Range Report Generator</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: flex-end; background: #f8fafc; padding: 18px; border-radius: 12px; border: 1px solid #e2e8f0;">
+          <div>
+            <label style="font-size: 0.82rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">From Date</label>
+            <input type="date" id="adminDateFrom" class="form-control" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
+          </div>
+          <div>
+            <label style="font-size: 0.82rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">To Date</label>
+            <input type="date" id="adminDateTo" class="form-control" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
+          </div>
+          <div>
+            <label style="font-size: 0.82rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Section Scope</label>
+            <select id="adminDateSection" class="form-control" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
+              <option value="OVERALL">ECE Overall (All Sections)</option>
+              <option value="ECE A">Section A</option>
+              <option value="ECE B">Section B</option>
+              <option value="ECE C">Section C</option>
+              <option value="ECE D">Section D</option>
+              <option value="ECE E">Section E</option>
+              <option value="ECE F">Section F</option>
+            </select>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button id="adminGenerateDateExcel" class="btn-portal-primary" style="background: #16a34a; border-color: #15803d; width: 100%;">
+              <span>📗 Excel</span>
+            </button>
+            <button id="adminGenerateDateCsv" class="btn-portal-secondary" style="width: 100%;">
+              <span>📄 CSV</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         TAB 2: ASSESSMENT MANAGEMENT
+         ============================================================ -->
+    <section id="tab-assessment" class="admin-tab-pane" role="tabpanel">
+      <!-- Embedded Assessment Management Control Panel -->
+      <div class="admin-panel-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 style="font-size: 1.3rem; margin: 0 0 4px 0; color: #0f172a;">Technical Examination Command Center</h2>
+            <p style="color: #64748b; font-size: 0.88rem; margin: 0;">Configure tests, upload question banks, publish to candidates, and monitor section completion.</p>
+          </div>
+          <a href="assessment.html" class="btn-portal-primary" style="text-decoration: none;">Launch Student Test Portal →</a>
+        </div>
+
+        <!-- Publish Toggle & Test Settings Box -->
+        <div class="publish-box" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 12px; padding: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 20px;">
+          <div>
+            <h3 id="adminPubBannerTitle" style="margin: 0 0 4px 0; font-size: 1.1rem; color: #0f172a;">Assessment Status: Unpublished</h3>
+            <p id="adminPubBannerDesc" style="margin: 0; font-size: 0.84rem; color: #64748b;">Students see "No active assessment" upon login until published.</p>
+          </div>
+          <button type="button" class="btn-portal-primary" id="btnAdminTogglePublish" style="background: #16a34a; border-color: #15803d; font-size: 0.95rem; padding: 10px 20px;">
+            <span>Publish Test to Students</span>
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 14px; align-items: flex-end; margin-bottom: 20px;">
+          <div>
+            <label style="font-size: 0.82rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Assessment Title</label>
+            <input type="text" id="adminTestTitleInput" class="form-control" value="Technical Assessment 2026" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
+          </div>
+          <div>
+            <label style="font-size: 0.82rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Duration (Minutes)</label>
+            <input type="number" id="adminTestDurationInput" class="form-control" value="45" min="5" max="180" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
+          </div>
+          <button type="button" id="btnAdminSaveTestDetails" class="btn-portal-primary" style="padding: 10px 20px;">
+            <span>Save Settings</span>
+          </button>
+        </div>
+
+        <!-- Excel / CSV Question Upload Zone -->
+        <h3 style="font-size: 1.05rem; margin: 24px 0 10px 0;">Question Bank Management</h3>
+        <div class="upload-dropzone" id="adminQuestionDropzone" style="border: 2px dashed #94a3b8; border-radius: 12px; padding: 28px 20px; text-align: center; background: #f8fafc; cursor: pointer;">
+          <input type="file" id="adminQuestionFileInput" accept=".csv, .xlsx, .xls" style="display: none;">
+          <div style="font-size: 2rem; margin-bottom: 6px;">📂</div>
+          <h4 style="margin: 0 0 6px 0; font-size: 1rem; color: #0f172a;">Click or Drag &amp; Drop Question Bank Excel (.xlsx) or CSV</h4>
+          <p style="color: #64748b; font-size: 0.82rem; margin: 0 0 12px 0;">Supports both Multiple Choice (MCQ with options A–D) and Fill in the Blanks (FIB).</p>
+          <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button type="button" class="btn-portal-primary" id="btnAdminBrowseQuestionFile" style="padding: 6px 14px; font-size: 0.84rem;">
+              <span>Browse File</span>
+            </button>
+            <a href="sample_question_template.csv" download="sample_question_template.csv" class="btn-portal-secondary" style="padding: 6px 14px; font-size: 0.84rem; text-decoration: none;">
+              <span>📥 Download CSV Template</span>
+            </a>
+          </div>
+        </div>
+
+        <div id="adminQuestionAlert" class="alert" style="display: none; margin-top: 14px;"></div>
+
+        <!-- Questions Summary & Section Completion -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 28px 0 14px 0; flex-wrap: wrap; gap: 10px;">
+          <h3 style="font-size: 1.05rem; margin: 0;">Section-wise Completion &amp; Submission Analytics</h3>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" id="adminExportAllSubmissionsExcel" class="btn-portal-primary" style="background: #16a34a; border-color: #15803d; font-size: 0.82rem;">
+              <span>📗 Export Submissions (Excel)</span>
+            </button>
+            <button type="button" id="adminExportAllSubmissionsPdf" class="btn-portal-primary" style="background: #dc2626; border-color: #b91c1c; font-size: 0.82rem;">
+              <span>📕 Export Submissions (PDF)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section Progress Cards (A to F) -->
+        <div id="adminSectionProgressGrid" class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px;">
+          <!-- Injected via JS -->
+        </div>
+
+        <!-- Active Questions Table -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 24px 0 12px 0;">
+          <h3 style="font-size: 1.05rem; margin: 0;">Active Test Questions (<span id="adminActiveQuestionCount" style="color: #2563eb;">0</span>)</h3>
+          <button type="button" id="btnAdminClearQuestions" class="btn-portal-secondary" style="color: #ef4444; border-color: #fca5a5; font-size: 0.82rem;">
+            <span>🗑️ Clear All Questions</span>
+          </button>
+        </div>
+
+        <div style="max-height: 380px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 10px;">
+          <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+            <thead>
+              <tr style="background: #f1f5f9; text-align: left;">
+                <th style="padding: 10px;">#</th>
+                <th style="padding: 10px;">Type</th>
+                <th style="padding: 10px;">Category</th>
+                <th style="padding: 10px;">Question</th>
+                <th style="padding: 10px;">Correct Answer</th>
+              </tr>
+            </thead>
+            <tbody id="adminQuestionsTableBody">
+              <tr><td colspan="5" style="padding: 20px; text-align: center; color: #64748b;">No questions assigned yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         TAB 3: TASK & PROOF VERIFICATION
+         ============================================================ -->
+    <section id="tab-tasks" class="admin-tab-pane" role="tabpanel">
+      <div class="admin-panel-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <h2 style="font-size: 1.3rem; margin: 0 0 4px 0; color: #0f172a;">Task Proof Submissions &amp; Verification</h2>
+            <p style="color: #64748b; font-size: 0.88rem; margin: 0;">Inspect student uploaded screenshots, filter pending candidates, and generate class reminders.</p>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="btnAdminExportTaskCsv" class="btn-portal-secondary">📊 Export CSV</button>
+            <button id="btnAdminExportTaskZip" class="btn-portal-secondary">📦 Download Proofs ZIP</button>
+            <button id="btnAdminExportTaskPdf" class="btn-portal-primary" style="background: #0f172a; border-color: #0f172a;">📄 Compiled PDF Report</button>
+          </div>
+        </div>
+
+        <!-- KPI Grid for Tasks -->
+        <div class="admin-card-grid">
+          <div class="admin-stat-box">
+            <h4>Total Enrolled</h4>
+            <div class="stat-num" id="taskTotalEnrolled">372</div>
+            <p style="font-size: 0.8rem; color: #64748b; margin: 4px 0 0 0;">Sections A–F roster</p>
+          </div>
+          <div class="admin-stat-box">
+            <h4>Proofs Submitted</h4>
+            <div class="stat-num" id="taskSubmittedCount" style="color: #10b981;">0</div>
+            <p style="font-size: 0.8rem; color: #10b981; margin: 4px 0 0 0;" id="taskSubmittedPct">0% completion</p>
+          </div>
+          <div class="admin-stat-box">
+            <h4>Pending Proofs</h4>
+            <div class="stat-num" id="taskPendingCount" style="color: #f59e0b;">372</div>
+            <p style="font-size: 0.8rem; color: #f59e0b; margin: 4px 0 0 0;" id="taskPendingPct">Awaiting submission</p>
+          </div>
+        </div>
+
+        <!-- WhatsApp Reminder Card -->
+        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+          <div>
+            <h4 style="margin: 0 0 4px 0; color: #065f46; font-size: 0.95rem;">⚡ WhatsApp Class Group Reminder</h4>
+            <p style="margin: 0; color: #047857; font-size: 0.84rem;">Copy all pending roll numbers formatted for instant announcement.</p>
+          </div>
+          <button id="btnAdminCopyWhatsApp" class="btn-portal-primary" style="background: #059669; border-color: #047857;">
+            <span>📋 Copy Pending Roll Numbers</span>
+          </button>
+        </div>
+
+        <!-- Filter Controls -->
+        <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;">
+          <input type="text" id="adminTaskSearchInput" class="form-control" placeholder="Search by roll number or name..." style="padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; min-width: 240px;">
+          <select id="adminTaskFilterSection" class="form-control" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
+            <option value="all">All Sections (A–F)</option>
+            <option value="A">Section A</option>
+            <option value="B">Section B</option>
+            <option value="C">Section C</option>
+            <option value="D">Section D</option>
+            <option value="E">Section E</option>
+            <option value="F">Section F</option>
+          </select>
+          <select id="adminTaskFilterStatus" class="form-control" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
+            <option value="all">All Statuses</option>
+            <option value="submitted">Submitted Only</option>
+            <option value="pending">Pending Only</option>
+          </select>
+        </div>
+
+        <!-- Task Submissions Table -->
+        <div style="max-height: 480px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 10px;">
+          <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+            <thead>
+              <tr style="background: #f1f5f9; text-align: left;">
+                <th style="padding: 10px;">Register No</th>
+                <th style="padding: 10px;">Student Name</th>
+                <th style="padding: 10px;">Section</th>
+                <th style="padding: 10px;">Status</th>
+                <th style="padding: 10px;">Submitted At</th>
+                <th style="padding: 10px;">Proof Screenshot</th>
+              </tr>
+            </thead>
+            <tbody id="adminTaskTableBody">
+              <tr><td colspan="6" style="padding: 24px; text-align: center; color: #64748b;">Loading task records...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         TAB 4: STUDENT MASTER DIRECTORY (372 STUDENTS)
+         ============================================================ -->
+    <section id="tab-students" class="admin-tab-pane" role="tabpanel">
+      <div class="admin-panel-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <h2 style="font-size: 1.3rem; margin: 0 0 4px 0; color: #0f172a;">Official Student Roster &amp; Directory</h2>
+            <p style="color: #64748b; font-size: 0.88rem; margin: 0;">Verified repository of all 372 ECE students across Sections A through F.</p>
+          </div>
+          <button id="adminDownloadRosterExcel" class="btn-portal-primary" style="background: #16a34a; border-color: #15803d;">
+            <span>📗 Export Roster (.xlsx)</span>
+          </button>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+          <input type="text" id="adminRosterSearchInput" class="form-control" placeholder="Search by name or register number..." style="padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; min-width: 260px;">
+          <select id="adminRosterSectionSelect" class="form-control" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
+            <option value="ALL">All Sections (A–F)</option>
+            <option value="A">Section A</option>
+            <option value="B">Section B</option>
+            <option value="C">Section C</option>
+            <option value="D">Section D</option>
+            <option value="E">Section E</option>
+            <option value="F">Section F</option>
+          </select>
+        </div>
+
+        <div style="max-height: 520px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 10px;">
+          <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+            <thead>
+              <tr style="background: #f1f5f9; text-align: left;">
+                <th style="padding: 10px;">#</th>
+                <th style="padding: 10px;">Register Number</th>
+                <th style="padding: 10px;">Student Name</th>
+                <th style="padding: 10px;">Department</th>
+                <th style="padding: 10px;">Section</th>
+              </tr>
+            </thead>
+            <tbody id="adminRosterTableBody">
+              <!-- Injected dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Proof Lightbox Modal -->
+  <div id="adminProofModal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #ffffff; border-radius: 16px; max-width: 900px; width: 100%; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
+      <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+        <h3 id="adminProofModalTitle" style="margin: 0; font-size: 1.1rem; color: #0f172a;">Student Proof Screenshot</h3>
+        <button id="closeAdminProofModal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">✕</button>
+      </div>
+      <div style="padding: 20px; overflow: auto; text-align: center; background: #0f172a;">
+        <img id="adminProofModalImg" src="" alt="Proof" style="max-width: 100%; max-height: 70vh; border-radius: 8px;">
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Scripts -->
+  <script src="config.js?v=7.0"></script>
+  <script src="js/assessment/students.js?v=7.0"></script>
+  <script src="js/assessment/questions.js?v=7.0"></script>
+  <script src="js/assessment/supabase-config.js?v=7.0"></script>
+  <script src="js/tasks/mock-data.js?v=7.0"></script>
+  <script src="js/tasks/supabase-config.js?v=7.0"></script>
+  <script src="js/unified-admin.js?v=7.0"></script>
+</body>
+</html>

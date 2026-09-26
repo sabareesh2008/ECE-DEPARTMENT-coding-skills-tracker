@@ -1,0 +1,7 @@
+Type,Category,Question,Option A,Option B,Option C,Option D,Correct Answer,Explanation
+MCQ,Data Structures,Which data structure follows the Last-In-First-Out (LIFO) principle?,Queue,Stack,Linked List,Binary Tree,B,A Stack operates on LIFO order.
+MCQ,Digital Electronics,How many select lines are needed for an 8-to-1 Multiplexer (MUX)?,2,3,4,8,B,An 8-to-1 MUX requires log2(8) = 3 select lines.
+MCQ,Computer Networks,What standard port number is used for HTTPS web traffic?,80,21,443,8080,C,Port 443 is universally designated for HTTPS traffic.
+FIB,Computer Networks,The protocol used to map an IP address to a physical MAC address is _______.,,,,ARP,Address Resolution Protocol (ARP) resolves IPv4 to MAC addresses.
+FIB,Electronics,In a PN junction diode under reverse breakdown the current increases _______.,,,,sharply,Under reverse breakdown the zener or avalanche effect causes a sharp current increase.
+FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a _______.,,,,Mutex,A binary semaphore functions as a mutual exclusion lock (Mutex).

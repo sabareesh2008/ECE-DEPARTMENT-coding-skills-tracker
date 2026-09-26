@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeMetrix · Task Analytics & Proof Verification</title>
+  <link rel="stylesheet" href="css/tasks.css?v=7.0">
+  <link rel="stylesheet" href="css/admin.css?v=7.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Supabase JS Client CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- JSZip & FileSaver for Bulk ZIP Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <!-- jsPDF for Single-File PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body id="tasksAdminApp">
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <a href="index.html" class="brand-icon" style="text-decoration:none;" title="CodeMetrix Hub">CM</a>
+        <div class="brand-title">
+          CodeMetrix Tasks
+          <span>Faculty & Admin Analytics</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <!-- Task Switcher Dropdown -->
+        <select id="adminTaskSelector" class="filter-select" style="max-width: 260px; font-weight: 600;">
+          <option value="">Loading tasks...</option>
+        </select>
+
+        <button id="btnRefreshData" class="btn btn-secondary btn-sm" title="Refresh Live Submissions">
+          🔄 Refresh
+        </button>
+
+        <button id="btnNewTask" class="btn btn-primary btn-sm">
+          + Create Task
+        </button>
+
+        <button id="btnManageStudents" class="btn btn-secondary btn-sm">
+          👥 Student Roster
+        </button>
+
+        <a href="index.html" class="btn btn-outline btn-sm" title="Go to Student View">
+          Student Portal &rarr;
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="main-wrapper">
+
+    <!-- Active Task Summary Bar -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+          <h1 id="activeTaskTitle" style="font-size: 1.45rem;">Loading Task...</h1>
+          <span id="activeTaskStatusBadge" class="badge badge-live">Active</span>
+        </div>
+        <p id="activeTaskDeadlineText" style="font-size: 0.85rem; color: var(--text-secondary);">Deadline: Checking...</p>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button id="btnExportCSV" class="btn btn-secondary btn-sm">
+          📊 Export CSV
+        </button>
+        <button id="btnDownloadZip" class="btn btn-outline btn-sm">
+          📦 Download ZIP
+        </button>
+        <button id="btnOpenPdfModal" class="btn btn-primary btn-sm" style="background-color: #0f172a; border-color: #0f172a;">
+          📄 Download Proofs (PDF)
+        </button>
+      </div>
+    </div>
+
+    <!-- 1. KPI Analytics Overview Cards -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Enrolled</div>
+        <div class="stat-value" id="kpiTotalStudents">0</div>
+        <div class="stat-sub">Across all registered sections</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">
+          <span>Submitted (Done)</span>
+          <span style="color: var(--success-text); font-size: 0.85rem;" id="kpiSubmittedPct">0%</span>
+        </div>
+        <div class="stat-value" id="kpiSubmittedCount" style="color: var(--success-text);">0</div>
+        <div class="stat-progress-bar">
+          <div id="kpiProgressBar" class="stat-progress-fill" style="width: 0%; background-color: var(--success-text);"></div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">
+          <span>Pending (Not Done)</span>
+          <span style="color: var(--warning-text); font-size: 0.85rem;" id="kpiPendingPct">0%</span>
+        </div>
+        <div class="stat-value" id="kpiPendingCount" style="color: var(--warning-text);">0</div>
+        <div class="stat-sub">Students awaiting submission</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Monitored Sections</div>
+        <div class="stat-value" id="kpiTotalSections">0</div>
+        <div class="stat-sub">Click section below to filter</div>
+      </div>
+    </section>
+
+    <!-- 2. Section-wise Breakdown Cards Grid -->
+    <div class="section-analytics-header">
+      <h3 style="font-size: 1.1rem;">Section-Wise Performance Breakdown</h3>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Click any card to filter list below</span>
+    </div>
+    <div id="sectionCardsContainer" class="section-cards-grid">
+      <!-- Dynamically injected section cards -->
+    </div>
+
+    <!-- 3. WhatsApp Reminder Quick Alert Banner -->
+    <div class="whatsapp-reminder-banner" id="whatsappBanner">
+      <div class="whatsapp-content">
+        <h4>⚡ Quick WhatsApp Class Reminder</h4>
+        <p id="whatsappBannerSub">Select a section or filter below to copy the pending roll numbers instantly for class groups.</p>
+      </div>
+      <button id="btnCopyWhatsAppPending" class="btn btn-secondary btn-sm" style="border-color: #10b981; color: #047857; font-weight: 700;">
+        📋 Copy Pending Roll Numbers
+      </button>
+    </div>
+
+    <!-- 4. Filter & Search Controls Bar -->
+    <div class="filter-bar">
+      <div class="filter-group-left">
+        <!-- Search -->
+        <div class="filter-search-box">
+          <svg class="filter-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <input type="text" id="searchInput" class="filter-search-input" placeholder="Search by Roll No or Name...">
+        </div>
+
+        <!-- Status Filter Tabs -->
+        <div class="filter-tabs">
+          <button class="filter-tab-btn active" data-status="all">All (<span id="tabCountAll">0</span>)</button>
+          <button class="filter-tab-btn" data-status="submitted">Submitted (<span id="tabCountSubmitted">0</span>)</button>
+          <button class="filter-tab-btn" data-status="pending">Pending (<span id="tabCountPending">0</span>)</button>
+        </div>
+
+        <!-- Section Dropdown -->
+        <select id="filterSectionSelect" class="filter-select">
+          <option value="all">All Sections</option>
+        </select>
+
+        <!-- Department Dropdown -->
+        <select id="filterDeptSelect" class="filter-select">
+          <option value="all">All Departments</option>
+        </select>
+      </div>
+
+      <div class="action-buttons-group">
+        <span id="filteredResultsCount" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">
+          Showing 0 records
+        </span>
+      </div>
+    </div>
+
+    <!-- 5. Main Submissions / Students Table -->
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Register No</th>
+              <th>Student Details</th>
+              <th>Dept & Section</th>
+              <th>Status</th>
+              <th>Submission Time</th>
+              <th>Screenshot Proof</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="studentsTableBody">
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                Loading student records...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ===================================================================
+       MODALS
+       =================================================================== -->
+
+  <!-- Modal 1: Image Lightbox Preview -->
+  <div id="screenshotModal" class="modal-overlay">
+    <div class="modal-card modal-card-lg">
+      <div class="modal-header">
+        <div>
+          <h3 id="modalStudentTitle">Screenshot Proof</h3>
+          <span id="modalStudentMeta" style="font-size: 0.8rem; color: var(--text-muted);">-</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeScreenshotModal()">&times;</button>
+      </div>
+      <div class="modal-body lightbox-content">
+        <img id="lightboxImg" class="lightbox-img" src="" alt="Proof Preview">
+        <p id="lightboxNotes" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem; font-style: italic;"></p>
+        <div class="lightbox-meta">
+          <span id="lightboxTimestamp" style="font-size: 0.8rem; color: var(--text-muted);">-</span>
+          <div style="display: flex; gap: 0.5rem;">
+            <a id="btnDownloadSingleImg" href="#" target="_blank" download="proof.png" class="btn btn-secondary btn-sm">
+              ⬇ Download Screenshot
+            </a>
+            <button type="button" class="btn btn-primary btn-sm" onclick="closeScreenshotModal()">
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Create New Task -->
+  <div id="newTaskModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Create New Task</h3>
+        <button class="modal-close-btn" onclick="closeNewTaskModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="newTaskForm">
+          <div class="form-group">
+            <label class="form-label" for="taskTitleInput">Task Title <span class="req">*</span></label>
+            <input type="text" id="taskTitleInput" class="form-input" placeholder="e.g. NPTEL Course Registration Proof" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="taskDescInput">Instructions / Description</label>
+            <textarea id="taskDescInput" class="form-input" rows="3" placeholder="Provide guidelines for what screenshot to upload..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="taskDeadlineInput">Deadline (Date & Time)</label>
+            <input type="datetime-local" id="taskDeadlineInput" class="form-input">
+          </div>
+          <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;">
+            <input type="checkbox" id="taskSetActiveCheckbox" checked style="width: 18px; height: 18px; accent-color: var(--primary);">
+            <label for="taskSetActiveCheckbox" style="font-size: 0.875rem; font-weight: 600; cursor: pointer;">
+              Set as the currently active task for students
+            </label>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
+            <button type="button" class="btn btn-outline" onclick="closeNewTaskModal()">Cancel</button>
+            <button type="submit" id="btnSaveTask" class="btn btn-primary">Create & Assign</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Student Roster Management (CSV Bulk Import) -->
+  <div id="rosterModal" class="modal-overlay">
+    <div class="modal-card modal-card-lg">
+      <div class="modal-header">
+        <h3>👥 Student Master Roster</h3>
+        <button class="modal-close-btn" onclick="closeRosterModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">
+            Upload a CSV containing your department's students to enable instant auto-fill when they enter their roll number.
+          </p>
+          <button type="button" class="btn btn-outline btn-sm" onclick="downloadSampleCSV()">
+            ⬇ Download Sample CSV Template
+          </button>
+        </div>
+
+        <!-- CSV Drop Area -->
+        <div class="csv-drop-area" id="csvDropzone">
+          <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">📄</div>
+          <div style="font-weight: 600; font-size: 0.95rem;">Click to upload CSV or drag and drop</div>
+          <div style="font-size: 0.775rem; color: var(--text-muted); margin-top: 0.25rem;">
+            Required Columns: <code>reg_no, name, department, section</code> (Optional: <code>email</code>)
+          </div>
+        </div>
+
+        <div id="csvParsedPreview" style="display: none; margin-top: 1rem;">
+          <div class="alert alert-info">
+            <span id="csvCountMessage">Found 0 students ready to import</span>
+          </div>
+          <button type="button" id="btnCommitImport" class="btn btn-primary btn-sm" style="width: 100%;">
+            Confirm & Save to Roster
+          </button>
+        </div>
+
+        <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--border-light);">
+
+        <!-- Add Single Student Manually -->
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Or Add Single Student Manually:</h4>
+        <form id="addSingleStudentForm">
+          <div class="form-row">
+            <div>
+              <label class="form-label" style="font-size: 0.75rem;">Register No *</label>
+              <input type="text" id="manRegNo" class="form-input" placeholder="717822P111" required>
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 0.75rem;">Full Name *</label>
+              <input type="text" id="manName" class="form-input" placeholder="Student Name" required>
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 0.75rem;">Department *</label>
+              <input type="text" id="manDept" class="form-input" placeholder="CSE" required>
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 0.75rem;">Section *</label>
+              <input type="text" id="manSec" class="form-input" placeholder="A" required>
+            </div>
+          </div>
+          <div style="margin-top: 0.75rem; text-align: right;">
+            <button type="submit" class="btn btn-secondary btn-sm">+ Add to Database</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Copy Pending Roll Numbers Modal -->
+  <div id="pendingCopyModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>📋 Copy Pending Roll Numbers</h3>
+        <button class="modal-close-btn" onclick="closePendingCopyModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+          Format generated for direct pasting into class WhatsApp groups:
+        </p>
+        <textarea id="pendingCopyTextarea" class="form-input" rows="8" style="font-family: monospace; font-size: 0.8rem;"></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+          <button type="button" class="btn btn-outline" onclick="closePendingCopyModal()">Close</button>
+          <button type="button" class="btn btn-primary" onclick="copyPendingToClipboard()">
+            Copy to Clipboard
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Download Proofs as Single PDF -->
+  <div id="pdfExportModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>📄 Download Proofs in Single PDF</h3>
+        <button class="modal-close-btn" onclick="closePdfExportModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+          Generate a high-quality compiled PDF document containing student screenshot proofs with registration details.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="pdfSectionSelect">Choose Download Scope</label>
+          <select id="pdfSectionSelect" class="form-input" style="cursor: pointer; font-weight: 600;">
+            <option value="all">🌐 All Sections Combined (Single Master PDF)</option>
+          </select>
+          <div class="form-hint" id="pdfScopeHint">All submitted students across all sections compiled in 1 document</div>
+        </div>
+
+        <!-- Progress Box -->
+        <div id="pdfProgressBox" style="display: none; margin-top: 1rem;">
+          <div class="alert alert-info" style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="display: inline-block; animation: spin 1s linear infinite;">⏳</span>
+            <div>
+              <strong id="pdfProgressTitle">Generating PDF...</strong>
+              <div id="pdfProgressSub" style="font-size: 0.8rem; margin-top: 0.2rem;">Downloading images and formatting pages...</div>
+            </div>
+          </div>
+          <div class="stat-progress-bar" style="margin-top: 0.5rem;">
+            <div id="pdfProgressBar" class="stat-progress-fill" style="width: 0%; background-color: var(--primary);"></div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
+          <button type="button" class="btn btn-outline" onclick="closePdfExportModal()">Cancel</button>
+          <button type="button" id="btnGeneratePDF" class="btn btn-primary">
+            Download PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="toast">Action completed successfully</div>
+
+  <!-- Scripts -->
+  <script src="config.js?v=7.0"></script>
+  <script src="js/tasks/mock-data.js?v=7.0"></script>
+  <script src="js/tasks/supabase-config.js?v=7.0"></script>
+  <script src="js/tasks/admin-app.js?v=7.0"></script>
+</body>
+</html>

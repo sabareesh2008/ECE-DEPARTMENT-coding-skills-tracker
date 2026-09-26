@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CODEMETRIX · Official Presentation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #060913;
+      color: #0f172a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      user-select: none;
+    }
+
+    .slide-viewport {
+      width: 1280px;
+      height: 720px;
+      position: relative;
+      background: #f8fafc;
+      border-radius: 12px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      display: none;
+    }
+
+    .slide-viewport.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Dark Slide Style */
+    .slide-dark {
+      background: #081225;
+      color: #f8fafc;
+    }
+
+    /* Decorative circles for dark slides */
+    .bg-circle-1 {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(14, 116, 144, 0.15) 0%, rgba(8, 18, 37, 0) 70%);
+      top: -200px;
+      left: 100px;
+      pointer-events: none;
+    }
+    .bg-circle-2 {
+      position: absolute;
+      width: 800px;
+      height: 800px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(15, 23, 42, 0.8) 0%, rgba(8, 18, 37, 0) 70%);
+      bottom: -300px;
+      right: -100px;
+      pointer-events: none;
+    }
+
+    .kicker {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #0ea5e9;
+    }
+
+    .slide-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    .slide-subtitle {
+      font-size: 13.5px;
+      color: #64748b;
+      line-height: 1.5;
+      margin-top: 4px;
+    }
+
+    .card-white {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+    }
+
+    .card-navy {
+      background: #0b1e36;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      color: #ffffff;
+    }
+
+    .footer-bar {
+      height: 40px;
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: #94a3b8;
+    }
+
+    .slide-dark .footer-bar {
+      color: #475569;
+    }
+
+    .top-badge-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #0284c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+    }
+
+    .logo-badge {
+      position: absolute;
+      top: 36px;
+      right: 48px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="p-4">
+
+  <!-- ==================== SLIDE 1 ==================== -->
+  <div class="slide-viewport slide-dark active" id="slide-1">
+    <div class="bg-circle-1"></div>
+    <div class="bg-circle-2"></div>
+    
+    <div class="p-12 flex-1 flex flex-col justify-between relative z-10">
+      <!-- Top Brand -->
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-sky-600/30 border border-sky-400/40 flex items-center justify-center text-sky-400 text-xs font-bold mono">&lt;&gt;</div>
+        <span class="text-sm font-bold tracking-widest text-slate-200 uppercase">CODEMETRIX</span>
+      </div>
+
+      <!-- Center / Left Details & QR Card -->
+      <div class="flex items-center justify-between mt-4">
+        <div class="max-w-xl">
+          <h1 class="text-6xl font-black tracking-tight text-white mb-3">CODEMETRIX</h1>
+          <p class="text-sky-400 text-lg font-medium italic mb-10">From Coding Activity to Actionable Performance Insights</p>
+
+          <div class="space-y-3.5 text-xs">
+            <div class="flex items-center">
+              <span class="w-36 font-bold tracking-wider text-sky-400 uppercase text-[11px]">TEAM NAME</span>
+              <span class="text-slate-200 font-semibold text-sm">CodeMetrix</span>
+            </div>
+            <div class="flex items-center">
+              <span class="w-36 font-bold tracking-wider text-sky-400 uppercase text-[11px]">TEAM MEMBERS</span>
+              <span class="text-slate-200 font-medium text-sm">Sabareesh K &nbsp;•&nbsp; Sabarivasan P &nbsp;•&nbsp; Roshan M</span>
+            </div>
+            <div class="flex items-center">
+              <span class="w-36 font-bold tracking-wider text-sky-400 uppercase text-[11px]">DEPARTMENT</span>
+              <span class="text-slate-200 font-semibold text-sm">II ECE E</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right White QR Box -->
+        <div class="bg-white p-6 rounded-2xl flex flex-col items-center justify-center shadow-2xl mr-8 text-slate-900 border-4 border-slate-100">
+          <div class="w-48 h-48 bg-slate-900 rounded-xl flex items-center justify-center p-2 mb-4">
+            <!-- Simulated QR SVG -->
+            <svg viewBox="0 0 100 100" class="w-full h-full text-white fill-current">
+              <path d="M0 0h30v30H0zm5 5v20h20V5zm4 4h12v12H9zM70 0h30v30H70zm5 5v20h20V5zm4 4h12v12H79zM0 70h30v30H0zm5 5v20h20V75zm4 4h12v12H9zM40 10h10v10H40zm10 20h10v10H50zm-10 10h10v10H40zm20 0h10v10H60zm10 20h10v10H70zm-30 0h10v10H40zm20 20h10v10H60zm10 10h10v10H70zm-20 0h10v10H50z"/>
+            </svg>
+          </div>
+          <span class="text-[10px] font-extrabold tracking-wider uppercase text-slate-500">SCAN TO VIEW</span>
+          <span class="text-xs font-black tracking-widest text-slate-900 uppercase">CODEMETRIX</span>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer-bar px-0">
+        <span>C O D E M E T R I X</span>
+        <span>01</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 2 ==================== -->
+  <div class="slide-viewport" id="slide-2">
+    <div class="logo-badge">
+      <div class="w-5 h-5 rounded-md bg-sky-500"></div>
+      <div class="w-5 h-5 rounded-md bg-slate-900 -ml-2.5 -mt-2"></div>
+    </div>
+    
+    <div class="px-12 pt-10 pb-4 flex-1 flex flex-col justify-between">
+      <div>
+        <div class="kicker mb-1">THE CHALLENGE</div>
+        <h2 class="slide-title">Problem Statement</h2>
+        <p class="slide-subtitle max-w-4xl">
+          Students practice coding on platforms like LeetCode and GitHub, but faculty often lack a centralized system to track and evaluate that progress effectively.
+        </p>
+
+        <!-- 3x2 Grid -->
+        <div class="grid grid-cols-3 gap-5 mt-6">
+          <div class="card-white p-5">
+            <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 mb-3 text-sm">📋</div>
+            <h3 class="font-bold text-slate-900 text-sm mb-1">Manual Tracking</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Manual tracking of students' coding progress across hundreds of individual profiles.</p>
+          </div>
+          <div class="card-white p-5">
+            <div class="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600 mb-3 text-sm">👥</div>
+            <h3 class="font-bold text-slate-900 text-sm mb-1">Hard to Monitor at Scale</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Difficult to monitor hundreds of students and keep records continually up to date.</p>
+          </div>
+          <div class="card-white p-5">
+            <div class="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500 mb-3 text-sm">👤✕</div>
+            <h3 class="font-bold text-slate-900 text-sm mb-1">Inactive Students Missed</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Faculty cannot easily identify inactive students early for academic counseling.</p>
+          </div>
+          <div class="card-white p-5">
+            <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500 mb-3 text-sm">🔀</div>
+            <h3 class="font-bold text-slate-900 text-sm mb-1">Scattered Data &amp; Copy-Paste</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Coding submissions are scattered across platforms without any code integrity verification.</p>
+          </div>
+          <div class="card-white p-5">
+            <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 mb-3 text-sm">📊</div>
+            <h3 class="font-bold text-slate-900 text-sm mb-1">No Easy Comparison</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Difficult to compare section-wise performance, daily streaks, and authentic logic building.</p>
+          </div>
+          <div class="card-white p-5">
+            <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 mb-3 text-sm">🗂️</div>
+            <h3 class="font-bold text-slate-900 text-sm mb-1">Database Storage Exhaustion</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Saving raw code files rapidly consumes free cloud quotas without an automated 50-limit purge.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bar px-0">
+        <span>C O D E M E T R I X</span>
+        <span>02</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 3 ==================== -->
+  <div class="slide-viewport" id="slide-3">
+    <div class="logo-badge">
+      <div class="w-5 h-5 rounded-md bg-sky-500"></div>
+      <div class="w-5 h-5 rounded-md bg-slate-900 -ml-2.5 -mt-2"></div>
+    </div>
+    
+    <div class="px-12 pt-10 pb-4 flex-1 flex flex-col justify-between">
+      <div>
+        <div class="kicker mb-1">THE APPROACH</div>
+        <h2 class="slide-title">Proposed Solution</h2>
+        <p class="slide-subtitle max-w-4xl">
+          CodeMetrix is a centralized dashboard that automatically collects and analyzes students' LeetCode and GitHub activity, and presents it through student, section, and faculty dashboards.
+        </p>
+
+        <!-- Visual Flow Diagram -->
+        <div class="mt-8 flex flex-col items-center">
+          <!-- Top 4 Boxes -->
+          <div class="flex items-center gap-4 w-full justify-between">
+            <div class="card-navy flex-1 p-4 flex flex-col items-center text-center">
+              <div class="text-xl mb-1 text-sky-400">🔗</div>
+              <span class="text-xs font-bold text-white">LeetCode &amp; GitHub</span>
+            </div>
+            <div class="text-sky-500 font-bold text-lg">➜</div>
+            <div class="card-navy flex-1 p-4 flex flex-col items-center text-center">
+              <div class="text-xl mb-1 text-sky-400">⚡</div>
+              <span class="text-xs font-bold text-white">Automated Data Collection</span>
+            </div>
+            <div class="text-sky-500 font-bold text-lg">➜</div>
+            <div class="card-navy flex-1 p-4 flex flex-col items-center text-center">
+              <div class="text-xl mb-1 text-sky-400">⚙️</div>
+              <span class="text-xs font-bold text-white">Data Processing &amp; Telemetry</span>
+            </div>
+            <div class="text-sky-500 font-bold text-lg">➜</div>
+            <div class="card-navy flex-1 p-4 flex flex-col items-center text-center">
+              <div class="text-xl mb-1 text-sky-400">🗄️</div>
+              <span class="text-xs font-bold text-white">Supabase Database</span>
+            </div>
+          </div>
+
+          <!-- Down Arrow to CodeMetrix Pill -->
+          <div class="text-sky-500 font-bold text-xl my-2">⬇</div>
+          <div class="bg-sky-500 text-slate-950 font-black text-sm px-10 py-2.5 rounded-full shadow-lg shadow-sky-500/30 tracking-wider">
+            CODEMETRIX
+          </div>
+          <div class="text-sky-500 font-bold text-xl my-2">⬇</div>
+
+          <!-- Bottom 3 Dashboards -->
+          <div class="grid grid-cols-3 gap-6 w-full">
+            <div class="card-white p-4 flex items-center justify-center gap-3 text-center border-slate-200">
+              <div class="w-7 h-7 rounded bg-sky-100 flex items-center justify-center text-sky-600 text-xs">💻</div>
+              <span class="text-xs font-bold text-slate-800">Student Dashboard</span>
+            </div>
+            <div class="card-white p-4 flex items-center justify-center gap-3 text-center border-slate-200">
+              <div class="w-7 h-7 rounded bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs">📊</div>
+              <span class="text-xs font-bold text-slate-800">Faculty Analytics</span>
+            </div>
+            <div class="card-white p-4 flex items-center justify-center gap-3 text-center border-slate-200">
+              <div class="w-7 h-7 rounded bg-purple-100 flex items-center justify-center text-purple-600 text-xs">🛡️</div>
+              <span class="text-xs font-bold text-slate-800">Admin Dashboard</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bar px-0">
+        <span>C O D E M E T R I X</span>
+        <span>03</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 4 ==================== -->
+  <div class="slide-viewport" id="slide-4">
+    <div class="logo-badge">
+      <div class="w-5 h-5 rounded-md bg-sky-500"></div>
+      <div class="w-5 h-5 rounded-md bg-slate-900 -ml-2.5 -mt-2"></div>
+    </div>
+    
+    <div class="px-12 pt-10 pb-4 flex-1 flex flex-col justify-between">
+      <div>
+        <div class="kicker mb-1">UNDER THE HOOD</div>
+        <h2 class="slide-title">Technology Stack</h2>
+
+        <div class="grid grid-cols-3 gap-6 mt-6">
+          <!-- Col 1 -->
+          <div class="card-white overflow-hidden flex flex-col">
+            <div class="bg-slate-900 text-white font-bold text-xs uppercase tracking-wider py-3 px-5">FRONTEND</div>
+            <div class="p-5 space-y-4 flex-1 text-xs">
+              <div class="flex items-start gap-3">
+                <span class="text-base">📄</span>
+                <div>
+                  <strong class="text-slate-900 block text-xs">HTML</strong>
+                  <span class="text-slate-500 text-[11px]">Builds the structure of the web dashboard</span>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="text-base">🎨</span>
+                <div>
+                  <strong class="text-slate-900 block text-xs">CSS</strong>
+                  <span class="text-slate-500 text-[11px]">Creates responsive, modern dark UI styling</span>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="text-base">⚡</span>
+                <div>
+                  <strong class="text-slate-900 block text-xs">JavaScript &amp; JSZip</strong>
+                  <span class="text-slate-500 text-[11px]">Handles filtering, search, and 1-click ZIP code downloading</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Col 2 -->
+          <div class="card-white overflow-hidden flex flex-col">
+            <div class="bg-slate-900 text-white font-bold text-xs uppercase tracking-wider py-3 px-5">AUTOMATION &amp; PROCESSING</div>
+            <div class="p-5 space-y-4 flex-1 text-xs">
+              <div class="flex items-start gap-3">
+                <span class="text-base">🐍</span>
+                <div>
+                  <strong class="text-slate-900 block text-xs">Python</strong>
+                  <span class="text-slate-500 text-[11px]">Automates LeetCode GraphQL &amp; GitHub collection</span>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="text-base">⚙️</span>
+                <div>
+                  <strong class="text-slate-900 block text-xs">GitHub Actions</strong>
+                  <span class="text-slate-500 text-[11px]">Runs automated trackers periodically without manual execution</span>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="text-base">🧩</span>
+                <div>
+                  <strong class="text-slate-900 block text-xs">Monaco DOM Hook</strong>
+                  <span class="text-slate-500 text-[11px]">Browser extension capturing typing rhythm and paste counts</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Col 3 -->
+          <div class="card-white overflow-hidden flex flex-col">
+            <div class="bg-slate-900 text-white font-bold text-xs uppercase tracking-wider py-3 px-5">DATABASE &amp; AUTHENTICATION</div>
+            <div class="p-5 space-y-4 flex-1 text-xs">
+              <div class="flex items-start gap-3">
+                <span class="text-base">🗄️</span>
+                <div>
+                  <strong class="text-slate-900 block text-xs">SQL &amp; Triggers</strong>
+                  <span class="text-slate-500 text-[11px]">Auto-replace deduplication constraints &amp; 50-problem purge</span>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="text-base">⚡</span>
+                <div>
+                  <strong class="text-slate-900 block text-xs">Supabase</strong>
+                  <span class="text-slate-500 text-[11px]">Stores student profiles, verified problems &amp; application data</span>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="text-base">🛡️</span>
+                <div>
+                  <strong class="text-slate-900 block text-xs">Row Level Security</strong>
+                  <span class="text-slate-500 text-[11px]">Guarantees secure access across faculty and student portals</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bar px-0">
+        <span>C O D E M E T R I X</span>
+        <span>04</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 5 ==================== -->
+  <div class="slide-viewport" id="slide-5">
+    <div class="logo-badge">
+      <div class="w-5 h-5 rounded-md bg-sky-500"></div>
+      <div class="w-5 h-5 rounded-md bg-slate-900 -ml-2.5 -mt-2"></div>
+    </div>
+    
+    <div class="px-12 pt-10 pb-4 flex-1 flex flex-col justify-between">
+      <div>
+        <div class="kicker mb-1">HOW IT WORKS</div>
+        <h2 class="slide-title">System Architecture</h2>
+
+        <div class="mt-4 space-y-2.5 text-[11px]">
+          <!-- Row 1 -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="card-navy p-3">
+              <span class="text-sky-400 font-bold block mb-1">LeetCode</span>
+              <span class="text-slate-300">• Problems solved (E / M / H) &nbsp;• Daily activity &amp; submissions</span>
+            </div>
+            <div class="card-navy p-3">
+              <span class="text-sky-400 font-bold block mb-1">GitHub</span>
+              <span class="text-slate-300">• Repositories &amp; commits &nbsp;• Contribution heatmap activity</span>
+            </div>
+          </div>
+
+          <!-- Row 2 -->
+          <div class="card-white p-3 border-sky-200">
+            <span class="text-slate-900 font-bold block mb-0.5">Python — Processing Engine</span>
+            <span class="text-slate-500">• Fetch data &nbsp;• Process &amp; clean &nbsp;• Validate deduplication &nbsp;• Enforce 50-limit window</span>
+          </div>
+
+          <!-- Row 3 -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="card-white p-3">
+              <span class="text-slate-900 font-bold block mb-0.5">GitHub Actions</span>
+              <span class="text-slate-500">• Scheduled execution &nbsp;• Runs trackers automatically</span>
+            </div>
+            <div class="card-white p-3">
+              <span class="text-slate-900 font-bold block mb-0.5">Supabase (PostgreSQL)</span>
+              <span class="text-slate-500">• Central data store &nbsp;• Auto-prune triggers &nbsp;• Powers all dashboards</span>
+            </div>
+          </div>
+
+          <!-- Row 4 -->
+          <div class="grid grid-cols-3 gap-4">
+            <div class="card-navy p-3">
+              <span class="text-sky-400 font-bold block mb-0.5">Student Dashboard</span>
+              <span class="text-slate-300 text-[10px]">• Solved breakdown &nbsp;• 1-Click ZIP archive</span>
+            </div>
+            <div class="card-navy p-3">
+              <span class="text-sky-400 font-bold block mb-0.5">Faculty Analytics</span>
+              <span class="text-slate-300 text-[10px]">• Section comparison &nbsp;• In-modal code viewer</span>
+            </div>
+            <div class="card-navy p-3">
+              <span class="text-sky-400 font-bold block mb-0.5">Admin Dashboard</span>
+              <span class="text-slate-300 text-[10px]">• Anti-paste forensics &nbsp;• Excel reports</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bar px-0">
+        <span>C O D E M E T R I X</span>
+        <span>05</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 6 ==================== -->
+  <div class="slide-viewport" id="slide-6">
+    <div class="logo-badge">
+      <div class="w-5 h-5 rounded-md bg-sky-500"></div>
+      <div class="w-5 h-5 rounded-md bg-slate-900 -ml-2.5 -mt-2"></div>
+    </div>
+    
+    <div class="px-12 pt-10 pb-4 flex-1 flex flex-col justify-between">
+      <div>
+        <div class="kicker mb-1">WHAT IT DELIVERS</div>
+        <h2 class="slide-title">Key Features</h2>
+
+        <div class="grid grid-cols-3 gap-5 mt-6">
+          <div class="card-white p-5">
+            <div class="text-sky-500 text-2xl mb-2">⚡</div>
+            <h3 class="font-bold text-slate-900 text-sm mb-1">Automated LeetCode &amp; GitHub Tracking</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Daily background scraping captures solved counts, streaks, and difficulty breakdowns automatically.</p>
+          </div>
+          <div class="card-white p-5">
+            <div class="text-sky-500 text-2xl mb-2">📊</div>
+            <h3 class="font-bold text-slate-900 text-sm mb-1">Section-wise Analysis</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Instant filtering across sections with ranked leaderboards and detailed student modals.</p>
+          </div>
+          <div class="card-white p-5">
+            <div class="text-rose-500 text-2xl mb-2">👤✕</div>
+            <h3 class="font-bold text-slate-900 text-sm mb-1">Inactive Students Detection</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Early identification of students with broken practice streaks for prompt academic mentoring.</p>
+          </div>
+          <div class="card-white p-5">
+            <div class="text-amber-500 text-2xl mb-2">⚠️</div>
+            <h3 class="font-bold text-slate-900 text-sm mb-1">Suspicious Solving &amp; Anti-Paste</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Extension tracks typing vs paste deltas to flag AI-pasted code while keeping short one-liners clean.</p>
+          </div>
+          <div class="card-white p-5">
+            <div class="text-emerald-500 text-2xl mb-2">📦</div>
+            <h3 class="font-bold text-slate-900 text-sm mb-1">50-Problem Download &amp; Auto-Purge</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">1-click ZIP and Excel archive of solved files with automatic database reset to maintain free cloud limits.</p>
+          </div>
+          <div class="card-white p-5">
+            <div class="text-indigo-500 text-2xl mb-2">🔄</div>
+            <h3 class="font-bold text-slate-900 text-sm mb-1">Duplicate Prevention</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Re-submitted problems automatically replace older records, guaranteeing zero duplicate entries.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bar px-0">
+        <span>C O D E M E T R I X</span>
+        <span>06</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 7 ==================== -->
+  <div class="slide-viewport" id="slide-7">
+    <div class="logo-badge">
+      <div class="w-5 h-5 rounded-md bg-sky-500"></div>
+      <div class="w-5 h-5 rounded-md bg-slate-900 -ml-2.5 -mt-2"></div>
+    </div>
+    
+    <div class="px-12 pt-10 pb-4 flex-1 flex flex-col justify-between">
+      <div>
+        <div class="kicker mb-1">WHAT SETS US APART</div>
+        <h2 class="slide-title">Innovation</h2>
+
+        <div class="grid grid-cols-2 gap-5 mt-6 text-xs">
+          <div class="card-white p-5 flex items-start gap-4">
+            <div class="text-sky-500 text-2xl">🥞</div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm mb-1">Unified Coding Intelligence</h3>
+              <p class="text-slate-500 leading-relaxed">Combines LeetCode problem-solving with GitHub commit activity into a single comprehensive score.</p>
+            </div>
+          </div>
+          <div class="card-white p-5 flex items-start gap-4">
+            <div class="text-sky-500 text-2xl">⚡</div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm mb-1">Real-Time Extension Telemetry</h3>
+              <p class="text-slate-500 leading-relaxed">Monitors Monaco editor keystroke rhythm directly in-browser with zero external server latency.</p>
+            </div>
+          </div>
+          <div class="card-white p-5 flex items-start gap-4">
+            <div class="text-sky-500 text-2xl">🛡️</div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm mb-1">Pattern-Based Integrity Checks</h3>
+              <p class="text-slate-500 leading-relaxed">Physical keystroke counting and smart one-liner tolerance (&le;220 chars) eliminate false alarms.</p>
+            </div>
+          </div>
+          <div class="card-white p-5 flex items-start gap-4">
+            <div class="text-sky-500 text-2xl">🗄️</div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm mb-1">Self-Pruning Cloud Architecture</h3>
+              <p class="text-slate-500 leading-relaxed">Maintains perpetual free-tier operation via automated rolling 50-problem pruning and offline archives.</p>
+            </div>
+          </div>
+          <div class="card-white p-5 flex items-start gap-4">
+            <div class="text-sky-500 text-2xl">📊</div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm mb-1">Data-Driven Reporting</h3>
+              <p class="text-slate-500 leading-relaxed">Instant exportable Excel sheets formatted for departmental accreditation and reviews.</p>
+            </div>
+          </div>
+          <div class="card-white p-5 flex items-start gap-4">
+            <div class="text-sky-500 text-2xl">✉️</div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm mb-1">Automated Delivery</h3>
+              <p class="text-slate-500 leading-relaxed">Pre-formats class section summaries and progress digests for class advisors in one click.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bar px-0">
+        <span>C O D E M E T R I X</span>
+        <span>07</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 8 ==================== -->
+  <div class="slide-viewport" id="slide-8">
+    <div class="logo-badge">
+      <div class="w-5 h-5 rounded-md bg-sky-500"></div>
+      <div class="w-5 h-5 rounded-md bg-slate-900 -ml-2.5 -mt-2"></div>
+    </div>
+    
+    <div class="px-12 pt-10 pb-4 flex-1 flex flex-col justify-between">
+      <div>
+        <div class="kicker mb-1">WHY IT MATTERS</div>
+        <h2 class="slide-title">Impact</h2>
+
+        <!-- Table -->
+        <div class="card-white overflow-hidden mt-6 text-xs">
+          <div class="bg-slate-900 text-white font-bold flex px-6 py-3">
+            <span class="w-1/3 text-xs tracking-wider">IMPACT</span>
+            <span class="w-2/3 text-xs tracking-wider">RESULT</span>
+          </div>
+          <div class="divide-y divide-slate-100">
+            <div class="flex px-6 py-3 text-slate-800 font-medium">
+              <span class="w-1/3 font-bold text-slate-900">Consistent Practice</span>
+              <span class="w-2/3 text-slate-600">Daily coding habit fostered across all students</span>
+            </div>
+            <div class="flex px-6 py-3 text-slate-800 font-medium bg-slate-50/50">
+              <span class="w-1/3 font-bold text-slate-900">Reduced Workload</span>
+              <span class="w-2/3 text-slate-600">Automated monitoring saves 15+ faculty hours weekly</span>
+            </div>
+            <div class="flex px-6 py-3 text-slate-800 font-medium">
+              <span class="w-1/3 font-bold text-slate-900">Early Intervention</span>
+              <span class="w-2/3 text-slate-600">Inactive students identified quickly for counseling</span>
+            </div>
+            <div class="flex px-6 py-3 text-slate-800 font-medium bg-slate-50/50">
+              <span class="w-1/3 font-bold text-slate-900">Data-Driven Decisions</span>
+              <span class="w-2/3 text-slate-600">Meaningful analytics for section-level performance reviews</span>
+            </div>
+            <div class="flex px-6 py-3 text-slate-800 font-medium">
+              <span class="w-1/3 font-bold text-slate-900">Academic Integrity</span>
+              <span class="w-2/3 text-slate-600">Unusual solving patterns and copy-paste dumps flagged</span>
+            </div>
+            <div class="flex px-6 py-3 text-slate-800 font-medium bg-slate-50/50">
+              <span class="w-1/3 font-bold text-slate-900">Storage Sustainability</span>
+              <span class="w-2/3 text-slate-600">50-problem auto-pruning enables perpetual zero-cost operation</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bar px-0">
+        <span>C O D E M E T R I X</span>
+        <span>08</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 9 ==================== -->
+  <div class="slide-viewport" id="slide-9">
+    <div class="logo-badge">
+      <div class="w-5 h-5 rounded-md bg-sky-500"></div>
+      <div class="w-5 h-5 rounded-md bg-slate-900 -ml-2.5 -mt-2"></div>
+    </div>
+    
+    <div class="px-12 pt-10 pb-4 flex-1 flex flex-col justify-between">
+      <div>
+        <div class="kicker mb-1">WHAT'S NEXT</div>
+        <h2 class="slide-title">Future Scope</h2>
+
+        <div class="mt-6 space-y-3 text-xs">
+          <div class="card-white p-4 flex items-center gap-4">
+            <span class="text-sky-500 text-lg">🧠</span>
+            <strong class="text-slate-800 text-xs">AI-Based Performance &amp; Complexity Optimization Hints</strong>
+          </div>
+          <div class="card-white p-4 flex items-center gap-4">
+            <span class="text-sky-500 text-lg">🔍</span>
+            <strong class="text-slate-800 text-xs">Advanced Anomaly &amp; Code Quality Detection</strong>
+          </div>
+          <div class="card-white p-4 flex items-center gap-4">
+            <span class="text-sky-500 text-lg">💻</span>
+            <strong class="text-slate-800 text-xs">Complete Online Department Coding Test Platform</strong>
+          </div>
+          <div class="card-white p-4 flex items-center gap-4">
+            <span class="text-sky-500 text-lg">📱</span>
+            <strong class="text-slate-800 text-xs">Mobile App &amp; Automated Telegram/WhatsApp Notifications</strong>
+          </div>
+          <div class="card-white p-4 flex items-center gap-4">
+            <span class="text-sky-500 text-lg">🔗</span>
+            <strong class="text-slate-800 text-xs">Integration with Multiple Platforms (Codeforces, HackerRank, GFG)</strong>
+          </div>
+        </div>
+
+        <div class="mt-6 text-center text-xs italic text-slate-500">
+          "The future vision of CodeMetrix is to evolve from a coding activity tracker into an intelligent, personalized coding education platform."
+        </div>
+      </div>
+
+      <div class="footer-bar px-0">
+        <span>C O D E M E T R I X</span>
+        <span>09</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 10 ==================== -->
+  <div class="slide-viewport slide-dark" id="slide-10">
+    <div class="bg-circle-1"></div>
+    <div class="bg-circle-2"></div>
+    
+    <div class="p-12 flex-1 flex flex-col justify-between items-center text-center relative z-10">
+      <div></div>
+
+      <div class="max-w-2xl flex flex-col items-center">
+        <div class="w-12 h-12 rounded-xl bg-sky-600/30 border border-sky-400/40 flex items-center justify-center text-sky-400 text-lg font-bold mono mb-6">&lt;&gt;</div>
+        <h1 class="text-6xl font-black tracking-tight text-white mb-4">THANK YOU</h1>
+        <p class="text-sky-400 text-base font-medium">CODEMETRIX &nbsp;•&nbsp; From Coding Activity to Actionable Performance Insights</p>
+      </div>
+
+      <div class="footer-bar w-full px-0">
+        <span>C O D E M E T R I X</span>
+        <span>10</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Controls -->
+  <div class="mt-4 flex items-center gap-4">
+    <button onclick="prevSlide()" class="px-5 py-2 rounded-lg bg-slate-800 text-white font-semibold text-xs hover:bg-slate-700 transition">← Previous</button>
+    <span id="navCounter" class="text-xs font-bold text-slate-400 mono">Slide 1 / 10</span>
+    <button onclick="nextSlide()" class="px-5 py-2 rounded-lg bg-sky-500 text-slate-950 font-bold text-xs hover:bg-sky-400 transition">Next →</button>
+  </div>
+
+  <script>
+    let current = 1;
+    const total = 10;
+    const counter = document.getElementById('navCounter');
+
+    function update() {
+      for (let i = 1; i <= total; i++) {
+        const el = document.getElementById(`slide-${i}`);
+        if (el) el.classList.toggle('active', i === current);
+      }
+      counter.textContent = `Slide ${current} / ${total}`;
+    }
+
+    function nextSlide() {
+      if (current < total) { current++; update(); }
+    }
+
+    function prevSlide() {
+      if (current > 1) { current--; update(); }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+      if (e.key === 'ArrowLeft') prevSlide();
+    });
+  </script>
+</body>
+</html>

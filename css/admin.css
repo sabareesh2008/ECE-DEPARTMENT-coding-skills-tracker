@@ -1,0 +1,435 @@
+/* ===================================================================
+   ADMIN & FACULTY DASHBOARD STYLES (White & Grey Aesthetic)
+   =================================================================== */
+
+/* Admin Stats Overview Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.35rem 1.5rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-value {
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.stat-sub {
+  margin-top: 0.5rem;
+  font-size: 0.775rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.stat-progress-bar {
+  width: 100%;
+  height: 6px;
+  background-color: var(--bg-subtle);
+  border-radius: var(--radius-full);
+  margin-top: 0.75rem;
+  overflow: hidden;
+}
+
+.stat-progress-fill {
+  height: 100%;
+  background-color: var(--primary);
+  border-radius: var(--radius-full);
+  transition: width 0.5s ease;
+}
+
+/* Section Breakdown Cards Grid */
+.section-analytics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.section-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.section-box {
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 1.15rem;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+}
+
+.section-box:hover, .section-box.active-filter {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.section-box.active-filter {
+  background-color: #fafbfc;
+}
+
+.section-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.section-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.section-percentage {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+}
+
+.section-percentage.high {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.section-percentage.low {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+
+.section-counts {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.section-bar-track {
+  width: 100%;
+  height: 6px;
+  background-color: #e2e8f0;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.section-bar-thumb {
+  height: 100%;
+  background-color: var(--primary);
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+/* Filter and Actions Bar */
+.filter-bar {
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.filter-group-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.filter-search-box {
+  position: relative;
+  min-width: 220px;
+  flex: 1;
+  max-width: 320px;
+}
+
+.filter-search-input {
+  width: 100%;
+  padding: 0.55rem 0.85rem 0.55rem 2.2rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  outline: none;
+  font-family: inherit;
+}
+
+.filter-search-input:focus {
+  border-color: var(--border-focus);
+}
+
+.filter-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  width: 16px;
+  height: 16px;
+}
+
+.filter-select {
+  padding: 0.55rem 0.85rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  background-color: #ffffff;
+  color: var(--text-primary);
+  outline: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.filter-tabs {
+  display: flex;
+  background-color: var(--bg-subtle);
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+  gap: 0.25rem;
+}
+
+.filter-tab-btn {
+  padding: 0.45rem 0.85rem;
+  border: none;
+  background: transparent;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.filter-tab-btn.active {
+  background: #ffffff;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.action-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Copy WhatsApp Banner Box */
+.whatsapp-reminder-banner {
+  background-color: #ffffff;
+  border: 1px solid var(--border-light);
+  border-left: 4px solid #10b981;
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.whatsapp-content h4 {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin-bottom: 0.15rem;
+}
+
+.whatsapp-content p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* Table Design */
+.table-card {
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.data-table th {
+  background-color: #fafbfc;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.775rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.data-table td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+/* Table Cells */
+.student-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.student-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.student-email {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.thumbnail-preview {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  border: 1px solid var(--border-medium);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.thumbnail-preview:hover {
+  transform: scale(1.1);
+  border-color: var(--primary);
+}
+
+/* Modal Screenshot Lightbox */
+.lightbox-content {
+  text-align: center;
+}
+
+.lightbox-img {
+  max-width: 100%;
+  max-height: 65vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 1rem;
+}
+
+.lightbox-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+}
+
+/* CSV Upload Area in Admin */
+.csv-drop-area {
+  border: 2px dashed var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  text-align: center;
+  background-color: var(--bg-subtle);
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.csv-drop-area:hover {
+  border-color: var(--primary);
+}
+
+/* Toast Message */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background-color: #0f172a;
+  color: #ffffff;
+  padding: 0.85rem 1.25rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 999;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.toast.success {
+  background-color: #064e3b;
+  border-left: 4px solid #34d399;
+}
+
+.toast.error {
+  background-color: #7f1d1d;
+  border-left: 4px solid #f87171;
+}

@@ -18,6 +18,9 @@
 
   <div class="home-quick-actions" aria-label="Quick actions">
     <button id="homeBackButton" class="quick-circle-button" type="button" title="Back" aria-label="Back">←</button>
+    <a class="quick-circle-button" href="assessment.html" title="Open Technical Assessment" aria-label="Open Technical Assessment">📝</a>
+    <a class="quick-circle-button" href="tasks.html" title="Open Task Submission" aria-label="Open Task Submission">📋</a>
+    <a class="quick-circle-button" href="admin.html" title="Open Unified Faculty Admin" aria-label="Open Unified Faculty Admin">🛡️</a>
     <button id="top50LeetCodeButton" class="quick-circle-button" type="button" title="Download Top 50 LeetCode" aria-label="Download Top 50 LeetCode">🏆</button>
     <button id="top50GitHubButton" class="quick-circle-button" type="button" title="Download Top 50 GitHub" aria-label="Download Top 50 GitHub">🐙</button>
     <button id="allFacultyLeetCodeButton" class="quick-circle-button" type="button" title="Download All Faculty LeetCode Report" aria-label="Download All Faculty LeetCode Report">👨‍🏫</button>
@@ -26,13 +29,13 @@
 
   <header class="hero tracker-entry-hero">
     <div class="hero-copy">
-      <div class="eyebrow">ECE CODING PROGRESS</div>
+      <div class="eyebrow">UNIFIED STUDENT DEVELOPMENT PLATFORM</div>
       <h1>
         ECE
         <span>CodeMetrix</span>
       </h1>
       <p>
-        Choose the public tracker you want to open.
+        Unified student hub for coding analytics, timed assessments, and faculty task proofs.
       </p>
     </div>
 
@@ -47,6 +50,7 @@
       </div>
 
       <div class="home-admin-badge-wrap">
+        <a href="admin.html" class="action-button secondary" style="text-decoration:none;">Faculty Admin</a>
         <button id="homeAdminLoginButton" class="action-button primary" type="button">Admin Login</button>
         <button id="homeAddProfileButton" class="action-button primary admin-only" type="button" hidden>+ Add Profile</button>
       </div>
@@ -54,8 +58,8 @@
       <div class="status-card tracker-entry-status">
         <div class="live-dot"></div>
         <div>
-          <span id="homeAccessLabel">Public Access</span>
-          <strong id="homeAccessNote">No login required</strong>
+          <span id="homeAccessLabel">372 Students Enrolled</span>
+          <strong id="homeAccessNote">Sections A–F Live</strong>
         </div>
       </div>
     </div>
@@ -65,31 +69,29 @@
     <section class="section-home tracker-entry-home">
       <div class="section-home-head">
         <div>
-          <div class="eyebrow">SELECT TRACKER</div>
-          <h2>ECE Department Coding Trackers</h2>
+          <div class="eyebrow">UNIFIED ACADEMIC PORTALS</div>
+          <h2>Explore Core Student Modules</h2>
           <p>
-            Open LeetCode or GitHub. Both trackers use the same CodeMetrix visual system.
+            Choose a module below to track daily coding progress, take proctored assessments, or submit course registration proofs.
           </p>
         </div>
 
         <div class="home-head-actions">
-          <button id="sectionAdminLoginButton" class="action-button primary" type="button">
-            Admin Login
-          </button>
-          <button id="sectionAddProfileButton" class="action-button primary admin-only" type="button" hidden>
-            + Add Profile
-          </button>
+          <a href="admin.html" class="action-button primary" style="text-decoration:none;">
+            Faculty Command Center →
+          </a>
         </div>
       </div>
 
+      <!-- UNIFIED 360° STUDENT SEARCH -->
       <section class="home-student-search" aria-label="Student search">
         <div class="home-search-copy">
-          <span class="section-card-title">STUDENT SEARCH</span>
-          <strong>View LeetCode + GitHub together</strong>
-          <span>Search by register number, student name, LeetCode username or GitHub username.</span>
+          <span class="section-card-title">360° STUDENT DOSSIER SEARCH</span>
+          <strong>Unified Student Performance Profile</strong>
+          <span>Instant lookup across all 372 ECE students: LeetCode + GitHub + Assessment Score + Task Proofs.</span>
         </div>
         <form id="studentSearchForm" class="home-search-form">
-          <input id="studentSearchInput" class="home-search-input" type="search" autocomplete="off" placeholder="Register no, name, LeetCode or GitHub username" aria-label="Search by register number, name, LeetCode username or GitHub username">
+          <input id="studentSearchInput" class="home-search-input" type="search" autocomplete="off" placeholder="Enter Roll Number (e.g. 922525106001, 922525106265) or Name" aria-label="Search by register number, name, LeetCode username or GitHub username">
           <button class="action-button primary home-search-button" type="submit">Search</button>
         </form>
       </section>
@@ -99,9 +101,9 @@
         <section class="student-dashboard-panel" role="dialog" aria-modal="true" aria-labelledby="studentDashboardTitle">
           <header class="student-dashboard-header">
             <div>
-              <div class="eyebrow">STUDENT PERFORMANCE</div>
-              <h2 id="studentDashboardTitle">Student Dashboard</h2>
-              <p id="studentDashboardSubtitle">LeetCode + GitHub</p>
+              <div class="eyebrow">360° STUDENT DOSSIER</div>
+              <h2 id="studentDashboardTitle">Student Performance Dashboard</h2>
+              <p id="studentDashboardSubtitle">LeetCode · GitHub · Assessment · Task Proofs</p>
             </div>
             <button id="closeStudentDashboard" class="action-button secondary" type="button">Close</button>
           </header>
@@ -111,19 +113,39 @@
 
       <div id="homeActionMessage" class="home-action-message" role="status" aria-live="polite"></div>
 
-      <div class="tracker-entry-grid">
-        <a class="section-card tracker-entry-card" href="leetcode.html">
-          <span class="section-card-title">LeetCode</span>
-          <strong>LeetCode Tracker</strong>
-          <span>Problems · Activity · Section Leaderboards</span>
-          <div class="tracker-entry-open">Open LeetCode Tracker →</div>
+      <!-- 3 DISTINCT GATEWAY CARDS -->
+      <div class="tracker-entry-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+        <!-- Module 1: Coding Trackers -->
+        <div class="section-card tracker-entry-card" style="display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <span class="section-card-title">MODULE 01 · CODING TRACKERS</span>
+            <strong>LeetCode &amp; GitHub Analytics</strong>
+            <span>Live daily problem leaderboards, commit streaks, forensic integrity checks, and section standings.</span>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+            <a class="action-button primary" href="leetcode.html" style="text-decoration:none;font-size:13px;padding:9px 14px;">Open LeetCode →</a>
+            <a class="action-button secondary" href="github.html" style="text-decoration:none;font-size:13px;padding:9px 14px;">Open GitHub →</a>
+          </div>
+        </div>
+
+        <!-- Module 2: Technical Assessment Portal -->
+        <a class="section-card tracker-entry-card" href="assessment.html" style="display:flex;flex-direction:column;justify-content:space-between;text-decoration:none;">
+          <div>
+            <span class="section-card-title">MODULE 02 · TECHNICAL ASSESSMENTS</span>
+            <strong>Proctored Examination Portal</strong>
+            <span>Timed MCQ &amp; Fill-in-the-blanks test workspace with tab-switch detection, instant evaluation &amp; PDF answer keys.</span>
+          </div>
+          <div class="tracker-entry-open" style="margin-top:16px;">Launch Assessment Portal →</div>
         </a>
 
-        <a class="section-card tracker-entry-card" href="github.html">
-          <span class="section-card-title">GitHub</span>
-          <strong>GitHub Tracker</strong>
-          <span>Contributions · Commits · Repositories · Deployments</span>
-          <div class="tracker-entry-open">Open GitHub Tracker →</div>
+        <!-- Module 3: Task & Proof Submission -->
+        <a class="section-card tracker-entry-card" href="tasks.html" style="display:flex;flex-direction:column;justify-content:space-between;text-decoration:none;">
+          <div>
+            <span class="section-card-title">MODULE 03 · TASK PROOFS</span>
+            <strong>Task &amp; Proof Submission</strong>
+            <span>Course registrations and certification proofs with automatic canvas compression and faculty verification.</span>
+          </div>
+          <div class="tracker-entry-open" style="margin-top:16px;">Submit Proof Screenshot →</div>
         </a>
       </div>
     </section>
@@ -452,10 +474,11 @@
     </section>
   </div>
 
-  <script src="config.js"></script>
+  <script src="config.js?v=7.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="home-dashboard.js"></script>
+  <script src="js/assessment/students.js?v=7.0"></script>
+  <script src="home-dashboard.js?v=7.0"></script>
 </body>
 </html>

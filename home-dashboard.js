@@ -145,12 +145,20 @@
   function buildMergedIndex(){
     const map = new Map();
     const add = (row, source) => {
-      const reg = normalizeReg(row['Register Number']);
-      const key = reg || `${normalizeText(row['Student Name'])}|${normalizeText(source==='leetcode'?row['LeetCode Username']:row['GitHub Username'])}`;
+      const reg = normalizeReg(row['Register Number'] || row.reg_no || row.register_number);
+      const name = row['Student Name'] || row.name || row.student_name || '';
+      const key = reg || `${normalizeText(name)}|${normalizeText(source==='leetcode'?row['LeetCode Username']:row['GitHub Username'])}`;
       if(!key) return;
-      if(!map.has(key)) map.set(key, { lc:null, gh:null });
-      map.get(key)[source === 'leetcode' ? 'lc' : 'gh'] = row;
+      if(!map.has(key)) map.set(key, { lc:null, gh:null, roster:null });
+      if (source === 'roster') {
+        map.get(key).roster = row;
+      } else {
+        map.get(key)[source === 'leetcode' ? 'lc' : 'gh'] = row;
+      }
     };
+    if (typeof REGISTERED_STUDENTS !== 'undefined' && Array.isArray(REGISTERED_STUDENTS)) {
+      REGISTERED_STUDENTS.forEach(r => add(r, 'roster'));
+    }
     state.leetcode.forEach(r=>add(r,'leetcode'));
     state.github.forEach(r=>add(r,'github'));
     state.merged = [...map.values()];
@@ -292,9 +300,9 @@
     setMessage(`Student report downloaded for ${studentName}.`);
   }
 
-  function getStudentName(item){ return item.lc?.['Student Name'] || item.gh?.['Student Name'] || 'Unknown Student'; }
-  function getRegister(item){ return normalizeReg(item.lc?.['Register Number'] || item.gh?.['Register Number']); }
-  function getSection(item){ return item.lc?.Section || item.gh?.Section || 'Section not available'; }
+  function getStudentName(item){ return item.lc?.['Student Name'] || item.gh?.['Student Name'] || item.roster?.name || item.roster?.student_name || 'Unknown Student'; }
+  function getRegister(item){ return normalizeReg(item.lc?.['Register Number'] || item.gh?.['Register Number'] || item.roster?.reg_no || item.roster?.register_number); }
+  function getSection(item){ return item.lc?.Section || item.gh?.Section || (item.roster?.section ? `ECE ${item.roster.section}` : 'Section not available'); }
 
   function searchStudents(query){
     const q=normalizeText(query);
@@ -338,7 +346,7 @@
       ['Current Streak',lc['Current Streak']||'—'],
       ['Last Problem',lc['Last Problem']||'—'],
       ['Last Solved',lc['Last Solved']||'—']
-    ] : [['Status','No LeetCode record']];
+    ] : [['Status','No live LeetCode sync']];
 
     const ghItems=gh ? [
       ['Deployments',num(gh['Detected Deployments'])],
@@ -349,15 +357,35 @@
       ['Repositories · 30 Days',num(gh['Repositories 30 Days'])],
       ['Latest Repository',gh['Latest Repository']||'—'],
       ['Last Activity',gh['Last Activity']||'—']
-    ] : [['Status','No GitHub record']];
+    ] : [['Status','No live GitHub sync']];
+
+    const assessCardHtml = `
+      <article class="student-metric-card" id="homeAssessmentCard">
+        <div class="student-metric-card-title">📝 Technical Assessment</div>
+        <div id="homeAssessmentDossierBody">
+          <div class="student-metric-row"><span>Status</span><strong style="color:#60a5fa;">Checking assessment records...</strong></div>
+        </div>
+      </article>
+    `;
+
+    const taskCardHtml = `
+      <article class="student-metric-card" id="homeTaskCard">
+        <div class="student-metric-card-title">📋 Task &amp; Proof Submission</div>
+        <div id="homeTaskDossierBody">
+          <div class="student-metric-row"><span>Status</span><strong style="color:#60a5fa;">Checking task proofs...</strong></div>
+        </div>
+      </article>
+    `;
 
     const links=[];
     if(lc?.['LeetCode Link']) links.push(`<a class="action-button secondary" href="${esc(lc['LeetCode Link'])}" target="_blank" rel="noopener">Open LeetCode ↗</a>`);
     if(gh?.['GitHub Link']) links.push(`<a class="action-button secondary" href="${esc(gh['GitHub Link'])}" target="_blank" rel="noopener">Open GitHub ↗</a>`);
+    links.push(`<a class="action-button secondary" href="assessment.html" style="text-decoration:none;">Take Assessment ↗</a>`);
+    links.push(`<a class="action-button secondary" href="tasks.html" style="text-decoration:none;">Submit Proof ↗</a>`);
     links.push(`<button class="view-problems-action-btn" id="homeViewSolvedProblemsBtn" type="button">⚡ View Solved Problems &amp; Code</button>`);
     links.push(`<button class="action-button primary" id="downloadStudentReportBtn" type="button">📥 Download Report (Excel)</button>`);
 
-    els.content.innerHTML=`<div class="student-dashboard-grid">${card('💻 LeetCode',lcItems)}${card('🐙 GitHub',ghItems)}</div><div class="student-dashboard-links">${links.join('')}</div>`;
+    els.content.innerHTML=`<div class="student-dashboard-grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">${card('💻 LeetCode Tracker',lcItems)}${card('🐙 GitHub Tracker',ghItems)}${assessCardHtml}${taskCardHtml}</div><div class="student-dashboard-links">${links.join('')}</div>`;
 
     document.getElementById('downloadStudentReportBtn')?.addEventListener('click', () => {
       try { downloadSingleStudentReport(item); } catch(e){ setMessage(e.message, true); }
@@ -376,6 +404,60 @@
           badgeEl.innerHTML = status.html;
         }
       }).catch(() => {});
+
+      // Asynchronously load Technical Assessment status
+      if (window.StudentService?.fetchAssessmentResult) {
+        window.StudentService.fetchAssessmentResult(reg).then(assess => {
+          const body = document.getElementById('homeAssessmentDossierBody');
+          if (!body) return;
+          if (assess) {
+            const obtained = Number(assess.obtained_marks || assess.score || 0);
+            const total = Math.max(1, Number(assess.total_marks || 1));
+            const pct = Math.round((obtained / total) * 100);
+            body.innerHTML = `
+              <div class="student-metric-row"><span>Assessment Title</span><strong>${esc(assess.test_title || 'Technical Assessment 2026')}</strong></div>
+              <div class="student-metric-row"><span>Marks Obtained</span><strong style="color:#34d399;font-size:1.05rem;">${obtained} / ${total}</strong></div>
+              <div class="student-metric-row"><span>Score / Percentage</span><strong style="color:#38bdf8;">${pct}%</strong></div>
+              <div class="student-metric-row"><span>Status</span><strong style="color:#10b981;">✓ Completed</strong></div>
+              <div class="student-metric-row"><span>Submitted At</span><strong>${assess.submitted_at ? new Date(assess.submitted_at).toLocaleDateString() : 'Recorded'}</strong></div>
+            `;
+          } else {
+            body.innerHTML = `
+              <div class="student-metric-row"><span>Status</span><strong style="color:#f59e0b;">No Submissions Yet</strong></div>
+              <div class="student-metric-row"><span style="color:var(--muted);font-size:0.82rem;">Eligible to take published assessments.</span></div>
+            `;
+          }
+        }).catch(() => {
+          const body = document.getElementById('homeAssessmentDossierBody');
+          if (body) body.innerHTML = `<div class="student-metric-row"><span>Status</span><strong style="color:var(--muted);">No records found</strong></div>`;
+        });
+      }
+
+      // Asynchronously load Task & Proof submission
+      if (window.StudentService?.fetchTaskSubmission) {
+        window.StudentService.fetchTaskSubmission(reg).then(task => {
+          const body = document.getElementById('homeTaskDossierBody');
+          if (!body) return;
+          if (task) {
+            const proofLink = task.proof_url ? `<a href="${esc(task.proof_url)}" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline;">View Proof ↗</a>` : 'Uploaded';
+            body.innerHTML = `
+              <div class="student-metric-row"><span>Active Task</span><strong>${esc(task.task_title || 'Course Registration & Proof')}</strong></div>
+              <div class="student-metric-row"><span>Status</span><strong style="color:#34d399;">✓ Submitted</strong></div>
+              <div class="student-metric-row"><span>Proof Attachment</span><strong>${proofLink}</strong></div>
+              <div class="student-metric-row"><span>Submitted At</span><strong>${task.submitted_at ? new Date(task.submitted_at).toLocaleDateString() : 'Recorded'}</strong></div>
+              ${task.notes ? `<div class="student-metric-row"><span>Remarks</span><strong>${esc(task.notes)}</strong></div>` : ''}
+            `;
+          } else {
+            body.innerHTML = `
+              <div class="student-metric-row"><span>Status</span><strong style="color:#f87171;">⏳ Pending Proof</strong></div>
+              <div class="student-metric-row"><span style="color:var(--muted);font-size:0.82rem;">No proof uploaded for current active task.</span></div>
+            `;
+          }
+        }).catch(() => {
+          const body = document.getElementById('homeTaskDossierBody');
+          if (body) body.innerHTML = `<div class="student-metric-row"><span>Status</span><strong style="color:var(--muted);">No submissions recorded</strong></div>`;
+        });
+      }
     }
 
     els.modal.hidden=false; document.body.classList.add('modal-open');

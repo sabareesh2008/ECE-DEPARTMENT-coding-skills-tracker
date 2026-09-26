@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeMetrix · Technical Assessment Portal</title>
+  <link rel="stylesheet" href="css/assessment.css?v=7.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body id="assessmentApp">
+
+  <!-- ==========================================
+       GLOBAL PORTAL HEADER (EXAMLYTICS STYLE)
+       ========================================== -->
+  <header class="portal-header">
+    <div class="brand-section">
+      <a href="index.html" class="brand-logo" style="text-decoration:none;" title="Return to CodeMetrix Hub">CM</a>
+      <div class="brand-title">
+        <h1>TECHNICAL ASSESSMENT PORTAL</h1>
+        <p>CodeMetrix · ECE Department</p>
+      </div>
+    </div>
+
+    <!-- Header Navigation & Status -->
+    <div class="header-controls">
+      <!-- Role Switcher -->
+      <nav class="role-switcher" id="portal-role-nav">
+        <a href="index.html" class="role-btn" style="text-decoration:none;">
+          <span>🏠 Hub</span>
+        </a>
+        <button type="button" class="role-btn active" id="btn-nav-student">
+          <span>🎓 Student Portal</span>
+        </button>
+        <button type="button" class="role-btn" id="btn-nav-admin">
+          <span>🛡️ Admin / Faculty</span>
+        </button>
+      </nav>
+
+      <!-- Assessment Status Badge -->
+      <div id="portal-status-badge" class="status-badge inactive">
+        ● No Active Assessment
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       VIEW 1: STUDENT LOGIN PAGE
+       ========================================== -->
+  <main id="student-login-view" class="auth-wrapper">
+    <section class="auth-card">
+      <div class="auth-card-header">
+        <div class="auth-card-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+          </svg>
+        </div>
+        <h2>Student Login </h2>
+        <p class="subtitle">Enter your official Register Number to verify your eligibility for the assessment.</p>
+      </div>
+
+      <!-- Alert Notification -->
+      <div id="student-login-alert" class="alert alert-danger"></div>
+
+      <form id="student-login-form" autocomplete="off">
+        <!-- Register Number -->
+        <div class="form-group">
+          <label for="reg-no">Register Number *</label>
+          <input 
+            type="text" 
+            id="reg-no" 
+            class="form-control" 
+            placeholder="922525106264" 
+            required
+            autofocus
+          >
+        </div>
+
+        
+        <!-- Student Name -->
+        <div class="form-group" style="margin-top: 18px;">
+          <label for="student-name">Full Student Name *</label>
+          <input 
+            type="text" 
+            id="student-name" 
+            class="form-control" 
+            placeholder="SABAREESH K" 
+            required
+          >
+        </div>
+
+        <!-- Department and Section -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="department">Department *</label>
+            <select id="department" class="form-control" required>
+              <option value="ECE" selected>ECE (Electronics & Communication)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="section">Section *</label>
+            <select id="section" class="form-control" required>
+              <option value="">Select Section</option>
+              <option value="A">Section A</option>
+              <option value="B">Section B</option>
+              <option value="C">Section C</option>
+              <option value="D">Section D</option>
+              <option value="E">Section E</option>
+              <option value="F">Section F</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-primary" id="btn-enter-test">
+          <span>Proceed to Examination</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </form>
+    </section>
+  </main>
+
+  <!-- ==========================================
+       VIEW 2: ADMIN LOGIN PAGE
+       ========================================== -->
+  <main id="admin-login-view" class="auth-wrapper hidden">
+    <section class="auth-card">
+      <div class="auth-card-header">
+        <div class="auth-card-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <h2>Faculty & Admin Access</h2>
+        <p class="subtitle">Authenticate with administrator credentials to manage students and publish assessments.</p>
+      </div>
+
+      <div id="admin-login-alert" class="alert alert-danger"></div>
+
+      <form id="admin-login-form" autocomplete="off">
+        <div class="form-group">
+          <label for="admin-username">Admin Username</label>
+          <input type="text" id="admin-username" class="form-control" placeholder="Enter username" required>
+        </div>
+
+        <div class="form-group">
+          <label for="admin-password">Password</label>
+          <input type="password" id="admin-password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn-primary">
+          <span>Login to Admin Command Center</span>
+        </button>
+
+        <div style="margin-top: 18px; text-align: center; font-size: 0.8rem; color: #64748b;">
+          Authorized Faculty & Administrator Portal
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- ==========================================
+       VIEW 3: ADMIN DASHBOARD (AFTER LOGIN)
+       ========================================== -->
+  <div id="admin-dashboard-view" class="admin-container hidden">
+    <!-- Top Bar -->
+    <div class="admin-header-bar">
+      <div>
+        <h2>Faculty Command Dashboard</h2>
+        <p>Live candidate roster management, examination publishing & analytics</p>
+      </div>
+      <button type="button" class="btn-secondary" id="btn-admin-logout">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>Exit Admin</span>
+      </button>
+    </div>
+
+    <!-- Quick Metrics -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Registered Students</div>
+        <div class="stat-value" id="metric-total-students">372</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Assessment Status</div>
+        <div class="stat-value" id="metric-test-status" style="color: #f59e0b; font-size: 1.35rem;">Unpublished</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Completed Submissions</div>
+        <div class="stat-value" id="metric-submissions-count" style="color: #10b981;">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Assigned Questions</div>
+        <div class="stat-value" id="metric-questions-count" style="color: #60a5fa;">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Sections Enrolled</div>
+        <div class="stat-value">6 (A-F)</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs (Streamlined: 3 Purposeful Tabs) -->
+    <div class="admin-tabs">
+      <button type="button" class="admin-tab active" data-target="admin-tab-test-manager">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span>Test Setup & Questions Bank</span>
+      </button>
+
+      <button type="button" class="admin-tab" data-target="admin-tab-students">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span>Student Enrollment & Roster</span>
+      </button>
+
+      <button type="button" class="admin-tab" data-target="admin-tab-analytics">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span>Submissions & Tracker</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: UNIFIED TEST SETUP & QUESTION BANK (ALL ON THE SAME PAGE) -->
+    <div id="admin-tab-test-manager" class="admin-tab-content">
+      <!-- Section 1: Test Details & Publishing Controller (Name Assign, Time Setting, Publish Button) -->
+      <div class="admin-panel-card" style="margin-bottom: 22px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h3 style="font-size: 1.22rem; margin-bottom: 4px;">Assessment Setup & Live Publishing</h3>
+            <p class="card-desc" style="margin-bottom: 0;">Configure test title, duration, and control candidate exam access.</p>
+          </div>
+        </div>
+
+        <!-- Current Status Banner & Publish Toggle -->
+        <div class="publish-box">
+          <div class="publish-status-info">
+            <h4 id="publish-banner-title">Current State: Unpublished</h4>
+            <p id="publish-banner-desc" style="color: var(--text-muted); font-size: 0.86rem;">
+              Students currently see "There is no test right now" upon login.
+            </p>
+          </div>
+          <button type="button" class="btn-publish" id="btn-toggle-publish">
+            <span>Publish Test to Students</span>
+          </button>
+        </div>
+
+        <!-- Name Assigning & Time Setting on the SAME page -->
+        <div class="form-row" style="margin-top: 18px;">
+          <div class="form-group" style="flex: 2;">
+            <label for="admin-test-title">Examination Title / Assessment Name *</label>
+            <input type="text" id="admin-test-title" class="form-control" value="Technical Assessment 2026" placeholder="e.g. Technical Assessment 2026">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label for="admin-test-duration">Duration (Minutes) *</label>
+            <input type="number" id="admin-test-duration" class="form-control" value="45" min="5" max="180">
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 14px; margin-top: 14px; flex-wrap: wrap;">
+          <button type="button" class="btn-primary" id="btn-save-test-settings" style="padding: 10px 22px;">
+            <span>Save Test Details</span>
+          </button>
+          <button type="button" class="btn-secondary" id="btn-create-new-test" style="border-color: #2563eb; color: #2563eb;">
+            <span>➕ Create New Assessment (Test)</span>
+          </button>
+          <span id="save-settings-feedback" style="font-size: 0.85rem; color: #10b981; font-weight: 600; display: none;">✓ Test configuration saved successfully!</span>
+        </div>
+      </div>
+
+      <!-- Section 1B: All Assessments & Historical Archive -->
+      <div class="admin-panel-card" style="margin-bottom: 22px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h3 style="font-size: 1.18rem; margin-bottom: 3px;">All Assessments & Test Archives</h3>
+            <p class="card-desc" style="margin-bottom: 0;">Completed and unpublished tests preserve all candidate submissions and section analytics.</p>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 45px;">#</th>
+                <th>Assessment Title</th>
+                <th style="width: 100px;">Duration</th>
+                <th style="width: 95px;">Questions</th>
+                <th style="width: 120px;">Submissions</th>
+                <th style="width: 140px;">Status</th>
+                <th style="width: 200px; text-align: center;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="all-tests-tbody">
+              <!-- Dynamically populated tests list -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 2: Question Adding & Question Bank Management (On the exact same page) -->
+      <div class="admin-panel-card">
+        <div class="table-toolbar" style="margin-bottom: 20px;">
+          <div>
+            <h3 style="font-size: 1.22rem; margin-bottom: 4px;">Assessment Question Bank</h3>
+            <p class="card-desc" style="margin-bottom: 0;">Add questions via Excel (.xlsx/.xls), CSV, or direct entry. Manage and preview questions below.</p>
+          </div>
+
+          <!-- Question Bank Action Toolbar -->
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="btn-secondary" id="btn-download-template" style="border-color: #3b82f6; color: #93c5fd;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Sample Template (.CSV)</span>
+            </button>
+
+            <button type="button" class="btn-secondary" id="btn-toggle-manual-add" style="border-color: #10b981; color: #6ee7b7;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Add Single Question</span>
+            </button>
+
+            <!-- Prominent Red Delete All Questions Button -->
+            <button type="button" class="btn-danger-all" id="btn-clear-questions">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+              <span>Delete All Questions</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Collapsible Manual Question Creator Form -->
+        <div id="manual-add-panel" class="manual-add-box hidden">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h4 style="font-size: 1rem; color: #f1f5f9; display: flex; align-items: center; gap: 8px;">
+              <span>➕ Add Individual Question</span>
+            </h4>
+            <button type="button" id="btn-close-manual-add" style="background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;">✕</button>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+              <label for="manual-q-type">Question Type *</label>
+              <select id="manual-q-type" class="form-control">
+                <option value="MCQ" selected>Multiple Choice (MCQ)</option>
+                <option value="FIB">Fill in the Blanks (FIB)</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label for="manual-q-category">Category / Topic *</label>
+              <input type="text" id="manual-q-category" class="form-control" placeholder="e.g. Data Structures, Computer Networks" value="General">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="manual-q-text">Question Prompt / Statement *</label>
+            <textarea id="manual-q-text" class="form-control" rows="2" placeholder="Enter the question statement here. For Fill in Blanks, use _______ for the blank space."></textarea>
+          </div>
+
+          <!-- Options Container for MCQ -->
+          <div id="manual-mcq-fields">
+            <div class="form-row" style="margin-bottom: 8px;">
+              <div class="form-group" style="flex: 1;">
+                <label for="manual-opt-a">Option A *</label>
+                <input type="text" id="manual-opt-a" class="form-control" placeholder="Option A text">
+              </div>
+              <div class="form-group" style="flex: 1;">
+                <label for="manual-opt-b">Option B *</label>
+                <input type="text" id="manual-opt-b" class="form-control" placeholder="Option B text">
+              </div>
+            </div>
+            <div class="form-row" style="margin-bottom: 8px;">
+              <div class="form-group" style="flex: 1;">
+                <label for="manual-opt-c">Option C *</label>
+                <input type="text" id="manual-opt-c" class="form-control" placeholder="Option C text">
+              </div>
+              <div class="form-group" style="flex: 1;">
+                <label for="manual-opt-d">Option D *</label>
+                <input type="text" id="manual-opt-d" class="form-control" placeholder="Option D text">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+              <label for="manual-q-correct" id="manual-correct-label">Correct Answer (A, B, C, or D) *</label>
+              <input type="text" id="manual-q-correct" class="form-control" placeholder="e.g. A, B, C, or D (or word for FIB)">
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label for="manual-q-explanation">Explanation / Solution (Optional)</label>
+              <input type="text" id="manual-q-explanation" class="form-control" placeholder="Reasoning or reference for the solution">
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 12px;">
+            <button type="button" class="btn-primary" id="btn-save-manual-q" style="padding: 9px 20px;">
+              <span>Save Question to Test</span>
+            </button>
+            <button type="button" class="btn-secondary" id="btn-cancel-manual-q">
+              <span>Cancel</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Excel / CSV Dropzone -->
+        <div class="upload-dropzone" id="question-dropzone">
+          <input type="file" id="question-file-input" accept=".csv, .xlsx, .xls" style="display: none;">
+          <div class="upload-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <h4 style="margin-bottom: 6px; font-size: 1.05rem;">Click or Drag & Drop Excel (.xlsx) or CSV file here</h4>
+          <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 580px; margin: 0 auto 12px;">
+            Supports both <strong>MCQ</strong> (Question, Options A-D, Correct Answer A/B/C/D) and <strong>Fill in the Blanks</strong> (Question with blank, Correct Answer).
+          </p>
+          <button type="button" class="btn-primary" id="btn-browse-file" style="max-width: 180px; margin: 0 auto; padding: 8px 16px; font-size: 0.88rem;">
+            <span>Browse File</span>
+          </button>
+        </div>
+
+        <div id="question-upload-alert" class="alert"></div>
+
+        <!-- Question Preview & Live Bank Table -->
+        <div style="margin-top: 24px;">
+          <div class="table-toolbar">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <h4 style="font-size: 1rem; margin-bottom: 0;">Active Questions in Test (<span id="assigned-q-count" style="color: #60a5fa; font-weight: 800;">0</span>)</h4>
+              <span style="font-size: 0.8rem; color: #94a3b8;">• Questions automatically assigned to the examination</span>
+            </div>
+            <!-- Secondary quick delete all button beside table -->
+            <button type="button" class="btn-danger-all" id="btn-clear-questions-bottom" style="padding: 5px 12px; font-size: 0.8rem;">
+              <span>🗑️ Delete All Questions</span>
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th style="width: 70px;">Type</th>
+                  <th style="width: 130px;">Category</th>
+                  <th>Question Prompt</th>
+                  <th style="width: 200px;">Options / Blank Info</th>
+                  <th style="width: 110px;">Correct Answer</th>
+                  <th style="width: 70px; text-align: center;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="questions-preview-tbody">
+                <tr>
+                  <td colspan="7" style="text-align: center; color: #64748b; padding: 24px;">No questions loaded yet. Upload an Excel or CSV file above or download the sample template.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: STUDENT ENROLLMENT & ROSTER (UNIFIED VIEW) -->
+    <div id="admin-tab-students" class="admin-tab-content hidden">
+      <!-- Card A: Enroll New Student -->
+      <div class="admin-panel-card" style="margin-bottom: 22px;">
+        <h3>Enroll a New Student</h3>
+        <p class="card-desc">Add a candidate's register number to the database roster to authorize them for tests.</p>
+
+        <div id="add-student-alert" class="alert"></div>
+
+        <form id="add-student-form">
+          <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+              <label for="new-regno">Register Number *</label>
+              <input type="text" id="new-regno" class="form-control" placeholder="e.g. 922525106379" required>
+            </div>
+            <div class="form-group" style="flex: 1.5;">
+              <label for="new-name">Full Student Name *</label>
+              <input type="text" id="new-name" class="form-control" placeholder="e.g. KARTHIK S" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label for="new-dept">Department *</label>
+              <select id="new-dept" class="form-control" required>
+                <option value="ECE" selected>ECE</option>
+                <option value="CSE">CSE</option>
+                <option value="IT">IT</option>
+                <option value="AIDS">AIDS</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label for="new-section">Section *</label>
+              <select id="new-section" class="form-control" required>
+                <option value="A">Section A</option>
+                <option value="B">Section B</option>
+                <option value="C">Section C</option>
+                <option value="D">Section D</option>
+                <option value="E">Section E</option>
+                <option value="F">Section F</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" style="margin-top: 10px;">
+            <span>Add Student to Database</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Card B: Official Student Directory -->
+      <div class="admin-panel-card">
+        <div class="table-toolbar">
+          <div>
+            <h3>Official Student Directory</h3>
+            <p class="card-desc" style="margin-bottom: 0;" id="dir-count-text">Showing 372 registered candidates</p>
+          </div>
+
+          <div style="display: flex; gap: 10px;">
+            <select id="filter-dir-section" class="form-control" style="width: auto;">
+              <option value="ALL">All Sections</option>
+              <option value="A">Section A</option>
+              <option value="B">Section B</option>
+              <option value="C">Section C</option>
+              <option value="D">Section D</option>
+              <option value="E">Section E</option>
+              <option value="F">Section F</option>
+            </select>
+
+            <input type="text" id="search-dir-student" class="form-control search-input" placeholder="Search by name or reg no...">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Register Number</th>
+                <th>Student Name</th>
+                <th>Department</th>
+                <th>Section</th>
+              </tr>
+            </thead>
+            <tbody id="student-roster-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: SECTION ANALYTICS & SUBMISSIONS TRACKER -->
+    <div id="admin-tab-analytics" class="admin-tab-content hidden">
+      <div class="admin-panel-card">
+        <!-- Top Title & Export Action Toolbar -->
+        <div class="table-toolbar" style="margin-bottom: 20px;">
+          <div>
+            <h3 style="font-size: 1.25rem; margin-bottom: 4px;">Section-wise Completion & Submission Tracker</h3>
+            <p class="card-desc" style="margin-bottom: 0;">Click on any section card below to open its roster, inspect student statuses, or download section reports.</p>
+          </div>
+
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+            <!-- Overall Section Summary Matrix (Excel, PDF, CSV) -->
+            <div style="display: flex; align-items: center; gap: 6px; background: #f0fdf4; padding: 4px 8px; border-radius: 8px; border: 1px solid #bbf7d0;">
+              <span style="font-size: 0.78rem; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">Section Summary:</span>
+              <button type="button" class="btn-portal-primary" id="btn-download-section-matrix-excel" style="padding: 6px 11px; font-size: 0.80rem; background: #059669; border-color: #059669;" title="Download Overall Section Summary in Excel (.XLSX)">
+                <span>📗 Excel</span>
+              </button>
+              <button type="button" class="btn-portal-primary" id="btn-download-section-matrix-pdf" style="padding: 6px 11px; font-size: 0.80rem; background: #dc2626; border-color: #dc2626;" title="Download Overall Section Summary in PDF (.PDF)">
+                <span>📕 PDF</span>
+              </button>
+              <button type="button" class="btn-portal-secondary" id="btn-download-section-matrix-csv" style="padding: 6px 11px; font-size: 0.80rem;" title="Download Overall Section Summary in CSV (.CSV)">
+                <span>📄 CSV</span>
+              </button>
+            </div>
+
+            <!-- Full Submissions (All Candidates) -->
+            <div style="display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 4px 8px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <span style="font-size: 0.78rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Candidate List:</span>
+              <button type="button" class="btn-portal-primary" id="btn-download-all-excel" style="padding: 6px 11px; font-size: 0.80rem; background: #16a34a; border-color: #16a34a;" title="Export All Candidate Submissions to Excel (.XLSX)">
+                <span>📗 Excel</span>
+              </button>
+              <button type="button" class="btn-portal-primary" id="btn-download-all-pdf" style="padding: 6px 11px; font-size: 0.80rem; background: #e11d48; border-color: #e11d48;" title="Export All Candidate Submissions to PDF (.PDF)">
+                <span>📕 PDF</span>
+              </button>
+              <button type="button" class="btn-portal-secondary" id="btn-download-all-submissions" style="padding: 6px 11px; font-size: 0.80rem;" title="Export All Candidate Submissions to CSV (.CSV)">
+                <span>📄 CSV</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assessment Selector Bar (Test 1, Test 2, etc.) -->
+        <div class="test-selector-card">
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <label for="admin-test-archive-select" style="font-size: 0.92rem; font-weight: 700; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 6px;">
+              <span>📊 Select Assessment to Analyze:</span>
+            </label>
+            <select id="admin-test-archive-select" class="form-control" style="width: auto; min-width: 280px; font-weight: 600; padding: 7px 12px;">
+              <!-- Dynamically populated options for all tests (Test 1, Test 2, etc.) -->
+            </select>
+            <span id="selected-test-status-pill" class="badge-test-live">● Live / Active</span>
+          </div>
+          <div style="font-size: 0.84rem; color: #64748b;" id="selected-test-meta-info">
+            <!-- Shows submissions & question count for selected test -->
+          </div>
+        </div>
+
+        <!-- Section Progress Grid (Interactive Clickable Cards A to F) -->
+        <div class="stats-grid" id="section-progress-cards" style="margin-bottom: 24px;">
+          <!-- Dynamically populated interactive section cards -->
+        </div>
+
+        <!-- Section Drilldown Panel (Opens when a section card is clicked) -->
+        <div id="section-drilldown-panel" class="section-drilldown-box hidden" style="margin-bottom: 30px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h4 style="font-size: 1.15rem; color: #f8fafc; margin-bottom: 3px;" id="drilldown-title">Section A Detailed Breakdown</h4>
+              <p style="font-size: 0.84rem; color: #94a3b8; margin-bottom: 0;" id="drilldown-subtitle">Showing all 62 enrolled students and test submission statuses.</p>
+            </div>
+
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="btn-portal-primary" id="btn-download-section-excel" style="padding: 7px 12px; font-size: 0.82rem; background: #16a34a; border-color: #16a34a;" title="Download Section Report in Excel">
+                <span>📗 Excel (.XLSX)</span>
+              </button>
+              <button type="button" class="btn-portal-primary" id="btn-download-section-pdf" style="padding: 7px 12px; font-size: 0.82rem; background: #dc2626; border-color: #dc2626;" title="Download Section Report in PDF">
+                <span>📕 PDF (.PDF)</span>
+              </button>
+              <button type="button" class="btn-portal-secondary" id="btn-download-section-report" style="padding: 7px 12px; font-size: 0.82rem;" title="Download Section Report in CSV">
+                <span id="btn-download-section-text">📄 CSV (.CSV)</span>
+              </button>
+              <button type="button" class="btn-portal-neutral" id="btn-close-drilldown" style="padding: 7px 12px; font-size: 0.82rem;">
+                <span>✕ Close</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Stat Tiles for the Opened Section -->
+          <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 18px;">
+            <div class="stat-card" style="padding: 12px;">
+              <div class="stat-title" style="font-size: 0.76rem;">Enrolled Students</div>
+              <div class="stat-value" id="drilldown-enrolled" style="font-size: 1.3rem; color: #60a5fa;">0</div>
+            </div>
+            <div class="stat-card" style="padding: 12px;">
+              <div class="stat-title" style="font-size: 0.76rem;">Completed</div>
+              <div class="stat-value" id="drilldown-completed" style="font-size: 1.3rem; color: #10b981;">0</div>
+            </div>
+            <div class="stat-card" style="padding: 12px;">
+              <div class="stat-title" style="font-size: 0.76rem;">Pending / Not Started</div>
+              <div class="stat-value" id="drilldown-pending" style="font-size: 1.3rem; color: #f59e0b;">0</div>
+            </div>
+            <div class="stat-card" style="padding: 12px;">
+              <div class="stat-title" style="font-size: 0.76rem;">Class Average</div>
+              <div class="stat-value" id="drilldown-avg" style="font-size: 1.3rem; color: #a78bfa;">0%</div>
+            </div>
+          </div>
+
+          <!-- Filter Pills for Section Candidates -->
+          <div style="display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; align-items: center;">
+            <span style="font-size: 0.82rem; color: #94a3b8; font-weight: 600;">Filter:</span>
+            <button type="button" class="filter-chip active" id="drilldown-filter-all">
+              <span>All Candidates (<strong id="drilldown-count-all">0</strong>)</span>
+            </button>
+            <button type="button" class="filter-chip chip-correct" id="drilldown-filter-completed">
+              <span>Completed (<strong id="drilldown-count-completed">0</strong>)</span>
+            </button>
+            <button type="button" class="filter-chip chip-wrong" id="drilldown-filter-pending">
+              <span>Pending (<strong id="drilldown-count-pending">0</strong>)</span>
+            </button>
+          </div>
+
+          <!-- Section Detailed Student Table -->
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width: 45px;">#</th>
+                  <th>Register Number</th>
+                  <th>Student Name</th>
+                  <th style="width: 100px;">Status</th>
+                  <th style="width: 95px;">Score</th>
+                  <th style="width: 85px;">Percentage</th>
+                  <th style="width: 95px;">Time Taken</th>
+                  <th style="width: 110px;">Warnings</th>
+                  <th>Submitted At</th>
+                </tr>
+              </thead>
+              <tbody id="drilldown-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Master Submissions Log Table -->
+        <div class="table-toolbar" style="margin-top: 10px;">
+          <div>
+            <h4 style="font-size: 1.05rem; margin-bottom: 2px;">Submissions Log</h4>
+            <p class="card-desc" style="margin-bottom: 0;">Comprehensive record of completed student submissions.</p>
+          </div>
+
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <select id="filter-submission-section" class="form-control" style="width: auto;">
+              <option value="ALL">All Sections (A-F)</option>
+              <option value="A">Section A</option>
+              <option value="B">Section B</option>
+              <option value="C">Section C</option>
+              <option value="D">Section D</option>
+              <option value="E">Section E</option>
+              <option value="F">Section F</option>
+            </select>
+
+            <input type="text" id="search-submission-student" class="form-control search-input" placeholder="Search by name or reg no...">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 45px;">#</th>
+                <th>Register No</th>
+                <th>Student Name</th>
+                <th>Department</th>
+                <th>Section</th>
+                <th>Marks</th>
+                <th>Percentage</th>
+                <th>Time Taken</th>
+                <th style="width: 120px;">Warnings</th>
+                <th>Submitted At</th>
+              </tr>
+            </thead>
+            <tbody id="submissions-tbody">
+              <tr>
+                <td colspan="10" style="text-align: center; color: #64748b; padding: 24px;">No student submissions recorded yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       VIEW 4A: ALREADY SUBMITTED BLOCK SCREEN
+       ========================================== -->
+  <div id="already-submitted-view" class="no-test-container hidden">
+    <div class="no-test-card" style="border: 1.5px solid var(--danger-border); box-shadow: var(--shadow-lg);">
+      <div class="no-test-icon" style="background: var(--danger-bg); border: 2px dashed var(--danger-border);">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h2 style="color: #dc2626;">Test Already Submitted</h2>
+      <p style="color: var(--text-muted); margin-bottom: 8px;">You have already completed and submitted this assessment. Multiple submissions are not allowed.</p>
+
+      <div id="already-submitted-info" style="margin: 20px 0; padding: 18px 20px; background: #f8fafc; border-radius: 12px; font-size: 0.9rem; border: 1px solid var(--border-color); text-align: left;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+          <strong id="as-student-name" style="font-size:1.05rem; color:var(--text-main);">—</strong>
+          <span id="as-reg-no" style="font-size:0.82rem; color:var(--primary); background:var(--primary-light); border:1px solid var(--primary-border); padding:3px 12px; border-radius:20px; font-weight:700;">—</span>
+        </div>
+        <div style="color:var(--text-muted); font-size:0.84rem;" id="as-dept-sec">—</div>
+        <hr style="border: none; border-top: 1px solid var(--border-color); margin: 12px 0;">
+        <div style="display:flex; gap: 24px; flex-wrap: wrap; font-size: 0.84rem;">
+          <div><span style="color:var(--text-muted);">Score</span><br><strong id="as-score" style="color:var(--success); font-size:1.15rem;">—</strong></div>
+          <div><span style="color:var(--text-muted);">Percentage</span><br><strong id="as-pct" style="color:var(--success); font-size:1.15rem;">—</strong></div>
+          <div><span style="color:var(--text-muted);">Submitted At</span><br><strong id="as-time" style="color:var(--text-main); font-size:0.9rem;">—</strong></div>
+        </div>
+      </div>
+
+      <p style="font-size:0.84rem; color:var(--text-muted); margin-bottom: 20px;">If you believe this is an error, please contact your department coordinator.</p>
+      <button type="button" class="btn-primary" id="btn-back-from-submitted" style="max-width: 220px; margin: 0 auto;">
+        <span>Back to Home</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       VIEW 4: NO TEST NOTICE SCREEN (STUDENT VIEW)
+       ========================================== -->
+  <div id="no-test-view" class="no-test-container hidden">
+    <div class="no-test-card">
+      <div class="no-test-icon">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </div>
+      <h2>There is no test right now</h2>
+      <p>The examination is currently not published or questions have not been assigned yet.</p>
+      
+      <div id="candidate-info-box" style="margin: 20px 0; padding: 16px 20px; background: #f8fafc; border-radius: 12px; font-size: 0.9rem; border: 1px solid var(--border-color);">
+        <div><strong id="no-test-name" style="color: var(--text-main);">Student Name</strong> (<span id="no-test-regno" style="color: var(--primary); font-weight: 700;">Register Number</span>)</div>
+        <div style="color: var(--text-muted); font-size: 0.84rem; margin-top: 4px;" id="no-test-dept-sec">ECE • Section A</div>
+      </div>
+
+      <p class="no-test-subtext">Please check back later or contact your department coordinator / advisor.</p>
+      <button type="button" class="btn-primary" id="btn-back-to-home" style="max-width: 220px; margin: 24px auto 0;">
+        <span>Return to Login</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       VIEW 5: STUDENT EXAMINATION WORKSPACE
+       ========================================== -->
+  <div id="exam-view" class="hidden" style="width: 100%; min-height: 100vh; display: flex; flex-direction: column;">
+    <!-- Top Candidate & Timer Header -->
+    <header class="dashboard-header">
+      <div class="candidate-badge">
+        <div class="candidate-avatar" id="exam-avatar">S</div>
+        <div class="candidate-info">
+          <h4 id="exam-student-name">Student Name</h4>
+          <p id="exam-student-meta">ECE • Section A • 922525106001</p>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <!-- Proctoring Fullscreen Protection Pill -->
+        <div class="proctor-pill" id="exam-proctor-pill" title="Protected by fullscreen proctoring">
+          <span class="proctor-dot"></span>
+          <span>Proctored Fullscreen</span>
+          <span class="proctor-warn-badge" id="exam-warning-badge">Warnings: 0/3</span>
+        </div>
+
+        <div class="timer-pill" id="exam-timer-pill">
+          <span class="timer-label">Time Remaining</span>
+          <span class="timer-clock" id="exam-timer-display">45:00</span>
+        </div>
+        <button type="button" class="btn-submit-exam" id="btn-submit-exam">
+          <span>Submit Test</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace: Question Area + Palette -->
+    <main class="exam-workspace">
+      <!-- Left Question Panel -->
+      <section class="question-panel">
+        <div class="q-meta-bar">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="q-badge" id="exam-q-index">Question 1 of 10</span>
+            <span class="badge-sec" id="exam-q-category">General</span>
+            <span id="exam-q-type-badge" class="badge-mcq">MCQ</span>
+          </div>
+          <button type="button" class="btn-secondary" id="btn-mark-review" style="padding: 6px 14px; font-size: 0.8rem;">
+            <span>🔖 Mark for Review</span>
+          </button>
+        </div>
+
+        <div class="question-prompt" id="exam-question-text">
+          Loading question prompt...
+        </div>
+
+        <!-- MCQ Options Container -->
+        <div id="exam-mcq-container" class="mcq-options-list">
+          <!-- Dynamically populated MCQ Option Cards -->
+        </div>
+
+        <!-- Fill In The Blanks Container -->
+        <div id="exam-fib-container" class="fib-box hidden">
+          <label for="exam-fib-input">Type your exact answer in the blank below:</label>
+          <input type="text" id="exam-fib-input" class="fib-input" placeholder="Type answer here..." autocomplete="off">
+        </div>
+
+        <!-- Navigation Controls Footer -->
+        <div class="q-control-footer">
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn-secondary" id="btn-prev-q">
+              <span>← Previous</span>
+            </button>
+            <button type="button" class="btn-secondary" id="btn-clear-q">
+              <span>Clear Response</span>
+            </button>
+          </div>
+          <button type="button" class="btn-primary" id="btn-next-q">
+            <span>Next Question →</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Right Palette Sidebar -->
+      <aside class="palette-container">
+        <div class="palette-stats">
+          <div class="stat-chip"><div class="stat-dot answered"></div><span id="pal-count-answered">0 Answered</span></div>
+          <div class="stat-chip"><div class="stat-dot unanswered"></div><span id="pal-count-unanswered">0 Unanswered</span></div>
+          <div class="stat-chip"><div class="stat-dot review"></div><span id="pal-count-review">0 In Review</span></div>
+          <div class="stat-chip"><span id="pal-count-total" style="font-weight: 700; color: #93c5fd;">Total: 0</span></div>
+        </div>
+
+        <h4 style="font-size: 0.82rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; letter-spacing: 0.5px;">Question Navigator</h4>
+        <div class="palette-grid" id="exam-palette-grid">
+          <!-- Dynamically populated 1 to N buttons -->
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- ==========================================
+       VIEW 4B: PRE-EXAM FULLSCREEN LAUNCH MODAL
+       ========================================== -->
+  <div id="exam-launch-modal" class="proctor-modal-overlay hidden">
+    <div class="launch-modal-card">
+      <div style="width: 64px; height: 64px; border-radius: 50%; background: #eff6ff; border: 2px solid #bfdbfe; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+      </div>
+
+      <h3 style="font-size: 1.4rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">
+        Assessment Security & Full-Screen Check
+      </h3>
+      <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 14px;">
+        Please review your candidate credentials and proctoring rules before entering.
+      </p>
+
+      <div class="launch-candidate-badge">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span style="font-size: 0.82rem; color: #64748b; font-weight: 600;">Candidate:</span>
+          <strong id="launch-student-name" style="color: #0f172a;">—</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span style="font-size: 0.82rem; color: #64748b; font-weight: 600;">Register Number:</span>
+          <strong id="launch-student-regno" style="color: #2563eb; font-family: monospace;">—</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span style="font-size: 0.82rem; color: #64748b; font-weight: 600;">Department & Section:</span>
+          <span id="launch-student-dept-sec" style="color: #334155; font-weight: 600;">—</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="font-size: 0.82rem; color: #64748b; font-weight: 600;">Assessment / Duration:</span>
+          <span id="launch-test-meta" style="color: #16a34a; font-weight: 700;">45 Mins • 15 Questions</span>
+        </div>
+      </div>
+
+      <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 14px; text-align: left; margin-bottom: 20px;">
+        <h5 style="color: #92400e; font-size: 0.84rem; font-weight: 700; margin-bottom: 4px;">⚠️ Strict Proctoring Rules:</h5>
+        <ul style="color: #78350f; font-size: 0.8rem; margin: 0; padding-left: 18px; line-height: 1.5;">
+          <li>This examination runs exclusively in <strong>Full-Screen Mode</strong>.</li>
+          <li>Exiting full screen, pressing <code>Escape</code>, or switching tabs issues a security warning.</li>
+          <li>Reaching <strong>3 warnings terminates and auto-submits</strong> your test immediately.</li>
+        </ul>
+      </div>
+
+      <div style="display: flex; gap: 12px;">
+        <button type="button" class="btn-portal-neutral" id="btn-cancel-launch" style="flex: 1;">
+          <span>Cancel</span>
+        </button>
+        <button type="button" class="btn-portal-primary" id="btn-confirm-launch-fullscreen" style="flex: 2; padding: 12px 20px; font-size: 0.95rem; font-weight: 700;">
+          <span>⛶ Launch Exam in Full Screen</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       PROCTORING SECURITY WARNING MODAL (ESC / TAB SWITCH)
+       ========================================== -->
+  <div id="proctor-warning-modal" class="proctor-modal-overlay hidden">
+    <div class="proctor-modal-card">
+      <div class="proctor-warning-icon">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </div>
+      <h3 id="proctor-warning-title" style="color: #dc2626; font-size: 1.45rem; font-weight: 800; margin-bottom: 8px;">
+        Security Warning 1 of 3
+      </h3>
+      <p id="proctor-warning-desc" style="color: #334155; font-size: 0.92rem; line-height: 1.55; margin-bottom: 16px;">
+        Exiting full screen, pressing Escape, or navigating away from the test portal is strictly prohibited!
+      </p>
+
+      <div style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 12px; padding: 14px 18px; margin-bottom: 22px; text-align: left;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <span style="font-weight: 700; color: #991b1b; font-size: 0.88rem;">Violation Count</span>
+          <span id="proctor-warning-counter" style="background: #dc2626; color: #ffffff; padding: 2px 10px; border-radius: 20px; font-weight: 800; font-size: 0.8rem;">1 / 3 Warnings</span>
+        </div>
+        <p style="color: #b91c1c; font-size: 0.82rem; margin: 0; line-height: 1.4;">
+          ⚠️ <strong>Notice:</strong> If you reach <strong>3 warnings</strong>, your assessment will be <strong>terminated immediately</strong> and automatically submitted with all violations recorded.
+        </p>
+      </div>
+
+      <button type="button" class="btn-primary" id="btn-resume-fullscreen" style="margin-top: 0;">
+        <span>Return to Fullscreen & Resume Test</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       VIEW 6: STUDENT TEST SUBMISSION RESULTS
+       ========================================== -->
+  <div id="result-view" class="result-container hidden">
+    <div class="result-card">
+      <div class="result-badge-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+
+      <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.02em;">Assessment Completed!</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Your test has been successfully evaluated and securely saved to the database.</p>
+
+      <div style="margin: 20px 0; padding: 16px 20px; background: #f8fafc; border-radius: 12px; border: 1.5px solid var(--border-color);">
+        <div style="font-weight: 800; color: var(--text-main); font-size: 1.05rem;" id="res-student-name">Student Name</div>
+        <div style="color: var(--text-muted); font-size: 0.84rem; margin-top: 4px;" id="res-student-meta">ECE • Section A • 922525106001</div>
+      </div>
+
+      <div class="result-score-banner">
+        <div class="result-score-item">
+          <h3 id="res-marks-obtained">0 / 0</h3>
+          <p>Score / Marks</p>
+        </div>
+        <div style="width: 1px; height: 50px; background: var(--border-color);"></div>
+        <div class="result-score-item">
+          <h3 id="res-percentage" style="color: var(--success);">0%</h3>
+          <p>Percentage</p>
+        </div>
+      </div>
+
+      <div class="result-stats-row" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="result-stat-box">
+          <div class="val" id="res-total-q" style="color: var(--primary);">0</div>
+          <div class="lbl">Total Questions</div>
+        </div>
+        <div class="result-stat-box">
+          <div class="val" id="res-correct-q" style="color: var(--success);">0</div>
+          <div class="lbl">Correct Answers</div>
+        </div>
+        <div class="result-stat-box">
+          <div class="val" id="res-time-spent" style="color: var(--warning);">0m 0s</div>
+          <div class="lbl">Time Taken</div>
+        </div>
+        <div class="result-stat-box">
+          <div class="val" id="res-warnings" style="color: var(--success);">0 / 3</div>
+          <div class="lbl">Security Warnings</div>
+        </div>
+      </div>
+
+      <!-- Action & Download Buttons Toolbar -->
+      <div class="result-action-bar">
+        <button type="button" class="btn-portal-primary" id="btn-download-pdf">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Download Answer Key (PDF / Print)</span>
+        </button>
+
+        <button type="button" class="btn-portal-secondary" id="btn-download-csv-answers">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>Download Answer Key (.CSV)</span>
+        </button>
+
+        <button type="button" class="btn-portal-neutral" id="btn-result-return">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Return to Student Portal</span>
+        </button>
+      </div>
+
+      <!-- Detailed Question-by-Question Review Section -->
+      <section class="answer-review-section">
+        <div class="answer-review-header-box">
+          <div class="answer-review-title-group">
+            <h3>Detailed Question-by-Question Answer Key</h3>
+            <p>Review every question with your candidate response, correctness, and the official answer key.</p>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="review-filter-bar">
+            <button type="button" class="filter-chip active" data-filter="all" id="btn-filter-all">
+              <span>All Questions (<strong id="count-all-q">0</strong>)</span>
+            </button>
+            <button type="button" class="filter-chip chip-wrong" data-filter="wrong" id="btn-filter-wrong">
+              <span>Wrong / Incorrect (<strong id="count-wrong-q">0</strong>)</span>
+            </button>
+            <button type="button" class="filter-chip chip-correct" data-filter="correct" id="btn-filter-correct">
+              <span>Correct (<strong id="count-correct-q">0</strong>)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Rendered Cards -->
+        <div class="review-cards-list" id="review-cards-container">
+          <!-- Dynamically populated review cards -->
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- SheetJS CDN for robust Excel (.xlsx/.xls) and CSV parsing & export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- jsPDF & AutoTable CDN for Direct Client-Side PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <!-- Application Scripts -->
+  <script src="config.js?v=7.0"></script>
+  <script src="js/assessment/supabase-config.js?v=7.0"></script>
+  <script src="js/assessment/questions.js?v=7.0"></script>
+  <script src="js/assessment/students.js?v=7.0"></script>
+  <script src="js/assessment/app.js?v=7.0"></script>
+</body>
+</html>

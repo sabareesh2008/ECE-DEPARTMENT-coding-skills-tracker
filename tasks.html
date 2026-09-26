@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeMetrix · Task & Proof Submission Portal</title>
+  <link rel="stylesheet" href="css/tasks.css?v=7.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Supabase JS Client CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body id="tasksApp">
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <a href="index.html" class="brand-icon" style="text-decoration:none;" title="CodeMetrix Hub">CM</a>
+        <div class="brand-title">
+          CodeMetrix Tasks
+          <span>Student Proof Submission Portal</span>
+        </div>
+      </div>
+      <div class="nav-actions" style="display:flex;gap:8px;align-items:center;">
+        <a href="index.html" class="btn btn-secondary btn-sm" style="text-decoration:none;">
+          🏠 Hub
+        </a>
+        <a href="admin.html" class="btn btn-secondary btn-sm" style="text-decoration:none;">
+          Faculty Admin &rarr;
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-wrapper">
+
+    <!-- Active Task Banner (Clickable to reveal submission form) -->
+    <section id="taskHeroSection" class="task-hero-card clickable-task" role="button" tabindex="0" aria-expanded="false" title="Click to open submission form">
+      <div class="task-meta-top">
+        <span class="badge badge-live" id="taskStatusBadge">● Active Task</span>
+        <span class="badge badge-pill" id="taskDeadlineBadge">⏳ Loading deadline...</span>
+      </div>
+      <h1 class="task-hero-title" id="taskTitle">Loading Assigned Task...</h1>
+      <p class="task-hero-desc" id="taskDescription">
+        Please wait while the active task instructions are fetched.
+      </p>
+      <div class="task-hero-meta">
+        <div class="meta-item">
+          <span>📋</span>
+          <span id="taskSubmissionCount">Submissions: Fetching...</span>
+        </div>
+        <div class="meta-item">
+          <span>📅</span>
+          <span id="taskDueDate">Deadline: Fetching...</span>
+        </div>
+        <div class="meta-item">
+          <span>🔒</span>
+          <span>Single submission per Register Number</span>
+        </div>
+      </div>
+      
+      <!-- Interactive Click CTA Prompt -->
+      <div class="task-click-prompt">
+        <span style="font-size: 0.875rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem;">
+          <span>💡</span> Click this task card to open the submission form
+        </span>
+        <button type="button" id="btnToggleForm" class="task-click-btn">
+          <span>Open Submission Form</span> &darr;
+        </button>
+      </div>
+    </section>
+
+    <!-- Submission Form Card (Collapsed by default, opens on task click) -->
+    <section id="submissionFormSection" class="card form-container form-collapsed">
+      <div class="card-header">
+        <div>
+          <h2 style="font-size: 1.25rem;">Submit Proof Screenshot</h2>
+          <p style="font-size: 0.85rem; margin-top: 0.15rem;">Enter your Register Number to auto-fetch your details, then attach your screenshot.</p>
+        </div>
+        <button type="button" id="btnCloseForm" class="btn btn-outline btn-sm" title="Close submission form">
+          ✕ Close Form
+        </button>
+      </div>
+
+      <div class="card-body">
+        <form id="submissionForm">
+          
+          <!-- Existing submission warning alert -->
+          <div id="existingSubAlert" class="alert alert-warning" style="display: none;">
+            <span>ℹ️</span>
+            <div>
+              <strong>Existing Submission Found!</strong>
+              <div id="existingSubText">You previously submitted a proof for this task. Submitting again will update your existing screenshot.</div>
+            </div>
+          </div>
+
+          <!-- Step 1: Register Number -->
+          <div class="form-group">
+            <label class="form-label" for="regNoInput">
+              Register / Roll Number <span class="req">*</span>
+            </label>
+            <div class="input-with-action">
+              <input 
+                type="text" 
+                id="regNoInput" 
+                class="form-input" 
+                placeholder="e.g. 922525106001" 
+                autocomplete="off"
+                required
+                style="text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"
+              >
+              <button type="button" id="btnVerifyRegNo" class="btn btn-secondary">
+                Verify
+              </button>
+            </div>
+            <div class="form-hint" id="regNoHint">
+              Type your roll number (e.g. 922525106001, 922525106265, 922525106318)
+            </div>
+          </div>
+
+          <!-- Auto-fetched Student Details Box -->
+          <div id="studentVerifiedCard" class="student-verified-box" style="display: none;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+              <span style="font-size: 0.8rem; font-weight: 700; color: var(--success-text); display: flex; align-items: center; gap: 0.35rem;">
+                ✓ Student Profile Verified
+              </span>
+              <span id="studentDeptSecBadge" class="badge badge-pill">CSE - Section A</span>
+            </div>
+            <div class="student-verified-grid">
+              <div class="verified-item">
+                <span class="verified-label">Student Name</span>
+                <span class="verified-value" id="verifiedName">-</span>
+              </div>
+              <div class="verified-item">
+                <span class="verified-label">Department</span>
+                <span class="verified-value" id="verifiedDept">-</span>
+              </div>
+              <div class="verified-item">
+                <span class="verified-label">Section</span>
+                <span class="verified-value" id="verifiedSection">-</span>
+              </div>
+              <div class="verified-item">
+                <span class="verified-label">Email ID</span>
+                <span class="verified-value" id="verifiedEmail">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Alert if Student not found -->
+          <div id="studentNotFoundAlert" class="alert alert-danger" style="display: none; margin-top: 1rem;">
+            <span>⚠️</span>
+            <div>
+              <strong>Register Number Not Found</strong>
+              <div>This register number is not in the student master database. Please check for typos or contact your department admin to add you.</div>
+            </div>
+          </div>
+
+          <!-- Step 2: Screenshot Upload Zone -->
+          <div class="form-group" style="margin-top: 1.5rem;">
+            <label class="form-label">
+              Upload Screenshot Proof <span class="req">*</span>
+            </label>
+            
+            <div class="dropzone" id="uploadDropzone">
+              <input type="file" id="screenshotFileInput" accept="image/png, image/jpeg, image/jpg, image/webp">
+              <svg class="dropzone-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <div class="dropzone-title">Click to upload or drag and drop screenshot</div>
+              <div class="dropzone-sub">PNG, JPG, or WEBP (Max 10 MB)</div>
+            </div>
+
+            <!-- Uploaded Image Preview -->
+            <div id="imagePreviewBox" class="image-preview-container" style="display: none;">
+              <div class="preview-thumb-box">
+                <img id="imagePreviewImg" class="preview-thumb" src="" alt="Proof Preview">
+                <div class="preview-details">
+                  <span id="previewFilename" class="preview-filename">screenshot.png</span>
+                  <span id="previewFilesize" class="preview-filesize">240 KB</span>
+                </div>
+              </div>
+              <button type="button" id="btnRemoveImage" class="btn btn-outline btn-sm">
+                Remove / Change
+              </button>
+            </div>
+          </div>
+
+          <!-- Optional Notes -->
+          <div class="form-group">
+            <label class="form-label" for="notesInput">
+              Remarks / Course ID / Transaction Ref <span style="font-weight: normal; color: var(--text-muted);">(Optional)</span>
+            </label>
+            <input 
+              type="text" 
+              id="notesInput" 
+              class="form-input" 
+              placeholder="e.g. Enrolled in Cloud Computing - NPTEL24CS91"
+            >
+          </div>
+
+          <!-- Submit Button -->
+          <div style="margin-top: 2rem;">
+            <button type="submit" id="btnSubmitProof" class="btn btn-primary btn-lg" disabled>
+              Submit Proof
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Success Confirmation Modal -->
+  <div id="successModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🎉 Submission Received!</h3>
+        <button class="modal-close-btn" onclick="closeSuccessModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align: center; padding: 2rem 1.5rem;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background-color: var(--success-bg); color: var(--success-text); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; margin: 0 auto 1.25rem;">
+          ✓
+        </div>
+        <h3 style="font-size: 1.3rem; margin-bottom: 0.5rem;">Proof Uploaded Successfully</h3>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+          Your screenshot proof has been saved and registered in the system. The faculty dashboard has recorded your submission.
+        </p>
+
+        <div style="background-color: var(--bg-subtle); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 1rem; text-align: left; font-size: 0.85rem; margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+            <span style="color: var(--text-muted);">Register No:</span>
+            <strong id="receiptRegNo" style="color: var(--text-primary);">-</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+            <span style="color: var(--text-muted);">Student Name:</span>
+            <strong id="receiptStudentName" style="color: var(--text-primary);">-</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+            <span style="color: var(--text-muted);">Class Section:</span>
+            <strong id="receiptSection" style="color: var(--text-primary);">-</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);">Timestamp:</span>
+            <strong id="receiptTimestamp" style="color: var(--text-primary);">-</strong>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary" style="width: 100%;" onclick="closeSuccessModal()">
+          Done / Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+      <div>College Task Submission System &copy; 2026. Minimal & Fast.</div>
+      <div>Powered by Supabase Cloud</div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="config.js?v=7.0"></script>
+  <script src="js/tasks/mock-data.js?v=7.0"></script>
+  <script src="js/tasks/supabase-config.js?v=7.0"></script>
+  <script src="js/tasks/student-app.js?v=7.0"></script>
+</body>
+</html>
