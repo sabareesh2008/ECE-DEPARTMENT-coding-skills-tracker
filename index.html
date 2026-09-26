@@ -3,482 +3,707 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta
-    name="description"
-    content="CodeMetrix public coding tracker with LeetCode and GitHub leaderboards."
-  >
-  <title>CodeMetrix · Coding Progress</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="description" content="CodeMetrix unified college student development and assessment platform.">
+  <title>Examlytics · CodeMetrix Unified Student Platform</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="style.css?v=7.0">
+  <link rel="stylesheet" href="css/examlytics-theme.css?v=7.0">
+  <link rel="stylesheet" href="css/assessment.css?v=7.0">
+  <link rel="stylesheet" href="css/tasks.css?v=7.0">
+  <link rel="stylesheet" href="css/admin.css?v=7.0">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- Core CDNs -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 
-<body class="tracker-entry-page">
-  <div class="background-orb orb-one"></div>
-  <div class="background-orb orb-two"></div>
+<body class="examlytics-layout">
 
-  <div class="home-quick-actions" aria-label="Quick actions">
-    <button id="homeBackButton" class="quick-circle-button" type="button" title="Back" aria-label="Back">←</button>
-    <a class="quick-circle-button" href="assessment.html" title="Open Technical Assessment" aria-label="Open Technical Assessment">📝</a>
-    <a class="quick-circle-button" href="tasks.html" title="Open Task Submission" aria-label="Open Task Submission">📋</a>
-    <a class="quick-circle-button" href="admin.html" title="Open Unified Faculty Admin" aria-label="Open Unified Faculty Admin">🛡️</a>
-    <button id="top50LeetCodeButton" class="quick-circle-button" type="button" title="Download Top 50 LeetCode" aria-label="Download Top 50 LeetCode">🏆</button>
-    <button id="top50GitHubButton" class="quick-circle-button" type="button" title="Download Top 50 GitHub" aria-label="Download Top 50 GitHub">🐙</button>
-    <button id="allFacultyLeetCodeButton" class="quick-circle-button" type="button" title="Download All Faculty LeetCode Report" aria-label="Download All Faculty LeetCode Report">👨‍🏫</button>
-    <button id="homeOpenDateReportButton" class="quick-circle-button admin-only home-date-report-button" type="button" hidden title="Download Date Report" aria-label="Download Date Report">📅</button>
+  <div class="app-layout">
+    
+    <!-- ============================================================
+         LEFT SIDEBAR NAVIGATION (WHITE / LIGHT GREY MODERN UI)
+         ============================================================ -->
+    <aside class="app-sidebar" aria-label="Main Navigation">
+      <!-- Brand Logo & Title -->
+      <a href="index.html" class="sidebar-brand">
+        <div class="brand-badge">EX</div>
+        <div class="brand-info">
+          <span class="brand-name">Examlytics</span>
+          <span class="brand-sub">ECE CodeMetrix 2026</span>
+        </div>
+      </a>
+
+      <!-- Menu Navigation Items -->
+      <nav class="sidebar-nav">
+        <button class="nav-item-btn active" data-view="view-dashboard">
+          <span class="nav-icon">⊞</span>
+          <span>Dashboard</span>
+        </button>
+
+        <button class="nav-item-btn" data-view="view-exams">
+          <span class="nav-icon">📋</span>
+          <span>Available Exams</span>
+          <span class="nav-item-badge">Live</span>
+        </button>
+
+        <button class="nav-item-btn" data-view="view-leetcode">
+          <span class="nav-icon">💻</span>
+          <span>LeetCode Tracker</span>
+        </button>
+
+        <button class="nav-item-btn" data-view="view-github">
+          <span class="nav-icon">🐙</span>
+          <span>GitHub Tracker</span>
+        </button>
+
+        <button class="nav-item-btn" data-view="view-tasks">
+          <span class="nav-icon">📥</span>
+          <span>Task Submissions</span>
+          <span class="nav-item-badge">Proof</span>
+        </button>
+
+        <button class="nav-item-btn" data-view="view-leaderboard">
+          <span class="nav-icon">🏆</span>
+          <span>Leaderboard</span>
+        </button>
+
+        <button class="nav-item-btn" data-view="view-roster">
+          <span class="nav-icon">👥</span>
+          <span>Student Directory</span>
+          <span class="nav-item-badge">372</span>
+        </button>
+
+        <button class="nav-item-btn" data-view="view-admin">
+          <span class="nav-icon">🛡️</span>
+          <span>Faculty &amp; Admin</span>
+        </button>
+
+        <button class="nav-item-btn" data-view="view-reports">
+          <span class="nav-icon">⚙️</span>
+          <span>Reports &amp; Exports</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Footer Profile -->
+      <div class="sidebar-footer">
+        <div class="sidebar-avatar" id="sidebarAvatar">
+          <span>EC</span>
+        </div>
+        <div class="sidebar-user-info">
+          <span class="sidebar-user-name" id="sidebarUserName">ECE Department</span>
+          <span class="sidebar-user-role" id="sidebarUserRole">Sections A–F Active</span>
+        </div>
+        <button id="sidebarAdminLoginBtn" title="Admin Login" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--text-muted);">🔒</button>
+      </div>
+    </aside>
+
+    <!-- ============================================================
+         MAIN CONTENT AREA
+         ============================================================ -->
+    <div class="app-main">
+      
+      <!-- Top Navigation Header -->
+      <header class="main-header">
+        <div class="header-title-group">
+          <h1 id="pageViewTitle">Dashboard</h1>
+          <p id="pageViewSubtitle">Good morning, ECE Scholars · 372 Students active across Sections A–F</p>
+        </div>
+
+        <div class="header-actions">
+          <!-- Quick Global Student / Topic Search Box -->
+          <div class="header-search-box">
+            <span>🔍</span>
+            <input type="search" id="topSearchInput" placeholder="Search exams, students, roll number..." autocomplete="off">
+          </div>
+
+          <!-- Notification Bell -->
+          <button class="header-icon-btn" id="btnNotifications" title="Notifications">
+            <span>🔔</span>
+            <span class="header-notif-badge">3</span>
+          </button>
+
+          <!-- User Avatar Circle -->
+          <div class="header-user-avatar" id="headerUserAvatar" title="User Profile">
+            <div style="width:100%;height:100%;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;">
+              CM
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Dynamic Content Views -->
+      <main class="main-content">
+
+        <!-- ============================================================
+             VIEW 1: FLAGSHIP DASHBOARD
+             ============================================================ -->
+        <section id="view-dashboard" class="feature-view-pane active">
+          
+          <!-- Hero Greeting Card (Examlytics style) -->
+          <div class="hero-greeting-card">
+            <div class="greeting-text-group">
+              <h2 id="heroGreetingHeading">Good morning, ECE Department</h2>
+              <p id="heroGreetingDesc">
+                Department coding and assessment tracker is active. Last 30-day streak standing: <strong>1,280+ problems solved</strong> across 372 candidates.
+              </p>
+            </div>
+
+            <div class="greeting-pills-group">
+              <!-- Streak Pill -->
+              <div class="greeting-pill-box">
+                <span class="pill-icon-circle">🔥</span>
+                <div class="pill-data">
+                  <strong id="dashboardStreakNum">23-day streak</strong>
+                  <span>Longest streak: 31 days</span>
+                </div>
+              </div>
+
+              <!-- Target Exam Pill -->
+              <div class="greeting-pill-box">
+                <span class="pill-icon-circle">🎯</span>
+                <div class="pill-data">
+                  <strong>Technical Assessment</strong>
+                  <span>Live Proctoring</span>
+                </div>
+              </div>
+
+              <!-- Milestone Pill -->
+              <div class="greeting-pill-box">
+                <span class="pill-icon-circle">📅</span>
+                <div class="pill-data">
+                  <strong id="dashboardLiveTerm">Academic 2026</strong>
+                  <span>Semester Progress</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI 4-Card Grid -->
+          <div class="kpi-grid">
+            <!-- Metric 1: Exams / Problems -->
+            <div class="kpi-card">
+              <div class="kpi-card-top">
+                <div class="kpi-icon-square">📋</div>
+                <span class="trend-badge">↗ +12%</span>
+              </div>
+              <div>
+                <div class="kpi-value" id="kpiExamsSolvedCount">1,280</div>
+                <div class="kpi-label">Problems Solved</div>
+                <div class="kpi-sub">Across LeetCode &amp; GitHub</div>
+              </div>
+            </div>
+
+            <!-- Metric 2: Average Score -->
+            <div class="kpi-card">
+              <div class="kpi-card-top">
+                <div class="kpi-icon-square">📈</div>
+                <span class="trend-badge">↗ +3.2</span>
+              </div>
+              <div>
+                <div class="kpi-value" id="kpiAvgScorePct">78.4%</div>
+                <div class="kpi-label">Average Score</div>
+                <div class="kpi-sub">Department performance index</div>
+              </div>
+            </div>
+
+            <!-- Metric 3: Proofs / Tasks -->
+            <div class="kpi-card">
+              <div class="kpi-card-top">
+                <div class="kpi-icon-square">⏱️</div>
+                <span class="trend-badge">↗ +1.8</span>
+              </div>
+              <div>
+                <div class="kpi-value" id="kpiProofsRate">94.2%</div>
+                <div class="kpi-label">Proof Completion</div>
+                <div class="kpi-sub">Verified course registrations</div>
+              </div>
+            </div>
+
+            <!-- Metric 4: Leaderboard Standing -->
+            <div class="kpi-card">
+              <div class="kpi-card-top">
+                <div class="kpi-icon-square">🏆</div>
+                <span class="trend-badge">↗ 96</span>
+              </div>
+              <div>
+                <div class="kpi-value" id="kpiTopRankSection">#1 Sec E</div>
+                <div class="kpi-label">Section Champion</div>
+                <div class="kpi-sub">30-day top scoring cohort</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 360° Student Search & Quick Gateway Row -->
+          <div class="white-panel-card" style="margin-bottom:24px;">
+            <div class="panel-header-row">
+              <div>
+                <h3>🔍 360° Student Dossier Lookup</h3>
+                <p>Enter any 12-digit register number or student name to inspect LeetCode, GitHub, Assessment score, and Task submission proofs.</p>
+              </div>
+            </div>
+
+            <form id="studentSearchForm" class="home-search-form" style="display:flex;gap:12px;max-width:700px;">
+              <input id="studentSearchInput" class="form-control" type="search" placeholder="Enter Register Number (e.g. 922525106001, 922525106265) or Name..." style="flex:1;padding:12px 16px;border-radius:12px;border:1px solid var(--border-main);background:var(--bg-subtle);">
+              <button class="btn-clean-primary" type="submit">Search Dossier</button>
+            </form>
+          </div>
+
+          <!-- Available Modules Gateway Cards -->
+          <div class="panel-header-row" style="margin-top:30px;">
+            <div>
+              <h3>Available Department Portals</h3>
+              <p>Direct entry into dedicated workspaces</p>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;">
+            <!-- Portal 1: LeetCode & GitHub -->
+            <div class="white-panel-card" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;">
+              <div>
+                <div style="font-size:0.75rem;font-weight:700;color:var(--primary);text-transform:uppercase;margin-bottom:6px;">MODULE 01 · CODING TRACKERS</div>
+                <h4 style="margin:0 0 8px 0;font-size:1.15rem;color:var(--text-main);">LeetCode &amp; GitHub Analytics</h4>
+                <p style="color:var(--text-secondary);font-size:0.86rem;margin:0 0 16px 0;">Live problem leaderboards, commit streaks, anti-cheat forensics, and section standings.</p>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <a href="leetcode.html" class="btn-clean-primary" style="font-size:0.84rem;padding:8px 14px;">Open LeetCode →</a>
+                <a href="github.html" class="btn-clean-secondary" style="font-size:0.84rem;padding:8px 14px;">Open GitHub →</a>
+              </div>
+            </div>
+
+            <!-- Portal 2: Assessment -->
+            <div class="white-panel-card" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;">
+              <div>
+                <div style="font-size:0.75rem;font-weight:700;color:#10b981;text-transform:uppercase;margin-bottom:6px;">MODULE 02 · EXAMINATIONS</div>
+                <h4 style="margin:0 0 8px 0;font-size:1.15rem;color:var(--text-main);">Technical Assessment Portal</h4>
+                <p style="color:var(--text-secondary);font-size:0.86rem;margin:0 0 16px 0;">Timed MCQ &amp; Fill-in-the-blanks test workspace with tab-switch proctoring and PDF key downloads.</p>
+              </div>
+              <a href="assessment.html" class="btn-clean-primary" style="background:#10b981;border-color:#059669;font-size:0.84rem;padding:8px 14px;align-self:flex-start;">Launch Assessment →</a>
+            </div>
+
+            <!-- Portal 3: Tasks -->
+            <div class="white-panel-card" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;">
+              <div>
+                <div style="font-size:0.75rem;font-weight:700;color:#f59e0b;text-transform:uppercase;margin-bottom:6px;">MODULE 03 · PROOF DESK</div>
+                <h4 style="margin:0 0 8px 0;font-size:1.15rem;color:var(--text-main);">Task &amp; Proof Submission</h4>
+                <p style="color:var(--text-secondary);font-size:0.86rem;margin:0 0 16px 0;">Course registrations, certificate proofs with auto canvas image compression.</p>
+              </div>
+              <a href="tasks.html" class="btn-clean-secondary" style="font-size:0.84rem;padding:8px 14px;align-self:flex-start;">Submit Screenshot →</a>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             VIEW 2: AVAILABLE EXAMS / ASSESSMENTS
+             ============================================================ -->
+        <section id="view-exams" class="feature-view-pane">
+          <div class="white-panel-card">
+            <div class="panel-header-row">
+              <div>
+                <h3>Technical Assessments &amp; Online Examinations</h3>
+                <p>Timed MCQ &amp; Fill-in-the-blanks examinations with automatic grading and PDF report generation.</p>
+              </div>
+              <a href="assessment.html" class="btn-clean-primary">Launch Full Exam Workspace ↗</a>
+            </div>
+
+            <!-- Active Test Card -->
+            <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:var(--radius-lg);padding:24px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                  <span class="badge-clean-pill success">● Live / Active</span>
+                  <span style="font-size:0.82rem;color:var(--text-muted);">45 Minutes · Proctored</span>
+                </div>
+                <h4 style="margin:0 0 6px 0;font-size:1.25rem;color:var(--text-main);">Technical Assessment 2026</h4>
+                <p style="color:var(--text-secondary);font-size:0.88rem;margin:0;">Data Structures, Digital Electronics, Computer Networks, and Core Circuit Concepts.</p>
+              </div>
+              <a href="assessment.html" class="btn-clean-primary" style="padding:10px 20px;">Enter Assessment Now →</a>
+            </div>
+
+            <h4 style="margin:20px 0 12px 0;font-size:1.05rem;">Proctoring &amp; Assessment Guidelines</h4>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">
+              <div style="background:#fff;border:1px solid var(--border-light);border-radius:12px;padding:16px;">
+                <strong style="color:var(--text-main);font-size:0.9rem;">⛶ Fullscreen Enforcement</strong>
+                <p style="color:var(--text-muted);font-size:0.8rem;margin:4px 0 0 0;">Exiting fullscreen issues a security warning. 3 warnings triggers auto-submit.</p>
+              </div>
+              <div style="background:#fff;border:1px solid var(--border-light);border-radius:12px;padding:16px;">
+                <strong style="color:var(--text-main);font-size:0.9rem;">⏱️ Countdown Timer</strong>
+                <p style="color:var(--text-muted);font-size:0.8rem;margin:4px 0 0 0;">Automated submission when timer reaches 00:00 with instant evaluation.</p>
+              </div>
+              <div style="background:#fff;border:1px solid var(--border-light);border-radius:12px;padding:16px;">
+                <strong style="color:var(--text-main);font-size:0.9rem;">📄 Downloadable Answer Key</strong>
+                <p style="color:var(--text-muted);font-size:0.8rem;margin:4px 0 0 0;">Instant client-side PDF answer key download upon submission.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             VIEW 3: LEETCODE TRACKER (WHITE-GREY MODERN UI)
+             ============================================================ -->
+        <section id="view-leetcode" class="feature-view-pane">
+          <div class="white-panel-card">
+            <div class="panel-header-row">
+              <div>
+                <h3>LeetCode Department Leaderboard</h3>
+                <p>Live synchronized solver activity, streaks, and problem forensics across 372 candidates.</p>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button id="btnDownloadTop50LeetEmbedded" class="btn-clean-primary" style="font-size:0.84rem;">🏆 Top 50 Excel</button>
+                <a href="leetcode.html" class="btn-clean-secondary" style="font-size:0.84rem;">Full LeetCode Page ↗</a>
+              </div>
+            </div>
+
+            <!-- Section Filter Pills -->
+            <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
+              <button class="filter-chip active" data-lc-sec="ALL">All Sections (A–F)</button>
+              <button class="filter-chip" data-lc-sec="ECE A">Section A</button>
+              <button class="filter-chip" data-lc-sec="ECE B">Section B</button>
+              <button class="filter-chip" data-lc-sec="ECE C">Section C</button>
+              <button class="filter-chip" data-lc-sec="ECE D">Section D</button>
+              <button class="filter-chip" data-lc-sec="ECE E">Section E</button>
+              <button class="filter-chip" data-lc-sec="ECE F">Section F</button>
+            </div>
+
+            <!-- Table -->
+            <div style="max-height:550px;overflow-y:auto;border:1px solid var(--border-main);border-radius:12px;">
+              <table class="clean-light-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Register No</th>
+                    <th>Student Name</th>
+                    <th>Section</th>
+                    <th>LeetCode User</th>
+                    <th>Total Solved</th>
+                    <th>Solved 7D</th>
+                    <th>Streak</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="leetcodeEmbeddedTbody">
+                  <tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">Loading LeetCode live records...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             VIEW 4: GITHUB TRACKER (WHITE-GREY MODERN UI)
+             ============================================================ -->
+        <section id="view-github" class="feature-view-pane">
+          <div class="white-panel-card">
+            <div class="panel-header-row">
+              <div>
+                <h3>GitHub Department Leaderboard</h3>
+                <p>Live commits, repositories, active contributions, and detected live deployments.</p>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button id="btnDownloadTop50GitEmbedded" class="btn-clean-primary" style="font-size:0.84rem;">🐙 Top 50 Excel</button>
+                <a href="github.html" class="btn-clean-secondary" style="font-size:0.84rem;">Full GitHub Page ↗</a>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <div style="max-height:550px;overflow-y:auto;border:1px solid var(--border-main);border-radius:12px;">
+              <table class="clean-light-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Register No</th>
+                    <th>Student Name</th>
+                    <th>Section</th>
+                    <th>GitHub User</th>
+                    <th>Deployments</th>
+                    <th>Contributions (30D)</th>
+                    <th>Commits (30D)</th>
+                    <th>Total Repos</th>
+                  </tr>
+                </thead>
+                <tbody id="githubEmbeddedTbody">
+                  <tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">Loading GitHub live records...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             VIEW 5: TASK SUBMISSIONS DESK
+             ============================================================ -->
+        <section id="view-tasks" class="feature-view-pane">
+          <div class="white-panel-card">
+            <div class="panel-header-row">
+              <div>
+                <h3>Student Task &amp; Proof Submission Desk</h3>
+                <p>Upload proof screenshots for course registrations, certifications, or assessments.</p>
+              </div>
+              <a href="tasks.html" class="btn-clean-primary">Open Dedicated Submission Portal ↗</a>
+            </div>
+
+            <!-- Embedded Task Submission Form -->
+            <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:var(--radius-lg);padding:24px;max-width:720px;margin:0 auto;">
+              <h4 style="margin:0 0 4px 0;font-size:1.15rem;color:var(--text-main);">Course Registration &amp; Proof Submission</h4>
+              <p style="color:var(--text-muted);font-size:0.85rem;margin:0 0 18px 0;">Please upload a clear screenshot showing your Name and Register Number.</p>
+
+              <form id="embeddedTaskForm">
+                <div style="margin-bottom:14px;">
+                  <label style="display:block;font-size:0.82rem;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">Register Number *</label>
+                  <input type="text" id="embeddedTaskRegNo" class="form-control" placeholder="e.g. 922525106001" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-main);" required>
+                </div>
+
+                <div style="margin-bottom:14px;">
+                  <label style="display:block;font-size:0.82rem;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">Upload Screenshot Proof *</label>
+                  <input type="file" id="embeddedTaskFile" accept="image/*" class="form-control" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border-main);" required>
+                </div>
+
+                <div style="margin-bottom:18px;">
+                  <label style="display:block;font-size:0.82rem;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">Remarks (Optional)</label>
+                  <input type="text" id="embeddedTaskNotes" class="form-control" placeholder="e.g. NPTEL / Coursera course enrollment reference" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-main);">
+                </div>
+
+                <button type="submit" id="btnSubmitEmbeddedTask" class="btn-clean-primary" style="width:100%;justify-content:center;padding:12px;">Submit Proof Screenshot</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             VIEW 6: LEADERBOARDS & STANDINGS
+             ============================================================ -->
+        <section id="view-leaderboard" class="feature-view-pane">
+          <div class="white-panel-card">
+            <div class="panel-header-row">
+              <div>
+                <h3>Department Top 50 Standings</h3>
+                <p>Verified rankings across all 372 students in Electronics &amp; Communication Engineering.</p>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button id="btnDownloadTop50LeetTab" class="btn-clean-primary">🏆 LeetCode Top 50 (.xlsx)</button>
+                <button id="btnDownloadTop50GitTab" class="btn-clean-primary" style="background:#0f172a;border-color:#0f172a;">🐙 GitHub Top 50 (.xlsx)</button>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-bottom:24px;">
+              <div class="admin-stat-box">
+                <h4>LeetCode Top Solver</h4>
+                <div class="stat-num" id="leadTopSolverName" style="font-size:1.35rem;">Loading...</div>
+                <p style="font-size:0.8rem;color:var(--text-muted);margin:4px 0 0 0;" id="leadTopSolverMeta">Section Leader</p>
+              </div>
+              <div class="admin-stat-box">
+                <h4>GitHub Top Deployer</h4>
+                <div class="stat-num" id="leadTopDeployerName" style="font-size:1.35rem;">Loading...</div>
+                <p style="font-size:0.8rem;color:var(--text-muted);margin:4px 0 0 0;" id="leadTopDeployerMeta">Section Leader</p>
+              </div>
+              <div class="admin-stat-box">
+                <h4>Active Faculty LeetCode</h4>
+                <div class="stat-num" id="leadFacultyCount" style="font-size:1.35rem;color:var(--primary);">30+ Faculty</div>
+                <p style="font-size:0.8rem;color:var(--text-muted);margin:4px 0 0 0;">Department Mentors</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             VIEW 7: STUDENT MASTER DIRECTORY (372)
+             ============================================================ -->
+        <section id="view-roster" class="feature-view-pane">
+          <div class="white-panel-card">
+            <div class="panel-header-row">
+              <div>
+                <h3>Official Student Roster (372 Students)</h3>
+                <p>Verified master directory across Sections A through F with backwards-compatible roll mapping.</p>
+              </div>
+              <button id="btnDownloadMasterRosterExcel" class="btn-clean-primary" style="background:#16a34a;border-color:#15803d;">📗 Export Directory (.xlsx)</button>
+            </div>
+
+            <!-- Filters -->
+            <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+              <input type="text" id="rosterFilterInput" class="form-control" placeholder="Search by roll number or student name..." style="padding:8px 14px;border-radius:8px;border:1px solid var(--border-main);min-width:260px;">
+              <select id="rosterSectionSelect" class="form-control" style="padding:8px 14px;border-radius:8px;border:1px solid var(--border-main);">
+                <option value="ALL">All Sections (A–F)</option>
+                <option value="A">Section A</option>
+                <option value="B">Section B</option>
+                <option value="C">Section C</option>
+                <option value="D">Section D</option>
+                <option value="E">Section E</option>
+                <option value="F">Section F</option>
+              </select>
+            </div>
+
+            <!-- Roster Table -->
+            <div style="max-height:550px;overflow-y:auto;border:1px solid var(--border-main);border-radius:12px;">
+              <table class="clean-light-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Register Number</th>
+                    <th>Student Name</th>
+                    <th>Department</th>
+                    <th>Section</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="rosterDirectoryTbody">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             VIEW 8: FACULTY & ADMIN COMMAND CENTER
+             ============================================================ -->
+        <section id="view-admin" class="feature-view-pane">
+          <div class="white-panel-card">
+            <div class="panel-header-row">
+              <div>
+                <h3>Faculty Command &amp; Examination Setup</h3>
+                <p>Manage test question banks, publish assessments, and generate WhatsApp class reminders.</p>
+              </div>
+              <a href="admin.html" class="btn-clean-primary">Open Dedicated Admin Center ↗</a>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:24px;">
+              <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:12px;padding:18px;">
+                <h4 style="margin:0 0 6px 0;font-size:1rem;">⚡ WhatsApp Reminder</h4>
+                <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 12px 0;">Copy pending roll numbers formatted for instant broadcast in class groups.</p>
+                <button id="btnQuickWhatsAppCopy" class="btn-clean-primary" style="background:#059669;border-color:#047857;font-size:0.82rem;">📋 Copy Pending Roll Numbers</button>
+              </div>
+
+              <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:12px;padding:18px;">
+                <h4 style="margin:0 0 6px 0;font-size:1rem;">📂 Question Bank CSV Template</h4>
+                <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 12px 0;">Download standard format supporting both MCQ and Fill in Blanks.</p>
+                <a href="sample_question_template.csv" download="sample_question_template.csv" class="btn-clean-secondary" style="font-size:0.82rem;">📥 Download Template</a>
+              </div>
+
+              <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:12px;padding:18px;">
+                <h4 style="margin:0 0 6px 0;font-size:1rem;">📦 Compiled PDF Exporter</h4>
+                <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 12px 0;">Compile all student proof receipts into an institutional PDF.</p>
+                <a href="tasks-admin.html" class="btn-clean-primary" style="background:#0f172a;border-color:#0f172a;font-size:0.82rem;">Export Proofs PDF →</a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             VIEW 9: REPORTS & EXPORTS
+             ============================================================ -->
+        <section id="view-reports" class="feature-view-pane">
+          <div class="white-panel-card">
+            <div class="panel-header-row">
+              <div>
+                <h3>Institutional Date Range Report Generator</h3>
+                <p>Generate comprehensive Excel, CSV, or PDF reports for any date range or section.</p>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;background:var(--bg-subtle);padding:20px;border-radius:12px;border:1px solid var(--border-main);margin-bottom:20px;">
+              <div>
+                <label style="font-size:0.82rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">From Date</label>
+                <input type="date" id="reportFromDate" class="form-control" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border-main);">
+              </div>
+              <div>
+                <label style="font-size:0.82rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">To Date</label>
+                <input type="date" id="reportToDate" class="form-control" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border-main);">
+              </div>
+              <div>
+                <label style="font-size:0.82rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Section</label>
+                <select id="reportSectionSelect" class="form-control" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border-main);">
+                  <option value="OVERALL">ECE Overall</option>
+                  <option value="ECE A">Section A</option>
+                  <option value="ECE B">Section B</option>
+                  <option value="ECE C">Section C</option>
+                  <option value="ECE D">Section D</option>
+                  <option value="ECE E">Section E</option>
+                  <option value="ECE F">Section F</option>
+                </select>
+              </div>
+              <div style="display:flex;gap:8px;align-items:flex-end;">
+                <button id="btnGenerateExcelReport" class="btn-clean-primary" style="background:#16a34a;border-color:#15803d;width:100%;justify-content:center;">📗 Excel</button>
+                <button id="btnGenerateCsvReport" class="btn-clean-secondary" style="width:100%;justify-content:center;">📄 CSV</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
   </div>
 
-  <header class="hero tracker-entry-hero">
-    <div class="hero-copy">
-      <div class="eyebrow">UNIFIED STUDENT DEVELOPMENT PLATFORM</div>
-      <h1>
-        ECE
-        <span>CodeMetrix</span>
-      </h1>
-      <p>
-        Unified student hub for coding analytics, timed assessments, and faculty task proofs.
-      </p>
-    </div>
-
-    <div class="hero-side">
-      <div id="homeAdminSessionCard" class="session-card" hidden>
+  <!-- ============================================================
+       360° STUDENT DOSSIER MODAL
+       ============================================================ -->
+  <div id="studentDashboardModal" class="student-dashboard-modal" hidden>
+    <div class="student-dashboard-backdrop" data-close-student-dashboard></div>
+    <section class="student-dashboard-panel" role="dialog" aria-modal="true" aria-labelledby="studentDashboardTitle" style="background:#ffffff;border:1px solid var(--border-main);color:var(--text-main);">
+      <header class="student-dashboard-header" style="border-bottom:1px solid var(--border-main);padding-bottom:14px;margin-bottom:18px;">
         <div>
-          <span>Administrator</span>
-          <strong id="homeSessionEmail">—</strong>
+          <div class="eyebrow" style="color:var(--primary);font-size:0.75rem;font-weight:800;">360° STUDENT DOSSIER</div>
+          <h2 id="studentDashboardTitle" style="color:var(--text-main);font-size:1.45rem;margin:2px 0;">Student Performance Dashboard</h2>
+          <p id="studentDashboardSubtitle" style="color:var(--text-muted);font-size:0.88rem;margin:0;">LeetCode · GitHub · Assessment · Task Proofs</p>
         </div>
-        <span class="role-badge role-admin">Admin Mode</span>
-        <button id="homeAdminLogoutButton" class="action-button secondary compact" type="button">Logout</button>
-      </div>
-
-      <div class="home-admin-badge-wrap">
-        <a href="admin.html" class="action-button secondary" style="text-decoration:none;">Faculty Admin</a>
-        <button id="homeAdminLoginButton" class="action-button primary" type="button">Admin Login</button>
-        <button id="homeAddProfileButton" class="action-button primary admin-only" type="button" hidden>+ Add Profile</button>
-      </div>
-
-      <div class="status-card tracker-entry-status">
-        <div class="live-dot"></div>
-        <div>
-          <span id="homeAccessLabel">372 Students Enrolled</span>
-          <strong id="homeAccessNote">Sections A–F Live</strong>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <main class="container">
-    <section class="section-home tracker-entry-home">
-      <div class="section-home-head">
-        <div>
-          <div class="eyebrow">UNIFIED ACADEMIC PORTALS</div>
-          <h2>Explore Core Student Modules</h2>
-          <p>
-            Choose a module below to track daily coding progress, take proctored assessments, or submit course registration proofs.
-          </p>
-        </div>
-
-        <div class="home-head-actions">
-          <a href="admin.html" class="action-button primary" style="text-decoration:none;">
-            Faculty Command Center →
-          </a>
-        </div>
-      </div>
-
-      <!-- UNIFIED 360° STUDENT SEARCH -->
-      <section class="home-student-search" aria-label="Student search">
-        <div class="home-search-copy">
-          <span class="section-card-title">360° STUDENT DOSSIER SEARCH</span>
-          <strong>Unified Student Performance Profile</strong>
-          <span>Instant lookup across all 372 ECE students: LeetCode + GitHub + Assessment Score + Task Proofs.</span>
-        </div>
-        <form id="studentSearchForm" class="home-search-form">
-          <input id="studentSearchInput" class="home-search-input" type="search" autocomplete="off" placeholder="Enter Roll Number (e.g. 922525106001, 922525106265) or Name" aria-label="Search by register number, name, LeetCode username or GitHub username">
-          <button class="action-button primary home-search-button" type="submit">Search</button>
-        </form>
-      </section>
-
-      <div id="studentDashboardModal" class="student-dashboard-modal" hidden>
-        <div class="student-dashboard-backdrop" data-close-student-dashboard></div>
-        <section class="student-dashboard-panel" role="dialog" aria-modal="true" aria-labelledby="studentDashboardTitle">
-          <header class="student-dashboard-header">
-            <div>
-              <div class="eyebrow">360° STUDENT DOSSIER</div>
-              <h2 id="studentDashboardTitle">Student Performance Dashboard</h2>
-              <p id="studentDashboardSubtitle">LeetCode · GitHub · Assessment · Task Proofs</p>
-            </div>
-            <button id="closeStudentDashboard" class="action-button secondary" type="button">Close</button>
-          </header>
-          <div id="studentDashboardContent" class="student-dashboard-content"></div>
-        </section>
-      </div>
-
-      <div id="homeActionMessage" class="home-action-message" role="status" aria-live="polite"></div>
-
-      <!-- 3 DISTINCT GATEWAY CARDS -->
-      <div class="tracker-entry-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
-        <!-- Module 1: Coding Trackers -->
-        <div class="section-card tracker-entry-card" style="display:flex;flex-direction:column;justify-content:space-between;">
-          <div>
-            <span class="section-card-title">MODULE 01 · CODING TRACKERS</span>
-            <strong>LeetCode &amp; GitHub Analytics</strong>
-            <span>Live daily problem leaderboards, commit streaks, forensic integrity checks, and section standings.</span>
-          </div>
-          <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
-            <a class="action-button primary" href="leetcode.html" style="text-decoration:none;font-size:13px;padding:9px 14px;">Open LeetCode →</a>
-            <a class="action-button secondary" href="github.html" style="text-decoration:none;font-size:13px;padding:9px 14px;">Open GitHub →</a>
-          </div>
-        </div>
-
-        <!-- Module 2: Technical Assessment Portal -->
-        <a class="section-card tracker-entry-card" href="assessment.html" style="display:flex;flex-direction:column;justify-content:space-between;text-decoration:none;">
-          <div>
-            <span class="section-card-title">MODULE 02 · TECHNICAL ASSESSMENTS</span>
-            <strong>Proctored Examination Portal</strong>
-            <span>Timed MCQ &amp; Fill-in-the-blanks test workspace with tab-switch detection, instant evaluation &amp; PDF answer keys.</span>
-          </div>
-          <div class="tracker-entry-open" style="margin-top:16px;">Launch Assessment Portal →</div>
-        </a>
-
-        <!-- Module 3: Task & Proof Submission -->
-        <a class="section-card tracker-entry-card" href="tasks.html" style="display:flex;flex-direction:column;justify-content:space-between;text-decoration:none;">
-          <div>
-            <span class="section-card-title">MODULE 03 · TASK PROOFS</span>
-            <strong>Task &amp; Proof Submission</strong>
-            <span>Course registrations and certification proofs with automatic canvas compression and faculty verification.</span>
-          </div>
-          <div class="tracker-entry-open" style="margin-top:16px;">Submit Proof Screenshot →</div>
-        </a>
-      </div>
+        <button id="closeStudentDashboard" class="btn-clean-secondary" type="button">✕ Close</button>
+      </header>
+      <div id="studentDashboardContent" class="student-dashboard-content"></div>
     </section>
-  </main>
+  </div>
 
-  <!-- =======================================================
-       HOME ADMIN LOGIN MODAL
-       ======================================================= -->
+  <!-- ============================================================
+       ADMIN AUTHENTICATION MODAL
+       ============================================================ -->
   <div id="homeAdminLoginModal" class="profile-modal" hidden>
     <div class="profile-modal-backdrop" data-close-home-admin-login></div>
-
-    <section class="profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="homeAdminLoginTitle">
+    <section class="profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="homeAdminLoginTitle" style="background:#ffffff;color:var(--text-main);border:1px solid var(--border-main);">
       <div class="profile-modal-head">
         <div>
-          <div class="eyebrow">ADMIN AUTHENTICATION</div>
-          <h2 id="homeAdminLoginTitle">Admin Login</h2>
+          <div class="eyebrow" style="color:var(--primary);">ADMIN AUTHENTICATION</div>
+          <h2 id="homeAdminLoginTitle" style="color:var(--text-main);">Faculty &amp; Admin Login</h2>
         </div>
-
-        <button id="closeHomeAdminLogin" class="modal-close" type="button">×</button>
+        <button id="closeHomeAdminLogin" class="modal-close" type="button" style="color:var(--text-muted);">×</button>
       </div>
 
-      <form id="homeAdminLoginForm">
-        <label class="form-label" for="homeAdminEmail">Admin Email</label>
-        <input
-          id="homeAdminEmail"
-          class="form-input"
-          type="email"
-          autocomplete="username"
-          required
-          placeholder="admin@example.com"
-        >
+      <form id="homeAdminLoginForm" style="margin-top:16px;">
+        <label class="form-label" for="homeAdminEmail" style="color:var(--text-secondary);font-size:0.84rem;font-weight:700;">Admin Email</label>
+        <input id="homeAdminEmail" class="form-input" type="email" autocomplete="username" required placeholder="admin@example.com" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-main);margin-bottom:12px;">
 
-        <label class="form-label" for="homeAdminPassword">Password</label>
-        <div class="password-field">
-          <input
-            id="homeAdminPassword"
-            class="form-input"
-            type="password"
-            autocomplete="current-password"
-            required
-            placeholder="••••••••"
-          >
-
-          <button
-            id="toggleHomeAdminPassword"
-            class="password-toggle"
-            type="button"
-          >
-            Show
-          </button>
+        <label class="form-label" for="homeAdminPassword" style="color:var(--text-secondary);font-size:0.84rem;font-weight:700;">Password</label>
+        <div class="password-field" style="position:relative;margin-bottom:14px;">
+          <input id="homeAdminPassword" class="form-input" type="password" autocomplete="current-password" required placeholder="••••••••" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-main);">
+          <button id="toggleHomeAdminPassword" class="password-toggle" type="button" style="position:absolute;right:10px;top:10px;background:none;border:none;color:var(--text-muted);cursor:pointer;">Show</button>
         </div>
 
         <p id="homeAdminLoginMessage" class="form-message" role="status" aria-live="polite"></p>
 
-        <div class="modal-actions">
-          <button class="action-button secondary" type="button" data-close-home-admin-login>
-            Cancel
-          </button>
-
-          <button id="homeAdminSignInButton" class="action-button primary" type="submit">
-            Login
-          </button>
+        <div class="modal-actions" style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+          <button class="btn-clean-secondary" type="button" data-close-home-admin-login>Cancel</button>
+          <button id="homeAdminSignInButton" class="btn-clean-primary" type="submit">Authenticate</button>
         </div>
       </form>
     </section>
   </div>
 
-  <!-- =======================================================
-       UNIFIED ADD PROFILE MODAL (LEETCODE + GITHUB)
-       ======================================================= -->
-  <div id="homeUnifiedProfileModal" class="profile-modal" hidden>
-    <div class="profile-modal-backdrop" data-close-unified-profile></div>
+  <!-- Action Notification Toast / Alert -->
+  <div id="homeActionMessage" class="home-action-message" role="status" aria-live="polite"></div>
 
-    <section class="profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="homeUnifiedProfileTitle">
-      <div class="profile-modal-head">
-        <div>
-          <div class="eyebrow">STUDENT REGISTRATION</div>
-          <h2 id="homeUnifiedProfileTitle">Add Student Profile</h2>
-          <p style="color:var(--muted);font-size:13px;margin-top:4px;">Register student with both LeetCode and GitHub usernames</p>
-        </div>
-
-        <button id="closeHomeUnifiedProfile" class="modal-close" type="button">×</button>
-      </div>
-
-      <form id="homeUnifiedProfileForm">
-        <label class="form-label" for="homeRegNumber">Register Number</label>
-        <input id="homeRegNumber" class="form-input" required placeholder="e.g. 7376221EC101">
-
-        <label class="form-label" for="homeStudentName">Student Name</label>
-        <input id="homeStudentName" class="form-input" required placeholder="e.g. John Doe">
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div>
-            <label class="form-label" for="homeStudentYear">Academic Year</label>
-            <select id="homeStudentYear" class="form-input" required>
-              <option value="1">Year I</option>
-              <option value="2" selected>Year II</option>
-              <option value="3">Year III</option>
-              <option value="4">Year IV</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label" for="homeStudentSection">Section</label>
-            <select id="homeStudentSection" class="form-input" required>
-              <option value="">Select Section</option>
-              <option value="ECE A">ECE A</option>
-              <option value="ECE B">ECE B</option>
-              <option value="ECE C">ECE C</option>
-              <option value="ECE D">ECE D</option>
-              <option value="ECE E">ECE E</option>
-              <option value="ECE F">ECE F</option>
-            </select>
-          </div>
-        </div>
-
-        <label class="form-label" for="homeLeetcodeUser">LeetCode Username</label>
-        <input id="homeLeetcodeUser" class="form-input" placeholder="e.g. leetcode_user">
-
-        <label class="form-label" for="homeGithubUser">GitHub Username</label>
-        <input id="homeGithubUser" class="form-input" placeholder="e.g. github_user">
-
-        <p id="homeProfileFormMessage" class="form-message" role="status" aria-live="polite"></p>
-
-        <div class="modal-actions">
-          <button class="action-button secondary" type="button" data-close-unified-profile>
-            Cancel
-          </button>
-
-          <button id="homeSaveProfileButton" class="action-button primary" type="submit">
-            Save Student
-          </button>
-        </div>
-      </form>
-    </section>
-  </div>
-
-  <footer>
-    ECE CodeMetrix · Public Coding Progress Platform
-  </footer>
-
-
-  <!-- ADMIN DATE REPORT -->
-  <div id="homeDateReportModal" class="profile-modal date-report-modal" hidden>
-    <div class="profile-modal-backdrop" data-close-home-date-report></div>
-    <section class="profile-modal-card date-report-card" role="dialog" aria-modal="true" aria-labelledby="homeDateReportTitle">
-      <div class="profile-modal-head">
-        <div>
-          <div class="eyebrow">ADMIN REPORT</div>
-          <h2 id="homeDateReportTitle">Download Date Report</h2>
-          <p class="modal-help">Generate a report for one day or any custom date range.</p>
-        </div>
-        <button id="closeHomeDateReport" class="modal-close" type="button" aria-label="Close">×</button>
-      </div>
-      <div class="date-report-grid">
-        <label class="form-label">From date<input id="homeDateReportFrom" class="form-input" type="date" required></label>
-        <label class="form-label">To date<input id="homeDateReportTo" class="form-input" type="date" required></label>
-      </div>
-      <label class="form-label">Section
-        <select id="homeDateReportSection" class="form-input">
-          <option value="OVERALL">ECE Overall</option><option value="ECE A">ECE A</option><option value="ECE B">ECE B</option><option value="ECE C">ECE C</option><option value="ECE D">ECE D</option><option value="ECE E">ECE E</option><option value="ECE F">ECE F</option>
-        </select>
-      </label>
-      <div class="date-report-scope"><span>Report scope</span><strong id="homeDateReportScope">ECE Overall</strong></div>
-      <p id="homeDateReportMessage" class="form-message" role="status"></p>
-      <div class="modal-actions date-report-actions">
-        <button id="homeDownloadDateReportCsv" class="action-button secondary" type="button">Download CSV</button>
-        <button id="homeDownloadDateReportExcel" class="action-button primary" type="button">Download Excel</button>
-        <button id="homeDownloadDateReportPdf" class="action-button secondary" type="button">Download PDF</button>
-        <button id="cancelHomeDateReport" class="action-button secondary" type="button">Cancel</button>
-      </div>
-      <div id="homeDateReportPrintContent" class="date-report-print-content" hidden></div>
-    </section>
-  </div>
-
-  <!-- =======================================================
-       STUDENT SOLVED PROBLEMS & ACTIVITY MODAL
-       ======================================================= -->
-  <div id="solvedProblemsModal" class="profile-modal" hidden>
-    <div class="profile-modal-backdrop" data-close-solved-problems></div>
-    <section class="solved-problems-modal-card" role="dialog" aria-modal="true" aria-labelledby="solvedProblemsTitle">
-      <div class="solved-problems-head">
-        <div>
-          <div class="eyebrow">LEETCODE FORENSICS &amp; ACTIVITY</div>
-          <h2 id="solvedProblemsTitle">Solved Problems Activity</h2>
-          <p id="solvedProblemsSubtitle" style="color:var(--muted);font-size:13px;margin-top:4px;">Viewing synced solutions and anti-cheat forensics</p>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <button id="downloadSolvedHistoryExcelBtn" class="action-button primary" type="button" style="padding:8px 14px;font-size:12px;">📥 Download History &amp; Code (Excel)</button>
-          <button id="downloadSolvedHistoryPdfBtn" class="action-button secondary" type="button" style="padding:8px 14px;font-size:12px;">📄 Download Portfolio (PDF)</button>
-          <button id="downloadSolvedHistoryZipBtn" class="action-button secondary" type="button" style="padding:8px 14px;font-size:12px;background:#1e293b;border:1px solid #475569;color:#e2e8f0;">📦 Download All Codes (.zip)</button>
-          <button id="closeSolvedProblems" class="modal-close" type="button" aria-label="Close">×</button>
-        </div>
-      </div>
-
-      <div class="solved-problems-summary">
-        <div class="summary-pill-card active">
-          <span>Total Synced</span>
-          <strong id="summaryTotalSynced">0</strong>
-        </div>
-        <div class="summary-pill-card clean">
-          <span>Clean Submissions</span>
-          <strong id="summaryCleanCount">0</strong>
-        </div>
-        <div class="summary-pill-card flagged">
-          <span>Flagged Alerts</span>
-          <strong id="summaryFlaggedCount">0</strong>
-        </div>
-        <div class="summary-pill-card">
-          <span>Extension Status</span>
-          <strong id="summaryExtStatus" style="font-size:1rem;">Checking...</strong>
-        </div>
-      </div>
-
-      <!-- 50 Problems Milestone & Archive Banner -->
-      <div id="solvedArchiveBanner" class="milestone-archive-card" hidden>
-        <div class="milestone-archive-info">
-          <span style="font-size:1.4rem;">📦</span>
-          <div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <strong id="milestoneArchiveTitle" style="color:#f8fafc;font-size:0.95rem;">50 Problems Capacity Reached (50/50)</strong>
-              <span class="diff-badge Easy" id="milestoneBadge">50 Solved</span>
-            </div>
-            <p id="milestoneArchiveDesc" style="color:#94a3b8;font-size:0.8rem;margin:3px 0 0 0;">
-              Download and archive your complete 50-problem solutions portfolio before database auto-reset.
-            </p>
-          </div>
-        </div>
-        <div class="milestone-archive-actions">
-          <button id="archiveAndPurgeSolvedBtn" type="button" class="action-button primary" style="padding:7px 14px;font-size:12px;background:#10b981;border-color:#059669;font-weight:700;">
-            📦 Download Archive &amp; Clear Database (Reset to 0)
-          </button>
-          <button id="purgeOnlySolvedBtn" type="button" class="action-button secondary" style="padding:7px 12px;font-size:12px;color:#fca5a5;border-color:#ef4444;background:rgba(239,68,68,0.1);">
-            🗑️ Clear Database Only
-          </button>
-        </div>
-      </div>
-
-      <div class="solved-problems-table-wrap">
-        <table class="solved-problems-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Problem Name</th>
-              <th>Difficulty</th>
-              <th>Language</th>
-              <th>Solved Timing</th>
-              <th>Active Time</th>
-              <th>Keystrokes / Pastes</th>
-              <th>Integrity Status</th>
-            </tr>
-          </thead>
-          <tbody id="solvedProblemsTableBody">
-            <tr>
-              <td colspan="8" style="text-align:center;padding:24px;color:var(--muted);">
-                Loading submissions...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </div>
-
-
-
-  <!-- =======================================================
-       SOLUTION CODE VIEWER MODAL
-       ======================================================= -->
-  <div id="solutionCodeModal" class="profile-modal" hidden>
-    <div class="profile-modal-backdrop" data-close-solution-code></div>
-    <section class="solution-code-modal-card" role="dialog" aria-modal="true" aria-labelledby="solutionCodeTitle">
-      <div class="solution-code-head">
-        <div>
-          <div class="eyebrow">SOURCE CODE &amp; TELEMETRY</div>
-          <h2 id="solutionCodeTitle">
-            <span id="solutionProblemName">Problem Solution</span>
-            <span id="solutionDifficultyBadge" class="diff-badge Medium">Medium</span>
-          </h2>
-          <p id="solutionMetadata" style="color:var(--muted);font-size:13px;margin-top:4px;">Submitted by student</p>
-        </div>
-        <button id="closeSolutionCode" class="modal-close" type="button" aria-label="Close">×</button>
-      </div>
-
-      <div class="solution-telemetry-grid">
-        <div class="telemetry-item">
-          <span>Active Time</span>
-          <strong id="telemetryActiveTime">—</strong>
-        </div>
-        <div class="telemetry-item">
-          <span>Keystrokes</span>
-          <strong id="telemetryKeystrokes">—</strong>
-        </div>
-        <div class="telemetry-item">
-          <span>Pastes / Ratio</span>
-          <strong id="telemetryPastes">—</strong>
-        </div>
-        <div class="telemetry-item">
-          <span>Tab Switches</span>
-          <strong id="telemetryTabSwitches">—</strong>
-        </div>
-        <div class="telemetry-item">
-          <span>Plagiarism Risk</span>
-          <strong id="telemetryRiskScore">—</strong>
-        </div>
-        <div class="telemetry-item">
-          <span>Verdict</span>
-          <strong id="telemetryVerdict">—</strong>
-        </div>
-      </div>
-
-      <div id="solutionAlertBanner" class="solution-alert-box" hidden>
-        <span>⚠️</span>
-        <span id="solutionAlertText">AI / Paste anomalies detected in this submission.</span>
-      </div>
-
-      <div class="code-viewer-container">
-        <div class="code-viewer-topbar">
-          <span id="solutionCodeLang" class="code-lang-tag">PYTHON3</span>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <button id="downloadSingleSolutionCodeBtn" class="copy-code-btn" type="button" style="background:#2563eb;color:#fff;border-color:#3b82f6;">💾 Download Code</button>
-            <button id="copySolutionCodeBtn" class="copy-code-btn" type="button">📋 Copy Code</button>
-          </div>
-        </div>
-        <pre class="code-content-pre"><code id="solutionCodeContent">// Code will appear here</code></pre>
-      </div>
-    </section>
-  </div>
-
+  <!-- Application Scripts -->
   <script src="config.js?v=7.0"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="js/assessment/students.js?v=7.0"></script>
+  <script src="js/assessment/questions.js?v=7.0"></script>
+  <script src="js/assessment/supabase-config.js?v=7.0"></script>
+  <script src="js/tasks/mock-data.js?v=7.0"></script>
+  <script src="js/tasks/supabase-config.js?v=7.0"></script>
   <script src="home-dashboard.js?v=7.0"></script>
+  <script src="js/examlytics-controller.js?v=7.0"></script>
 </body>
 </html>
