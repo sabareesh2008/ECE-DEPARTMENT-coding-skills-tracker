@@ -563,20 +563,21 @@
                 </div>
               </div>
 
-              <!-- Section Live KPI Grid -->
+              <!-- Section Live KPI Grid (Clickable Cards) -->
               <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:16px;">
-                <div class="kpi-card" style="min-height:100px;padding:16px 18px;">
+                <div id="kpiAdvisorTotalStudentsCard" class="kpi-card" style="min-height:100px;padding:16px 18px;cursor:pointer;" title="Click to view all enrolled students in this section">
                   <div class="kpi-card-top">
                     <div class="kpi-icon-square">👥</div>
-                    <span class="trend-badge neutral-badge">Enrolled</span>
+                    <span class="trend-badge neutral-badge">View Roster ↗</span>
                   </div>
                   <div>
                     <div class="kpi-value" id="kpiAdvisorTotalStudents" style="font-size:1.6rem;">0</div>
                     <div class="kpi-label">Section Strength</div>
+                    <div class="kpi-sub" style="color:#2563eb;font-size:0.75rem;font-weight:700;margin-top:3px;">Click to view roster list</div>
                   </div>
                 </div>
 
-                <div class="kpi-card" style="min-height:100px;padding:16px 18px;">
+                <div id="kpiAdvisorTestCompletedCard" class="kpi-card" style="min-height:100px;padding:16px 18px;cursor:pointer;" title="Click to view test completed students">
                   <div class="kpi-card-top">
                     <div class="kpi-icon-square" style="color:#059669;background:#ecfdf5;">📝</div>
                     <span class="trend-badge" style="background:#ecfdf5;color:#059669;">Test Passed</span>
@@ -584,10 +585,11 @@
                   <div>
                     <div class="kpi-value" id="kpiAdvisorTestCompleted" style="font-size:1.6rem;color:#059669;">0</div>
                     <div class="kpi-label">Test Completed</div>
+                    <div class="kpi-sub" style="color:#059669;font-size:0.75rem;font-weight:700;margin-top:3px;">Click to inspect scores</div>
                   </div>
                 </div>
 
-                <div class="kpi-card" style="min-height:100px;padding:16px 18px;">
+                <div id="kpiAdvisorTestPendingCard" class="kpi-card" style="min-height:100px;padding:16px 18px;cursor:pointer;" title="Click to view pending test students">
                   <div class="kpi-card-top">
                     <div class="kpi-icon-square" style="color:#dc2626;background:#fef2f2;">⏳</div>
                     <span class="trend-badge" style="background:#fef2f2;color:#dc2626;">Action Needed</span>
@@ -595,10 +597,11 @@
                   <div>
                     <div class="kpi-value" id="kpiAdvisorTestPending" style="font-size:1.6rem;color:#dc2626;">0</div>
                     <div class="kpi-label">Test Pending</div>
+                    <div class="kpi-sub" style="color:#dc2626;font-size:0.75rem;font-weight:700;margin-top:3px;">Click for WhatsApp notice</div>
                   </div>
                 </div>
 
-                <div class="kpi-card" style="min-height:100px;padding:16px 18px;">
+                <div id="kpiAdvisorTaskCompletedCard" class="kpi-card" style="min-height:100px;padding:16px 18px;cursor:pointer;" title="Click to view submitted proof screenshots">
                   <div class="kpi-card-top">
                     <div class="kpi-icon-square" style="color:#2563eb;background:#eff6ff;">📋</div>
                     <span class="trend-badge" style="background:#eff6ff;color:#2563eb;">Uploaded</span>
@@ -606,10 +609,11 @@
                   <div>
                     <div class="kpi-value" id="kpiAdvisorTaskCompleted" style="font-size:1.6rem;color:#2563eb;">0</div>
                     <div class="kpi-label">Proof Submitted</div>
+                    <div class="kpi-sub" style="color:#2563eb;font-size:0.75rem;font-weight:700;margin-top:3px;">Click to verify proofs</div>
                   </div>
                 </div>
 
-                <div class="kpi-card" style="min-height:100px;padding:16px 18px;">
+                <div id="kpiAdvisorTaskPendingCard" class="kpi-card" style="min-height:100px;padding:16px 18px;cursor:pointer;" title="Click to view pending task roll numbers">
                   <div class="kpi-card-top">
                     <div class="kpi-icon-square" style="color:#d97706;background:#fffbeb;">⏳</div>
                     <span class="trend-badge" style="background:#fffbeb;color:#d97706;">Pending</span>
@@ -617,6 +621,7 @@
                   <div>
                     <div class="kpi-value" id="kpiAdvisorTaskPending" style="font-size:1.6rem;color:#d97706;">0</div>
                     <div class="kpi-label">Task Pending</div>
+                    <div class="kpi-sub" style="color:#d97706;font-size:0.75rem;font-weight:700;margin-top:3px;">Click for task reminders</div>
                   </div>
                 </div>
               </div>
@@ -624,7 +629,13 @@
 
             <!-- Advisor Workspace Navigation Tabs -->
             <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;border-bottom:1px solid #e2e8f0;padding-bottom:12px;">
-              <button class="advisor-main-tab-btn active" data-tab="tab-advisor-tests">
+              <button class="advisor-main-tab-btn active" data-tab="tab-advisor-roster">
+                👥 Enrolled Students Roster
+              </button>
+              <button class="advisor-main-tab-btn" data-tab="tab-advisor-coding">
+                💻 LeetCode &amp; GitHub Activity
+              </button>
+              <button class="advisor-main-tab-btn" data-tab="tab-advisor-tests">
                 📝 Technical Assessment Tracking
               </button>
               <button class="advisor-main-tab-btn" data-tab="tab-advisor-tasks">
@@ -639,11 +650,66 @@
             </div>
 
             <div id="advisorDataLoading" style="padding:30px;text-align:center;color:#64748b;" hidden>
-              ⏳ Fetching live section analytics from Supabase...
+              ⏳ Fetching live section analytics from Supabase &amp; coding tracker...
             </div>
 
-            <!-- TAB 1: TECHNICAL ASSESSMENT TRACKING -->
-            <div id="tab-advisor-tests" class="advisor-tab-pane active">
+            <!-- TAB 0: ENROLLED STUDENT ROSTER -->
+            <div id="tab-advisor-roster" class="advisor-tab-pane active">
+              <div class="white-panel-card">
+                <div class="panel-header-row">
+                  <div>
+                    <h3 style="font-size:1.2rem;color:#0f172a;margin:0 0 4px 0;">Official Enrolled Candidates Roster</h3>
+                    <p style="color:#64748b;font-size:0.85rem;margin:0;">Complete student roll for this section with direct access to 360° dossiers, LeetCode, and GitHub profiles.</p>
+                  </div>
+
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <input type="text" id="advisorRosterSearchInput" class="form-control" placeholder="Search by name or reg no..." style="padding:7px 12px;font-size:0.85rem;border-radius:8px;border:1px solid #cbd5e1;width:220px;">
+                    <button id="btnExportAdvisorRosterExcel" class="btn-clean-secondary" style="font-size:0.84rem;">
+                      📥 Export Section Roster (Excel)
+                    </button>
+                  </div>
+                </div>
+
+                <div id="advisorRosterTableWrap" style="margin-top:16px;">
+                  <!-- Injected via JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 0.5: LEETCODE & GITHUB CODING ACTIVITY -->
+            <div id="tab-advisor-coding" class="advisor-tab-pane">
+              <div class="white-panel-card">
+                <div class="panel-header-row">
+                  <div>
+                    <h3 style="font-size:1.2rem;color:#0f172a;margin:0 0 4px 0;">LeetCode &amp; GitHub Engineering Performance</h3>
+                    <p style="color:#64748b;font-size:0.85rem;margin:0;">Track live problems solved, daily streaks, GitHub commits, deployments, and identify inactive coders.</p>
+                  </div>
+
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <!-- Filter Sub-toggle -->
+                    <div class="button-toggle-group">
+                      <button id="toggleAdvisorLeetCodeBtn" class="toggle-sub-btn active" type="button">
+                        <span>💻 LeetCode Ranks</span>
+                      </button>
+                      <button id="toggleAdvisorGitHubBtn" class="toggle-sub-btn" type="button">
+                        <span>🐙 GitHub Activity</span>
+                      </button>
+                    </div>
+
+                    <button id="btnCopyInactiveCodersWhatsApp" class="btn-clean-primary" style="background:#059669;border-color:#047857;font-size:0.84rem;">
+                      📋 Copy Inactive Coders (WhatsApp)
+                    </button>
+                    <button id="btnExportAdvisorCodingExcel" class="btn-clean-secondary" style="font-size:0.84rem;">
+                      📥 Export Coding Report
+                    </button>
+                  </div>
+                </div>
+
+                <div id="advisorCodingTableWrap" style="margin-top:16px;">
+                  <!-- Injected via JS -->
+                </div>
+              </div>
+            </div>
               <div class="white-panel-card">
                 <div class="panel-header-row">
                   <div>

@@ -1,6 +1,6 @@
 // ============================================================
-// ECE CLASS ADVISOR & FACULTY COMMAND CONTROLLER
-// High-performance section-specific tracking, WhatsApp broadcast & task assignment
+// ECE CLASS ADVISOR & FACULTY COMMAND CONTROLLER (V2)
+// Full Section-Specific Roster, LeetCode, GitHub, Technical Tests & Tasks
 // ============================================================
 
 (function () {
@@ -9,18 +9,23 @@
   const STORAGE_KEY = 'codemetrix_advisor_session';
   let currentAdvisor = null;
   let sectionStudents = [];
+  let mergedStudentData = [];
   let testCompletedList = [];
   let testPendingList = [];
   let taskCompletedList = [];
   let taskPendingList = [];
+  let sectionLcData = [];
+  let sectionGhData = [];
   let currentActiveTestTab = 'completed';
   let currentActiveTaskTab = 'completed';
+  let currentActiveCodingTab = 'leetcode';
+  let rawLcData = [];
+  let rawGhData = [];
 
   document.addEventListener('DOMContentLoaded', () => {
     initAdvisorController();
   });
 
-  // Global initialization
   function initAdvisorController() {
     loadAdvisorSession();
     bindLoginEvents();
@@ -108,7 +113,7 @@
     const switcherEl = document.getElementById('advisorSectionSwitcher');
 
     if (titleEl) titleEl.textContent = `Class Advisor Cockpit · ${currentAdvisor.section_full}`;
-    if (subEl) subEl.textContent = `Active Advisor: ${currentAdvisor.name} · Live Technical Assessment & Task Submission Monitoring`;
+    if (subEl) subEl.textContent = `Active Advisor: ${currentAdvisor.name} · Roster, LeetCode, GitHub, Tests & Tasks`;
     if (badgeEl) badgeEl.textContent = currentAdvisor.section_full;
     if (switcherEl) {
       switcherEl.value = currentAdvisor.section_full.includes('ALL') ? 'ALL' : currentAdvisor.section;
@@ -133,6 +138,7 @@
     // Load Data for Section
     await refreshSectionData();
     bindTabControls();
+    bindKpiCardClicks();
     bindTaskCreation();
   }
 
@@ -148,7 +154,26 @@
         sectionStudents = REGISTERED_STUDENTS.filter(s => cleanSec === 'ALL' || s.section === cleanSec);
       }
 
-      // 2. Get Live Submissions from Supabase
+      // 2. Fetch Live CSV Data for LeetCode and GitHub
+      if (!rawLcData.length || !rawGhData.length) {
+        try {
+          const [lcRes, ghRes] = await Promise.all([
+            fetch('LiveData.csv?t=' + Date.now()).catch(() => null),
+            fetch('GitHubLiveData.csv?t=' + Date.now()).catch(() => null)
+          ]);
+          if (lcRes && lcRes.ok) rawLcData = parseCsvData(await lcRes.text());
+          if (ghRes && ghRes.ok) rawGhData = parseCsvData(await ghRes.text());
+        } catch (e) {
+          console.warn('[AdvisorController] CSV load warning:', e);
+        }
+      }
+
+      // Filter CSV data for current section
+      const cleanSec = currentAdvisor.section.replace(/^ECE\s*/i, '').trim().toUpperCase();
+      sectionLcData = rawLcData.filter(r => cleanSec === 'ALL' || String(r.Section || '').trim().toUpperCase() === cleanSec);
+      sectionGhData = rawGhData.filter(r => cleanSec === 'ALL' || String(r.Section || '').trim().toUpperCase() === cleanSec);
+
+      // 3. Get Live Submissions from Supabase
       const [testSubs, taskSubs] = await Promise.all([
         window.StudentService?.fetchAllAssessmentSubmissions ? window.StudentService.fetchAllAssessmentSubmissions() : Promise.resolve([]),
         window.StudentService?.fetchAllTaskSubmissions ? window.StudentService.fetchAllTaskSubmissions() : Promise.resolve([])
@@ -171,16 +196,40 @@
         }
       });
 
+      const lcMap = new Map();
+      sectionLcData.forEach(r => {
+        const reg = String(r['Register Number'] || '').trim().toUpperCase();
+        if (reg) lcMap.set(reg, r);
+      });
+
+      const ghMap = new Map();
+      sectionGhData.forEach(r => {
+        const reg = String(r['Register Number'] || '').trim().toUpperCase();
+        if (reg) ghMap.set(reg, r);
+      });
+
       // Divide section students into completed & pending
       testCompletedList = [];
       testPendingList = [];
       taskCompletedList = [];
       taskPendingList = [];
+      mergedStudentData = [];
 
       sectionStudents.forEach(stu => {
         const reg = String(stu.reg_no || '').trim().toUpperCase();
         const testSub = testMap.get(reg);
         const taskSub = taskMap.get(reg);
+        const lcInfo = lcMap.get(reg);
+        const ghInfo = ghMap.get(reg);
+
+        const merged = {
+          ...stu,
+          lc: lcInfo || null,
+          gh: ghInfo || null,
+          test: testSub || null,
+          task: taskSub || null
+        };
+        mergedStudentData.push(merged);
 
         if (testSub) {
           testCompletedList.push({
@@ -226,6 +275,8 @@
       setElText('kpiAdvisorTaskPending', taskPendCount);
 
       // Render Active Views
+      renderRosterView();
+      renderCodingView();
       renderTestSubviews();
       renderTaskSubviews();
       loadSectionTasksList();
@@ -242,7 +293,62 @@
     if (el) el.textContent = txt;
   }
 
-  // Bind Tab Switching (Test Tracking / Task Tracking / Task Creator / Question Bank)
+  // 1. KPI Card Click Navigation
+  function bindKpiCardClicks() {
+    document.getElementById('kpiAdvisorTotalStudentsCard')?.addEventListener('click', () => {
+      switchAdvisorTab('tab-advisor-roster');
+    });
+
+    document.getElementById('kpiAdvisorTestCompletedCard')?.addEventListener('click', () => {
+      currentActiveTestTab = 'completed';
+      updateTestToggleButtons();
+      renderTestSubviews();
+      switchAdvisorTab('tab-advisor-tests');
+    });
+
+    document.getElementById('kpiAdvisorTestPendingCard')?.addEventListener('click', () => {
+      currentActiveTestTab = 'pending';
+      updateTestToggleButtons();
+      renderTestSubviews();
+      switchAdvisorTab('tab-advisor-tests');
+    });
+
+    document.getElementById('kpiAdvisorTaskCompletedCard')?.addEventListener('click', () => {
+      currentActiveTaskTab = 'completed';
+      updateTaskToggleButtons();
+      renderTaskSubviews();
+      switchAdvisorTab('tab-advisor-tasks');
+    });
+
+    document.getElementById('kpiAdvisorTaskPendingCard')?.addEventListener('click', () => {
+      currentActiveTaskTab = 'pending';
+      updateTaskToggleButtons();
+      renderTaskSubviews();
+      switchAdvisorTab('tab-advisor-tasks');
+    });
+  }
+
+  function switchAdvisorTab(tabId) {
+    const tabBtns = document.querySelectorAll('.advisor-main-tab-btn');
+    const tabPanes = document.querySelectorAll('.advisor-tab-pane');
+
+    tabBtns.forEach(b => {
+      if (b.getAttribute('data-tab') === tabId) b.classList.add('active');
+      else b.classList.remove('active');
+    });
+
+    tabPanes.forEach(p => {
+      if (p.id === tabId) p.classList.add('active');
+      else p.classList.remove('active');
+    });
+
+    const targetEl = document.getElementById(tabId);
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  // 2. Bind Tab Switching
   function bindTabControls() {
     const tabBtns = document.querySelectorAll('.advisor-main-tab-btn');
     const tabPanes = document.querySelectorAll('.advisor-tab-pane');
@@ -259,7 +365,28 @@
       });
     });
 
-    // Test Sub-tab Toggle (Completed vs Pending)
+    // Roster search filter
+    document.getElementById('advisorRosterSearchInput')?.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      renderRosterView(q);
+    });
+
+    // Coding Sub-tab Toggle
+    document.getElementById('toggleAdvisorLeetCodeBtn')?.addEventListener('click', () => {
+      currentActiveCodingTab = 'leetcode';
+      document.getElementById('toggleAdvisorLeetCodeBtn')?.classList.add('active');
+      document.getElementById('toggleAdvisorGitHubBtn')?.classList.remove('active');
+      renderCodingView();
+    });
+
+    document.getElementById('toggleAdvisorGitHubBtn')?.addEventListener('click', () => {
+      currentActiveCodingTab = 'github';
+      document.getElementById('toggleAdvisorGitHubBtn')?.classList.add('active');
+      document.getElementById('toggleAdvisorLeetCodeBtn')?.classList.remove('active');
+      renderCodingView();
+    });
+
+    // Test Sub-tab Toggle
     document.getElementById('toggleTestCompletedBtn')?.addEventListener('click', () => {
       currentActiveTestTab = 'completed';
       updateTestToggleButtons();
@@ -272,7 +399,7 @@
       renderTestSubviews();
     });
 
-    // Task Sub-tab Toggle (Completed vs Pending)
+    // Task Sub-tab Toggle
     document.getElementById('toggleTaskCompletedBtn')?.addEventListener('click', () => {
       currentActiveTaskTab = 'completed';
       updateTaskToggleButtons();
@@ -286,22 +413,15 @@
     });
 
     // WhatsApp Copy Action Buttons
-    document.getElementById('btnCopyTestWhatsApp')?.addEventListener('click', () => {
-      copyTestPendingWhatsApp();
-    });
-
-    document.getElementById('btnCopyTaskWhatsApp')?.addEventListener('click', () => {
-      copyTaskPendingWhatsApp();
-    });
+    document.getElementById('btnCopyInactiveCodersWhatsApp')?.addEventListener('click', copyInactiveCodersWhatsApp);
+    document.getElementById('btnCopyTestWhatsApp')?.addEventListener('click', copyTestPendingWhatsApp);
+    document.getElementById('btnCopyTaskWhatsApp')?.addEventListener('click', copyTaskPendingWhatsApp);
 
     // Export Buttons
-    document.getElementById('btnExportSectionTestExcel')?.addEventListener('click', () => {
-      exportSectionTestExcel();
-    });
-
-    document.getElementById('btnExportSectionTaskExcel')?.addEventListener('click', () => {
-      exportSectionTaskExcel();
-    });
+    document.getElementById('btnExportAdvisorRosterExcel')?.addEventListener('click', exportSectionRosterExcel);
+    document.getElementById('btnExportAdvisorCodingExcel')?.addEventListener('click', exportSectionCodingExcel);
+    document.getElementById('btnExportSectionTestExcel')?.addEventListener('click', exportSectionTestExcel);
+    document.getElementById('btnExportSectionTaskExcel')?.addEventListener('click', exportSectionTaskExcel);
   }
 
   function updateTestToggleButtons() {
@@ -328,7 +448,219 @@
     }
   }
 
-  // Render Technical Assessment Tables
+  // 3. Render Enrolled Roster View
+  function renderRosterView(searchQuery = '') {
+    const wrap = document.getElementById('advisorRosterTableWrap');
+    if (!wrap) return;
+
+    let list = mergedStudentData;
+    if (searchQuery) {
+      list = list.filter(s =>
+        s.reg_no.toLowerCase().includes(searchQuery) ||
+        s.name.toLowerCase().includes(searchQuery)
+      );
+    }
+
+    if (!list.length) {
+      wrap.innerHTML = `<div class="empty-state-box"><p>No students found matching "${esc(searchQuery)}".</p></div>`;
+      return;
+    }
+
+    wrap.innerHTML = `
+      <div class="table-responsive">
+        <table class="white-data-table">
+          <thead>
+            <tr>
+              <th style="width:50px;">#</th>
+              <th>Register Number</th>
+              <th>Student Name</th>
+              <th>Section</th>
+              <th>LeetCode Profile</th>
+              <th>GitHub Profile</th>
+              <th>Assessment</th>
+              <th>Task Proof</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.map((s, idx) => {
+              const lcSolved = s.lc ? Number(s.lc['Problems Solved'] || 0) : 0;
+              const lcUser = s.lc?.['LeetCode Username'] || '—';
+              const ghRepos = s.gh ? Number(s.gh['Repositories Total'] || 0) : 0;
+              const ghUser = s.gh?.['GitHub Username'] || '—';
+              const testDone = Boolean(s.test);
+              const taskDone = Boolean(s.task);
+
+              return `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td><strong style="color:#0f172a;font-family:monospace;font-size:0.95rem;">${esc(s.reg_no)}</strong></td>
+                  <td><strong>${esc(s.name)}</strong></td>
+                  <td><span class="badge-section">${esc(s.section)}</span></td>
+                  <td>
+                    ${s.lc?.['LeetCode Link'] ? `
+                      <a href="${esc(s.lc['LeetCode Link'])}" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700;text-decoration:underline;">
+                        ${esc(lcUser)} (${lcSolved} ⚡)
+                      </a>
+                    ` : `<span style="color:#94a3b8;">${esc(lcUser)}</span>`}
+                  </td>
+                  <td>
+                    ${s.gh?.['GitHub Link'] ? `
+                      <a href="${esc(s.gh['GitHub Link'])}" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700;text-decoration:underline;">
+                        ${esc(ghUser)} (${ghRepos} 📦)
+                      </a>
+                    ` : `<span style="color:#94a3b8;">${esc(ghUser)}</span>`}
+                  </td>
+                  <td>
+                    ${testDone ? `<span class="trend-badge" style="background:#ecfdf5;color:#059669;font-weight:700;">✓ Done (${s.test.obtained_marks}/${s.test.total_marks})</span>` : `<span class="trend-badge" style="background:#fef2f2;color:#dc2626;font-weight:700;">⏳ Pending</span>`}
+                  </td>
+                  <td>
+                    ${taskDone ? `<span class="trend-badge" style="background:#ecfdf5;color:#059669;font-weight:700;">✓ Uploaded</span>` : `<span class="trend-badge" style="background:#fffbeb;color:#d97706;font-weight:700;">⏳ Pending</span>`}
+                  </td>
+                  <td>
+                    <button class="btn-clean-secondary btn-open-dossier" data-reg="${esc(s.reg_no)}" type="button" style="padding:4px 10px;font-size:0.8rem;font-weight:700;color:#2563eb;border-color:#bfdbfe;background:#eff6ff;">
+                      🔍 360° Dossier
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    // Bind Dossier Buttons
+    wrap.querySelectorAll('.btn-open-dossier').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const reg = btn.getAttribute('data-reg');
+        openDossierByReg(reg);
+      });
+    });
+  }
+
+  // Helper: Open Student Dossier
+  function openDossierByReg(reg) {
+    const searchForm = document.getElementById('studentSearchForm');
+    const searchInput = document.getElementById('studentSearchInput');
+    if (searchInput && searchForm) {
+      searchInput.value = reg;
+      searchForm.dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+  }
+
+  // 4. Render LeetCode & GitHub Performance View
+  function renderCodingView() {
+    const wrap = document.getElementById('advisorCodingTableWrap');
+    if (!wrap) return;
+
+    if (currentActiveCodingTab === 'leetcode') {
+      const sortedLc = [...sectionLcData].sort((a,b) => Number(b['Problems Solved']||0) - Number(a['Problems Solved']||0));
+
+      if (!sortedLc.length) {
+        wrap.innerHTML = `<div class="empty-state-box"><p>No LeetCode records synced for ${esc(currentAdvisor.section_full)}.</p></div>`;
+        return;
+      }
+
+      wrap.innerHTML = `
+        <div class="table-responsive">
+          <table class="white-data-table">
+            <thead>
+              <tr>
+                <th style="width:50px;">Rank</th>
+                <th>Register No</th>
+                <th>Student Name</th>
+                <th>LeetCode Username</th>
+                <th>Solved</th>
+                <th>Today</th>
+                <th>Last 7D</th>
+                <th>Streak</th>
+                <th>Easy/Med/Hard</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sortedLc.map((s, idx) => {
+                const solved = Number(s['Problems Solved'] || 0);
+                const isZero = solved === 0;
+                return `
+                  <tr style="${isZero ? 'background:#fff7f7;' : ''}">
+                    <td><strong>#${idx + 1}</strong></td>
+                    <td><strong style="color:#0f172a;font-family:monospace;font-size:0.95rem;">${esc(s['Register Number'] || '—')}</strong></td>
+                    <td><strong>${esc(s['Student Name'] || '—')}</strong></td>
+                    <td>
+                      ${s['LeetCode Link'] ? `<a href="${esc(s['LeetCode Link'])}" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700;">${esc(s['LeetCode Username'])} ↗</a>` : esc(s['LeetCode Username'] || '—')}
+                    </td>
+                    <td><span class="badge-marks" style="${isZero ? 'background:#fee2e2;color:#dc2626;' : ''}">${solved}</span></td>
+                    <td><strong style="color:#059669;">+${s['Solved Today'] || 0}</strong></td>
+                    <td><strong>${s['Last 7 Days'] || 0}</strong></td>
+                    <td><span style="font-size:0.85rem;">🔥 ${s['Current Streak'] || '0'}</span></td>
+                    <td style="font-size:0.84rem;color:#64748b;">${s.Easy || 0} / ${s.Medium || 0} / ${s.Hard || 0}</td>
+                    <td>
+                      <button class="btn-clean-secondary btn-open-dossier" data-reg="${esc(s['Register Number'])}" type="button" style="padding:4px 8px;font-size:0.78rem;">
+                        🔍 Dossier
+                      </button>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      wrap.querySelectorAll('.btn-open-dossier').forEach(btn => {
+        btn.addEventListener('click', () => openDossierByReg(btn.getAttribute('data-reg')));
+      });
+
+    } else {
+      const sortedGh = [...sectionGhData].sort((a,b) => Number(b['Contributions 30 Days']||0) - Number(a['Contributions 30 Days']||0));
+
+      if (!sortedGh.length) {
+        wrap.innerHTML = `<div class="empty-state-box"><p>No GitHub records synced for ${esc(currentAdvisor.section_full)}.</p></div>`;
+        return;
+      }
+
+      wrap.innerHTML = `
+        <div class="table-responsive">
+          <table class="white-data-table">
+            <thead>
+              <tr>
+                <th style="width:50px;">Rank</th>
+                <th>Register No</th>
+                <th>Student Name</th>
+                <th>GitHub Username</th>
+                <th>Deployments</th>
+                <th>Repositories</th>
+                <th>Contributions 30D</th>
+                <th>Commits 30D</th>
+                <th>Last Activity</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sortedGh.map((s, idx) => `
+                <tr>
+                  <td><strong>#${idx + 1}</strong></td>
+                  <td><strong style="color:#0f172a;font-family:monospace;font-size:0.95rem;">${esc(s['Register Number'] || '—')}</strong></td>
+                  <td><strong>${esc(s['Student Name'] || '—')}</strong></td>
+                  <td>
+                    ${s['GitHub Link'] ? `<a href="${esc(s['GitHub Link'])}" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700;">${esc(s['GitHub Username'])} ↗</a>` : esc(s['GitHub Username'] || '—')}
+                  </td>
+                  <td><span class="badge-marks" style="background:#ecfdf5;color:#059669;">🚀 ${s['Detected Deployments'] || 0}</span></td>
+                  <td><strong>${s['Repositories Total'] || 0}</strong></td>
+                  <td><strong style="color:#2563eb;">${s['Contributions 30 Days'] || 0}</strong></td>
+                  <td><strong>${s['Commits 30 Days'] || 0}</strong></td>
+                  <td style="font-size:0.82rem;color:#64748b;">${esc(s['Last Activity'] || '—')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+  }
+
+  // 5. Render Technical Assessment Tables
   function renderTestSubviews() {
     const countComp = testCompletedList.length;
     const countPend = testPendingList.length;
@@ -395,7 +727,7 @@
       tableWrap.innerHTML = `
         <div style="margin-bottom:14px;padding:12px 16px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
           <div style="color:#92400e;font-size:0.88rem;">
-            <strong>${testPendingList.length} Candidates Pending:</strong> Use the button on the right to copy their register numbers formatted for your WhatsApp class group.
+            <strong>${testPendingList.length} Candidates Pending:</strong> Use the button to copy their roll numbers formatted for WhatsApp broadcast.
           </div>
           <button id="btnCopyTestWhatsAppInline" class="btn-clean-primary" style="background:#059669;border-color:#047857;font-size:0.84rem;padding:6px 14px;">
             📋 Copy WhatsApp Message
@@ -431,7 +763,7 @@
     }
   }
 
-  // Render Task & Proof Tables
+  // 6. Render Task & Proof Tables
   function renderTaskSubviews() {
     const countComp = taskCompletedList.length;
     const countPend = taskPendingList.length;
@@ -540,7 +872,36 @@
     }
   }
 
-  // WhatsApp Message Generators & Copy to Clipboard
+  // 7. WhatsApp Broadcasts
+  function copyInactiveCodersWhatsApp() {
+    const inactive = sectionStudents.filter(s => {
+      const reg = String(s.reg_no || '').trim().toUpperCase();
+      const lc = sectionLcData.find(l => String(l['Register Number'] || '').trim().toUpperCase() === reg);
+      return !lc || Number(lc['Problems Solved'] || 0) === 0;
+    });
+
+    if (!inactive.length) {
+      showToast('All students in this section have solved at least 1 LeetCode problem!', 'success');
+      return;
+    }
+
+    const regList = inactive.map((s, i) => `${i + 1}. ${s.reg_no} - ${s.name}`).join('\n');
+    const message = `📢 *ECE DEPARTMENT - ${currentAdvisor.section_full.toUpperCase()} CODING SKILLS NOTICE*
+
+Dear Students,
+The following *${inactive.length} candidates* currently have 0 or inactive LeetCode solved problems:
+
+${regList}
+
+⚠️ *Action Required:* Please maintain your daily coding streak and solve problems on LeetCode:
+🔗 https://sabareesh2008.github.io/ECE-DEPARTMENT-coding-skills-tracker/
+
+— *Class Advisor:* ${currentAdvisor.name}
+*ECE Department, Coding & Skills Development Cell*`;
+
+    copyToClipboard(message, `Copied ${inactive.length} inactive coding roll numbers for WhatsApp!`);
+  }
+
   function copyTestPendingWhatsApp() {
     if (!testPendingList.length) {
       showToast('All students in this section have completed the technical assessment!', 'success');
@@ -645,12 +1006,11 @@ ${regList}
     }, 4000);
   }
 
-  // Section Task Creation Handling
+  // 8. Section Task Creation
   function bindTaskCreation() {
     const form = document.getElementById('advisorCreateTaskForm');
     if (!form) return;
 
-    // Set default target section in form
     const secSelect = document.getElementById('taskTargetSectionSelect');
     if (secSelect) {
       secSelect.value = currentAdvisor.section === 'ALL' ? 'ALL' : currentAdvisor.section;
@@ -696,7 +1056,6 @@ ${regList}
     });
   }
 
-  // Load Section Tasks List
   async function loadSectionTasksList() {
     const listWrap = document.getElementById('advisorSectionTasksList');
     if (!listWrap) return;
@@ -705,7 +1064,6 @@ ${regList}
     const localTasks = JSON.parse(localStorage.getItem('codemetrix_custom_tasks') || '[]');
     const combined = [...localTasks, ...tasks];
 
-    // Filter tasks for current section or ALL
     const secTasks = combined.filter(t => {
       const ts = String(t.target_section || 'ALL').trim().toUpperCase();
       return currentAdvisor.isHod || ts === 'ALL' || ts === currentAdvisor.section;
@@ -739,13 +1097,53 @@ ${regList}
     `).join('');
   }
 
-  // Excel / CSV Exporters
-  function exportSectionTestExcel() {
-    if (typeof XLSX === 'undefined') {
-      alert('Excel export library is loading. Please try again in a moment.');
-      return;
-    }
+  // 9. Excel Exporters
+  function exportSectionRosterExcel() {
+    if (typeof XLSX === 'undefined') return alert('Excel library is loading. Try again in a moment.');
+    const rows = mergedStudentData.map((s, idx) => ({
+      'S.No': idx + 1,
+      'Register Number': s.reg_no,
+      'Student Name': s.name,
+      'Department': s.department || 'ECE',
+      'Section': s.section,
+      'LeetCode Username': s.lc?.['LeetCode Username'] || '—',
+      'Problems Solved': s.lc ? Number(s.lc['Problems Solved'] || 0) : 0,
+      'GitHub Username': s.gh?.['GitHub Username'] || '—',
+      'GitHub Repos': s.gh ? Number(s.gh['Repositories Total'] || 0) : 0,
+      'Test Status': s.test ? 'Completed' : 'Pending',
+      'Test Marks': s.test ? `${s.test.obtained_marks}/${s.test.total_marks}` : '—',
+      'Task Proof Status': s.task ? 'Submitted' : 'Pending'
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, `Roster_${currentAdvisor.section}`);
+    XLSX.writeFile(wb, `ECE_${currentAdvisor.section}_Enrolled_Students_Roster.xlsx`);
+  }
 
+  function exportSectionCodingExcel() {
+    if (typeof XLSX === 'undefined') return alert('Excel library is loading. Try again in a moment.');
+    const rows = sectionLcData.map((s, idx) => ({
+      'Rank': idx + 1,
+      'Register Number': s['Register Number'],
+      'Student Name': s['Student Name'],
+      'Section': s.Section,
+      'LeetCode Username': s['LeetCode Username'],
+      'Problems Solved': Number(s['Problems Solved'] || 0),
+      'Solved Today': Number(s['Solved Today'] || 0),
+      'Last 7 Days': Number(s['Last 7 Days'] || 0),
+      'Current Streak': s['Current Streak'] || '0',
+      'Easy': Number(s.Easy || 0),
+      'Medium': Number(s.Medium || 0),
+      'Hard': Number(s.Hard || 0)
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, `Coding_${currentAdvisor.section}`);
+    XLSX.writeFile(wb, `ECE_${currentAdvisor.section}_LeetCode_Performance.xlsx`);
+  }
+
+  function exportSectionTestExcel() {
+    if (typeof XLSX === 'undefined') return alert('Excel library is loading.');
     const rows = sectionStudents.map((s, idx) => {
       const comp = testCompletedList.find(c => c.reg_no === s.reg_no);
       return {
@@ -761,7 +1159,6 @@ ${regList}
         'Submitted At': comp && comp.submitted_at ? new Date(comp.submitted_at).toLocaleString() : 'Not Submitted'
       };
     });
-
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, `Test_${currentAdvisor.section}`);
@@ -769,11 +1166,7 @@ ${regList}
   }
 
   function exportSectionTaskExcel() {
-    if (typeof XLSX === 'undefined') {
-      alert('Excel export library is loading. Please try again in a moment.');
-      return;
-    }
-
+    if (typeof XLSX === 'undefined') return alert('Excel library is loading.');
     const rows = sectionStudents.map((s, idx) => {
       const comp = taskCompletedList.find(c => c.reg_no === s.reg_no);
       return {
@@ -788,11 +1181,30 @@ ${regList}
         'Submitted At': comp && comp.submitted_at ? new Date(comp.submitted_at).toLocaleString() : 'Pending'
       };
     });
-
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, `Tasks_${currentAdvisor.section}`);
     XLSX.writeFile(wb, `ECE_${currentAdvisor.section}_Task_Submissions_Report.xlsx`);
+  }
+
+  function parseCsvData(text) {
+    const rows=[]; let row=[], value='', quoted=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i], n=text[i+1];
+      if(c==='"' && quoted && n==='"'){ value+='"'; i++; }
+      else if(c==='"') quoted=!quoted;
+      else if(c===',' && !quoted){ row.push(value); value=''; }
+      else if((c==='\n'||c==='\r')&&!quoted){ if(c==='\r'&&n==='\n')i++; row.push(value); value=''; if(row.some(x=>x.trim()))rows.push(row); row=[]; }
+      else value+=c;
+    }
+    if(value!==''||row.length){row.push(value);rows.push(row);}
+    if(rows.length<2)return[];
+    const headers=rows[0].map(h=>h.replace(/^\uFEFF/,'').trim());
+    return rows.slice(1).map(cells=>Object.fromEntries(headers.map((h,i)=>[h,(cells[i]??'').trim()]))).filter(row => {
+      const reg = String(row['Register Number'] || row.register_number || '').trim();
+      const name = String(row['Student Name'] || row.student_name || '').trim();
+      return reg !== '' && reg !== '—' && reg !== '-' && !reg.startsWith('<') && !reg.startsWith('=') && !reg.startsWith('>') && name !== '';
+    });
   }
 
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
