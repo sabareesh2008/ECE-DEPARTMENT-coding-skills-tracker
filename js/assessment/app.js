@@ -1692,6 +1692,8 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
   }
 
   function submitAssessment() {
+    state.proctorGraceUntil = Date.now() + 8000; // 8s grace period
+    
     let answered = 0;
     state.questions.forEach((q, idx) => {
       const resp = state.examAnswers[idx];
@@ -1703,9 +1705,19 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
       ? `You have answered ${answered} of ${state.questions.length} questions.\n${unanswered} questions are still unanswered.\n\nAre you sure you want to finish and submit the assessment now?`
       : `You have answered all ${state.questions.length} questions!\n\nAre you sure you want to submit your assessment?`;
 
+    // Deactivate active proctoring checks during submission confirmation
+    const wasActive = state.isExamActive;
+    state.isExamActive = false;
+    state.isWarningModalOpen = false;
+    if (proctorWarningModal) proctorWarningModal.classList.add('hidden');
+
     if (confirm(confirmMsg)) {
       clearInterval(state.examTimerInterval);
       finalizeSubmission(false);
+    } else {
+      // User cancelled submit - resume test with grace period
+      state.isExamActive = wasActive;
+      state.proctorGraceUntil = Date.now() + 3000;
     }
   }
 
@@ -1735,7 +1747,7 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
   function setupProctoringGuards() {
     // 1. Detect Fullscreen Exit (Escape key or browser control)
     const onFullscreenChange = () => {
-      if (!state.isExamActive) return;
+      if (!state.isExamActive || (examView && examView.classList.contains('hidden'))) return;
       if (Date.now() < (state.proctorGraceUntil || 0)) return; // Ignore during launch/resume transition!
       const isFull = Boolean(
         document.fullscreenElement ||
@@ -1755,7 +1767,7 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
 
     // 2. Tab switch or minimize window
     document.addEventListener('visibilitychange', () => {
-      if (!state.isExamActive) return;
+      if (!state.isExamActive || (examView && examView.classList.contains('hidden'))) return;
       if (Date.now() < (state.proctorGraceUntil || 0)) return;
       if (document.hidden) {
         triggerProctorWarning('Switched tabs or minimized browser window');
@@ -1764,11 +1776,11 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
 
     // 3. Window blur (clicked outside or alt-tabbed)
     window.addEventListener('blur', () => {
-      if (!state.isExamActive) return;
+      if (!state.isExamActive || (examView && examView.classList.contains('hidden'))) return;
       if (Date.now() < (state.proctorGraceUntil || 0)) return;
       if (state.isWarningModalOpen) return;
       setTimeout(() => {
-        if (state.isExamActive && !document.hasFocus() && !state.isWarningModalOpen) {
+        if (state.isExamActive && !document.hasFocus() && !state.isWarningModalOpen && examView && !examView.classList.contains('hidden')) {
           triggerProctorWarning('Left examination window');
         }
       }, 350);
@@ -1776,7 +1788,8 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
 
     // 4. Intercept Escape key explicitly
     window.addEventListener('keydown', (e) => {
-      if (!state.isExamActive) return;
+      if (!state.isExamActive || (examView && examView.classList.contains('hidden'))) return;
+      if (Date.now() < (state.proctorGraceUntil || 0)) return;
       if (e.key === 'Escape' || e.keyCode === 27) {
         triggerProctorWarning('Escape key detected');
       }
@@ -1794,7 +1807,7 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
   }
 
   function triggerProctorWarning(reason) {
-    if (!state.isExamActive) return;
+    if (!state.isExamActive || (examView && examView.classList.contains('hidden'))) return;
     if (state.isWarningModalOpen) return; // Prevent multiple simultaneous triggers
 
     state.proctorWarnings = (state.proctorWarnings || 0) + 1;
@@ -1813,6 +1826,7 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
 
   function showWarningModal(reason) {
     if (!proctorWarningModal) return;
+    if (!state.isExamActive || (examView && examView.classList.contains('hidden'))) return;
 
     if (proctorWarningTitle) {
       proctorWarningTitle.textContent = `Security Warning ${state.proctorWarnings} of 3`;
@@ -1837,8 +1851,6 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
     try {
       if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
     } catch (e) {}
-
-    alert(`⚠️ TEST TERMINATED IMMEDIATELY!\n\nYou have exceeded the maximum limit of 3 security warnings (${reason}).\n\nYour assessment has been automatically ended and submitted with all violation records.`);
 
     finalizeSubmission(true);
   }
