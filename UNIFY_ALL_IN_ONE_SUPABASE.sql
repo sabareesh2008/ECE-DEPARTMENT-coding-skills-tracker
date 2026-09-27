@@ -1,0 +1,249 @@
+-- ============================================================
+-- CODEMETRIX UNIFIED ALL-IN-ONE SUPABASE MIGRATION SCRIPT
+-- Run this ONCE in your target primary Supabase project's SQL Editor
+-- (Dashboard -> SQL Editor -> New Query -> Run)
+-- ============================================================
+
+-- 1. EXTENSIONS
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- ============================================================
+-- 2. STUDENTS MASTER TABLE (Unified fields: reg_no, register_number)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.students (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    register_number TEXT UNIQUE,
+    reg_no TEXT GENERATED ALWAYS AS (register_number) STORED,
+    student_name TEXT NOT NULL,
+    name TEXT GENERATED ALWAYS AS (student_name) STORED,
+    department TEXT DEFAULT 'ECE',
+    section TEXT NOT NULL,
+    academic_year INT DEFAULT 2,
+    leetcode_username TEXT,
+    github_username TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_students_reg_no ON public.students(register_number);
+CREATE INDEX IF NOT EXISTS idx_students_section ON public.students(section);
+
+-- ============================================================
+-- 3. LEETCODE SUBMISSIONS & FORENSICS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.student_leetcode_submissions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    register_number TEXT NOT NULL,
+    student_name TEXT,
+    section TEXT,
+    leetcode_username TEXT,
+    problem_title TEXT NOT NULL,
+    problem_slug TEXT,
+    difficulty TEXT,
+    language TEXT,
+    submission_id TEXT,
+    submission_time TIMESTAMPTZ DEFAULT NOW(),
+    source_code TEXT,
+    active_time_seconds INT DEFAULT 0,
+    keystrokes_count INT DEFAULT 0,
+    paste_count INT DEFAULT 0,
+    keystroke_ratio NUMERIC DEFAULT 1.0,
+    tab_switch_count INT DEFAULT 0,
+    is_pasted BOOLEAN DEFAULT FALSE,
+    has_prompt_comments BOOLEAN DEFAULT FALSE,
+    plagiarism_risk_score INT DEFAULT 0,
+    plagiarism_verdict TEXT DEFAULT 'CLEAN',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_sub_reg ON public.student_leetcode_submissions(register_number);
+CREATE INDEX IF NOT EXISTS idx_sub_time ON public.student_leetcode_submissions(submission_time);
+
+-- ============================================================
+-- 4. FACULTIES TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.faculties (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    faculty_id TEXT UNIQUE NOT NULL,
+    faculty_name TEXT NOT NULL,
+    designation TEXT,
+    department TEXT DEFAULT 'ECE',
+    email TEXT,
+    leetcode_username TEXT,
+    total_solved INT DEFAULT 0,
+    solved_today INT DEFAULT 0,
+    last_7_days INT DEFAULT 0,
+    last_30_days INT DEFAULT 0,
+    easy INT DEFAULT 0,
+    medium INT DEFAULT 0,
+    hard INT DEFAULT 0,
+    total_submissions INT DEFAULT 0,
+    last_problem TEXT,
+    last_solved TEXT,
+    status TEXT DEFAULT 'Active',
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- 5. TECHNICAL ASSESSMENTS (EXAMINATIONS) TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.assessments (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    duration INT DEFAULT 45,
+    is_published BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insert default test if not exists
+INSERT INTO public.assessments (id, title, duration, is_published)
+VALUES ('test_1', 'Technical Assessment 2026', 45, TRUE)
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 6. QUESTION BANK TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.questions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    test_id TEXT DEFAULT 'test_1',
+    type TEXT DEFAULT 'MCQ', -- 'MCQ' or 'FIB'
+    category TEXT DEFAULT 'General',
+    question TEXT NOT NULL,
+    options JSONB DEFAULT '[]'::jsonb, -- ['Opt A', 'Opt B', 'Opt C', 'Opt D']
+    correct_answer TEXT NOT NULL,
+    explanation TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_q_test ON public.questions(test_id);
+
+-- ============================================================
+-- 7. ASSESSMENT SUBMISSIONS (STUDENT TEST SCORES) TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.submissions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    test_id TEXT DEFAULT 'test_1',
+    test_title TEXT DEFAULT 'Technical Assessment 2026',
+    reg_no TEXT NOT NULL,
+    student_name TEXT NOT NULL,
+    department TEXT DEFAULT 'ECE',
+    section TEXT NOT NULL,
+    obtained_marks NUMERIC NOT NULL DEFAULT 0,
+    total_marks NUMERIC NOT NULL DEFAULT 0,
+    percentage NUMERIC NOT NULL DEFAULT 0,
+    time_taken TEXT,
+    tab_warnings INT DEFAULT 0,
+    submitted_at TIMESTAMPTZ DEFAULT NOW(),
+    answers JSONB DEFAULT '[]'::jsonb
+);
+
+CREATE INDEX IF NOT EXISTS idx_test_sub_reg ON public.submissions(reg_no);
+CREATE INDEX IF NOT EXISTS idx_test_sub_sec ON public.submissions(section);
+
+-- ============================================================
+-- 8. TASK ASSIGNMENTS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.tasks (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    deadline TIMESTAMPTZ,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insert default active task if not exists
+INSERT INTO public.tasks (id, title, description, deadline, is_active)
+VALUES (
+    'task-live-01',
+    'Course Registration & Proof Screenshot Submission',
+    'Please upload a clear screenshot of your course enrollment / assessment completion proof showing your Name and Register Number.',
+    NOW() + INTERVAL '14 days',
+    TRUE
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 9. TASK PROOF SUBMISSIONS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.task_submissions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    task_id TEXT DEFAULT 'task-live-01',
+    task_title TEXT DEFAULT 'Course Registration & Proof Screenshot Submission',
+    reg_no TEXT NOT NULL,
+    register_number TEXT GENERATED ALWAYS AS (reg_no) STORED,
+    student_name TEXT NOT NULL,
+    name TEXT GENERATED ALWAYS AS (student_name) STORED,
+    department TEXT DEFAULT 'ECE',
+    section TEXT NOT NULL,
+    proof_url TEXT NOT NULL,
+    notes TEXT,
+    submitted_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_task_sub_reg ON public.task_submissions(reg_no);
+CREATE INDEX IF NOT EXISTS idx_task_sub_sec ON public.task_submissions(section);
+
+-- ============================================================
+-- 10. STORAGE BUCKET FOR PROOF SCREENSHOTS
+-- ============================================================
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('proof-screenshots', 'proof-screenshots', TRUE)
+ON CONFLICT (id) DO UPDATE SET public = TRUE;
+
+-- Storage RLS Policies (Allow public uploads & reads)
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Allow Public Uploads proof-screenshots" ON storage.objects;
+    DROP POLICY IF EXISTS "Allow Public Select proof-screenshots" ON storage.objects;
+    
+    CREATE POLICY "Allow Public Uploads proof-screenshots"
+    ON storage.objects FOR INSERT
+    WITH CHECK (bucket_id = 'proof-screenshots');
+
+    CREATE POLICY "Allow Public Select proof-screenshots"
+    ON storage.objects FOR SELECT
+    USING (bucket_id = 'proof-screenshots');
+END $$;
+
+-- ============================================================
+-- 11. ENABLE ROW LEVEL SECURITY & PUBLIC POLICIES
+-- ============================================================
+ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.student_leetcode_submissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.faculties ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.assessments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.submissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.task_submissions ENABLE ROW LEVEL SECURITY;
+
+-- Allow read & write access with anon key for frictionless client operations
+DO $$
+DECLARE
+    tbl text;
+BEGIN
+    FOR tbl IN SELECT unnest(ARRAY[
+        'students', 
+        'student_leetcode_submissions', 
+        'faculties', 
+        'assessments', 
+        'questions', 
+        'submissions', 
+        'tasks', 
+        'task_submissions'
+    ]) LOOP
+        EXECUTE format('DROP POLICY IF EXISTS "Public Read All on %I" ON public.%I', tbl, tbl);
+        EXECUTE format('CREATE POLICY "Public Read All on %I" ON public.%I FOR SELECT USING (true)', tbl, tbl);
+        
+        EXECUTE format('DROP POLICY IF EXISTS "Public Insert on %I" ON public.%I', tbl, tbl);
+        EXECUTE format('CREATE POLICY "Public Insert on %I" ON public.%I FOR INSERT WITH CHECK (true)', tbl, tbl);
+        
+        EXECUTE format('DROP POLICY IF EXISTS "Public Update on %I" ON public.%I', tbl, tbl);
+        EXECUTE format('CREATE POLICY "Public Update on %I" ON public.%I FOR UPDATE USING (true)', tbl, tbl);
+        
+        EXECUTE format('DROP POLICY IF EXISTS "Public Delete on %I" ON public.%I', tbl, tbl);
+        EXECUTE format('CREATE POLICY "Public Delete on %I" ON public.%I FOR DELETE USING (true)', tbl, tbl);
+    END LOOP;
+END $$;
