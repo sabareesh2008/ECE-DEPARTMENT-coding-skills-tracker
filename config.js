@@ -231,5 +231,59 @@ window.StudentService = {
       localStorage.setItem('codemetrix_custom_tasks', JSON.stringify(localTasks));
       return payload;
     }
+  },
+
+  // Fetch all published assessments
+  async fetchAssessments() {
+    try {
+      const res = await fetch(`${window.APP_CONFIG.PORTAL_SUPABASE_URL}/rest/v1/assessments?select=*&order=created_at.desc`, {
+        headers: {
+          'apikey': window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY}`
+        }
+      });
+      if (!res.ok) {
+        const localTests = JSON.parse(localStorage.getItem('codemetrix_published_tests') || '[]');
+        return localTests.length ? localTests : [{ id: 'test_1', title: 'Technical Assessment 2026', duration: 45, is_published: true, target_section: 'ALL', created_by: 'Department Head' }];
+      }
+      const data = await res.json();
+      return Array.isArray(data) && data.length ? data : [{ id: 'test_1', title: 'Technical Assessment 2026', duration: 45, is_published: true, target_section: 'ALL', created_by: 'Department Head' }];
+    } catch (e) {
+      const localTests = JSON.parse(localStorage.getItem('codemetrix_published_tests') || '[]');
+      return localTests.length ? localTests : [{ id: 'test_1', title: 'Technical Assessment 2026', duration: 45, is_published: true, target_section: 'ALL', created_by: 'Department Head' }];
+    }
+  },
+
+  // Publish / activate a new assessment (Overall or Section-specific)
+  async publishAssessment(testData) {
+    const payload = {
+      id: testData.id || ('test_' + Date.now()),
+      title: testData.title || 'Technical Assessment 2026',
+      duration: Number(testData.duration || 45),
+      target_section: testData.target_section || 'ALL',
+      is_published: testData.is_published !== false,
+      created_by: testData.created_by || 'Faculty Admin',
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      await fetch(`${window.APP_CONFIG.PORTAL_SUPABASE_URL}/rest/v1/assessments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY}`,
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {
+      console.warn('[StudentService] Remote assessment publish fallback to local storage');
+    }
+
+    const localTests = JSON.parse(localStorage.getItem('codemetrix_published_tests') || '[]');
+    localTests.unshift(payload);
+    localStorage.setItem('codemetrix_published_tests', JSON.stringify(localTests));
+    return payload;
   }
 };

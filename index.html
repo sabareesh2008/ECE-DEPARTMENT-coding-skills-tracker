@@ -623,13 +623,16 @@
                 💻 LeetCode &amp; GitHub Activity
               </button>
               <button class="advisor-main-tab-btn" data-tab="tab-advisor-tests">
-                📝 Technical Assessment Tracking
+                📝 Technical Assessment Results
               </button>
               <button class="advisor-main-tab-btn" data-tab="tab-advisor-tasks">
-                📋 Task &amp; Proof Monitoring
+                📋 Task Proof Monitoring
               </button>
-              <button class="advisor-main-tab-btn" data-tab="tab-advisor-create-task">
-                ➕ Section Task Assignment Desk
+              <button class="advisor-main-tab-btn" data-tab="tab-advisor-publish-test" style="background:#ecfdf5;color:#059669;border-color:#a7f3d0;font-weight:800;">
+                🚀 Publish Overall / Section Exams
+              </button>
+              <button class="advisor-main-tab-btn" data-tab="tab-advisor-create-task" style="background:#eff6ff;color:#2563eb;border-color:#bfdbfe;font-weight:800;">
+                📋 Publish Overall / Section Tasks
               </button>
               <button class="advisor-main-tab-btn" data-tab="tab-advisor-resources">
                 📂 Question Banks &amp; Tools
@@ -697,6 +700,9 @@
                 </div>
               </div>
             </div>
+
+            <!-- TAB 1: TECHNICAL ASSESSMENT TRACKING -->
+            <div id="tab-advisor-tests" class="advisor-tab-pane">
               <div class="white-panel-card">
                 <div class="panel-header-row">
                   <div>
@@ -765,13 +771,83 @@
               </div>
             </div>
 
-            <!-- TAB 3: SECTION TASK ASSIGNMENT DESK -->
+            <!-- TAB 2.5: PUBLISH OVERALL / SECTION TECHNICAL ASSESSMENTS -->
+            <div id="tab-advisor-publish-test" class="advisor-tab-pane">
+              <div class="white-panel-card">
+                <div class="panel-header-row">
+                  <div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                      <span class="report-eyebrow" style="background:#ecfdf5;color:#059669;">EXAMINATION PUBLISHING DESK</span>
+                    </div>
+                    <h3 style="font-size:1.2rem;color:#0f172a;margin:0 0 4px 0;">🚀 Publish Technical Assessment (Overall / Section)</h3>
+                    <p style="color:#64748b;font-size:0.85rem;margin:0;">Publish examinations live for the entire department (Sections A–F) or target specific class sections.</p>
+                  </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-top:16px;">
+                  <!-- Test Publishing Form -->
+                  <form id="advisorPublishTestForm" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:22px;">
+                    <div style="margin-bottom:14px;">
+                      <label for="publishTestTitleInput" style="display:block;font-size:0.85rem;font-weight:700;color:#334155;margin-bottom:6px;">Assessment Title</label>
+                      <input type="text" id="publishTestTitleInput" class="form-control" placeholder="e.g. Technical Assessment 2026 - Comprehensive" value="Technical Assessment 2026" required style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #cbd5e1;">
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+                      <div>
+                        <label for="publishTestScopeSelect" style="display:block;font-size:0.85rem;font-weight:700;color:#334155;margin-bottom:6px;">Target Scope</label>
+                        <select id="publishTestScopeSelect" class="form-control" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;">
+                          <option value="ALL">🌐 Overall (Sections A–F)</option>
+                          <option value="A">Section A Only</option>
+                          <option value="B">Section B Only</option>
+                          <option value="C">Section C Only</option>
+                          <option value="D">Section D Only</option>
+                          <option value="E">Section E Only</option>
+                          <option value="F">Section F Only</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label for="publishTestDurationInput" style="display:block;font-size:0.85rem;font-weight:700;color:#334155;margin-bottom:6px;">Duration (Minutes)</label>
+                        <input type="number" id="publishTestDurationInput" class="form-control" value="45" min="5" max="180" required style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;">
+                      </div>
+                    </div>
+
+                    <div style="margin-bottom:14px;">
+                      <label for="publishTestQBankSelect" style="display:block;font-size:0.85rem;font-weight:700;color:#334155;margin-bottom:6px;">Question Bank Source</label>
+                      <select id="publishTestQBankSelect" class="form-control" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;">
+                        <option value="builtin">Standard 50-Question Department Bank (MCQ &amp; Fill-in-Blanks)</option>
+                        <option value="custom">Custom Question Bank (Loaded from CSV)</option>
+                      </select>
+                    </div>
+
+                    <div id="publishTestMsg" style="margin-bottom:10px;font-size:0.85rem;font-weight:600;"></div>
+
+                    <button type="submit" class="btn-clean-primary" style="width:100%;padding:11px;font-weight:700;background:#059669;border-color:#047857;display:flex;align-items:center;justify-content:center;gap:8px;">
+                      🚀 Publish Exam Live for Students
+                    </button>
+                  </form>
+
+                  <!-- Active Published Tests List -->
+                  <div>
+                    <h4 style="margin:0 0 12px 0;font-size:1rem;color:#0f172a;">Active Published Examinations</h4>
+                    <div id="advisorPublishedTestsList">
+                      <!-- Injected via JS -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 3: SECTION & OVERALL TASK PUBLISHING DESK -->
             <div id="tab-advisor-create-task" class="advisor-tab-pane">
               <div class="white-panel-card">
                 <div class="panel-header-row">
                   <div>
-                    <h3 style="font-size:1.2rem;color:#0f172a;margin:0 0 4px 0;">Assign New Section Task</h3>
-                    <p style="color:#64748b;font-size:0.85rem;margin:0;">Create assignments or proof verification tasks targeted exclusively for your class section.</p>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                      <span class="report-eyebrow" style="background:#eff6ff;color:#2563eb;">TASK ASSIGNMENT DESK</span>
+                    </div>
+                    <h3 style="font-size:1.2rem;color:#0f172a;margin:0 0 4px 0;">📋 Publish Task &amp; Proof Assignment (Overall / Section)</h3>
+                    <p style="color:#64748b;font-size:0.85rem;margin:0;">Create assignments or proof verification tasks for all sections (Overall ECE) or target specific class sections.</p>
                   </div>
                 </div>
 
@@ -780,19 +856,19 @@
                   <form id="advisorCreateTaskForm" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:22px;">
                     <div style="margin-bottom:14px;">
                       <label for="taskTitleInput" style="display:block;font-size:0.85rem;font-weight:700;color:#334155;margin-bottom:6px;">Task Title</label>
-                      <input type="text" id="taskTitleInput" class="form-control" placeholder="e.g. Mini-Project Phase 1 Screenshot Proof" required style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #cbd5e1;">
+                      <input type="text" id="taskTitleInput" class="form-control" placeholder="e.g. Course Enrollment &amp; Assessment Screenshot Proof" value="Course Registration &amp; Proof Screenshot Submission" required style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #cbd5e1;">
                     </div>
 
                     <div style="margin-bottom:14px;">
                       <label for="taskTargetSectionSelect" style="display:block;font-size:0.85rem;font-weight:700;color:#334155;margin-bottom:6px;">Target Section Scope</label>
                       <select id="taskTargetSectionSelect" class="form-control" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;">
+                        <option value="ALL">🌐 Overall (All ECE Sections A–F)</option>
                         <option value="A">Section A Only</option>
                         <option value="B">Section B Only</option>
                         <option value="C">Section C Only</option>
                         <option value="D">Section D Only</option>
                         <option value="E">Section E Only</option>
                         <option value="F">Section F Only</option>
-                        <option value="ALL">All Sections (Entire Department)</option>
                       </select>
                     </div>
 
@@ -803,19 +879,19 @@
 
                     <div style="margin-bottom:14px;">
                       <label for="taskDescInput" style="display:block;font-size:0.85rem;font-weight:700;color:#334155;margin-bottom:6px;">Task Instructions</label>
-                      <textarea id="taskDescInput" rows="3" class="form-control" placeholder="Explain what screenshot / document students need to submit..." style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #cbd5e1;"></textarea>
+                      <textarea id="taskDescInput" rows="3" class="form-control" placeholder="Explain what screenshot / document students need to submit..." style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #cbd5e1;">Please upload a clear screenshot of your course enrollment / assessment completion proof showing your Name and Register Number.</textarea>
                     </div>
 
                     <div id="taskCreateMsg" style="margin-bottom:10px;font-size:0.85rem;font-weight:600;"></div>
 
-                    <button type="submit" class="btn-clean-primary" style="width:100%;padding:11px;font-weight:700;background:#2563eb;border-color:#1d4ed8;">
-                      🚀 Publish Task for Section
+                    <button type="submit" class="btn-clean-primary" style="width:100%;padding:11px;font-weight:700;background:#2563eb;border-color:#1d4ed8;display:flex;align-items:center;justify-content:center;gap:8px;">
+                      🚀 Publish Task for Students
                     </button>
                   </form>
 
                   <!-- Active Section Tasks List -->
                   <div>
-                    <h4 style="margin:0 0 12px 0;font-size:1rem;color:#0f172a;">Active Tasks in this Section</h4>
+                    <h4 style="margin:0 0 12px 0;font-size:1rem;color:#0f172a;">Active Published Tasks</h4>
                     <div id="advisorSectionTasksList">
                       <!-- Injected via JS -->
                     </div>

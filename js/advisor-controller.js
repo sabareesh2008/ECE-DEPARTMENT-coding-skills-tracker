@@ -139,6 +139,7 @@
     bindTabControls();
     bindKpiCardClicks();
     bindTaskCreation();
+    bindTestPublishing();
   }
 
   async function refreshSectionData() {
@@ -279,6 +280,7 @@
       renderTestSubviews();
       renderTaskSubviews();
       loadSectionTasksList();
+      loadPublishedAssessmentsList();
 
     } catch (e) {
       console.error('[AdvisorController] Refresh data error:', e);
@@ -1005,14 +1007,14 @@ ${regList}
     }, 4000);
   }
 
-  // 8. Section Task Creation
+  // 8. Overall & Section Task Creation
   function bindTaskCreation() {
     const form = document.getElementById('advisorCreateTaskForm');
     if (!form) return;
 
     const secSelect = document.getElementById('taskTargetSectionSelect');
     if (secSelect) {
-      secSelect.value = currentAdvisor.section === 'ALL' ? 'ALL' : currentAdvisor.section;
+      secSelect.value = currentAdvisor.isHod ? 'ALL' : currentAdvisor.section;
     }
 
     form.addEventListener('submit', async (e) => {
@@ -1032,7 +1034,7 @@ ${regList}
         return;
       }
 
-      if (msgEl) { msgEl.textContent = 'Publishing task to section students...'; msgEl.style.color = '#2563eb'; }
+      if (msgEl) { msgEl.textContent = 'Publishing task to section / overall students...'; msgEl.style.color = '#2563eb'; }
 
       const taskData = {
         title: title,
@@ -1045,13 +1047,13 @@ ${regList}
       await window.StudentService.createSectionTask(taskData);
 
       if (msgEl) {
-        msgEl.textContent = `✓ Task "${title}" published successfully for Section ${targetSec}!`;
+        msgEl.textContent = `✓ Task "${title}" published successfully for Scope: ${targetSec === 'ALL' ? 'Overall (All Sections)' : 'Section ' + targetSec}!`;
         msgEl.style.color = '#059669';
       }
 
       form.reset();
       loadSectionTasksList();
-      showToast(`Task assigned to Section ${targetSec}!`, 'success');
+      showToast(`Task published for Scope: ${targetSec}!`, 'success');
     });
   }
 
@@ -1071,7 +1073,7 @@ ${regList}
     if (!secTasks.length) {
       listWrap.innerHTML = `
         <div class="empty-state-box">
-          <p>No active tasks assigned specifically for ${esc(currentAdvisor.section_full)}.</p>
+          <p>No active tasks assigned for ${esc(currentAdvisor.section_full)}.</p>
         </div>
       `;
       return;
@@ -1082,7 +1084,7 @@ ${regList}
         <div style="flex:1;min-width:240px;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
             <strong style="font-size:1rem;color:#0f172a;">${esc(t.title)}</strong>
-            <span class="badge-section" style="background:#dbeafe;color:#1d4ed8;">Section: ${esc(t.target_section || 'ALL')}</span>
+            <span class="badge-section" style="background:#dbeafe;color:#1d4ed8;font-weight:700;">Scope: ${t.target_section === 'ALL' ? '🌐 Overall (A–F)' : 'Section ' + esc(t.target_section)}</span>
           </div>
           <p style="color:#475569;font-size:0.86rem;margin:4px 0 8px 0;">${esc(t.description || 'Upload screenshot proof.')}</p>
           <div style="font-size:0.78rem;color:#64748b;">
@@ -1090,7 +1092,99 @@ ${regList}
           </div>
         </div>
         <div>
-          <span class="trend-badge" style="background:#ecfdf5;color:#059669;">Active</span>
+          <span class="trend-badge" style="background:#ecfdf5;color:#059669;">Active / Live</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // 8.5 Overall & Section Test Publishing
+  function bindTestPublishing() {
+    const form = document.getElementById('advisorPublishTestForm');
+    if (!form) return;
+
+    const secSelect = document.getElementById('publishTestScopeSelect');
+    if (secSelect) {
+      secSelect.value = currentAdvisor.isHod ? 'ALL' : currentAdvisor.section;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const titleInput = document.getElementById('publishTestTitleInput');
+      const scopeSelect = document.getElementById('publishTestScopeSelect');
+      const durationInput = document.getElementById('publishTestDurationInput');
+      const qbankSelect = document.getElementById('publishTestQBankSelect');
+      const msgEl = document.getElementById('publishTestMsg');
+
+      const title = (titleInput?.value || '').trim();
+      const scope = scopeSelect?.value || 'ALL';
+      const duration = Number(durationInput?.value || 45);
+      const qbank = qbankSelect?.value || 'builtin';
+
+      if (!title) {
+        if (msgEl) { msgEl.textContent = 'Please enter assessment title.'; msgEl.style.color = '#dc2626'; }
+        return;
+      }
+
+      if (msgEl) { msgEl.textContent = 'Publishing examination live for students...'; msgEl.style.color = '#2563eb'; }
+
+      const testData = {
+        title: title,
+        duration: duration,
+        target_section: scope,
+        qbank_source: qbank,
+        is_published: true,
+        created_by: currentAdvisor.name
+      };
+
+      if (window.StudentService?.publishAssessment) {
+        await window.StudentService.publishAssessment(testData);
+      }
+
+      if (msgEl) {
+        msgEl.textContent = `✓ Examination "${title}" published live successfully for Scope: ${scope === 'ALL' ? 'Overall (Sections A–F)' : 'Section ' + scope}!`;
+        msgEl.style.color = '#059669';
+      }
+
+      loadPublishedAssessmentsList();
+      showToast(`Exam published for Scope: ${scope}!`, 'success');
+    });
+  }
+
+  async function loadPublishedAssessmentsList() {
+    const listWrap = document.getElementById('advisorPublishedTestsList');
+    if (!listWrap) return;
+
+    const tests = window.StudentService ? await window.StudentService.fetchAssessments() : [];
+    const secTests = tests.filter(t => {
+      const ts = String(t.target_section || 'ALL').trim().toUpperCase();
+      return currentAdvisor.isHod || ts === 'ALL' || ts === currentAdvisor.section;
+    });
+
+    if (!secTests.length) {
+      listWrap.innerHTML = `
+        <div class="empty-state-box">
+          <p>No active published assessments found.</p>
+        </div>
+      `;
+      return;
+    }
+
+    listWrap.innerHTML = secTests.map(t => `
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:240px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <strong style="font-size:1.05rem;color:#0f172a;">${esc(t.title)}</strong>
+            <span class="badge-section" style="background:#ecfdf5;color:#047857;font-weight:700;">Scope: ${t.target_section === 'ALL' ? '🌐 Overall (A–F)' : 'Section ' + esc(t.target_section)}</span>
+          </div>
+          <p style="color:#475569;font-size:0.86rem;margin:4px 0 8px 0;">Timed MCQ &amp; Fill-in-the-blanks test with automated scoring and PDF keys.</p>
+          <div style="font-size:0.78rem;color:#64748b;">
+            ⏱️ Duration: <strong>${t.duration || 45} mins</strong> · Total Questions: <strong>50 Qs</strong> · Published by: <strong>${esc(t.created_by || 'Faculty Admin')}</strong>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+          <span class="trend-badge" style="background:#ecfdf5;color:#059669;">● Live / Active</span>
+          <a href="assessment.html" class="btn-clean-primary" style="font-size:0.8rem;padding:5px 12px;background:#059669;border-color:#047857;">Launch Test ↗</a>
         </div>
       </div>
     `).join('');
