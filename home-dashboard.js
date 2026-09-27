@@ -416,20 +416,20 @@
             const pct = Math.round((obtained / total) * 100);
             body.innerHTML = `
               <div class="student-metric-row"><span>Assessment Title</span><strong>${esc(assess.test_title || 'Technical Assessment 2026')}</strong></div>
-              <div class="student-metric-row"><span>Marks Obtained</span><strong style="color:#34d399;font-size:1.05rem;">${obtained} / ${total}</strong></div>
-              <div class="student-metric-row"><span>Score / Percentage</span><strong style="color:#38bdf8;">${pct}%</strong></div>
-              <div class="student-metric-row"><span>Status</span><strong style="color:#10b981;">✓ Completed</strong></div>
+              <div class="student-metric-row"><span>Marks Obtained</span><strong style="color:#059669;font-size:1.05rem;">${obtained} / ${total}</strong></div>
+              <div class="student-metric-row"><span>Score / Percentage</span><strong style="color:#0284c7;">${pct}%</strong></div>
+              <div class="student-metric-row"><span>Status</span><strong style="color:#059669;">✓ Completed</strong></div>
               <div class="student-metric-row"><span>Submitted At</span><strong>${assess.submitted_at ? new Date(assess.submitted_at).toLocaleDateString() : 'Recorded'}</strong></div>
             `;
           } else {
             body.innerHTML = `
-              <div class="student-metric-row"><span>Status</span><strong style="color:#f59e0b;">No Submissions Yet</strong></div>
-              <div class="student-metric-row"><span style="color:var(--muted);font-size:0.82rem;">Eligible to take published assessments.</span></div>
+              <div class="student-metric-row"><span>Status</span><strong style="color:#d97706;">No Submissions Yet</strong></div>
+              <div class="student-metric-row"><span style="color:#64748b;font-size:0.85rem;font-weight:500;">Eligible to take published assessments.</span></div>
             `;
           }
         }).catch(() => {
           const body = document.getElementById('homeAssessmentDossierBody');
-          if (body) body.innerHTML = `<div class="student-metric-row"><span>Status</span><strong style="color:var(--muted);">No records found</strong></div>`;
+          if (body) body.innerHTML = `<div class="student-metric-row"><span>Status</span><strong style="color:#64748b;">No records found</strong></div>`;
         });
       }
 
@@ -439,23 +439,23 @@
           const body = document.getElementById('homeTaskDossierBody');
           if (!body) return;
           if (task) {
-            const proofLink = task.proof_url ? `<a href="${esc(task.proof_url)}" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline;">View Proof ↗</a>` : 'Uploaded';
+            const proofLink = task.proof_url ? `<a href="${esc(task.proof_url)}" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline;font-weight:700;">View Proof ↗</a>` : 'Uploaded';
             body.innerHTML = `
               <div class="student-metric-row"><span>Active Task</span><strong>${esc(task.task_title || 'Course Registration & Proof')}</strong></div>
-              <div class="student-metric-row"><span>Status</span><strong style="color:#34d399;">✓ Submitted</strong></div>
+              <div class="student-metric-row"><span>Status</span><strong style="color:#059669;">✓ Submitted</strong></div>
               <div class="student-metric-row"><span>Proof Attachment</span><strong>${proofLink}</strong></div>
               <div class="student-metric-row"><span>Submitted At</span><strong>${task.submitted_at ? new Date(task.submitted_at).toLocaleDateString() : 'Recorded'}</strong></div>
               ${task.notes ? `<div class="student-metric-row"><span>Remarks</span><strong>${esc(task.notes)}</strong></div>` : ''}
             `;
           } else {
             body.innerHTML = `
-              <div class="student-metric-row"><span>Status</span><strong style="color:#f87171;">⏳ Pending Proof</strong></div>
-              <div class="student-metric-row"><span style="color:var(--muted);font-size:0.82rem;">No proof uploaded for current active task.</span></div>
+              <div class="student-metric-row"><span>Status</span><strong style="color:#dc2626;">⏳ Pending Proof</strong></div>
+              <div class="student-metric-row"><span style="color:#64748b;font-size:0.85rem;font-weight:500;">No proof uploaded for current active task.</span></div>
             `;
           }
         }).catch(() => {
           const body = document.getElementById('homeTaskDossierBody');
-          if (body) body.innerHTML = `<div class="student-metric-row"><span>Status</span><strong style="color:var(--muted);">No submissions recorded</strong></div>`;
+          if (body) body.innerHTML = `<div class="student-metric-row"><span>Status</span><strong style="color:#64748b;">No submissions recorded</strong></div>`;
         });
       }
     }

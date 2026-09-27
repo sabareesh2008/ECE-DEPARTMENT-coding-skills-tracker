@@ -853,3 +853,169 @@ body.examlytics-light footer {
   border-top: 1px solid #e2e8f0 !important;
 }
 
+/* ============================================================
+   360° STUDENT DOSSIER & MODALS HIGH-CONTRAST TYPOGRAPHY
+   ============================================================ */
+.student-dashboard-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1000 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 24px !important;
+  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.student-dashboard-modal[hidden] {
+  display: none !important;
+}
+
+.student-dashboard-backdrop {
+  position: absolute !important;
+  inset: 0 !important;
+  background: transparent !important;
+}
+
+.student-dashboard-panel {
+  position: relative !important;
+  width: min(100%, 980px) !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.3) !important;
+  padding: 28px !important;
+  color: #0f172a !important;
+}
+
+.student-dashboard-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 20px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding-bottom: 16px !important;
+  margin-bottom: 20px !important;
+}
+
+.student-dashboard-header h2,
+#studentDashboardTitle {
+  color: #0f172a !important;
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  margin: 4px 0 6px 0 !important;
+}
+
+.student-dashboard-header p,
+#studentDashboardSubtitle {
+  color: #475569 !important;
+  font-size: 0.94rem !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+.student-dashboard-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 16px !important;
+}
+
+.student-metric-card {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  padding: 16px 18px !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+.student-metric-card-title {
+  color: #0f172a !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  margin-bottom: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.student-metric-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 16px !important;
+  padding: 8px 0 !important;
+  border-top: 1px solid #eef2f6 !important;
+  font-size: 0.9rem !important;
+}
+
+.student-metric-row:first-of-type {
+  border-top: none !important;
+}
+
+.student-metric-row span {
+  color: #334155 !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+}
+
+.student-metric-row strong {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  font-size: 0.95rem !important;
+  text-align: right !important;
+  max-width: 60% !important;
+  overflow-wrap: anywhere !important;
+}
+
+.student-dashboard-links {
+  margin-top: 22px !important;
+  display: flex !important;
+  gap: 10px !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+}
+
+/* Solved Problems Modal & Code Viewer Modal */
+.solved-problems-modal-panel,
+.solution-code-modal-panel,
+.profile-modal-card,
+.report-modal-card,
+.home-date-report-panel {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.3) !important;
+  color: #0f172a !important;
+}
+
+.solved-problems-modal-panel header h2,
+.solution-code-modal-panel header h2,
+.profile-modal-card h2,
+.report-modal-card h2 {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+.solved-problems-modal-panel header p,
+.solution-code-modal-panel header p,
+.profile-modal-card p,
+.report-modal-card p {
+  color: #475569 !important;
+  font-weight: 600 !important;
+}
+
+.solved-history-table th {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  font-weight: 700 !important;
+}
+
+.solved-history-table td {
+  color: #0f172a !important;
+}
+
+
+
