@@ -1047,13 +1047,23 @@ ${regList}
       await window.StudentService.createSectionTask(taskData);
 
       if (msgEl) {
-        msgEl.textContent = `✓ Task "${title}" published successfully for Scope: ${targetSec === 'ALL' ? 'Overall (All Sections)' : 'Section ' + targetSec}!`;
+        msgEl.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+            <span>✓ Task "${title}" published successfully for Scope: ${targetSec === 'ALL' ? 'Overall (All Sections)' : 'Section ' + targetSec}!</span>
+            <a href="tasks.html" target="_blank" class="btn-clean-primary" style="background:#2563eb;padding:6px 14px;font-size:0.84rem;text-decoration:none;">🚀 Open Task Portal ↗</a>
+          </div>
+        `;
         msgEl.style.color = '#059669';
       }
 
       form.reset();
       loadSectionTasksList();
-      showToast(`Task published for Scope: ${targetSec}!`, 'success');
+      showToast(`Task published for Scope: ${targetSec}! Opening Task Submission Portal...`, 'success');
+
+      // Automatically open the task portal page
+      setTimeout(() => {
+        window.open('tasks.html', '_blank');
+      }, 500);
     });
   }
 
@@ -1142,12 +1152,22 @@ ${regList}
       }
 
       if (msgEl) {
-        msgEl.textContent = `✓ Examination "${title}" published live successfully for Scope: ${scope === 'ALL' ? 'Overall (Sections A–F)' : 'Section ' + scope}!`;
+        msgEl.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+            <span>✓ Examination "${title}" published live successfully for Scope: ${scope === 'ALL' ? 'Overall (Sections A–F)' : 'Section ' + scope}!</span>
+            <a href="assessment.html" target="_blank" class="btn-clean-primary" style="background:#059669;padding:6px 14px;font-size:0.84rem;text-decoration:none;">🚀 Open Assessment Portal ↗</a>
+          </div>
+        `;
         msgEl.style.color = '#059669';
       }
 
       loadPublishedAssessmentsList();
-      showToast(`Exam published for Scope: ${scope}!`, 'success');
+      showToast(`Exam published for Scope: ${scope}! Opening Assessment Portal...`, 'success');
+
+      // Automatically open the assessment portal page
+      setTimeout(() => {
+        window.open('assessment.html', '_blank');
+      }, 500);
     });
   }
 

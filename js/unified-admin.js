@@ -345,6 +345,11 @@
       state.assessment.isPublished = !state.assessment.isPublished;
       localStorage.setItem('portal_test_published', state.assessment.isPublished ? 'true' : 'false');
       renderAssessmentStatus();
+      if (state.assessment.isPublished) {
+        setTimeout(() => {
+          window.open('assessment.html', '_blank');
+        }, 400);
+      }
     });
 
     // Save test settings
@@ -657,6 +662,11 @@
           stateEl.classList.toggle('active', publish);
         }
         showMessage(publish ? 'Task published successfully. Students will see the new task on the Task Desk.' : 'Task draft saved successfully.');
+        if (publish) {
+          setTimeout(() => {
+            window.open('tasks.html', '_blank');
+          }, 400);
+        }
       } catch (error) {
         console.error('[Task Publish]', error);
         showMessage(error.message || 'Could not save the task. Run the task publishing SQL setup once, then retry.', false);
