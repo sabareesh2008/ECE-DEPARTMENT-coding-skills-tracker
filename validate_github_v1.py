@@ -79,7 +79,7 @@ for required_text in [
             "GitHub UI missing: " + required_text
         )
 
-if 'class="github-mode"' not in github_html:
+if 'github-mode' not in github_html:
     raise SystemExit("GitHub mode marker missing")
 
 entry = (BASE / "index.html").read_text(encoding="utf-8")

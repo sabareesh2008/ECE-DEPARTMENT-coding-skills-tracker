@@ -25,6 +25,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="css/ui-refresh.css?v=8.4">
+
+<style>
+.feature-mini-card{background:#fff;border:1px solid var(--border-light);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px}.feature-mini-card strong{color:var(--text-main);font-size:.92rem}.feature-mini-card span{color:var(--text-muted);font-size:.82rem;line-height:1.45}.workflow-strip{margin-top:20px;padding:15px 18px;border:1px solid var(--border-light);border-radius:14px;background:var(--bg-subtle);display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;color:var(--text-secondary);font-size:.82rem;font-weight:650}.workflow-strip b{color:var(--primary)}.top-five-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:20px}.top-five-panel{border:1px solid var(--border-light);border-radius:16px;background:#fff;padding:18px}.top-five-heading{display:flex;align-items:center;gap:11px;padding-bottom:14px;border-bottom:1px solid var(--border-light)}.top-five-heading>span{font-size:1.45rem}.top-five-heading h4{margin:0;color:var(--text-main);font-size:1.05rem}.top-five-heading small{color:var(--text-muted)}.top-five-list{display:flex;flex-direction:column}.top-five-row{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:13px 2px;border-bottom:1px solid #eef2f7}.top-five-row:last-child{border-bottom:0}.top-five-rank{font-weight:800;color:var(--primary);font-size:.9rem}.top-five-name{font-weight:750;color:var(--text-main);font-size:.9rem}.top-five-meta{display:block;color:var(--text-muted);font-size:.74rem;margin-top:2px}.top-five-score{font-weight:800;color:var(--text-main);font-size:.9rem;text-align:right}.top-five-loading{padding:22px;text-align:center;color:var(--text-muted)}@media(max-width:760px){.top-five-grid{grid-template-columns:1fr}}
+</style>
 </head>
 
 <body class="examlytics-layout">
@@ -84,10 +88,10 @@
           <span class="nav-item-badge">372</span>
         </button>
 
-        <button class="nav-item-btn" data-view="view-admin">
+        <a class="nav-item-btn" href="admin.html" style="text-decoration:none;">
           <span class="nav-icon">🛡️</span>
           <span>Faculty &amp; Admin</span>
-        </button>
+        </a>
 
         <button class="nav-item-btn" data-view="view-reports">
           <span class="nav-icon">⚙️</span>
@@ -280,47 +284,40 @@
           <div class="white-panel-card">
             <div class="panel-header-row">
               <div>
-                <h3>Technical Assessments &amp; Online Examinations</h3>
-                <p>Timed MCQ &amp; Fill-in-the-blanks examinations with automatic grading and PDF report generation.</p>
+                <span class="module-kicker">ASSESSMENT</span>
+                <h3>Available Exams</h3>
+                <p>Start the currently published technical assessment. All test configuration is managed from the single Faculty &amp; Admin Portal.</p>
               </div>
-              <a href="assessment.html" class="btn-clean-primary">Open Assessment Portal →</a>
             </div>
 
-            <!-- Dynamic Active Exams Container -->
-            <div id="availableExamsContainer" style="margin-bottom:24px;">
-              <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:var(--radius-lg);padding:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+            <div id="availableExamsContainer" style="margin:18px 0 26px;">
+              <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:18px;padding:26px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;">
                 <div>
-                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
                     <span class="badge-clean-pill success">● Live / Active</span>
-                    <span style="font-size:0.82rem;color:var(--text-muted);">45 Minutes · Proctored</span>
+                    <span style="font-size:.84rem;color:var(--text-muted);">45 Minutes · Proctored</span>
                   </div>
-                  <h4 style="margin:0 0 6px 0;font-size:1.25rem;color:var(--text-main);">Technical Assessment 2026</h4>
-                  <p style="color:var(--text-secondary);font-size:0.88rem;margin:0;">Data Structures, Digital Electronics, Computer Networks, and Core Circuit Concepts.</p>
+                  <h4 style="margin:0 0 7px;font-size:1.35rem;color:var(--text-main);">Technical Assessment 2026</h4>
+                  <p style="color:var(--text-secondary);font-size:.9rem;margin:0;max-width:720px;">MCQ &amp; Fill-in-the-blanks technical examination with automatic evaluation.</p>
                 </div>
-                <a href="assessment.html" class="btn-clean-primary" style="padding:10px 20px;">Start Test →</a>
+                <a href="assessment.html" class="btn-clean-primary" style="padding:12px 24px;white-space:nowrap;">Start Test →</a>
               </div>
             </div>
 
-            <h4 style="margin:20px 0 12px 0;font-size:1.05rem;">Proctoring &amp; Assessment Guidelines</h4>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">
-              <div style="background:#fff;border:1px solid var(--border-light);border-radius:12px;padding:16px;">
-                <strong style="color:var(--text-main);font-size:0.9rem;">⛶ Fullscreen Enforcement</strong>
-                <p style="color:var(--text-muted);font-size:0.8rem;margin:4px 0 0 0;">Exiting fullscreen issues a security warning. 3 warnings triggers auto-submit.</p>
-              </div>
-              <div style="background:#fff;border:1px solid var(--border-light);border-radius:12px;padding:16px;">
-                <strong style="color:var(--text-main);font-size:0.9rem;">⏱️ Countdown Timer</strong>
-                <p style="color:var(--text-muted);font-size:0.8rem;margin:4px 0 0 0;">Automated submission when timer reaches 00:00 with instant evaluation.</p>
-              </div>
-              <div style="background:#fff;border:1px solid var(--border-light);border-radius:12px;padding:16px;">
-                <strong style="color:var(--text-main);font-size:0.9rem;">📄 Downloadable Answer Key</strong>
-                <p style="color:var(--text-muted);font-size:0.8rem;margin:4px 0 0 0;">Instant client-side PDF answer key download upon submission.</p>
-              </div>
+            <h4 style="margin:0 0 12px;font-size:1.05rem;">Exam Guidelines</h4>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+              <div class="feature-mini-card"><strong>⛶ Fullscreen</strong><span>Stay in fullscreen during the examination.</span></div>
+              <div class="feature-mini-card"><strong>⏱️ Timer</strong><span>The test auto-submits when time reaches zero.</span></div>
+              <div class="feature-mini-card"><strong>🔒 One Attempt</strong><span>Each student gets one official submission.</span></div>
+              <div class="feature-mini-card"><strong>📄 Result</strong><span>Score and answer review are available after submission.</span></div>
             </div>
           </div>
         </section>
 
         <!-- ============================================================
-             VIEW 3: LEETCODE TRACKER (WHITE-GREY MODERN UI)
+             VIEW 3: LEETCODE TRACKER
+             ============================================================
+        
              ============================================================ -->
         <section id="view-leetcode" class="feature-view-pane">
           <div class="white-panel-card tracker-overview-card">
@@ -328,9 +325,9 @@
               <div>
                 <span class="module-kicker">CODING TRACKER</span>
                 <h3>LeetCode Tracker</h3>
-                <p>Live synchronized LeetCode activity. Use the dedicated tracker for detailed rankings, history and student profiles.</p>
+                <p>One place for total students, section-wise tracking, rankings, activity and every LeetCode report.</p>
               </div>
-              <a href="leetcode.html" class="btn-clean-primary">Open Detailed Tracker →</a>
+              <a href="leetcode.html" class="btn-clean-primary">Open LeetCode Workspace →</a>
             </div>
             <div class="tracker-overview-grid">
               <div class="tracker-overview-stat"><span>▣</span><strong id="homeLcOverviewSolved">0</strong><small>Problems Solved</small></div>
@@ -349,9 +346,9 @@
               <div>
                 <span class="module-kicker">CODING TRACKER</span>
                 <h3>GitHub Tracker</h3>
-                <p>Live GitHub contribution activity. Use the dedicated tracker for repositories, commits and deployment analytics.</p>
+                <p>One place for total students, section-wise tracking, repositories, commits, activity and every GitHub report.</p>
               </div>
-              <a href="github.html" class="btn-clean-primary">Open Detailed Tracker →</a>
+              <a href="github.html" class="btn-clean-primary">Open GitHub Workspace →</a>
             </div>
             <div class="tracker-overview-grid">
               <div class="tracker-overview-stat"><span>◉</span><strong id="homeGhOverviewProfiles">0</strong><small>Profiles Tracked</small></div>
@@ -368,86 +365,50 @@
           <div class="white-panel-card">
             <div class="panel-header-row">
               <div>
-                <h3>Student Task &amp; Proof Submission Desk</h3>
-                <p>Upload proof screenshots for course registrations, certifications, or assessments.</p>
+                <span class="module-kicker">TASK DESK</span>
+                <h3>Task Submissions</h3>
+                <p>View every published task. Select a task to open its submission form and upload the required proof.</p>
               </div>
-              <a href="tasks.html" class="btn-clean-primary">Open Dedicated Submission Portal ↗</a>
+              <a href="tasks.html" class="btn-clean-primary">Open Task Submission Desk →</a>
             </div>
-
-            <!-- Embedded Task Submission Form -->
-            <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:var(--radius-lg);padding:24px;max-width:720px;margin:0 auto;">
-              <div id="activeTaskCardHeader" style="margin-bottom:18px;">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                  <span class="badge-clean-pill success">● Active Assigned Task</span>
-                  <span id="embeddedTaskDeadlineBadge" style="font-size:0.82rem;color:var(--text-muted);">Open Submission</span>
-                </div>
-                <h4 id="embeddedTaskTitle" style="margin:0 0 4px 0;font-size:1.15rem;color:var(--text-main);">Course Registration &amp; Proof Submission</h4>
-                <p id="embeddedTaskDesc" style="color:var(--text-muted);font-size:0.85rem;margin:0;">Please upload a clear screenshot showing your Name and Register Number.</p>
-              </div>
-
-              <form id="embeddedTaskForm">
-                <div id="embeddedTaskFeedback" style="display:none;padding:10px 14px;border-radius:8px;font-size:0.88rem;margin-bottom:14px;"></div>
-
-                <div style="margin-bottom:14px;">
-                  <label style="display:block;font-size:0.82rem;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">Register Number *</label>
-                  <input type="text" id="embeddedTaskRegNo" class="form-control" placeholder="e.g. 922525106001" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-main);" required>
-                  <div id="embeddedStudentInfo" style="font-size:0.8rem;color:#059669;margin-top:4px;display:none;font-weight:600;"></div>
-                </div>
-
-                <div style="margin-bottom:14px;">
-                  <label style="display:block;font-size:0.82rem;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">Upload Screenshot Proof *</label>
-                  <input type="file" id="embeddedTaskFile" accept="image/png, image/jpeg, image/jpg, image/webp" class="form-control" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border-main);" required>
-                </div>
-
-                <div style="margin-bottom:18px;">
-                  <label style="display:block;font-size:0.82rem;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">Remarks (Optional)</label>
-                  <input type="text" id="embeddedTaskNotes" class="form-control" placeholder="e.g. NPTEL / Coursera course enrollment reference" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-main);">
-                </div>
-
-                <button type="submit" id="btnSubmitEmbeddedTask" class="btn-clean-primary" style="width:100%;justify-content:center;padding:12px;">Submit Proof Screenshot</button>
-              </form>
+            <div class="workflow-strip">
+              <span>01 · Choose published task</span><b>→</b><span>02 · Enter register number</span><b>→</b><span>03 · Upload proof</span><b>→</b><span>04 · Submit</span>
             </div>
           </div>
         </section>
 
         <!-- ============================================================
-             VIEW 6: LEADERBOARDS & STANDINGS
+             VIEW 6: LEADERBOARD
+             ============================================================
+         & STANDINGS
              ============================================================ -->
         <section id="view-leaderboard" class="feature-view-pane">
           <div class="white-panel-card">
             <div class="panel-header-row">
               <div>
-                <h3>Department Top 50 Standings</h3>
-                <p>Verified rankings across all 372 students in Electronics &amp; Communication Engineering.</p>
-              </div>
-              <div style="display:flex;gap:10px;">
-                <button id="btnDownloadTop50LeetTab" class="btn-clean-primary">🏆 LeetCode Top 50 (.xlsx)</button>
-                <button id="btnDownloadTop50GitTab" class="btn-clean-primary" style="background:#0f172a;border-color:#0f172a;">🐙 GitHub Top 50 (.xlsx)</button>
+                <span class="module-kicker">LEADERBOARD</span>
+                <h3>Department Top 5</h3>
+                <p>A quick view of the top five LeetCode and GitHub performers. Detailed rankings remain inside their respective trackers.</p>
               </div>
             </div>
 
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-bottom:24px;">
-              <div class="admin-stat-box">
-                <h4>LeetCode Top Solver</h4>
-                <div class="stat-num" id="leadTopSolverName" style="font-size:1.35rem;">Loading...</div>
-                <p style="font-size:0.8rem;color:var(--text-muted);margin:4px 0 0 0;" id="leadTopSolverMeta">Section Leader</p>
-              </div>
-              <div class="admin-stat-box">
-                <h4>GitHub Top Deployer</h4>
-                <div class="stat-num" id="leadTopDeployerName" style="font-size:1.35rem;">Loading...</div>
-                <p style="font-size:0.8rem;color:var(--text-muted);margin:4px 0 0 0;" id="leadTopDeployerMeta">Section Leader</p>
-              </div>
-              <div class="admin-stat-box">
-                <h4>Active Faculty LeetCode</h4>
-                <div class="stat-num" id="leadFacultyCount" style="font-size:1.35rem;color:var(--primary);">30+ Faculty</div>
-                <p style="font-size:0.8rem;color:var(--text-muted);margin:4px 0 0 0;">Department Mentors</p>
-              </div>
+            <div class="top-five-grid">
+              <section class="top-five-panel">
+                <div class="top-five-heading"><span>💻</span><div><h4>Top 5 LeetCode</h4><small>Problems solved</small></div></div>
+                <div id="leaderboardTop5Leet" class="top-five-list"><div class="top-five-loading">Loading...</div></div>
+              </section>
+              <section class="top-five-panel">
+                <div class="top-five-heading"><span>🐙</span><div><h4>Top 5 GitHub</h4><small>Recent contribution activity</small></div></div>
+                <div id="leaderboardTop5Git" class="top-five-list"><div class="top-five-loading">Loading...</div></div>
+              </section>
             </div>
           </div>
         </section>
 
         <!-- ============================================================
-             VIEW 7: STUDENT MASTER DIRECTORY (372)
+             VIEW 7: STUDENT MASTER DIRECTORY
+             ============================================================
+        
              ============================================================ -->
         <section id="view-roster" class="feature-view-pane">
           <div class="white-panel-card">
@@ -497,7 +458,7 @@
         <!-- ============================================================
              VIEW 8: FACULTY & CLASS ADVISOR COMMAND COCKPIT
              ============================================================ -->
-        <section id="view-admin" class="feature-view-pane">
+        <section id="view-admin" class="feature-view-pane" hidden aria-hidden="true">
           
           <!-- STATE 1: CLASS ADVISOR LOGIN FORM (Shown when not authenticated) -->
           <div id="advisorLoginView" class="white-panel-card" style="max-width:620px;margin:30px auto;box-shadow:0 20px 45px rgba(15,23,42,0.08);border-radius:20px;padding:36px 32px;">
@@ -929,11 +890,6 @@
                     <a href="sample_question_template.csv" download="sample_question_template.csv" class="btn-clean-secondary" style="font-size:0.82rem;">📥 Download Template</a>
                   </div>
 
-                  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
-                    <h4 style="margin:0 0 6px 0;font-size:1rem;color:#0f172a;">📦 Compiled PDF Exporter</h4>
-                    <p style="color:#64748b;font-size:0.82rem;margin:0 0 12px 0;">Compile all section student proof receipts into an official institutional PDF.</p>
-                    <a href="tasks-admin.html" class="btn-clean-primary" style="background:#0f172a;border-color:#0f172a;font-size:0.82rem;">Export Proofs PDF →</a>
-                  </div>
                 </div>
               </div>
             </div>

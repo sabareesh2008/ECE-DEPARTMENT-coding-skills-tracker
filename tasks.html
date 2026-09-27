@@ -11,6 +11,10 @@
   <!-- Supabase JS Client CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="css/ui-refresh.css?v=8.0">
+
+<style>
+.published-tasks-shell{background:#fff;border:1px solid var(--border-light);border-radius:20px;padding:28px;box-shadow:0 10px 30px rgba(15,23,42,.04);margin-bottom:18px}.section-heading{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:22px}.section-heading h1{margin:4px 0 6px;font-size:1.65rem;color:var(--text-main)}.section-heading p{margin:0;color:var(--text-muted);max-width:760px}.published-tasks-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:15px}.published-task-card{border:1px solid #e2e8f0;border-radius:16px;background:#fff;padding:19px;transition:.18s ease;display:flex;flex-direction:column;gap:12px}.published-task-card.active{cursor:pointer}.published-task-card.active:hover{border-color:#93c5fd;box-shadow:0 10px 24px rgba(37,99,235,.08);transform:translateY(-1px)}.published-task-card.archived{background:#f8fafc}.published-task-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.published-task-title{font-weight:800;color:#0f172a;font-size:1rem}.published-task-desc{color:#64748b;font-size:.82rem;line-height:1.5;min-height:38px}.published-task-meta{display:flex;gap:8px;flex-wrap:wrap;color:#64748b;font-size:.74rem}.published-task-action{margin-top:auto;width:100%;border:0;border-radius:10px;padding:10px 13px;background:#2563eb;color:#fff;font-weight:750;cursor:pointer}.published-task-action.disabled{background:#e2e8f0;color:#64748b;cursor:not-allowed}.task-list-loading{padding:30px;text-align:center;color:#64748b;border:1px dashed #cbd5e1;border-radius:14px}@media(max-width:700px){.section-heading{flex-direction:column}}
+</style>
 </head>
 <body id="tasksApp">
 
@@ -28,9 +32,7 @@
         <a href="index.html" class="btn btn-secondary btn-sm" style="text-decoration:none;">
           🏠 Hub
         </a>
-        <a href="admin.html" class="btn btn-secondary btn-sm" style="text-decoration:none;">
-          Faculty Admin &rarr;
-        </a>
+
       </div>
     </div>
   </nav>
@@ -38,39 +40,37 @@
   <!-- Main Content Wrapper -->
   <main class="main-wrapper">
 
-    <!-- Active Task Banner (Clickable to reveal submission form) -->
-    <section id="taskHeroSection" class="task-hero-card clickable-task" role="button" tabindex="0" aria-expanded="false" title="Click to open submission form">
+    <!-- Published Task List -->
+    <section class="published-tasks-shell">
+      <div class="section-heading">
+        <div>
+          <span class="module-kicker">TASK SUBMISSIONS</span>
+          <h1>Published Tasks</h1>
+          <p>Select a task below to open its submission form. Only active tasks accept submissions.</p>
+        </div>
+        
+      </div>
+      <div id="publishedTasksList" class="published-tasks-list">
+        <div class="task-list-loading">Loading published tasks...</div>
+      </div>
+    </section>
+
+    <!-- Selected Task / Submission Target -->
+    <section id="taskHeroSection" class="task-hero-card clickable-task" role="region" aria-expanded="false" hidden>
       <div class="task-meta-top">
         <span class="badge badge-live" id="taskStatusBadge">● Active Task</span>
-        <span class="badge badge-pill" id="taskDeadlineBadge">⏳ Loading deadline...</span>
+        <span class="badge badge-pill" id="taskDeadlineBadge">Loading deadline...</span>
       </div>
-      <h1 class="task-hero-title" id="taskTitle">Loading Assigned Task...</h1>
-      <p class="task-hero-desc" id="taskDescription">
-        Please wait while the active task instructions are fetched.
-      </p>
+      <h2 class="task-hero-title" id="taskTitle">Select a task</h2>
+      <p class="task-hero-desc" id="taskDescription">Choose an active published task above to continue.</p>
       <div class="task-hero-meta">
-        <div class="meta-item">
-          <span>📋</span>
-          <span id="taskSubmissionCount">Submissions: Fetching...</span>
-        </div>
-        <div class="meta-item">
-          <span>📅</span>
-          <span id="taskDueDate">Deadline: Fetching...</span>
-        </div>
-        <div class="meta-item">
-          <span>🔒</span>
-          <span>Single submission per Register Number</span>
-        </div>
+        <div class="meta-item"><span>📋</span><span id="taskSubmissionCount">Submissions: —</span></div>
+        <div class="meta-item"><span>📅</span><span id="taskDueDate">Deadline: —</span></div>
+        <div class="meta-item"><span>🔒</span><span>Single submission per Register Number</span></div>
       </div>
-      
-      <!-- Interactive Click CTA Prompt -->
       <div class="task-click-prompt">
-        <span style="font-size: 0.875rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem;">
-          <span>💡</span> Click this task card to open the submission form
-        </span>
-        <button type="button" id="btnToggleForm" class="task-click-btn">
-          <span>Open Submission Form</span> &darr;
-        </button>
+        <span style="font-size:.875rem;color:var(--text-secondary);display:flex;align-items:center;gap:.4rem;"><span>✓</span> Selected task</span>
+        <button type="button" id="btnToggleForm" class="task-click-btn"><span>Open Submission Form</span> ↓</button>
       </div>
     </section>
 

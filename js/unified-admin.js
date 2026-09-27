@@ -7,7 +7,7 @@
 
   // Master State
   const state = {
-    activeTab: 'tab-coding',
+    activeTab: 'tab-dashboard',
     students: typeof REGISTERED_STUDENTS !== 'undefined' ? [...REGISTERED_STUDENTS] : [],
     leetcodeData: [],
     githubData: [],
@@ -22,7 +22,8 @@
       submissions: [],
       activeTask: null,
       draftTask: null
-    }
+    },
+    profileIssues: 0
   };
 
   // Helper escape
@@ -43,7 +44,9 @@
     initFacultyAnalytics();
     initAssessmentTab();
     initTasksTab();
+    initManualQuestionWriter();
     initStudentsTab();
+    initDashboard();
   }
 
   function initAdminPortalAuth() {
@@ -168,6 +171,21 @@
         const ghCountEl = document.getElementById('statGitCount');
         if (ghCountEl) ghCountEl.textContent = state.githubData.length || '372';
       }
+      const [lcErrRes, ghErrRes] = await Promise.all([
+        fetch('LeetCodeErrors.csv?t=' + Date.now()).catch(() => null),
+        fetch('GitHubErrors.csv?t=' + Date.now()).catch(() => null)
+      ]);
+      const issueRegs = new Set();
+      for (const res of [lcErrRes, ghErrRes]) {
+        if (res && res.ok) {
+          const rows = parseCsv(await res.text());
+          rows.forEach(r => {
+            const reg = String(r['Register Number'] || r['register_number'] || '').trim();
+            if (reg) issueRegs.add(reg);
+          });
+        }
+      }
+      state.profileIssues = issueRegs.size;
     } catch (e) {
       console.warn('[Coding Tab] CSV load:', e.message);
     }
@@ -262,6 +280,9 @@
       XLSX.writeFile(wb, `CodeMetrix_Master_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
     });
   }
+
+  // Keep dashboard KPIs synchronized after coding data loads.
+  updateDashboardSummary();
 
   // ============================================================
   // FACULTY LEETCODE + GITHUB ANALYTICS
@@ -458,6 +479,7 @@
         btnEl.style.borderColor = '#15803d';
       }
     }
+    updateDashboardSummary();
   }
 
   function renderQuestionsTable() {
@@ -794,6 +816,7 @@
     if (subEl) subEl.textContent = submitted;
     if (pendEl) pendEl.textContent = pending;
     if (pctEl) pctEl.textContent = `${pct}% completion`;
+    updateDashboardSummary();
   }
 
   function renderTasksTable() {
@@ -880,6 +903,39 @@
   // ============================================================
   // 5. TAB 4: STUDENT MASTER DIRECTORY (372 STUDENTS)
   // ============================================================
+  function initManualQuestionWriter() {
+    const typeEl = document.getElementById('manualQuestionType');
+    const optionsEl = document.getElementById('manualMcqOptions');
+    const addBtn = document.getElementById('btnAddManualQuestion');
+    const msg = document.getElementById('manualQuestionMessage');
+    const syncVisibility = () => { if (optionsEl) optionsEl.style.display = typeEl?.value === 'MCQ' ? 'grid' : 'none'; };
+    typeEl?.addEventListener('change', syncVisibility);
+    syncVisibility();
+    addBtn?.addEventListener('click', () => {
+      const type = typeEl?.value || 'MCQ';
+      const category = document.getElementById('manualQuestionCategory')?.value.trim() || 'General';
+      const question = document.getElementById('manualQuestionText')?.value.trim() || '';
+      const correct = document.getElementById('manualCorrectAnswer')?.value.trim() || '';
+      const explanation = document.getElementById('manualExplanation')?.value.trim() || '';
+      const options = type === 'MCQ' ? [
+        document.getElementById('manualOptionA')?.value.trim() || '',
+        document.getElementById('manualOptionB')?.value.trim() || '',
+        document.getElementById('manualOptionC')?.value.trim() || '',
+        document.getElementById('manualOptionD')?.value.trim() || ''
+      ] : [];
+      if (!question) { if(msg){msg.textContent='Enter the question text.';msg.style.color='#dc2626';} return; }
+      if (!correct) { if(msg){msg.textContent='Enter the correct answer.';msg.style.color='#dc2626';} return; }
+      if (type === 'MCQ' && options.some(v => !v)) { if(msg){msg.textContent='Fill all four MCQ options.';msg.style.color='#dc2626';} return; }
+      const nextId = (state.assessment.questions || []).length + 1;
+      state.assessment.questions.push({ id: nextId, type, category, question, options, correctAnswer: correct, explanation });
+      state.assessment.questions.forEach((q,i)=>q.id=i+1);
+      localStorage.setItem('portal_assigned_questions', JSON.stringify(state.assessment.questions));
+      renderQuestionsTable();
+      ['manualQuestionCategory','manualQuestionText','manualOptionA','manualOptionB','manualOptionC','manualOptionD','manualCorrectAnswer','manualExplanation'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+      if(msg){msg.textContent='✓ Question added to the active question bank.';msg.style.color='#16a34a';}
+    });
+  }
+
   function initStudentsTab() {
     renderRosterTable();
 
@@ -926,6 +982,44 @@
         <td style="padding: 8px 10px;"><span style="background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.8rem;">Section ${esc(s.section)}</span></td>
       </tr>
     `).join('');
+  }
+
+  // ============================================================
+  // FACULTY DASHBOARD / ACTION CENTER
+  // ============================================================
+  function initDashboard() {
+    document.querySelectorAll('.cm-jump').forEach(button => {
+      button.addEventListener('click', () => {
+        const target = button.getAttribute('data-jump');
+        const tab = document.querySelector(`.unified-tab-btn[data-tab="${target}"]`);
+        if (tab) tab.click();
+      });
+    });
+    updateDashboardSummary();
+  }
+
+  function updateDashboardSummary() {
+    const total = state.students.length || 0;
+    const lc = state.leetcodeData.length || 0;
+    const gh = state.githubData.length || 0;
+    const taskSubmitted = state.tasks.submissions.length || 0;
+    const testSubmitted = state.assessment.submissions.length || 0;
+    const taskPending = Math.max(0, total - taskSubmitted);
+    const testPending = Math.max(0, total - testSubmitted);
+
+    const values = {
+      dashboardStudentCount: total || '—',
+      dashboardLcCount: lc || '—',
+      dashboardGhCount: gh || '—',
+      dashboardTaskPending: taskPending,
+      dashboardProfileIssues: state.profileIssues || 0,
+      dashboardTestPending: `${testPending} pending`,
+      dashboardTaskAction: `${taskPending} pending`
+    };
+    Object.entries(values).forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(value);
+    });
   }
 
   // ============================================================

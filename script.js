@@ -819,6 +819,7 @@ async function loadData(year = selectedYear || 2) {
 
   if (selectedYear === year || year === 2) {
     allStudents = rows;
+    window.__CODEMETRIX_LC_STUDENTS = allStudents;
     profileDataLoaded = false;
     updateLastUpdated();
     updateSectionCounts();
@@ -8823,6 +8824,24 @@ document.getElementById("facultyTableBody")
   ?.addEventListener("click", handleFacultyTableClick);
 
 refreshCodingAdminLocks();
+
+// Unified Command Center shortcuts: keep the actual existing student/faculty
+// workflows in the main hub while allowing admin.html to be the single entry point.
+(function initUnifiedOpenShortcut() {
+  const open = new URLSearchParams(window.location.search).get("open");
+  if (!open) return;
+  window.setTimeout(() => {
+    const actions = {
+      "add-student": () => document.getElementById("homeAddProfileButton")?.click(),
+      "manage-students": () => document.getElementById("homeManageStudentsButton")?.click(),
+      "faculty": () => openFacultyDirectory(),
+      "sync": () => document.getElementById("homeSyncNowButton")?.click(),
+      "coding-test": () => document.getElementById("manageCodingTestsButton")?.click(),
+      "profile-request": () => document.getElementById("homeAddProfileButton")?.click()
+    };
+    actions[open]?.();
+  }, 500);
+})();
 
 
 // ============================================================

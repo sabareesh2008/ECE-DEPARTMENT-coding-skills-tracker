@@ -138,7 +138,14 @@
       align-items: center;
       gap: 6px;
     }
-  </style>
+  
+    .cm-module-card {
+      display:flex; flex-direction:column; gap:7px; padding:18px; border:1px solid #e2e8f0; border-radius:14px; background:#fff; color:#0f172a; box-shadow:0 2px 5px rgba(15,23,42,.04); transition:.18s ease;
+    }
+    .cm-module-card:hover { transform:translateY(-2px); border-color:#93c5fd; box-shadow:0 8px 22px rgba(37,99,235,.10); }
+    .cm-module-card strong { font-size:.96rem; }
+    .cm-module-card small { color:#64748b; line-height:1.45; }
+</style>
     <link rel="stylesheet" href="css/ui-refresh.css?v=8.0">
 </head>
 <body style="background: #f8fafc; color: #0f172a; font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh;">
@@ -185,13 +192,7 @@
 
     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
       <a href="index.html" class="btn-portal-secondary" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #f8fafc; text-decoration: none;">
-        <span>🏠 Hub</span>
-      </a>
-      <a href="assessment.html" class="btn-portal-secondary" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #f8fafc; text-decoration: none;">
-        <span>📝 Student Test Portal</span>
-      </a>
-      <a href="tasks.html" class="btn-portal-secondary" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #f8fafc; text-decoration: none;">
-        <span>📋 Student Task Desk</span>
+        <span>🏠 Main Hub</span>
       </a>
       <button id="btnAdminLogout" class="btn-portal-secondary" style="background: #ef4444; border-color: #dc2626; color: #ffffff;">
         <span>Logout</span>
@@ -202,50 +203,78 @@
   <!-- Main Container -->
   <main class="container" style="max-width: 1280px; margin: 24px auto; padding: 0 20px;">
     
-    <!-- Navigation Tabs (4 Core Modules) -->
-    <nav class="unified-nav-tabs" role="tablist">
-      <button class="unified-tab-btn active" data-tab="tab-coding" role="tab">
-        <span>💻 Faculty Coding Analytics &amp; Reports</span>
-      </button>
-      <button class="unified-tab-btn" data-tab="tab-assessment" role="tab">
-        <span>📝 Test Publishing &amp; Assessment</span>
-      </button>
-      <button class="unified-tab-btn" data-tab="tab-tasks" role="tab">
-        <span>📋 Task Publishing &amp; Verification</span>
-      </button>
-      <button class="unified-tab-btn" data-tab="tab-students" role="tab">
-        <span>👥 Student Master Directory (372)</span>
-      </button>
+    <!-- Faculty-first navigation: organize by work, not by technical feature -->
+    <nav class="unified-nav-tabs codemetrix-main-nav" role="tablist" aria-label="Faculty command center">
+      <button class="unified-tab-btn active" data-tab="tab-dashboard" role="tab">🏠 Dashboard</button>
+      <button class="unified-tab-btn" data-tab="tab-students" role="tab">👥 People</button>
+      <button class="unified-tab-btn" data-tab="tab-coding" role="tab">💻 Coding</button>
+      <button class="unified-tab-btn" data-tab="tab-assessment" role="tab">📝 Assessments</button>
+      <button class="unified-tab-btn" data-tab="tab-tasks" role="tab">📋 Tasks</button>
+      <button class="unified-tab-btn" data-tab="tab-content" role="tab">✍️ Content</button>
+      <button class="unified-tab-btn" data-tab="tab-reports" role="tab">📊 Reports</button>
+      <button class="unified-tab-btn" data-tab="tab-system" role="tab">⚙️ System</button>
     </nav>
 
-    <!-- Command Center module overview -->
-    <section class="admin-module-overview" aria-label="Admin command center modules">
-      <button type="button" class="admin-module-card active" data-module-target="tab-coding">
-        <span class="admin-module-icon">💻</span>
-        <span><strong>LeetCode Analysis</strong><small>Faculty coding activity &amp; tracker intelligence</small></span>
-      </button>
-      <button type="button" class="admin-module-card" data-module-target="tab-coding">
-        <span class="admin-module-icon">🐙</span>
-        <span><strong>GitHub Analysis</strong><small>Repositories, activity &amp; public profile metrics</small></span>
-      </button>
-      <button type="button" class="admin-module-card" data-module-target="tab-assessment">
-        <span class="admin-module-icon">📝</span>
-        <span><strong>Test Publishing</strong><small>Question bank, settings, publish &amp; results</small></span>
-      </button>
-      <button type="button" class="admin-module-card" data-module-target="tab-tasks">
-        <span class="admin-module-icon">📋</span>
-        <span><strong>Task Publishing</strong><small>Create, publish and verify submissions</small></span>
-      </button>
-      <button type="button" class="admin-module-card" data-module-target="tab-coding" data-scroll-target="adminReportsSection">
-        <span class="admin-module-icon">📊</span>
-        <span><strong>Reports</strong><small>Excel, PDF, CSV &amp; date-range exports</small></span>
-      </button>
+    <!-- Dashboard: one screen for the faculty's daily work -->
+    <section id="tab-dashboard" class="admin-tab-pane active" role="tabpanel">
+      <div class="cm-page-hero">
+        <div>
+          <span class="module-kicker">Faculty daily workspace</span>
+          <h2>Good day, Faculty 👋</h2>
+          <p>Everything important is grouped here. Open only the area that needs your attention.</p>
+        </div>
+        <div class="cm-quick-links">
+          <button type="button" class="btn-portal-primary cm-jump" data-jump="tab-students">👥 Find Student</button>
+          <button type="button" class="btn-portal-secondary cm-jump" data-jump="tab-assessment">📝 Manage Tests</button>
+          <button type="button" class="btn-portal-secondary cm-jump" data-jump="tab-tasks">📋 Manage Tasks</button>
+        </div>
+      </div>
+
+      <div class="cm-kpi-grid">
+        <button type="button" class="cm-kpi cm-jump" data-jump="tab-students">
+          <span class="cm-kpi-icon">👥</span><span><small>Total Students</small><strong id="dashboardStudentCount">—</strong></span>
+        </button>
+        <button type="button" class="cm-kpi cm-jump" data-jump="tab-coding">
+          <span class="cm-kpi-icon">💻</span><span><small>LeetCode Tracked</small><strong id="dashboardLcCount">—</strong></span>
+        </button>
+        <button type="button" class="cm-kpi cm-jump" data-jump="tab-coding">
+          <span class="cm-kpi-icon">🐙</span><span><small>GitHub Tracked</small><strong id="dashboardGhCount">—</strong></span>
+        </button>
+        <button type="button" class="cm-kpi cm-jump" data-jump="tab-tasks">
+          <span class="cm-kpi-icon">📋</span><span><small>Task Pending</small><strong id="dashboardTaskPending">—</strong></span>
+        </button>
+      </div>
+
+      <div class="cm-section-heading"><div><span class="module-kicker">Action center</span><h3>What needs attention?</h3></div><span class="cm-helper">Resolve these first</span></div>
+      <div class="cm-action-grid">
+        <button type="button" class="cm-action-card cm-jump" data-jump="tab-coding">
+          <span class="cm-action-icon">⚠️</span><span><strong id="dashboardProfileIssues">Checking…</strong><small>Profile / coding issues</small></span><span class="cm-arrow">→</span>
+        </button>
+        <button type="button" class="cm-action-card cm-jump" data-jump="tab-assessment">
+          <span class="cm-action-icon">📝</span><span><strong id="dashboardTestPending">Checking…</strong><small>Assessment submissions pending</small></span><span class="cm-arrow">→</span>
+        </button>
+        <button type="button" class="cm-action-card cm-jump" data-jump="tab-tasks">
+          <span class="cm-action-icon">📋</span><span><strong id="dashboardTaskAction">Checking…</strong><small>Task submissions pending</small></span><span class="cm-arrow">→</span>
+        </button>
+        <button type="button" class="cm-action-card cm-jump" data-jump="tab-reports">
+          <span class="cm-action-icon">📊</span><span><strong>Reports are ready</strong><small>Download official department reports</small></span><span class="cm-arrow">→</span>
+        </button>
+      </div>
+
+      <div class="cm-workflow">
+        <div><span>01</span><strong>Monitor</strong><small>Coding &amp; student activity</small></div><i>→</i>
+        <div><span>02</span><strong>Assess</strong><small>Tests &amp; results</small></div><i>→</i>
+        <div><span>03</span><strong>Collect</strong><small>Task submissions</small></div><i>→</i>
+        <div><span>04</span><strong>Report</strong><small>Export &amp; share</small></div>
+      </div>
     </section>
 
     <!-- ============================================================
-         TAB 1: CODING ANALYTICS & REPORTS
+         TAB 1: CODING ANALYTICS
          ============================================================ -->
-    <section id="tab-coding" class="admin-tab-pane active" role="tabpanel">
+
+         ============================================================ -->
+    <section id="tab-coding" class="admin-tab-pane" role="tabpanel">
       <!-- Faculty LeetCode + GitHub Analytics -->
       <div class="faculty-command-card">
         <div class="faculty-command-head">
@@ -274,12 +303,153 @@
         </div>
       </div>
 
-      <div id="adminReportsSection" class="admin-panel-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 24px; scroll-margin-top: 24px;">
+
+    </section>
+
+    <!-- ============================================================
+         TAB 2: ASSESSMENT MANAGEMENT
+         ============================================================ -->
+    <section id="tab-assessment" class="admin-tab-pane" role="tabpanel">
+      <!-- Embedded Assessment Management Control Panel -->
+      <div class="admin-panel-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 style="font-size: 1.3rem; margin: 0 0 4px 0; color: #0f172a;">Technical Examination Command Center</h2>
+            <p style="color: #64748b; font-size: 0.88rem; margin: 0;">Configure tests, upload question banks, publish to candidates, and monitor section completion.</p>
+          </div>
+          <a href="assessment.html" class="btn-portal-primary" style="text-decoration: none;">Launch Open Student Test Portal →</a>
+        </div>
+
+        <!-- Publish Toggle & Test Settings Box -->
+        <div class="publish-box" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 12px; padding: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 20px;">
+          <div>
+            <h3 id="adminPubBannerTitle" style="margin: 0 0 4px 0; font-size: 1.1rem; color: #0f172a;">Assessment Status: Unpublished</h3>
+            <p id="adminPubBannerDesc" style="margin: 0; font-size: 0.84rem; color: #64748b;">Students see "No active assessment" upon login until published.</p>
+          </div>
+          <button type="button" class="btn-portal-primary" id="btnAdminTogglePublish" style="background: #16a34a; border-color: #15803d; font-size: 0.95rem; padding: 10px 20px;">
+            <span>Publish Test to Students</span>
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 14px; align-items: flex-end; margin-bottom: 20px;">
+          <div>
+            <label style="font-size: 0.82rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Assessment Title</label>
+            <input type="text" id="adminTestTitleInput" class="form-control" value="Technical Assessment 2026" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
+          </div>
+          <div>
+            <label style="font-size: 0.82rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Duration (Minutes)</label>
+            <input type="number" id="adminTestDurationInput" class="form-control" value="45" min="5" max="180" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
+          </div>
+          <button type="button" id="btnAdminSaveTestDetails" class="btn-portal-primary" style="padding: 10px 20px;">
+            <span>Save Settings</span>
+          </button>
+        </div>
+
+        <!-- Section-wise Completion & Submission Analytics -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px 0;flex-wrap:wrap;gap:10px;">
+          <h3 style="font-size:1.05rem;margin:0;">Section-wise Completion &amp; Submission Analytics</h3>
+          <div style="display:flex;gap:8px;">
+            <button type="button" id="adminExportAllSubmissionsExcel" class="btn-portal-primary" style="background:#16a34a;border-color:#15803d;font-size:.82rem;">📗 Export Submissions (Excel)</button>
+            <button type="button" id="adminExportAllSubmissionsPdf" class="btn-portal-primary" style="background:#dc2626;border-color:#b91c1c;font-size:.82rem;">📕 Export Submissions (PDF)</button>
+          </div>
+        </div>
+        <div id="adminSectionProgressGrid" class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px;"></div>
+
+    </section>
+
+
+    <!-- ============================================================
+         TAB 6: CONTENT / QUESTION WRITING
+         ============================================================ -->
+    <section id="tab-content" class="admin-tab-pane" role="tabpanel">
+      <div class="cm-report-intro">
+        <div><span class="module-kicker">Create once, reuse in assessments</span><h2>Content &amp; Question Bank</h2><p>Write, upload, review and prepare assessment questions here. Publishing belongs in Assessments; content creation belongs here.</p></div>
+        <div class="cm-report-rule">MCQ + Fill in the Blanks<br><strong>CSV · Excel</strong></div>
+      </div>
+      <div class="admin-panel-card" style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:24px;">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px;">
+          <a href="sample_question_template.csv" download="sample_question_template.csv" class="btn-portal-secondary" style="text-decoration:none;">📥 Download Question Template</a>
+          <button type="button" class="btn-portal-primary cm-jump" data-jump="tab-assessment">📝 Use Questions in Assessment</button>
+        </div>
+        <!-- Manual Question Writer -->
+        <div class="manual-question-writer" style="margin:20px 0;border:1px solid #dbe3ef;border-radius:14px;padding:18px;background:#f8fafc;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+            <div><h3 style="margin:0 0 4px;font-size:1.02rem;color:#0f172a;">✍️ Write a Question</h3><p style="margin:0;color:#64748b;font-size:.82rem;">Create one MCQ or Fill-in-the-blank question directly without Excel.</p></div>
+            <span class="publish-state-pill">Adds to active question bank</span>
+          </div>
+          <div style="display:grid;grid-template-columns:150px 1fr;gap:10px;">
+            <select id="manualQuestionType" class="form-control"><option value="MCQ">MCQ</option><option value="FIB">Fill in the Blank</option></select>
+            <input id="manualQuestionCategory" class="form-control" placeholder="Category (e.g. Digital Electronics)">
+            <textarea id="manualQuestionText" class="form-control" rows="3" placeholder="Write the question..."></textarea>
+            <div id="manualMcqOptions" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input id="manualOptionA" class="form-control" placeholder="Option A"><input id="manualOptionB" class="form-control" placeholder="Option B"><input id="manualOptionC" class="form-control" placeholder="Option C"><input id="manualOptionD" class="form-control" placeholder="Option D"></div>
+            <input id="manualCorrectAnswer" class="form-control" placeholder="Correct answer (MCQ: A/B/C/D · FIB: exact answer)">
+            <input id="manualExplanation" class="form-control" placeholder="Explanation (optional)">
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:12px;"><button type="button" id="btnAddManualQuestion" class="btn-portal-primary">＋ Add Question</button></div>
+          <div id="manualQuestionMessage" style="margin-top:8px;font-size:.8rem;font-weight:700;"></div>
+        </div>
+
+        <!-- Excel / CSV Question Upload Zone -->
+        <h3 style="font-size: 1.05rem; margin: 24px 0 10px 0;">Question Bank Management</h3>
+        <div class="upload-dropzone" id="adminQuestionDropzone" style="border: 2px dashed #94a3b8; border-radius: 12px; padding: 28px 20px; text-align: center; background: #f8fafc; cursor: pointer;">
+          <input type="file" id="adminQuestionFileInput" accept=".csv, .xlsx, .xls" style="display: none;">
+          <div style="font-size: 2rem; margin-bottom: 6px;">📂</div>
+          <h4 style="margin: 0 0 6px 0; font-size: 1rem; color: #0f172a;">Click or Drag &amp; Drop Question Bank Excel (.xlsx) or CSV</h4>
+          <p style="color: #64748b; font-size: 0.82rem; margin: 0 0 12px 0;">Supports both Multiple Choice (MCQ with options A–D) and Fill in the Blanks (FIB).</p>
+          <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button type="button" class="btn-portal-primary" id="btnAdminBrowseQuestionFile" style="padding: 6px 14px; font-size: 0.84rem;">
+              <span>Browse File</span>
+            </button>
+            <a href="sample_question_template.csv" download="sample_question_template.csv" class="btn-portal-secondary" style="padding: 6px 14px; font-size: 0.84rem; text-decoration: none;">
+              <span>📥 Download CSV Template</span>
+            </a>
+          </div>
+        </div>
+
+        <div id="adminQuestionAlert" class="alert" style="display: none; margin-top: 14px;"></div>
+
+
+        <!-- Active Questions Table -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 24px 0 12px 0;">
+          <h3 style="font-size: 1.05rem; margin: 0;">Active Test Questions (<span id="adminActiveQuestionCount" style="color: #2563eb;">0</span>)</h3>
+          <button type="button" id="btnAdminClearQuestions" class="btn-portal-secondary" style="color: #ef4444; border-color: #fca5a5; font-size: 0.82rem;">
+            <span>🗑️ Clear All Questions</span>
+          </button>
+        </div>
+
+        <div style="max-height: 380px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 10px;">
+          <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+            <thead>
+              <tr style="background: #f1f5f9; text-align: left;">
+                <th style="padding: 10px;">#</th>
+                <th style="padding: 10px;">Type</th>
+                <th style="padding: 10px;">Category</th>
+                <th style="padding: 10px;">Question</th>
+                <th style="padding: 10px;">Correct Answer</th>
+              </tr>
+            </thead>
+            <tbody id="adminQuestionsTableBody">
+              <tr><td colspan="5" style="padding: 20px; text-align: center; color: #64748b;">No questions assigned yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </div>
+    </section>
+    <!-- ============================================================
+         TAB 6: REPORTS & EXPORTS
+         ============================================================ -->
+    <section id="tab-reports" class="admin-tab-pane" role="tabpanel">
+      <div class="cm-report-intro">
+        <div><span class="module-kicker">Official department outputs</span><h2>Reports &amp; Exports</h2><p>Choose a report, set the scope/date when available, and download it. Coding, assessment and task outputs stay in one place.</p></div>
+        <div class="cm-report-rule">Overall or section-wise<br><strong>Excel · PDF · CSV</strong></div>
+      </div>
+            <div id="adminReportsSection" class="admin-panel-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 24px; scroll-margin-top: 24px;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
           <div>
             <span class="module-kicker">Reports &amp; exports</span>
-            <h2 style="font-size: 1.3rem; margin: 0 0 4px 0; color: #0f172a;">Coding Tracker Intelligence &amp; Reports</h2>
-            <p style="color: #64748b; font-size: 0.88rem; margin: 0;">Generate instant Excel spreadsheets, faculty LeetCode reports, and custom date range summaries.</p>
+            <h2 style="font-size: 1.3rem; margin: 0 0 4px 0; color: #0f172a;">Coding Intelligence &amp; Analytics</h2>
+            <p style="color: #64748b; font-size: 0.88rem; margin: 0;">Monitor LeetCode and GitHub activity. Use the Reports tab when you need downloadable files.</p>
           </div>
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <a href="leetcode.html" class="btn-portal-primary" style="text-decoration: none;">Open LeetCode Leaderboard →</a>
@@ -360,110 +530,7 @@
     </section>
 
     <!-- ============================================================
-         TAB 2: ASSESSMENT MANAGEMENT
-         ============================================================ -->
-    <section id="tab-assessment" class="admin-tab-pane" role="tabpanel">
-      <!-- Embedded Assessment Management Control Panel -->
-      <div class="admin-panel-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
-          <div>
-            <h2 style="font-size: 1.3rem; margin: 0 0 4px 0; color: #0f172a;">Technical Examination Command Center</h2>
-            <p style="color: #64748b; font-size: 0.88rem; margin: 0;">Configure tests, upload question banks, publish to candidates, and monitor section completion.</p>
-          </div>
-          <a href="assessment.html" class="btn-portal-primary" style="text-decoration: none;">Launch Open Student Test Portal →</a>
-        </div>
-
-        <!-- Publish Toggle & Test Settings Box -->
-        <div class="publish-box" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 12px; padding: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 20px;">
-          <div>
-            <h3 id="adminPubBannerTitle" style="margin: 0 0 4px 0; font-size: 1.1rem; color: #0f172a;">Assessment Status: Unpublished</h3>
-            <p id="adminPubBannerDesc" style="margin: 0; font-size: 0.84rem; color: #64748b;">Students see "No active assessment" upon login until published.</p>
-          </div>
-          <button type="button" class="btn-portal-primary" id="btnAdminTogglePublish" style="background: #16a34a; border-color: #15803d; font-size: 0.95rem; padding: 10px 20px;">
-            <span>Publish Test to Students</span>
-          </button>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 14px; align-items: flex-end; margin-bottom: 20px;">
-          <div>
-            <label style="font-size: 0.82rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Assessment Title</label>
-            <input type="text" id="adminTestTitleInput" class="form-control" value="Technical Assessment 2026" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
-          </div>
-          <div>
-            <label style="font-size: 0.82rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Duration (Minutes)</label>
-            <input type="number" id="adminTestDurationInput" class="form-control" value="45" min="5" max="180" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
-          </div>
-          <button type="button" id="btnAdminSaveTestDetails" class="btn-portal-primary" style="padding: 10px 20px;">
-            <span>Save Settings</span>
-          </button>
-        </div>
-
-        <!-- Excel / CSV Question Upload Zone -->
-        <h3 style="font-size: 1.05rem; margin: 24px 0 10px 0;">Question Bank Management</h3>
-        <div class="upload-dropzone" id="adminQuestionDropzone" style="border: 2px dashed #94a3b8; border-radius: 12px; padding: 28px 20px; text-align: center; background: #f8fafc; cursor: pointer;">
-          <input type="file" id="adminQuestionFileInput" accept=".csv, .xlsx, .xls" style="display: none;">
-          <div style="font-size: 2rem; margin-bottom: 6px;">📂</div>
-          <h4 style="margin: 0 0 6px 0; font-size: 1rem; color: #0f172a;">Click or Drag &amp; Drop Question Bank Excel (.xlsx) or CSV</h4>
-          <p style="color: #64748b; font-size: 0.82rem; margin: 0 0 12px 0;">Supports both Multiple Choice (MCQ with options A–D) and Fill in the Blanks (FIB).</p>
-          <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-            <button type="button" class="btn-portal-primary" id="btnAdminBrowseQuestionFile" style="padding: 6px 14px; font-size: 0.84rem;">
-              <span>Browse File</span>
-            </button>
-            <a href="sample_question_template.csv" download="sample_question_template.csv" class="btn-portal-secondary" style="padding: 6px 14px; font-size: 0.84rem; text-decoration: none;">
-              <span>📥 Download CSV Template</span>
-            </a>
-          </div>
-        </div>
-
-        <div id="adminQuestionAlert" class="alert" style="display: none; margin-top: 14px;"></div>
-
-        <!-- Questions Summary & Section Completion -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin: 28px 0 14px 0; flex-wrap: wrap; gap: 10px;">
-          <h3 style="font-size: 1.05rem; margin: 0;">Section-wise Completion &amp; Submission Analytics</h3>
-          <div style="display: flex; gap: 8px;">
-            <button type="button" id="adminExportAllSubmissionsExcel" class="btn-portal-primary" style="background: #16a34a; border-color: #15803d; font-size: 0.82rem;">
-              <span>📗 Export Submissions (Excel)</span>
-            </button>
-            <button type="button" id="adminExportAllSubmissionsPdf" class="btn-portal-primary" style="background: #dc2626; border-color: #b91c1c; font-size: 0.82rem;">
-              <span>📕 Export Submissions (PDF)</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Section Progress Cards (A to F) -->
-        <div id="adminSectionProgressGrid" class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px;">
-          <!-- Injected via JS -->
-        </div>
-
-        <!-- Active Questions Table -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin: 24px 0 12px 0;">
-          <h3 style="font-size: 1.05rem; margin: 0;">Active Test Questions (<span id="adminActiveQuestionCount" style="color: #2563eb;">0</span>)</h3>
-          <button type="button" id="btnAdminClearQuestions" class="btn-portal-secondary" style="color: #ef4444; border-color: #fca5a5; font-size: 0.82rem;">
-            <span>🗑️ Clear All Questions</span>
-          </button>
-        </div>
-
-        <div style="max-height: 380px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 10px;">
-          <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-            <thead>
-              <tr style="background: #f1f5f9; text-align: left;">
-                <th style="padding: 10px;">#</th>
-                <th style="padding: 10px;">Type</th>
-                <th style="padding: 10px;">Category</th>
-                <th style="padding: 10px;">Question</th>
-                <th style="padding: 10px;">Correct Answer</th>
-              </tr>
-            </thead>
-            <tbody id="adminQuestionsTableBody">
-              <tr><td colspan="5" style="padding: 20px; text-align: center; color: #64748b;">No questions assigned yet.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         TAB 3: TASK & PROOF VERIFICATION
+         TAB 4: TASK & PROOF VERIFICATION
          ============================================================ -->
     <section id="tab-tasks" class="admin-tab-pane" role="tabpanel">
       <div class="admin-panel-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
@@ -585,14 +652,22 @@
     </section>
 
     <!-- ============================================================
-         TAB 4: STUDENT MASTER DIRECTORY (372 STUDENTS)
+         TAB 5: STUDENT MASTER DIRECTORY
          ============================================================ -->
     <section id="tab-students" class="admin-tab-pane" role="tabpanel">
+      <div class="cm-people-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px;">
+        <a class="cm-module-card" href="index.html?open=add-student" style="text-decoration:none;">➕<strong>Add / Update Student</strong><small>Create or replace a student profile.</small></a>
+        <a class="cm-module-card" href="index.html?open=manage-students" style="text-decoration:none;">👥<strong>Manage Students</strong><small>Open the full student management workspace.</small></a>
+        <a class="cm-module-card" href="index.html?open=faculty" style="text-decoration:none;">👨‍🏫<strong>Faculty Directory</strong><small>View and manage faculty profiles.</small></a>
+        <a class="cm-module-card" href="index.html?open=profile-request" style="text-decoration:none;">📨<strong>Profile Requests</strong><small>Review the student profile-request workflow.</small></a>
+      </div>
+
       <div class="admin-panel-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
           <div>
-            <h2 style="font-size: 1.3rem; margin: 0 0 4px 0; color: #0f172a;">Official Student Roster &amp; Directory</h2>
-            <p style="color: #64748b; font-size: 0.88rem; margin: 0;">Verified repository of all 372 ECE students across Sections A through F.</p>
+            <span class="module-kicker">People management</span>
+            <h2 style="font-size: 1.3rem; margin: 0 0 4px 0; color: #0f172a;">Students &amp; Faculty</h2>
+            <p style="color: #64748b; font-size: 0.88rem; margin: 0;">One place for student roster, faculty directory, adding profiles, and people-related actions.</p>
           </div>
           <button id="adminDownloadRosterExcel" class="btn-portal-primary" style="background: #16a34a; border-color: #15803d;">
             <span>📗 Export Roster (.xlsx)</span>
@@ -627,6 +702,33 @@
               <!-- Injected dynamically -->
             </tbody>
           </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SYSTEM / INTEGRATIONS
+         ============================================================ -->
+    <section id="tab-system" class="admin-tab-pane" role="tabpanel">
+      <div class="cm-report-intro">
+        <div><span class="module-kicker">System control</span><h2>System &amp; Integrations</h2><p>Keep operational tools in one place. Normal faculty work should stay in the other modules.</p></div>
+        <div class="cm-report-rule">Automation<br><strong>Sync · Portals · Access</strong></div>
+      </div>
+      <div class="cm-people-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">
+        <a class="cm-module-card" href="index.html?open=sync" style="text-decoration:none;">🔄<strong>Sync Data</strong><small>Run the existing LeetCode / GitHub synchronization workflow.</small></a>
+        <a class="cm-module-card" href="index.html?open=faculty" style="text-decoration:none;">👨‍🏫<strong>Faculty Management</strong><small>Open the existing faculty directory and management tools.</small></a>
+        <a class="cm-module-card" href="assessment.html" style="text-decoration:none;">🎓<strong>Student Assessment Portal</strong><small>Open the student-facing test experience when required.</small></a>
+        <a class="cm-module-card" href="tasks.html" style="text-decoration:none;">📥<strong>Student Task Desk</strong><small>Open the student-facing task submission experience.</small></a>
+        <a class="cm-module-card" href="README.md" style="text-decoration:none;">📚<strong>Project Documentation</strong><small>Setup, tracker, extension and deployment documentation.</small></a>
+      </div>
+      <div class="admin-panel-card" style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:22px;margin-top:18px;">
+        <h3 style="margin:0 0 8px;color:#0f172a;">How faculty should use CodeMetrix</h3>
+        <div class="cm-workflow">
+          <div><span>01</span><strong>People</strong><small>Students &amp; faculty</small></div><i>→</i>
+          <div><span>02</span><strong>Coding</strong><small>Monitor activity</small></div><i>→</i>
+          <div><span>03</span><strong>Assess</strong><small>Publish &amp; evaluate</small></div><i>→</i>
+          <div><span>04</span><strong>Tasks</strong><small>Collect &amp; verify</small></div><i>→</i>
+          <div><span>05</span><strong>Reports</strong><small>Export &amp; share</small></div>
         </div>
       </div>
     </section>

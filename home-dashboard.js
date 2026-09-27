@@ -137,9 +137,30 @@
     setMessage.timer=setTimeout(()=>{els.message.textContent='';els.message.className='home-action-message';},4500);
   }
 
+  function renderTopFiveHome(){
+    const lcEl=document.getElementById('leaderboardTop5Leet');
+    const ghEl=document.getElementById('leaderboardTop5Git');
+    if(!lcEl && !ghEl) return;
+    const escHtml=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+    const n=(v)=>Number(String(v??'').replace(/,/g,''))||0;
+    const lc=[...state.leetcode].sort((a,b)=>n(b['Problems Solved'])-n(a['Problems Solved'])||n(b['Last 7 Days'])-n(a['Last 7 Days'])).slice(0,5);
+    const gh=[...state.github].sort((a,b)=>n(b['Contributions 30 Days'])-n(a['Contributions 30 Days'])||n(b['Detected Deployments'])-n(a['Detected Deployments'])||n(b['Commits 30 Days'])-n(a['Commits 30 Days'])).slice(0,5);
+    const render=(rows,type)=>rows.length?rows.map((r,i)=>{
+      const name=escHtml(r['Student Name']||'Student');
+      const reg=escHtml(r['Register Number']||'');
+      const sec=escHtml(r['Section']||'');
+      const score=type==='leetcode'?n(r['Problems Solved']):n(r['Contributions 30 Days']);
+      const label=type==='leetcode'?'problems':'30-day contributions';
+      return `<div class="top-five-row"><span class="top-five-rank">#${i+1}</span><div><span class="top-five-name">${name}</span><span class="top-five-meta">${reg}${sec?` · ${sec}`:''}</span></div><span class="top-five-score">${score}<small style="display:block;font-size:.68rem;color:var(--text-muted);font-weight:600">${label}</small></span></div>`;
+    }).join(''):'<div class="top-five-loading">No ranking data available.</div>';
+    if(lcEl) lcEl.innerHTML=render(lc,'leetcode');
+    if(ghEl) ghEl.innerHTML=render(gh,'github');
+  }
+
   async function loadData(){
     [state.leetcode,state.github]=await Promise.all([loadFile('LiveData.csv'),loadFile('GitHubLiveData.csv')]);
     buildMergedIndex();
+    renderTopFiveHome();
   }
 
   function buildMergedIndex(){

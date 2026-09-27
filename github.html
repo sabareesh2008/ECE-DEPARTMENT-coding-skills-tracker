@@ -11,6 +11,9 @@
   <link rel="stylesheet" href="style.css?v=7.0">
   <link rel="stylesheet" href="css/examlytics-theme.css?v=7.0">
     <link rel="stylesheet" href="css/ui-refresh.css?v=8.0">
+<style>
+.legacy-home-grid,#adminLoginButton,#adminSessionCard,.home-admin-actions,.coding-test-home-card,.legacy-extra-card{display:none!important}.tracker-command-bar{display:flex;justify-content:space-between;gap:16px;align-items:stretch;margin:18px 0}.tracker-total-card{background:#fff;border:1px solid #dbe3ef;border-radius:16px;padding:15px 18px;min-width:190px;display:flex;flex-direction:column}.tracker-total-card span{font-size:.76rem;color:#64748b;font-weight:700}.tracker-total-card strong{font-size:1.6rem;color:#0f172a}.tracker-total-card small{color:#94a3b8}.tracker-command-menu{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.tracker-command-menu a{padding:10px 13px;border:1px solid #dbe3ef;border-radius:10px;background:#fff;color:#334155;text-decoration:none;font-size:.82rem;font-weight:700}.tracker-reports-panel{margin-top:24px;background:#fff;border:1px solid #dbe3ef;border-radius:18px;padding:22px}.tracker-reports-head h2{margin:4px 0;color:#0f172a}.tracker-reports-head p{margin:0;color:#64748b}.tracker-report-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}.tracker-report-card{border:1px solid #dbe3ef;background:#f8fafc;border-radius:14px;padding:16px;text-align:left;cursor:pointer}.tracker-report-card:hover{border-color:#93c5fd;background:#eff6ff}.tracker-report-card strong{display:block;color:#0f172a;margin-bottom:5px}.tracker-report-card span{display:block;color:#64748b;font-size:.78rem;line-height:1.4}.tracker-report-message{margin-top:12px;color:#2563eb;font-size:.82rem}@media(max-width:760px){.tracker-command-bar{flex-direction:column}.tracker-report-grid{grid-template-columns:1fr}}
+</style>
 </head>
 
 <body class="github-mode light-theme">
@@ -101,7 +104,14 @@
         <button class="year-tab-btn" data-year="4" role="tab" type="button">Year IV</button>
       </div>
 
-      <div id="yearSectionPanel" class="year-section-panel">
+      <div class="tracker-command-bar">
+  <div class="tracker-total-card"><span>Total Students</span><strong id="trackerTotalStudents">0</strong><small>Current year dataset</small></div>
+  <div class="tracker-command-menu" aria-label="GitHub workspace menu">
+    <a href="index.html">🏠 Hub</a><a href="#yearTabBar">📚 Sections</a><a href="#githubReports">📊 Reports</a><a href="#leaderboardView">🏆 Rankings</a>
+  </div>
+</div>
+
+<div id="yearSectionPanel" class="year-section-panel">
         <div id="yearSectionGrid" class="section-grid year-section-grid"></div>
       </div>
 
@@ -261,7 +271,20 @@
     <!-- =====================================================
          LEADERBOARD VIEW
          ===================================================== -->
-    <section id="leaderboardView" hidden>
+    <section id="githubReports" class="tracker-reports-panel">
+  <div class="tracker-reports-head"><div><span class="eyebrow">GITHUB REPORT CENTER</span><h2>Reports &amp; Exports</h2><p>All GitHub reporting tools live here. Choose Overall or a section above before generating a current-view report.</p></div></div>
+  <div class="tracker-report-grid">
+    <button type="button" class="tracker-report-card" id="ghReportTop50"><strong>🏆 Top 50</strong><span>Download the top 50 GitHub activity performers as Excel.</span></button>
+    <button type="button" class="tracker-report-card" id="ghReportCurrentCsv"><strong>📄 Current View CSV</strong><span>Export the selected overall/section leaderboard.</span></button>
+    <button type="button" class="tracker-report-card" id="ghReportCurrentPdf"><strong>🖨️ Current View PDF</strong><span>Print the selected leaderboard as a PDF.</span></button>
+    <button type="button" class="tracker-report-card" id="ghReportFacultyExcel"><strong>👨‍🏫 Faculty Excel</strong><span>Export faculty GitHub analytics.</span></button>
+    <button type="button" class="tracker-report-card" id="ghReportFacultyPdf"><strong>👨‍🏫 Faculty PDF</strong><span>Print faculty GitHub analytics.</span></button>
+    <button type="button" class="tracker-report-card" id="ghReportActivity"><strong>📈 Activity Report</strong><span>Use the current tracker scope for GitHub activity analysis.</span></button>
+  </div>
+  <div id="ghReportMessage" class="tracker-report-message" role="status"></div>
+</section>
+
+<section id="leaderboardView" hidden>
       <section class="leaderboard-topbar">
         <button id="backToSectionsButton" class="action-button secondary" type="button">
           ← Sections
@@ -1997,6 +2020,21 @@ public class Main {
   <script src="config.js?v=7.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="github-script.js?v=7.0"></script>
+<script>
+(function(){
+ function msg(t){var e=document.getElementById('ghReportMessage');if(e)e.textContent=t||'';}
+ function top50(){try{if(typeof XLSX==='undefined')throw new Error('Excel library is unavailable.');var rows=[...(window.__CODEMETRIX_GH_STUDENTS||[])];rows.sort(function(a,b){return (Number(b['Contributions 30 Days'])||0)-(Number(a['Contributions 30 Days'])||0)||(Number(b['Detected Deployments'])||0)-(Number(a['Detected Deployments'])||0)||(Number(b['Commits 30 Days'])||0)-(Number(a['Commits 30 Days'])||0);});rows=rows.slice(0,50).map(function(s,i){return {Rank:i+1,'Register Number':s['Register Number']||'', 'Student Name':s['Student Name']||'',Section:s.Section||'', 'GitHub Username':s['GitHub Username']||'', 'Contributions 30 Days':Number(s['Contributions 30 Days'])||0,'Commits 30 Days':Number(s['Commits 30 Days'])||0,'Repositories Total':Number(s['Repositories Total'])||0,'Detected Deployments':Number(s['Detected Deployments'])||0,'Last Activity':s['Last Activity']||'',Status:s.Status||''};});var ws=XLSX.utils.json_to_sheet(rows);var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Top 50 GitHub');XLSX.writeFile(wb,'CodeMetrix_GitHub_Top_50.xlsx');msg('Top 50 GitHub Excel downloaded.');}catch(e){msg(e.message);}}
+ document.getElementById('ghReportTop50')?.addEventListener('click',top50);
+ document.getElementById('ghReportCurrentCsv')?.addEventListener('click',function(){document.getElementById('downloadCsvButton')?.click();msg('Current GitHub view exported as CSV.');});
+ document.getElementById('ghReportCurrentPdf')?.addEventListener('click',function(){document.getElementById('downloadPdfButton')?.click();msg('Print dialog opened for the current GitHub view.');});
+ document.getElementById('ghReportFacultyExcel')?.addEventListener('click',function(){if(typeof downloadFacultyExcelReport==='function')downloadFacultyExcelReport();else msg('Faculty report is unavailable.');});
+ document.getElementById('ghReportFacultyPdf')?.addEventListener('click',function(){if(typeof downloadFacultyPdfReport==='function')downloadFacultyPdfReport();else msg('Faculty report is unavailable.');});
+ document.getElementById('ghReportActivity')?.addEventListener('click',function(){document.getElementById('downloadCsvButton')?.click();msg('Current GitHub activity scope exported.');});
+ document.getElementById('trackerTotalStudents').textContent='—';
+ setTimeout(function(){var el=document.getElementById('trackerTotalStudents');if(el&&Array.isArray(window.__CODEMETRIX_GH_STUDENTS))el.textContent=window.__CODEMETRIX_GH_STUDENTS.length;},1200);
+})();
+</script>
+
 
 </body>
 </html>

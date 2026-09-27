@@ -10,6 +10,8 @@ let isFormOpen = false;
 
 // DOM Elements
 const taskHeroSection = document.getElementById('taskHeroSection');
+const publishedTasksList = document.getElementById('publishedTasksList');
+let allPublishedTasks = [];
 const submissionFormSection = document.getElementById('submissionFormSection');
 const btnToggleForm = document.getElementById('btnToggleForm');
 const btnCloseForm = document.getElementById('btnCloseForm');
@@ -47,48 +49,94 @@ const btnSubmit = document.getElementById('btnSubmitProof');
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadActiveTask();
+  await loadAllTasks();
   attachEventListeners();
 });
 
-// 1. Fetch & Display Active Task
-async function loadActiveTask() {
+// 1. Load every published task and keep the active task ready for submission.
+async function loadAllTasks() {
   try {
-    currentTask = await DataService.getActiveTask();
-    if (!currentTask) {
-      taskTitleEl.textContent = 'No Active Task Currently Assigned';
-      taskDescEl.textContent = 'Please check back later or contact your department coordinator.';
-      taskDeadlineEl.textContent = 'No Deadline';
-      taskDueDateEl.textContent = 'N/A';
-      taskSubmissionCountEl.textContent = 'Submissions: 0';
-      btnSubmit.disabled = true;
-      return;
-    }
-
-    taskTitleEl.textContent = currentTask.title;
-    taskDescEl.textContent = currentTask.description || 'Upload your proof screenshot as requested by your faculty coordinator.';
-    
-    if (currentTask.deadline) {
-      const d = new Date(currentTask.deadline);
-      const isPast = d < new Date();
-      taskDeadlineEl.textContent = isPast ? '⚠️ Past Deadline' : '⏳ Due: ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-      taskDueDateEl.textContent = 'Deadline: ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    allPublishedTasks = await DataService.getAllTasks();
+    if (!Array.isArray(allPublishedTasks)) allPublishedTasks = [];
+    renderPublishedTasks();
+    const active = allPublishedTasks.find(t => t.is_active === true) || null;
+    if (active) {
+      currentTask = active;
+      renderSelectedTask(active, false);
     } else {
-      taskDeadlineEl.textContent = 'Open Submission';
-      taskDueDateEl.textContent = 'No Expiry';
+      currentTask = null;
+      if (taskHeroSection) taskHeroSection.hidden = true;
     }
-
-    // Load submission count
-    const submissions = await DataService.getSubmissionsForTask(currentTask.id);
-    taskSubmissionCountEl.textContent = `Submissions: ${submissions.length} received`;
   } catch (err) {
-    console.error('Failed to load task:', err);
-    taskTitleEl.textContent = 'Error Loading Task';
+    console.error('Failed to load published tasks:', err);
+    if (publishedTasksList) publishedTasksList.innerHTML = '<div class="task-list-loading">Unable to load published tasks. Please refresh or contact the department coordinator.</div>';
   }
 }
 
+function renderPublishedTasks() {
+  if (!publishedTasksList) return;
+  if (!allPublishedTasks.length) {
+    publishedTasksList.innerHTML = '<div class="task-list-loading">No published tasks are available right now.</div>';
+    return;
+  }
+  publishedTasksList.innerHTML = allPublishedTasks.map(task => {
+    const active = task.is_active !== false;
+    const d = task.deadline ? new Date(task.deadline) : null;
+    const past = d && d < new Date();
+    const canSubmit = active && !past;
+    const status = canSubmit ? '● Active' : (active ? '⚠ Deadline Passed' : 'Archived');
+    const deadline = d ? d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Open';
+    const desc = String(task.description || 'Submit the proof requested by your faculty coordinator.').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const title = String(task.title || 'Untitled Task').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return `<article class="published-task-card ${canSubmit?'active':'archived'}">
+      <div class="published-task-top"><span class="badge ${canSubmit?'badge-live':'badge-pill'}">${status}</span><span style="font-size:.75rem;color:#64748b">Due: ${deadline}</span></div>
+      <div class="published-task-title">${title}</div>
+      <div class="published-task-desc">${desc}</div>
+      <div class="published-task-meta"><span>📋 Proof submission</span><span>•</span><span>${task.target_section ? String(task.target_section) : 'Department task'}</span></div>
+      <button type="button" class="published-task-action ${canSubmit?'':'disabled'}" data-select-task="${String(task.id).replace(/"/g,'&quot;')}" ${canSubmit?'':'disabled'}>${canSubmit?'Submit Task →':'Submission Closed'}</button>
+    </article>`;
+  }).join('');
+}
+
+function renderSelectedTask(task, openForm = false) {
+  if (!task) return;
+  currentTask = task;
+  if (taskHeroSection) taskHeroSection.hidden = false;
+  taskTitleEl.textContent = task.title || 'Selected Task';
+  taskDescEl.textContent = task.description || 'Upload your proof screenshot as requested by your faculty coordinator.';
+  if (task.deadline) {
+    const d = new Date(task.deadline);
+    const isPast = d < new Date();
+    taskDeadlineEl.textContent = isPast ? '⚠️ Past Deadline' : '⏳ Due: ' + d.toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    taskDueDateEl.textContent = 'Deadline: ' + d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  } else {
+    taskDeadlineEl.textContent = 'Open Submission';
+    taskDueDateEl.textContent = 'No Expiry';
+  }
+  DataService.getSubmissionsForTask(task.id).then(rows => { taskSubmissionCountEl.textContent = `Submissions: ${(rows||[]).length} received`; }).catch(() => { taskSubmissionCountEl.textContent = 'Submissions: —'; });
+  if (openForm) openSubmissionForm();
+}
+
+// 1. Fetch & Display Active Task
+async function loadActiveTask() {
+  if (!allPublishedTasks.length) { await loadAllTasks(); return; }
+  const active = allPublishedTasks.find(t => t.is_active === true);
+  if (active) renderSelectedTask(active, false);
+  else { currentTask = null; if (taskHeroSection) taskHeroSection.hidden = true; }
+}
+
+
 // 2. Attach Event Listeners
 function attachEventListeners() {
+  if (publishedTasksList) {
+    publishedTasksList.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-select-task]');
+      if (!button || button.disabled) return;
+      const task = allPublishedTasks.find(t => String(t.id) === String(button.dataset.selectTask));
+      if (!task) return;
+      renderSelectedTask(task, true);
+    });
+  }
   // Click on active task banner to toggle/open submission form
   if (taskHeroSection) {
     taskHeroSection.addEventListener('click', (e) => {

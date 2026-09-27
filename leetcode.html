@@ -12,6 +12,9 @@
   <link rel="stylesheet" href="css/examlytics-theme.css?v=7.0">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="css/ui-refresh.css?v=8.0">
+<style>
+.legacy-home-grid,#adminLoginButton,.admin-session-card,#adminSessionCard,.home-admin-actions,.coding-test-home-card,.legacy-extra-card{display:none!important}.tracker-command-bar{display:flex;justify-content:space-between;gap:16px;align-items:stretch;margin:18px 0}.tracker-total-card{background:#fff;border:1px solid #dbe3ef;border-radius:16px;padding:15px 18px;min-width:190px;display:flex;flex-direction:column}.tracker-total-card span{font-size:.76rem;color:#64748b;font-weight:700}.tracker-total-card strong{font-size:1.6rem;color:#0f172a}.tracker-total-card small{color:#94a3b8}.tracker-command-menu{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.tracker-command-menu a{padding:10px 13px;border:1px solid #dbe3ef;border-radius:10px;background:#fff;color:#334155;text-decoration:none;font-size:.82rem;font-weight:700}.tracker-reports-panel{margin-top:24px;background:#fff;border:1px solid #dbe3ef;border-radius:18px;padding:22px}.tracker-reports-head h2{margin:4px 0;color:#0f172a}.tracker-reports-head p{margin:0;color:#64748b}.tracker-report-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}.tracker-report-card{border:1px solid #dbe3ef;background:#f8fafc;border-radius:14px;padding:16px;text-align:left;cursor:pointer}.tracker-report-card:hover{border-color:#93c5fd;background:#eff6ff}.tracker-report-card strong{display:block;color:#0f172a;margin-bottom:5px}.tracker-report-card span{display:block;color:#64748b;font-size:.78rem;line-height:1.4}.tracker-report-message{margin-top:12px;color:#2563eb;font-size:.82rem}.tracker-date-modal[hidden]{display:none}.tracker-date-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}.tracker-date-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55)}.tracker-date-card{position:relative;background:#fff;border-radius:18px;width:min(560px,100%);padding:22px;box-shadow:0 25px 70px rgba(15,23,42,.25)}.tracker-date-head{display:flex;justify-content:space-between;gap:15px}.tracker-date-head h2{margin:3px 0}.tracker-date-head p{margin:0;color:#64748b}.tracker-close{border:0;background:#f1f5f9;border-radius:8px;width:34px;height:34px;font-size:20px;cursor:pointer}.tracker-date-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}.tracker-date-fields label{font-size:.8rem;font-weight:750;color:#334155}.tracker-date-fields input{display:block;width:100%;margin-top:6px;padding:10px;border:1px solid #cbd5e1;border-radius:9px}.tracker-date-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}@media(max-width:760px){.tracker-command-bar{flex-direction:column}.tracker-report-grid{grid-template-columns:1fr}.tracker-date-fields{grid-template-columns:1fr}}
+</style>
 </head>
 
 <body class="light-theme">
@@ -102,11 +105,18 @@
         <button class="year-tab-btn" data-year="4" role="tab" type="button">Year IV</button>
       </div>
 
-      <div id="yearSectionPanel" class="year-section-panel">
+      <div class="tracker-command-bar">
+  <div class="tracker-total-card"><span>Total Students</span><strong id="trackerTotalStudents">0</strong><small>Current year dataset</small></div>
+  <div class="tracker-command-menu" aria-label="LeetCode workspace menu">
+    <a href="index.html">🏠 Hub</a><a href="#yearTabBar">📚 Sections</a><a href="#leetcodeReports">📊 Reports</a><a href="#leaderboardView" id="trackerBackToLeaderboard">🏆 Rankings</a>
+  </div>
+</div>
+
+<div id="yearSectionPanel" class="year-section-panel">
         <div id="yearSectionGrid" class="section-grid year-section-grid"></div>
       </div>
 
-      <div class="section-grid legacy-home-grid">
+      <div class="section-grid legacy-home-grid" id="leetcodeSectionCards">
         <button class="section-card legacy-section-choice" data-section="ECE A" type="button">
           <span class="section-card-title">ECE A</span>
           <strong id="countECEA">0</strong>
@@ -261,7 +271,20 @@
     <!-- =====================================================
          LEADERBOARD VIEW
          ===================================================== -->
-    <section id="leaderboardView" hidden>
+    <section id="leetcodeReports" class="tracker-reports-panel">
+  <div class="tracker-reports-head"><div><span class="eyebrow">LEETCODE REPORT CENTER</span><h2>Reports &amp; Exports</h2><p>All LeetCode reporting tools live here. Choose Overall or a section above before generating a current-view report.</p></div></div>
+  <div class="tracker-report-grid">
+    <button type="button" class="tracker-report-card" id="lcReportTop50"><strong>🏆 Top 50</strong><span>Download the top 50 LeetCode performers as Excel.</span></button>
+    <button type="button" class="tracker-report-card" id="lcReportCurrentCsv"><strong>📄 Current View CSV</strong><span>Export the selected overall/section leaderboard.</span></button>
+    <button type="button" class="tracker-report-card" id="lcReportCurrentPdf"><strong>🖨️ Current View PDF</strong><span>Print the selected leaderboard as a PDF.</span></button>
+    <button type="button" class="tracker-report-card" id="lcReportFacultyExcel"><strong>👨‍🏫 Faculty Excel</strong><span>Export faculty LeetCode analytics.</span></button>
+    <button type="button" class="tracker-report-card" id="lcReportFacultyPdf"><strong>👨‍🏫 Faculty PDF</strong><span>Print faculty LeetCode analytics.</span></button>
+    <button type="button" class="tracker-report-card" id="openDateReportButton"><strong>📅 Date Range Report</strong><span>Generate LeetCode activity for a selected date range.</span></button>
+  </div>
+  <div id="lcReportMessage" class="tracker-report-message" role="status"></div>
+</section>
+
+<section id="leaderboardView" hidden>
       <section class="leaderboard-topbar">
         <button id="backToSectionsButton" class="action-button secondary" type="button">
           ← Sections
@@ -413,151 +436,6 @@
     </section>
   </main>
 
-
-  <!-- =======================================================
-       ACTIONS MENU
-       ======================================================= -->
-  <div id="adminActionsModal" class="profile-modal admin-actions-modal" hidden>
-    <div class="profile-modal-backdrop" data-close-admin-actions></div>
-
-    <section
-      class="profile-modal-card admin-actions-card"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="adminActionsTitle"
-    >
-      <div class="profile-modal-head admin-actions-head">
-        <div>
-          <div class="eyebrow">QUICK CONTROLS</div>
-          <h2 id="adminActionsTitle">Actions</h2>
-          <p class="admin-actions-subtitle">
-            Export reports, manage students and open analytics.
-          </p>
-        </div>
-
-        <button
-          id="closeAdminActionsMenu"
-          class="modal-close"
-          type="button"
-          aria-label="Close actions menu"
-        >×</button>
-      </div>
-
-      <div class="admin-actions-section">
-        <div class="admin-actions-section-title">EXPORT</div>
-
-        <div class="admin-actions-grid">
-          <button
-            id="downloadCsvButton"
-            class="admin-action-tile export-tile"
-            type="button"
-          >
-            <span class="admin-action-icon">CSV</span>
-            <span class="admin-action-copy">
-              <strong>Download CSV</strong>
-              <small>Export current leaderboard</small>
-            </span>
-          </button>
-
-          <button
-            id="downloadPdfButton"
-            class="admin-action-tile export-tile"
-            type="button"
-          >
-            <span class="admin-action-icon">PDF</span>
-            <span class="admin-action-copy">
-              <strong>Download PDF</strong>
-              <small>Generate printable report</small>
-            </span>
-          </button>
-        </div>
-      </div>
-
-      <div class="admin-actions-section admin-only" hidden>
-        <div class="admin-actions-section-title">ADMINISTRATION</div>
-
-        <div class="admin-actions-grid">
-          <button
-            id="addProfileButton"
-            class="admin-action-tile admin-only"
-            type="button"
-            hidden
-          >
-            <span class="admin-action-icon">＋</span>
-            <span class="admin-action-copy">
-              <strong>Add Profile</strong>
-              <small>Add a new student</small>
-            </span>
-          </button>
-
-          <button
-            id="syncNowButton"
-            class="admin-action-tile admin-only"
-            type="button"
-            hidden
-          >
-            <span class="admin-action-icon">↻</span>
-            <span class="admin-action-copy">
-              <strong>Sync Now</strong>
-              <small>Refresh LeetCode data</small>
-            </span>
-          </button>
-
-          <button
-            id="manageStudentsButton"
-            class="admin-action-tile admin-only"
-            type="button"
-            hidden
-          >
-            <span class="admin-action-icon">👥</span>
-            <span class="admin-action-copy">
-              <strong>Manage Students</strong>
-              <small>Edit or remove profiles</small>
-            </span>
-          </button>
-
-          <button
-            id="facultyAnalyticsButton"
-            class="admin-action-tile admin-only"
-            type="button"
-            hidden
-          >
-            <span class="admin-action-icon">▦</span>
-            <span class="admin-action-copy">
-              <strong>Faculty Analytics</strong>
-              <small>Open faculty performance</small>
-            </span>
-          </button>
-
-          <button
-            id="aiAnalystButton"
-            class="admin-action-tile ai-tile admin-only"
-            type="button"
-            hidden
-          >
-            <span class="admin-action-icon">AI</span>
-            <span class="admin-action-copy">
-              <strong>AI Analyst</strong>
-              <small>Analyze coding performance</small>
-            </span>
-          </button>
-
-          <button
-            id="adminLogoutButton"
-            class="admin-action-tile logout-tile admin-only"
-            type="button"
-            hidden
-          >
-            <span class="admin-action-icon">↪</span>
-            <span class="admin-action-copy">
-              <strong>Logout</strong>
-              <small>End administrator session</small>
-            </span>
-          </button>
-        </div>
-      </div>
-    </section>
-  </div>
 
   <!-- =======================================================
        ADMIN LOGIN
@@ -2216,12 +2094,37 @@ public class Main {
     </section>
   </div>
 
-  <!-- Scripts MUST stay at the end so Coding Test buttons/forms exist before JS binds events -->
+  <div id="dateReportModal" class="tracker-date-modal" hidden>
+  <div class="tracker-date-backdrop" data-close-date-report></div>
+  <section class="tracker-date-card" role="dialog" aria-modal="true" aria-labelledby="dateReportTitle">
+    <div class="tracker-date-head"><div><span class="eyebrow">LEETCODE REPORT</span><h2 id="dateReportTitle">Date Range Activity</h2><p id="dateReportScope">ECE Overall</p></div><button type="button" id="closeDateReport" class="tracker-close" data-close-date-report>×</button></div>
+    <div class="tracker-date-fields"><label>From<input id="dateReportFrom" type="date"></label><label>To<input id="dateReportTo" type="date"></label></div>
+    <p id="dateReportMessage" class="form-message"></p>
+    <div class="tracker-date-actions"><button type="button" id="cancelDateReport" class="action-button secondary" data-close-date-report>Cancel</button><button type="button" id="downloadDateReportCsv" class="action-button secondary">CSV</button><button type="button" id="downloadDateReportExcel" class="action-button secondary">Excel</button><button type="button" id="downloadDateReportPdf" class="action-button primary">PDF</button></div>
+    <div id="dateReportPrintContent" hidden></div>
+  </section>
+</div>
+
+<!-- Scripts MUST stay at the end so Coding Test buttons/forms exist before JS binds events -->
   <script src="config.js?v=7.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="script.js?v=7.0"></script>
+<script>
+(function(){
+  function setMsg(t){var e=document.getElementById('lcReportMessage');if(e)e.textContent=t||'';}
+  function top50(){try{if(typeof XLSX==='undefined')throw new Error('Excel library is unavailable.');var rows=[...(window.__CODEMETRIX_LC_STUDENTS||[])];rows.sort(function(a,b){return (Number(b['Problems Solved'])||0)-(Number(a['Problems Solved'])||0)||(Number(b['Last 7 Days'])||0)-(Number(a['Last 7 Days'])||0);});rows=rows.slice(0,50).map(function(s,i){return {Rank:i+1,'Register Number':s['Register Number']||'', 'Student Name':s['Student Name']||'',Section:s.Section||'', 'LeetCode Username':s['LeetCode Username']||'', 'Problems Solved':Number(s['Problems Solved'])||0,'Solved Today':Number(s['Solved Today'])||0,'Last 7 Days':Number(s['Last 7 Days'])||0,'Last 30 Days':Number(s['Last 30 Days'])||0,Easy:Number(s.Easy)||0,Medium:Number(s.Medium)||0,Hard:Number(s.Hard)||0,Status:s.Status||''};});var ws=XLSX.utils.json_to_sheet(rows);var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Top 50 LeetCode');XLSX.writeFile(wb,'CodeMetrix_LeetCode_Top_50.xlsx');setMsg('Top 50 LeetCode Excel downloaded.');}catch(e){setMsg(e.message);}}
+  document.getElementById('lcReportTop50')?.addEventListener('click',top50);
+  document.getElementById('lcReportCurrentCsv')?.addEventListener('click',function(){document.getElementById('downloadCsvButton')?.click();setMsg('Current LeetCode view exported as CSV.');});
+  document.getElementById('lcReportCurrentPdf')?.addEventListener('click',function(){document.getElementById('downloadPdfButton')?.click();setMsg('Print dialog opened for the current LeetCode view.');});
+  document.getElementById('lcReportFacultyExcel')?.addEventListener('click',function(){if(typeof downloadFacultyExcelReport==='function')downloadFacultyExcelReport();else setMsg('Faculty report is unavailable.');});
+  document.getElementById('lcReportFacultyPdf')?.addEventListener('click',function(){if(typeof downloadFacultyPdfReport==='function')downloadFacultyPdfReport();else setMsg('Faculty report is unavailable.');});
+  document.getElementById('trackerTotalStudents').textContent='—';
+  setTimeout(function(){var el=document.getElementById('trackerTotalStudents');if(el&&Array.isArray(window.__CODEMETRIX_LC_STUDENTS))el.textContent=window.__CODEMETRIX_LC_STUDENTS.length;},1200);
+})();
+</script>
+
 
 </body>
 </html>

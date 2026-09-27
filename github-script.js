@@ -855,6 +855,7 @@ async function loadData(year = selectedYear || 2) {
 
   if (selectedYear === year || year === 2) {
     allStudents = rows;
+    window.__CODEMETRIX_GH_STUDENTS = allStudents;
     profileDataLoaded = false;
     updateLastUpdated();
     updateSectionCounts();
