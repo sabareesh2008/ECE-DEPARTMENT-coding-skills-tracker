@@ -59,12 +59,10 @@
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const nameInput = document.getElementById('advisorNameInput');
-      const secSelect = document.getElementById('advisorSectionSelect');
       const passInput = document.getElementById('advisorPasswordInput');
       const msgEl = document.getElementById('advisorLoginMsg');
 
       const name = (nameInput?.value || '').trim();
-      const section = secSelect?.value || 'ECE A';
       const pass = (passInput?.value || '').trim();
 
       const expectedPass = window.APP_CONFIG?.ADVISOR_PASSWORD || 'admin123';
@@ -79,13 +77,14 @@
         return;
       }
 
-      const cleanSec = section.replace(/^ECE\s*/i, '').trim().toUpperCase();
+      // Default to Section A upon login; can be switched immediately inside the Cockpit header
+      const defaultSec = 'A';
 
       currentAdvisor = {
         name: name,
-        section: cleanSec,
-        section_full: section.startsWith('ECE') ? section : `ECE ${section}`,
-        isHod: cleanSec === 'ALL' || cleanSec === 'OVERALL',
+        section: defaultSec,
+        section_full: `ECE ${defaultSec}`,
+        isHod: false,
         loggedInAt: new Date().toISOString()
       };
 
