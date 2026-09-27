@@ -167,8 +167,9 @@ window.StudentService = {
     }
   },
 
-  // Fetch all tasks from Supabase
+  // Fetch all tasks from Supabase and local cache
   async fetchTasks() {
+    let cloudTasks = [];
     try {
       const res = await fetch(`${window.APP_CONFIG.PORTAL_SUPABASE_URL}/rest/v1/tasks?select=*&order=created_at.desc`, {
         headers: {
@@ -176,30 +177,45 @@ window.StudentService = {
           'Authorization': `Bearer ${window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY}`
         }
       });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) cloudTasks = data;
+      }
     } catch (e) {
       console.warn('[StudentService] Tasks fetch error:', e.message);
-      return [];
     }
+    const localTasks = JSON.parse(localStorage.getItem('codemetrix_custom_tasks') || '[]');
+    const map = new Map();
+    [...localTasks, ...cloudTasks].forEach(t => {
+      if (t && t.id && !map.has(t.id)) map.set(t.id, t);
+    });
+    const result = Array.from(map.values());
+    return result.length ? result : [{
+      id: 'task-live-01',
+      title: 'Course Registration & Proof Screenshot Submission',
+      description: 'Please upload a clear screenshot of your course enrollment / assessment completion proof showing your Name and Register Number.',
+      deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+      target_section: 'ALL',
+      is_active: true,
+      created_by: 'Academic Cell'
+    }];
   },
 
   // Create a new task assigned to specific section or ALL
   async createSectionTask(taskData) {
-    try {
-      const payload = {
-        id: 'task-' + Date.now(),
-        title: taskData.title,
-        description: taskData.description || '',
-        deadline: taskData.deadline || null,
-        target_section: taskData.target_section || 'ALL',
-        created_by: taskData.created_by || 'Class Advisor',
-        is_active: true,
-        created_at: new Date().toISOString()
-      };
+    const payload = {
+      id: 'task-' + Date.now(),
+      title: taskData.title,
+      description: taskData.description || '',
+      deadline: taskData.deadline || null,
+      target_section: taskData.target_section || 'ALL',
+      created_by: taskData.created_by || 'Class Advisor',
+      is_active: true,
+      created_at: new Date().toISOString()
+    };
 
-      const res = await fetch(`${window.APP_CONFIG.PORTAL_SUPABASE_URL}/rest/v1/tasks`, {
+    try {
+      await fetch(`${window.APP_CONFIG.PORTAL_SUPABASE_URL}/rest/v1/tasks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -209,32 +225,20 @@ window.StudentService = {
         },
         body: JSON.stringify(payload)
       });
-      if (!res.ok) {
-        // Fallback: save to localStorage if table doesn't support target_section
-        const localTasks = JSON.parse(localStorage.getItem('codemetrix_custom_tasks') || '[]');
-        localTasks.unshift(payload);
-        localStorage.setItem('codemetrix_custom_tasks', JSON.stringify(localTasks));
-        return payload;
-      }
-      const data = await res.json();
-      return Array.isArray(data) && data.length > 0 ? data[0] : payload;
     } catch (e) {
-      console.warn('[StudentService] Create task error:', e.message);
-      const payload = {
-        id: 'task-' + Date.now(),
-        ...taskData,
-        is_active: true,
-        created_at: new Date().toISOString()
-      };
-      const localTasks = JSON.parse(localStorage.getItem('codemetrix_custom_tasks') || '[]');
-      localTasks.unshift(payload);
-      localStorage.setItem('codemetrix_custom_tasks', JSON.stringify(localTasks));
-      return payload;
+      console.warn('[StudentService] Create task cloud fallback:', e.message);
     }
+
+    const localTasks = JSON.parse(localStorage.getItem('codemetrix_custom_tasks') || '[]');
+    localTasks.unshift(payload);
+    localStorage.setItem('codemetrix_custom_tasks', JSON.stringify(localTasks));
+    localStorage.setItem('portal_active_task', JSON.stringify(payload));
+    return payload;
   },
 
   // Fetch all published assessments
   async fetchAssessments() {
+    let cloudTests = [];
     try {
       const res = await fetch(`${window.APP_CONFIG.PORTAL_SUPABASE_URL}/rest/v1/assessments?select=*&order=created_at.desc`, {
         headers: {
@@ -242,16 +246,28 @@ window.StudentService = {
           'Authorization': `Bearer ${window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY}`
         }
       });
-      if (!res.ok) {
-        const localTests = JSON.parse(localStorage.getItem('codemetrix_published_tests') || '[]');
-        return localTests.length ? localTests : [{ id: 'test_1', title: 'Technical Assessment 2026', duration: 45, is_published: true, target_section: 'ALL', created_by: 'Department Head' }];
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) cloudTests = data;
       }
-      const data = await res.json();
-      return Array.isArray(data) && data.length ? data : [{ id: 'test_1', title: 'Technical Assessment 2026', duration: 45, is_published: true, target_section: 'ALL', created_by: 'Department Head' }];
     } catch (e) {
-      const localTests = JSON.parse(localStorage.getItem('codemetrix_published_tests') || '[]');
-      return localTests.length ? localTests : [{ id: 'test_1', title: 'Technical Assessment 2026', duration: 45, is_published: true, target_section: 'ALL', created_by: 'Department Head' }];
+      console.warn('[StudentService] Assessments fetch cloud warning:', e.message);
     }
+
+    const localTests = JSON.parse(localStorage.getItem('codemetrix_published_tests') || '[]');
+    const map = new Map();
+    [...localTests, ...cloudTests].forEach(t => {
+      if (t && t.id && !map.has(t.id)) map.set(t.id, t);
+    });
+    const combined = Array.from(map.values());
+    return combined.length ? combined : [{
+      id: 'test_1',
+      title: 'Technical Assessment 2026',
+      duration: 45,
+      is_published: true,
+      target_section: 'ALL',
+      created_by: 'Department Head'
+    }];
   },
 
   // Publish / activate a new assessment (Overall or Section-specific)
@@ -284,6 +300,33 @@ window.StudentService = {
     const localTests = JSON.parse(localStorage.getItem('codemetrix_published_tests') || '[]');
     localTests.unshift(payload);
     localStorage.setItem('codemetrix_published_tests', JSON.stringify(localTests));
+
+    // Synchronize assessment portal direct state
+    localStorage.setItem('portal_test_published', 'true');
+    localStorage.setItem('portal_test_title', payload.title);
+    localStorage.setItem('portal_test_duration', String(payload.duration));
+    localStorage.setItem('portal_active_test_id', payload.id);
+
+    // Synchronize into portal_all_tests so app.js sees it immediately
+    const portalAllTests = JSON.parse(localStorage.getItem('portal_all_tests') || '[]');
+    const existingIndex = portalAllTests.findIndex(t => t.id === payload.id);
+    const portalTestObj = {
+      id: payload.id,
+      title: payload.title,
+      duration: payload.duration,
+      status: 'published',
+      target_section: payload.target_section,
+      createdAt: payload.created_at,
+      questions: typeof QUESTIONS_BANK !== 'undefined' ? QUESTIONS_BANK : [],
+      submissions: []
+    };
+    if (existingIndex >= 0) {
+      portalAllTests[existingIndex] = { ...portalAllTests[existingIndex], ...portalTestObj };
+    } else {
+      portalAllTests.unshift(portalTestObj);
+    }
+    localStorage.setItem('portal_all_tests', JSON.stringify(portalAllTests));
+
     return payload;
   }
 };

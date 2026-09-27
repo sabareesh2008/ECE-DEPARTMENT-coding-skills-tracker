@@ -21,15 +21,42 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
 
   // Multi-Test Archive & Management Setup
   let savedAllTests = JSON.parse(localStorage.getItem('portal_all_tests') || '[]');
+  const localPublished = JSON.parse(localStorage.getItem('codemetrix_published_tests') || '[]');
   let activeTestId = localStorage.getItem('portal_active_test_id') || 'test_1';
   const initialSubmissions = JSON.parse(localStorage.getItem('portal_submissions') || '[]');
+
+  // Merge any tests from codemetrix_published_tests into savedAllTests
+  if (Array.isArray(localPublished) && localPublished.length > 0) {
+    localPublished.forEach(pt => {
+      const existing = savedAllTests.find(t => t.id === pt.id);
+      if (existing) {
+        existing.title = pt.title || existing.title;
+        existing.duration = pt.duration || existing.duration;
+        existing.status = pt.is_published !== false ? 'published' : 'unpublished';
+        existing.target_section = pt.target_section || existing.target_section || 'ALL';
+        if (!existing.questions || !existing.questions.length) existing.questions = initialQuestions;
+      } else {
+        savedAllTests.unshift({
+          id: pt.id,
+          title: pt.title,
+          duration: pt.duration || 45,
+          status: pt.is_published !== false ? 'published' : 'unpublished',
+          target_section: pt.target_section || 'ALL',
+          createdAt: pt.created_at || new Date().toISOString(),
+          questions: initialQuestions,
+          submissions: []
+        });
+      }
+    });
+  }
 
   if (!Array.isArray(savedAllTests) || savedAllTests.length === 0) {
     savedAllTests = [{
       id: 'test_1',
       title: localStorage.getItem('portal_test_title') || 'Technical Assessment 2026',
       duration: parseInt(localStorage.getItem('portal_test_duration') || '45', 10),
-      status: localStorage.getItem('portal_test_published') === 'true' ? 'published' : 'unpublished',
+      status: localStorage.getItem('portal_test_published') !== 'false' ? 'published' : 'unpublished',
+      target_section: 'ALL',
       createdAt: new Date().toISOString(),
       questions: initialQuestions,
       submissions: initialSubmissions
@@ -39,6 +66,7 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
   }
 
   const initialActiveTest = savedAllTests.find(t => t.id === activeTestId) || savedAllTests[0];
+  const isDefaultPublished = initialActiveTest.status === 'published' || localStorage.getItem('portal_test_published') !== 'false';
 
   const state = {
     student: null,
@@ -46,7 +74,7 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
     allTests: savedAllTests,
     activeTestId: initialActiveTest.id,
     analyzingTestId: initialActiveTest.id,
-    isTestPublished: initialActiveTest.status === 'published',
+    isTestPublished: isDefaultPublished,
     testTitle: initialActiveTest.title || 'Technical Assessment 2026',
     testDuration: initialActiveTest.duration || 45,
     allStudents: typeof REGISTERED_STUDENTS !== 'undefined' ? [...REGISTERED_STUDENTS] : [],
@@ -523,6 +551,34 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
           return;
         }
         // ── END DUPLICATE GUARD ─────────────────────────────────────────
+
+        // Match active published test for this student's section or ALL
+        const studentSec = (state.student.section || '').replace(/^ECE\s*/i, '').trim().toUpperCase();
+        const localPublishedList = JSON.parse(localStorage.getItem('codemetrix_published_tests') || '[]');
+        const combinedCandidateTests = [...localPublishedList, ...state.allTests];
+        
+        const matchedTest = combinedCandidateTests.find(t => {
+          const tSec = String(t.target_section || 'ALL').replace(/^ECE\s*/i, '').trim().toUpperCase();
+          const isPub = t.status === 'published' || t.is_published !== false;
+          return isPub && (tSec === 'ALL' || tSec === studentSec);
+        }) || state.allTests[0];
+
+        if (matchedTest) {
+          state.activeTestId = matchedTest.id;
+          state.testTitle = matchedTest.title || state.testTitle;
+          state.testDuration = Number(matchedTest.duration || state.testDuration || 45);
+          if (Array.isArray(matchedTest.questions) && matchedTest.questions.length > 0) {
+            state.questions = matchedTest.questions;
+          } else if (!state.questions || state.questions.length === 0) {
+            state.questions = (typeof QUESTIONS_BANK !== 'undefined' && QUESTIONS_BANK.length > 0) ? [...QUESTIONS_BANK] : initialQuestions;
+          }
+          state.isTestPublished = (matchedTest.status === 'published' || matchedTest.is_published !== false || localStorage.getItem('portal_test_published') !== 'false');
+        }
+
+        // Guarantee questions bank is not empty
+        if (!state.questions || state.questions.length === 0) {
+          state.questions = (typeof QUESTIONS_BANK !== 'undefined' && QUESTIONS_BANK.length > 0) ? [...QUESTIONS_BANK] : initialQuestions;
+        }
 
         // Check if test is published and questions are assigned
         if (!state.isTestPublished || !state.questions || state.questions.length === 0) {

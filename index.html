@@ -283,20 +283,22 @@
                 <h3>Technical Assessments &amp; Online Examinations</h3>
                 <p>Timed MCQ &amp; Fill-in-the-blanks examinations with automatic grading and PDF report generation.</p>
               </div>
-              <a href="assessment.html" class="btn-clean-primary">Start Test →</a>
+              <a href="assessment.html" class="btn-clean-primary">Open Assessment Portal →</a>
             </div>
 
-            <!-- Active Test Card -->
-            <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:var(--radius-lg);padding:24px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
-              <div>
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                  <span class="badge-clean-pill success">● Live / Active</span>
-                  <span style="font-size:0.82rem;color:var(--text-muted);">45 Minutes · Proctored</span>
+            <!-- Dynamic Active Exams Container -->
+            <div id="availableExamsContainer" style="margin-bottom:24px;">
+              <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:var(--radius-lg);padding:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    <span class="badge-clean-pill success">● Live / Active</span>
+                    <span style="font-size:0.82rem;color:var(--text-muted);">45 Minutes · Proctored</span>
+                  </div>
+                  <h4 style="margin:0 0 6px 0;font-size:1.25rem;color:var(--text-main);">Technical Assessment 2026</h4>
+                  <p style="color:var(--text-secondary);font-size:0.88rem;margin:0;">Data Structures, Digital Electronics, Computer Networks, and Core Circuit Concepts.</p>
                 </div>
-                <h4 style="margin:0 0 6px 0;font-size:1.25rem;color:var(--text-main);">Technical Assessment 2026</h4>
-                <p style="color:var(--text-secondary);font-size:0.88rem;margin:0;">Data Structures, Digital Electronics, Computer Networks, and Core Circuit Concepts.</p>
+                <a href="assessment.html" class="btn-clean-primary" style="padding:10px 20px;">Start Test →</a>
               </div>
-              <a href="assessment.html" class="btn-clean-primary" style="padding:10px 20px;">Start Test →</a>
             </div>
 
             <h4 style="margin:20px 0 12px 0;font-size:1.05rem;">Proctoring &amp; Assessment Guidelines</h4>
@@ -374,18 +376,27 @@
 
             <!-- Embedded Task Submission Form -->
             <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:var(--radius-lg);padding:24px;max-width:720px;margin:0 auto;">
-              <h4 style="margin:0 0 4px 0;font-size:1.15rem;color:var(--text-main);">Course Registration &amp; Proof Submission</h4>
-              <p style="color:var(--text-muted);font-size:0.85rem;margin:0 0 18px 0;">Please upload a clear screenshot showing your Name and Register Number.</p>
+              <div id="activeTaskCardHeader" style="margin-bottom:18px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                  <span class="badge-clean-pill success">● Active Assigned Task</span>
+                  <span id="embeddedTaskDeadlineBadge" style="font-size:0.82rem;color:var(--text-muted);">Open Submission</span>
+                </div>
+                <h4 id="embeddedTaskTitle" style="margin:0 0 4px 0;font-size:1.15rem;color:var(--text-main);">Course Registration &amp; Proof Submission</h4>
+                <p id="embeddedTaskDesc" style="color:var(--text-muted);font-size:0.85rem;margin:0;">Please upload a clear screenshot showing your Name and Register Number.</p>
+              </div>
 
               <form id="embeddedTaskForm">
+                <div id="embeddedTaskFeedback" style="display:none;padding:10px 14px;border-radius:8px;font-size:0.88rem;margin-bottom:14px;"></div>
+
                 <div style="margin-bottom:14px;">
                   <label style="display:block;font-size:0.82rem;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">Register Number *</label>
                   <input type="text" id="embeddedTaskRegNo" class="form-control" placeholder="e.g. 922525106001" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-main);" required>
+                  <div id="embeddedStudentInfo" style="font-size:0.8rem;color:#059669;margin-top:4px;display:none;font-weight:600;"></div>
                 </div>
 
                 <div style="margin-bottom:14px;">
                   <label style="display:block;font-size:0.82rem;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">Upload Screenshot Proof *</label>
-                  <input type="file" id="embeddedTaskFile" accept="image/*" class="form-control" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border-main);" required>
+                  <input type="file" id="embeddedTaskFile" accept="image/png, image/jpeg, image/jpg, image/webp" class="form-control" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border-main);" required>
                 </div>
 
                 <div style="margin-bottom:18px;">

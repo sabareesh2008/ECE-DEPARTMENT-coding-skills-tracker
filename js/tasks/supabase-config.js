@@ -103,28 +103,61 @@ const DataService = {
   },
 
   // 1. Get the currently active assigned task
-  async getActiveTask() {
+  async getActiveTask(studentSection) {
+    const secClean = studentSection ? String(studentSection).replace(/^ECE\s*/i, '').trim().toUpperCase() : '';
+
+    // First check local tasks published via Advisor / Admin Cockpit
+    const localTasks = JSON.parse(localStorage.getItem('codemetrix_custom_tasks') || '[]');
+    if (Array.isArray(localTasks) && localTasks.length > 0) {
+      if (secClean) {
+        const secMatch = localTasks.find(t => {
+          const tSec = String(t.target_section || 'ALL').replace(/^ECE\s*/i, '').trim().toUpperCase();
+          return t.is_active !== false && (tSec === 'ALL' || tSec === secClean);
+        });
+        if (secMatch) return secMatch;
+      } else {
+        const activeOne = localTasks.find(t => t.is_active !== false);
+        if (activeOne) return activeOne;
+      }
+    }
+
     try {
-      const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/tasks?is_active=eq.true&order=created_at.desc&limit=1`, { headers: getHeaders() });
+      const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/tasks?is_active=eq.true&order=created_at.desc&limit=10`, { headers: getHeaders() });
       if (res.ok) {
         const rows = await res.json();
-        if (Array.isArray(rows) && rows.length) return rows[0];
+        if (Array.isArray(rows) && rows.length) {
+          if (secClean) {
+            const rowMatch = rows.find(r => {
+              const rSec = String(r.target_section || 'ALL').replace(/^ECE\s*/i, '').trim().toUpperCase();
+              return rSec === 'ALL' || rSec === secClean;
+            });
+            if (rowMatch) return rowMatch;
+          }
+          return rows[0];
+        }
       }
     } catch (err) {
       console.warn('getActiveTask cloud fetch error:', err);
     }
-    return DEFAULT_TASK;
+    return (localTasks && localTasks.length > 0) ? localTasks[0] : DEFAULT_TASK;
   },
 
   // 2. Get all tasks
   async getAllTasks() {
+    let cloudTasks = [];
     try {
       const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/tasks?select=*&order=created_at.desc`, { headers: getHeaders() });
-      if (res.ok) return await res.json();
+      if (res.ok) cloudTasks = await res.json();
     } catch (err) {
       console.warn('getAllTasks cloud fetch error:', err);
     }
-    return [DEFAULT_TASK];
+    const localTasks = JSON.parse(localStorage.getItem('codemetrix_custom_tasks') || '[]');
+    const map = new Map();
+    [...localTasks, ...cloudTasks].forEach(t => {
+      if (t && t.id && !map.has(t.id)) map.set(t.id, t);
+    });
+    const combined = Array.from(map.values());
+    return combined.length ? combined : [DEFAULT_TASK];
   },
 
   // 3. Create a new task and publish/draft it to the shared portal database

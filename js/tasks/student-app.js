@@ -238,6 +238,23 @@ async function verifyStudent(regNo) {
       studentDeptSecBadge.textContent = `${student.department} - Section ${student.section}`;
       studentVerifiedCard.style.display = 'block';
 
+      // Re-fetch active task scoped to student's section
+      const sectionTask = await DataService.getActiveTask(student.section);
+      if (sectionTask) {
+        currentTask = sectionTask;
+        taskTitleEl.textContent = currentTask.title;
+        taskDescEl.textContent = currentTask.description || 'Upload your proof screenshot as requested by your faculty coordinator.';
+        if (currentTask.deadline) {
+          const d = new Date(currentTask.deadline);
+          const isPast = d < new Date();
+          taskDeadlineEl.textContent = isPast ? '⚠️ Past Deadline' : '⏳ Due: ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          taskDueDateEl.textContent = 'Deadline: ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        } else {
+          taskDeadlineEl.textContent = 'Open Submission';
+          taskDueDateEl.textContent = 'No Expiry';
+        }
+      }
+
       // Check if this student already submitted
       if (currentTask) {
         const existing = await DataService.getExistingSubmission(currentTask.id, student.reg_no);

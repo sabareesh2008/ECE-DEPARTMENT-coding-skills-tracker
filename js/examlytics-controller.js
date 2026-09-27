@@ -29,6 +29,9 @@
     initRosterDirectory();
     initReportGenerator();
     initQuickActions();
+    loadAvailableExams();
+    loadAvailableTasks();
+    initEmbeddedTaskForm();
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeReportModal(); });
   });
 
@@ -584,6 +587,196 @@
       navigator.clipboard.writeText(text).then(() => {
         alert('✓ Copied notification announcement to clipboard!');
       }).catch(() => prompt('Copy text:', text));
+    });
+  }
+
+  // 7. Dynamic Exams & Assessments Loader for View 2
+  async function loadAvailableExams() {
+    const container = document.getElementById('availableExamsContainer');
+    if (!container) return;
+    try {
+      const exams = window.StudentService ? await window.StudentService.fetchAssessments() : [];
+      if (!exams.length) {
+        container.innerHTML = `
+          <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:var(--radius-lg);padding:24px;text-align:center;">
+            <p style="color:var(--text-muted);margin:0;">No examinations scheduled currently.</p>
+          </div>
+        `;
+        return;
+      }
+      container.innerHTML = exams.map(exam => {
+        const scope = exam.target_section === 'ALL' || !exam.target_section ? '🌐 Overall (All Sections)' : `Section ${exam.target_section}`;
+        const duration = exam.duration || 45;
+        const title = exam.title || 'Technical Assessment 2026';
+        return `
+          <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:var(--radius-lg);padding:24px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+                <span class="badge-clean-pill success">● Live / Active</span>
+                <span style="font-size:0.82rem;color:var(--text-muted);">${duration} Minutes · Proctored</span>
+                <span class="badge-section" style="background:#dbeafe;color:#1d4ed8;font-size:0.75rem;padding:2px 8px;border-radius:6px;font-weight:700;">Scope: ${scope}</span>
+              </div>
+              <h4 style="margin:0 0 6px 0;font-size:1.25rem;color:var(--text-main);">${title}</h4>
+              <p style="color:var(--text-secondary);font-size:0.88rem;margin:0;">Timed MCQ &amp; Fill-in-the-blanks test workspace with proctoring &amp; PDF solution keys.</p>
+            </div>
+            <a href="assessment.html" class="btn-clean-primary" style="padding:10px 20px;">Start Test →</a>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      console.warn('[Examlytics] Error loading exams:', e);
+    }
+  }
+
+  // 8. Dynamic Task Desk Loader for View 5
+  async function loadAvailableTasks() {
+    const titleEl = document.getElementById('embeddedTaskTitle');
+    const descEl = document.getElementById('embeddedTaskDesc');
+    const badgeEl = document.getElementById('embeddedTaskDeadlineBadge');
+    if (!titleEl) return;
+    try {
+      const tasks = window.StudentService ? await window.StudentService.fetchTasks() : [];
+      const active = tasks.find(t => t.is_active !== false) || tasks[0];
+      if (active) {
+        titleEl.textContent = active.title || 'Course Registration & Proof Submission';
+        if (descEl) descEl.textContent = active.description || 'Please upload a clear screenshot showing your Name and Register Number.';
+        if (badgeEl) {
+          if (active.deadline) {
+            const d = new Date(active.deadline);
+            badgeEl.textContent = 'Due: ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          } else {
+            badgeEl.textContent = 'Open Submission';
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[Examlytics] Error loading tasks:', e);
+    }
+  }
+
+  // 9. Embedded Task Form Handler
+  function initEmbeddedTaskForm() {
+    const form = document.getElementById('embeddedTaskForm');
+    const regInput = document.getElementById('embeddedTaskRegNo');
+    const fileInput = document.getElementById('embeddedTaskFile');
+    const notesInput = document.getElementById('embeddedTaskNotes');
+    const studentInfoEl = document.getElementById('embeddedStudentInfo');
+    const feedbackEl = document.getElementById('embeddedTaskFeedback');
+    const submitBtn = document.getElementById('btnSubmitEmbeddedTask');
+    if (!form || !regInput) return;
+
+    let verifiedStudent = null;
+    const roster = typeof REGISTERED_STUDENTS !== 'undefined' && Array.isArray(REGISTERED_STUDENTS) ? REGISTERED_STUDENTS : [];
+
+    regInput.addEventListener('input', () => {
+      const reg = regInput.value.trim().toUpperCase();
+      if (reg.length >= 5) {
+        verifiedStudent = roster.find(s => s.reg_no.toUpperCase() === reg);
+        if (verifiedStudent && studentInfoEl) {
+          studentInfoEl.textContent = `✓ ${verifiedStudent.name} (${verifiedStudent.department} - Sec ${verifiedStudent.section})`;
+          studentInfoEl.style.display = 'block';
+        } else if (studentInfoEl) {
+          studentInfoEl.style.display = 'none';
+        }
+      } else {
+        verifiedStudent = null;
+        if (studentInfoEl) studentInfoEl.style.display = 'none';
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const reg = regInput.value.trim().toUpperCase();
+      const file = fileInput.files && fileInput.files[0];
+      const notes = (notesInput?.value || '').trim();
+
+      if (!reg) return;
+      if (!verifiedStudent) {
+        verifiedStudent = roster.find(s => s.reg_no.toUpperCase() === reg);
+      }
+      if (!verifiedStudent) {
+        if (feedbackEl) {
+          feedbackEl.style.display = 'block';
+          feedbackEl.style.background = '#fef2f2';
+          feedbackEl.style.color = '#dc2626';
+          feedbackEl.style.border = '1px solid #fecaca';
+          feedbackEl.textContent = `Register number "${reg}" not found in department roster.`;
+        }
+        return;
+      }
+
+      if (!file) {
+        if (feedbackEl) {
+          feedbackEl.style.display = 'block';
+          feedbackEl.style.background = '#fef2f2';
+          feedbackEl.style.color = '#dc2626';
+          feedbackEl.style.border = '1px solid #fecaca';
+          feedbackEl.textContent = 'Please choose a screenshot image file.';
+        }
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting Proof...';
+      }
+
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const dataUrl = ev.target.result;
+        const taskTitle = document.getElementById('embeddedTaskTitle')?.textContent || 'Course Registration & Proof Submission';
+        const payload = {
+          reg_no: verifiedStudent.reg_no,
+          name: verifiedStudent.name,
+          student_name: verifiedStudent.name,
+          department: verifiedStudent.department,
+          section: verifiedStudent.section,
+          task_id: 'task-live-01',
+          task_title: taskTitle,
+          screenshot_url: dataUrl,
+          proof_url: dataUrl,
+          notes: notes,
+          submitted_at: new Date().toISOString()
+        };
+
+        try {
+          if (window.APP_CONFIG?.PORTAL_SUPABASE_URL) {
+            await fetch(`${window.APP_CONFIG.PORTAL_SUPABASE_URL}/rest/v1/task_submissions`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY}`,
+                'Prefer': 'return=representation'
+              },
+              body: JSON.stringify(payload)
+            });
+          }
+        } catch (err) {
+          console.warn('[Task Submit Hub] Cloud save warning:', err);
+        }
+
+        // Save locally
+        const localSubs = JSON.parse(localStorage.getItem('portal_task_submissions') || '[]');
+        localSubs.unshift(payload);
+        localStorage.setItem('portal_task_submissions', JSON.stringify(localSubs));
+
+        if (feedbackEl) {
+          feedbackEl.style.display = 'block';
+          feedbackEl.style.background = '#ecfdf5';
+          feedbackEl.style.color = '#059669';
+          feedbackEl.style.border = '1px solid #a7f3d0';
+          feedbackEl.innerHTML = `<strong>✓ Proof Uploaded Successfully!</strong> Verified for ${verifiedStudent.name} (Section ${verifiedStudent.section}). Recorded at ${new Date().toLocaleTimeString()}.`;
+        }
+
+        form.reset();
+        if (studentInfoEl) studentInfoEl.style.display = 'none';
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Proof Screenshot';
+        }
+      };
+      reader.readAsDataURL(file);
     });
   }
 
