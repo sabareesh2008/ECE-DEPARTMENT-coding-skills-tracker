@@ -20,7 +20,8 @@
     },
     tasks: {
       submissions: [],
-      activeTask: null
+      activeTask: null,
+      draftTask: null
     }
   };
 
@@ -28,13 +29,96 @@
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
   const num = (v) => { const n = Number(String(v ?? '').replace(/,/g, '')); return Number.isFinite(n) ? n : 0; };
 
-  document.addEventListener('DOMContentLoaded', async () => {
+  let appBooted = false;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initAdminPortalAuth();
+  });
+
+  function bootAdminPortal() {
+    if (appBooted) return;
+    appBooted = true;
     initTabs();
     initCodingTab();
+    initFacultyAnalytics();
     initAssessmentTab();
-    await initTasksTab();
+    initTasksTab();
     initStudentsTab();
-  });
+  }
+
+  function initAdminPortalAuth() {
+    const gate = document.getElementById('adminLoginGate');
+    const app = document.getElementById('adminPortalApp');
+    const form = document.getElementById('adminPortalLoginForm');
+    const message = document.getElementById('adminPortalLoginMessage');
+    const button = document.getElementById('adminPortalLoginButton');
+
+    const isLoggedIn = sessionStorage.getItem('admin_logged_in') === 'true';
+    if (isLoggedIn) {
+      gate?.setAttribute('hidden', 'hidden');
+      if (app) app.hidden = false;
+      bootAdminPortal();
+      return;
+    }
+
+    if (app) app.hidden = true;
+    gate?.removeAttribute('hidden');
+
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const username = document.getElementById('adminPortalUsername')?.value.trim() || '';
+      const password = document.getElementById('adminPortalPassword')?.value || '';
+      if (!username || !password) {
+        showAdminLoginMessage('Enter both username and password.', true);
+        return;
+      }
+
+      const original = button?.textContent || 'Sign in';
+      if (button) { button.disabled = true; button.textContent = 'Verifying access…'; }
+      try {
+        // Primary authentication comes from the Supabase `admins` table.
+        // A local fallback is kept so the faculty command center remains usable
+        // when the `admins` table is not configured yet or the database is offline.
+        // Change these two values if you want a different emergency/local login.
+        const LOCAL_ADMIN_USERNAME = 'sabareesh_261';
+        const LOCAL_ADMIN_PASSWORD = 'sabareesh';
+
+        let verified = false;
+        let verificationResult = null;
+        if (typeof SupabaseAPI !== 'undefined' && SupabaseAPI.verifyAdmin) {
+          verificationResult = await SupabaseAPI.verifyAdmin(username, password);
+          verified = !!verificationResult;
+        }
+
+        if (!verified && username === LOCAL_ADMIN_USERNAME && password === LOCAL_ADMIN_PASSWORD) {
+          verified = true;
+          verificationResult = { username: LOCAL_ADMIN_USERNAME, role: 'admin', source: 'local-fallback' };
+        }
+
+        if (!verified) {
+          showAdminLoginMessage('Invalid faculty/admin credentials.', true);
+          return;
+        }
+        sessionStorage.setItem('admin_logged_in', 'true');
+        sessionStorage.setItem('admin_username', username);
+        gate?.setAttribute('hidden', 'hidden');
+        if (app) app.hidden = false;
+        bootAdminPortal();
+      } catch (error) {
+        console.error('[Admin Login]', error);
+        showAdminLoginMessage('Login could not be verified. Please try again.', true);
+      } finally {
+        if (button) { button.disabled = false; button.textContent = original; }
+      }
+    });
+
+    function showAdminLoginMessage(text, isError) {
+      if (!message) return;
+      message.hidden = false;
+      message.textContent = text;
+      message.className = 'admin-login-message ' + (isError ? 'error' : 'success');
+    }
+  }
 
   // ============================================================
   // 1. TAB CONTROLLER
@@ -59,7 +143,8 @@
     // Logout
     document.getElementById('btnAdminLogout')?.addEventListener('click', () => {
       sessionStorage.removeItem('admin_logged_in');
-      window.location.href = 'index.html';
+      sessionStorage.removeItem('admin_username');
+      window.location.reload();
     });
   }
 
@@ -176,6 +261,75 @@
       XLSX.utils.book_append_sheet(wb, ws, 'All Students');
       XLSX.writeFile(wb, `CodeMetrix_Master_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
     });
+  }
+
+  // ============================================================
+  // FACULTY LEETCODE + GITHUB ANALYTICS
+  // ============================================================
+  async function initFacultyAnalytics() {
+    document.getElementById('btnRefreshFacultyAnalytics')?.addEventListener('click', renderFacultyAnalytics);
+    await renderFacultyAnalytics();
+  }
+
+  async function renderFacultyAnalytics() {
+    const tbody = document.getElementById('facultyAnalyticsTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="8" class="faculty-empty">Loading faculty analytics…</td></tr>';
+
+    let faculty = [];
+    try {
+      const client = window.supabase?.createClient?.(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_ANON_KEY);
+      if (client) {
+        const { data, error } = await client.from('faculties').select('*').order('faculty_name', { ascending: true });
+        if (!error) faculty = data || [];
+      }
+    } catch (error) {
+      console.warn('[Faculty Analytics] Supabase:', error.message);
+    }
+
+    const githubRows = await Promise.all((faculty || []).map(async f => {
+      const username = String(f.github_username || f.github || '').trim();
+      if (!username) return { username: '', repos: 0, followers: 0, status: 'GitHub not configured' };
+      try {
+        const response = await fetch(`https://api.github.com/users/${encodeURIComponent(username)}`, { headers: { Accept: 'application/vnd.github+json' } });
+        if (!response.ok) throw new Error('GitHub profile unavailable');
+        const profile = await response.json();
+        return { username, repos: num(profile.public_repos), followers: num(profile.followers), status: 'Live' };
+      } catch (_) {
+        return { username, repos: 0, followers: 0, status: 'Unavailable' };
+      }
+    }));
+
+    const totalSolved = faculty.reduce((sum, f) => sum + num(f.total_solved), 0);
+    const totalRepos = githubRows.reduce((sum, g) => sum + num(g.repos), 0);
+    const active = faculty.filter(f => String(f.status || '').toLowerCase() === 'active').length;
+    document.getElementById('facultyAnalyticsCount')?.replaceChildren(document.createTextNode(String(faculty.length)));
+    document.getElementById('facultyAnalyticsLeetSolved')?.replaceChildren(document.createTextNode(String(totalSolved)));
+    document.getElementById('facultyAnalyticsGitRepos')?.replaceChildren(document.createTextNode(String(totalRepos)));
+    document.getElementById('facultyAnalyticsActive')?.replaceChildren(document.createTextNode(String(active)));
+
+    if (!faculty.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="faculty-empty">No faculty profiles found. Add faculty records to the faculties table.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = faculty.map((f, index) => {
+      const gh = githubRows[index];
+      const lcStatus = String(f.status || 'Pending');
+      const githubCell = gh.username
+        ? `<strong>@${esc(gh.username)}</strong><small>${esc(gh.status)}</small>`
+        : '<span class="muted">Not configured</span>';
+      return `<tr>
+        <td><strong>${esc(f.faculty_name || 'Faculty')}</strong><small>${esc(f.designation || f.department || 'ECE')}</small></td>
+        <td><strong>${num(f.total_solved)}</strong><small>@${esc(f.leetcode_username || '—')}</small></td>
+        <td>${num(f.last_7_days)}</td>
+        <td>${num(f.last_30_days)}</td>
+        <td>${githubCell}</td>
+        <td>${num(gh.repos)}</td>
+        <td>${num(gh.followers)}</td>
+        <td><span class="faculty-status ${lcStatus.toLowerCase() === 'active' ? 'active' : ''}">${esc(lcStatus)}</span></td>
+      </tr>`;
+    }).join('');
   }
 
   // ============================================================
@@ -439,9 +593,85 @@
   }
 
   // ============================================================
+  // TASK PUBLISHING
+  // ============================================================
+  async function initTaskPublisher() {
+    const title = document.getElementById('adminTaskTitleInput');
+    const description = document.getElementById('adminTaskDescriptionInput');
+    const deadline = document.getElementById('adminTaskDeadlineInput');
+    const taskId = document.getElementById('adminTaskIdInput');
+    const stateEl = document.getElementById('adminTaskPublishState');
+    const message = document.getElementById('adminTaskPublishMessage');
+
+    const showMessage = (text, ok = true) => {
+      if (!message) return;
+      message.hidden = false;
+      message.textContent = text;
+      message.className = 'task-publish-message ' + (ok ? 'success' : 'error');
+    };
+
+    let active = null;
+    try { active = await DataService.getActiveTask(); } catch (_) {}
+    if (active) {
+      state.tasks.activeTask = active;
+      if (title) title.value = active.title || '';
+      if (description) description.value = active.description || '';
+      if (taskId) taskId.value = active.id || '';
+      if (deadline && active.deadline) {
+        const d = new Date(active.deadline);
+        if (!Number.isNaN(d.getTime())) deadline.value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,16);
+      }
+      if (stateEl) stateEl.textContent = active.is_active === false ? '● Draft / Inactive' : '● Active Task';
+      stateEl?.classList.toggle('active', active.is_active !== false);
+    } else if (stateEl) {
+      stateEl.textContent = '● No active task';
+    }
+
+    const buildPayload = (publish) => ({
+      id: taskId?.value.trim() || undefined,
+      title: title?.value.trim() || '',
+      description: description?.value.trim() || '',
+      deadline: deadline?.value ? new Date(deadline.value).toISOString() : new Date(Date.now() + 7 * 86400000).toISOString(),
+      is_active: publish,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+
+    async function save(publish) {
+      const payload = buildPayload(publish);
+      if (!payload.title || !payload.description) {
+        showMessage('Task title and instructions are required.', false);
+        return;
+      }
+      try {
+        let saved;
+        if (payload.id && state.tasks.activeTask?.id === payload.id && DataService.updateTask) {
+          saved = await DataService.updateTask(payload.id, payload);
+        } else {
+          saved = await DataService.createTask(payload);
+        }
+        state.tasks.activeTask = saved || payload;
+        if (taskId) taskId.value = saved?.id || payload.id || '';
+        if (stateEl) {
+          stateEl.textContent = publish ? '● Published to Students' : '● Draft Saved';
+          stateEl.classList.toggle('active', publish);
+        }
+        showMessage(publish ? 'Task published successfully. Students will see the new task on the Task Desk.' : 'Task draft saved successfully.');
+      } catch (error) {
+        console.error('[Task Publish]', error);
+        showMessage(error.message || 'Could not save the task. Run the task publishing SQL setup once, then retry.', false);
+      }
+    }
+
+    document.getElementById('btnAdminSaveTaskDraft')?.addEventListener('click', () => save(false));
+    document.getElementById('btnAdminPublishTask')?.addEventListener('click', () => save(true));
+  }
+
+  // ============================================================
   // 4. TAB 3: TASK & PROOF VERIFICATION
   // ============================================================
   async function initTasksTab() {
+    await initTaskPublisher();
     await fetchTaskData();
     renderTasksTable();
 
@@ -713,3 +943,21 @@
   }
 
 })();
+
+/* v8.3: Command Center module shortcuts */
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.admin-module-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const target = card.getAttribute('data-module-target');
+      const scrollTarget = card.getAttribute('data-scroll-target');
+      if (!target) return;
+      const tab = document.querySelector(`.unified-tab-btn[data-tab="${target}"]`);
+      if (tab) tab.click();
+      document.querySelectorAll('.admin-module-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      if (scrollTarget) {
+        setTimeout(() => document.getElementById(scrollTarget)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+      }
+    });
+  });
+});

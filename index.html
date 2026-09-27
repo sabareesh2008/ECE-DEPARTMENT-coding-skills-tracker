@@ -24,6 +24,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="css/ui-refresh.css?v=8.4">
 </head>
 
 <body class="examlytics-layout">
@@ -123,7 +124,7 @@
           <!-- Quick Global Student / Topic Search Box -->
           <div class="header-search-box">
             <span>🔍</span>
-            <input type="search" id="topSearchInput" placeholder="Search exams, students, roll number..." autocomplete="off">
+            <input type="search" id="topSearchInput" placeholder="Search student name, register number, LeetCode or GitHub..." autocomplete="off">
           </div>
 
           <!-- Notification Bell -->
@@ -188,60 +189,69 @@
             </div>
           </div>
 
-          <!-- KPI 4-Card Grid -->
-          <div class="kpi-grid">
-            <!-- Metric 1: Exams / Problems -->
+          <!-- Department Overview KPIs -->
+          <div class="kpi-grid department-kpi-grid">
             <div class="kpi-card">
               <div class="kpi-card-top">
-                <div class="kpi-icon-square">📋</div>
-                <span class="trend-badge">↗ +12%</span>
+                <div class="kpi-icon-square">👥</div>
+                <span class="trend-badge neutral-badge">ECE A–F</span>
               </div>
               <div>
-                <div class="kpi-value" id="kpiExamsSolvedCount">1,280</div>
+                <div class="kpi-value" id="kpiTotalStudents">372</div>
+                <div class="kpi-label">Total Students</div>
+                <div class="kpi-sub">Official department roster</div>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-card-top">
+                <div class="kpi-icon-square">💻</div>
+                <span class="trend-badge">Live</span>
+              </div>
+              <div>
+                <div class="kpi-value" id="kpiExamsSolvedCount">0</div>
                 <div class="kpi-label">Problems Solved</div>
-                <div class="kpi-sub">Across LeetCode &amp; GitHub</div>
+                <div class="kpi-sub">Current LeetCode records</div>
               </div>
             </div>
 
-            <!-- Metric 2: Average Score -->
             <div class="kpi-card">
               <div class="kpi-card-top">
-                <div class="kpi-icon-square">📈</div>
-                <span class="trend-badge">↗ +3.2</span>
+                <div class="kpi-icon-square">🔗</div>
+                <span class="trend-badge">Tracked</span>
               </div>
               <div>
-                <div class="kpi-value" id="kpiAvgScorePct">78.4%</div>
-                <div class="kpi-label">Average Score</div>
-                <div class="kpi-sub">Department performance index</div>
+                <div class="kpi-value" id="kpiLcProfiles">0</div>
+                <div class="kpi-label">LeetCode Profiles</div>
+                <div class="kpi-sub">Profiles with live tracker data</div>
               </div>
             </div>
 
-            <!-- Metric 3: Proofs / Tasks -->
             <div class="kpi-card">
               <div class="kpi-card-top">
-                <div class="kpi-icon-square">⏱️</div>
-                <span class="trend-badge">↗ +1.8</span>
+                <div class="kpi-icon-square">🐙</div>
+                <span class="trend-badge">Tracked</span>
               </div>
               <div>
-                <div class="kpi-value" id="kpiProofsRate">94.2%</div>
-                <div class="kpi-label">Proof Completion</div>
-                <div class="kpi-sub">Verified course registrations</div>
-              </div>
-            </div>
-
-            <!-- Metric 4: Leaderboard Standing -->
-            <div class="kpi-card">
-              <div class="kpi-card-top">
-                <div class="kpi-icon-square">🏆</div>
-                <span class="trend-badge">↗ 96</span>
-              </div>
-              <div>
-                <div class="kpi-value" id="kpiTopRankSection">#1 Sec E</div>
-                <div class="kpi-label">Section Champion</div>
-                <div class="kpi-sub">30-day top scoring cohort</div>
+                <div class="kpi-value" id="kpiGhProfiles">0</div>
+                <div class="kpi-label">GitHub Profiles</div>
+                <div class="kpi-sub">Profiles with live activity data</div>
               </div>
             </div>
           </div>
+
+          <!-- Section-wise Department Analysis -->
+          <section class="section-analysis-panel" aria-labelledby="sectionAnalysisTitle">
+            <div class="section-analysis-header">
+              <div>
+                <span class="section-analysis-kicker">DEPARTMENT OVERVIEW</span>
+                <h3 id="sectionAnalysisTitle">Section-wise Analysis</h3>
+                <p>Student strength and live coding activity across ECE Sections A–F.</p>
+              </div>
+              <span class="section-analysis-total" id="sectionAnalysisTotal">372 students</span>
+            </div>
+            <div id="sectionAnalysisGrid" class="section-analysis-grid" aria-live="polite"></div>
+          </section>
 
           <!-- 360° Student Search & Quick Gateway Row -->
           <div class="white-panel-card" style="margin-bottom:24px;">
@@ -312,7 +322,7 @@
                 <h3>Technical Assessments &amp; Online Examinations</h3>
                 <p>Timed MCQ &amp; Fill-in-the-blanks examinations with automatic grading and PDF report generation.</p>
               </div>
-              <a href="assessment.html" class="btn-clean-primary">Launch Full Exam Workspace ↗</a>
+              <a href="assessment.html" class="btn-clean-primary">Start Test →</a>
             </div>
 
             <!-- Active Test Card -->
@@ -325,7 +335,7 @@
                 <h4 style="margin:0 0 6px 0;font-size:1.25rem;color:var(--text-main);">Technical Assessment 2026</h4>
                 <p style="color:var(--text-secondary);font-size:0.88rem;margin:0;">Data Structures, Digital Electronics, Computer Networks, and Core Circuit Concepts.</p>
               </div>
-              <a href="assessment.html" class="btn-clean-primary" style="padding:10px 20px;">Enter Assessment Now →</a>
+              <a href="assessment.html" class="btn-clean-primary" style="padding:10px 20px;">Start Test →</a>
             </div>
 
             <h4 style="margin:20px 0 12px 0;font-size:1.05rem;">Proctoring &amp; Assessment Guidelines</h4>
@@ -350,49 +360,19 @@
              VIEW 3: LEETCODE TRACKER (WHITE-GREY MODERN UI)
              ============================================================ -->
         <section id="view-leetcode" class="feature-view-pane">
-          <div class="white-panel-card">
+          <div class="white-panel-card tracker-overview-card">
             <div class="panel-header-row">
               <div>
-                <h3>LeetCode Department Leaderboard</h3>
-                <p>Live synchronized solver activity, streaks, and problem forensics across 372 candidates.</p>
+                <span class="module-kicker">CODING TRACKER</span>
+                <h3>LeetCode Tracker</h3>
+                <p>Live synchronized LeetCode activity. Use the dedicated tracker for detailed rankings, history and student profiles.</p>
               </div>
-              <div style="display:flex;gap:10px;">
-                <button id="btnDownloadTop50LeetEmbedded" class="btn-clean-primary" style="font-size:0.84rem;">🏆 Top 50 Excel</button>
-                <a href="leetcode.html" class="btn-clean-secondary" style="font-size:0.84rem;">Full LeetCode Page ↗</a>
-              </div>
+              <a href="leetcode.html" class="btn-clean-primary">Open Detailed Tracker →</a>
             </div>
-
-            <!-- Section Filter Pills -->
-            <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
-              <button class="filter-chip active" data-lc-sec="ALL">All Sections (A–F)</button>
-              <button class="filter-chip" data-lc-sec="ECE A">Section A</button>
-              <button class="filter-chip" data-lc-sec="ECE B">Section B</button>
-              <button class="filter-chip" data-lc-sec="ECE C">Section C</button>
-              <button class="filter-chip" data-lc-sec="ECE D">Section D</button>
-              <button class="filter-chip" data-lc-sec="ECE E">Section E</button>
-              <button class="filter-chip" data-lc-sec="ECE F">Section F</button>
-            </div>
-
-            <!-- Table -->
-            <div style="max-height:550px;overflow-y:auto;border:1px solid var(--border-main);border-radius:12px;">
-              <table class="clean-light-table">
-                <thead>
-                  <tr>
-                    <th>Rank</th>
-                    <th>Register No</th>
-                    <th>Student Name</th>
-                    <th>Section</th>
-                    <th>LeetCode User</th>
-                    <th>Total Solved</th>
-                    <th>Solved 7D</th>
-                    <th>Streak</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody id="leetcodeEmbeddedTbody">
-                  <tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">Loading LeetCode live records...</td></tr>
-                </tbody>
-              </table>
+            <div class="tracker-overview-grid">
+              <div class="tracker-overview-stat"><span>▣</span><strong id="homeLcOverviewSolved">0</strong><small>Problems Solved</small></div>
+              <div class="tracker-overview-stat"><span>◉</span><strong id="homeLcOverviewProfiles">0</strong><small>Profiles Tracked</small></div>
+              <div class="tracker-overview-stat tracker-overview-action"><span>↗</span><strong>Detailed Analytics</strong><small>Rankings, streaks &amp; student profiles</small></div>
             </div>
           </div>
         </section>
@@ -401,38 +381,19 @@
              VIEW 4: GITHUB TRACKER (WHITE-GREY MODERN UI)
              ============================================================ -->
         <section id="view-github" class="feature-view-pane">
-          <div class="white-panel-card">
+          <div class="white-panel-card tracker-overview-card">
             <div class="panel-header-row">
               <div>
-                <h3>GitHub Department Leaderboard</h3>
-                <p>Live commits, repositories, active contributions, and detected live deployments.</p>
+                <span class="module-kicker">CODING TRACKER</span>
+                <h3>GitHub Tracker</h3>
+                <p>Live GitHub contribution activity. Use the dedicated tracker for repositories, commits and deployment analytics.</p>
               </div>
-              <div style="display:flex;gap:10px;">
-                <button id="btnDownloadTop50GitEmbedded" class="btn-clean-primary" style="font-size:0.84rem;">🐙 Top 50 Excel</button>
-                <a href="github.html" class="btn-clean-secondary" style="font-size:0.84rem;">Full GitHub Page ↗</a>
-              </div>
+              <a href="github.html" class="btn-clean-primary">Open Detailed Tracker →</a>
             </div>
-
-            <!-- Table -->
-            <div style="max-height:550px;overflow-y:auto;border:1px solid var(--border-main);border-radius:12px;">
-              <table class="clean-light-table">
-                <thead>
-                  <tr>
-                    <th>Rank</th>
-                    <th>Register No</th>
-                    <th>Student Name</th>
-                    <th>Section</th>
-                    <th>GitHub User</th>
-                    <th>Deployments</th>
-                    <th>Contributions (30D)</th>
-                    <th>Commits (30D)</th>
-                    <th>Total Repos</th>
-                  </tr>
-                </thead>
-                <tbody id="githubEmbeddedTbody">
-                  <tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">Loading GitHub live records...</td></tr>
-                </tbody>
-              </table>
+            <div class="tracker-overview-grid">
+              <div class="tracker-overview-stat"><span>◉</span><strong id="homeGhOverviewProfiles">0</strong><small>Profiles Tracked</small></div>
+              <div class="tracker-overview-stat"><span>✓</span><strong id="homeGhOverviewActive">0</strong><small>Active Records</small></div>
+              <div class="tracker-overview-stat tracker-overview-action"><span>↗</span><strong>Detailed Analytics</strong><small>Commits, repositories &amp; deployments</small></div>
             </div>
           </div>
         </section>
@@ -600,26 +561,28 @@
              VIEW 9: REPORTS & EXPORTS
              ============================================================ -->
         <section id="view-reports" class="feature-view-pane">
-          <div class="white-panel-card">
-            <div class="panel-header-row">
+          <div class="white-panel-card report-center-card">
+            <div class="panel-header-row report-center-header">
               <div>
-                <h3>Institutional Date Range Report Generator</h3>
-                <p>Generate comprehensive Excel, CSV, or PDF reports for any date range or section.</p>
+                <div class="report-eyebrow">CODEMETRIX REPORT CENTER</div>
+                <h3>Reports &amp; Exports</h3>
+                <p>Choose a report, select Overall or a section, then download the exact format you need.</p>
               </div>
+              <div class="report-center-badge">📊 Centralized Reporting</div>
             </div>
 
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;background:var(--bg-subtle);padding:20px;border-radius:12px;border:1px solid var(--border-main);margin-bottom:20px;">
+            <div class="report-filter-strip">
               <div>
-                <label style="font-size:0.82rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">From Date</label>
-                <input type="date" id="reportFromDate" class="form-control" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border-main);">
+                <label for="reportFromDate">From Date</label>
+                <input type="date" id="reportFromDate" class="form-control">
               </div>
               <div>
-                <label style="font-size:0.82rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">To Date</label>
-                <input type="date" id="reportToDate" class="form-control" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border-main);">
+                <label for="reportToDate">To Date</label>
+                <input type="date" id="reportToDate" class="form-control">
               </div>
               <div>
-                <label style="font-size:0.82rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Section</label>
-                <select id="reportSectionSelect" class="form-control" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border-main);">
+                <label for="reportSectionSelect">Default Scope</label>
+                <select id="reportSectionSelect" class="form-control">
                   <option value="OVERALL">ECE Overall</option>
                   <option value="ECE A">Section A</option>
                   <option value="ECE B">Section B</option>
@@ -629,16 +592,76 @@
                   <option value="ECE F">Section F</option>
                 </select>
               </div>
-              <div style="display:flex;gap:8px;align-items:flex-end;">
-                <button id="btnGenerateExcelReport" class="btn-clean-primary" style="background:#16a34a;border-color:#15803d;width:100%;justify-content:center;">📗 Excel</button>
-                <button id="btnGenerateCsvReport" class="btn-clean-secondary" style="width:100%;justify-content:center;">📄 CSV</button>
+              <div class="report-filter-note">
+                <strong>How it works</strong>
+                <span>Click any report below → choose Overall / Section → choose the available download format.</span>
               </div>
             </div>
+
+            <div class="report-grid">
+              <article class="report-card">
+                <div class="report-icon">🏆</div><div class="report-card-body"><h4>LeetCode Top 50</h4><p>Top 50 student coding performers. Filter by overall or section.</p><button class="report-action" data-report="leetcode-top50">Download Report →</button></div>
+              </article>
+              <article class="report-card">
+                <div class="report-icon">🐙</div><div class="report-card-body"><h4>GitHub Top 50</h4><p>Top 50 GitHub activity performers with section-wise filtering.</p><button class="report-action" data-report="github-top50">Download Report →</button></div>
+              </article>
+              <article class="report-card">
+                <div class="report-icon">💻</div><div class="report-card-body"><h4>LeetCode Performance</h4><p>Complete LeetCode performance report for overall or selected section.</p><button class="report-action" data-report="leetcode-performance">Download Report →</button></div>
+              </article>
+              <article class="report-card">
+                <div class="report-icon">📦</div><div class="report-card-body"><h4>GitHub Performance</h4><p>Complete GitHub activity report for overall or selected section.</p><button class="report-action" data-report="github-performance">Download Report →</button></div>
+              </article>
+              <article class="report-card">
+                <div class="report-icon">📋</div><div class="report-card-body"><h4>Task Submission Proof PDF</h4><p>Compile student screenshot proofs into a professional PDF by overall or section.</p><button class="report-action" data-report="task-proof-pdf">Generate PDF →</button></div>
+              </article>
+              <article class="report-card">
+                <div class="report-icon">📝</div><div class="report-card-body"><h4>Test Consolidation</h4><p>Assessment marks, percentage, section and submission status in one report.</p><button class="report-action" data-report="test-consolidation">Download Report →</button></div>
+              </article>
+              <article class="report-card">
+                <div class="report-icon">👨‍🏫</div><div class="report-card-body"><h4>Faculty Analytics</h4><p>Faculty LeetCode and GitHub analytics with export-ready data.</p><button class="report-action" data-report="faculty-analytics">Download Report →</button></div>
+              </article>
+              <article class="report-card">
+                <div class="report-icon">👥</div><div class="report-card-body"><h4>Student Master / Combined</h4><p>Master roster plus combined LeetCode and GitHub performance.</p><button class="report-action" data-report="student-master">Download Report →</button></div>
+              </article>
+              <article class="report-card">
+                <div class="report-icon">📅</div><div class="report-card-body"><h4>Date Range LeetCode Report</h4><p>Use the selected date range and section to export activity data.</p><button class="report-action" data-report="date-range">Download Report →</button></div>
+              </article>
+              <article class="report-card">
+                <div class="report-icon">📄</div><div class="report-card-body"><h4>Task Submission Data</h4><p>Download task submission records as Excel or CSV by scope.</p><button class="report-action" data-report="task-data">Download Report →</button></div>
+              </article>
+            </div>
+            <div id="reportsActionMessage" class="report-action-message" role="status" aria-live="polite"></div>
           </div>
         </section>
 
       </main>
     </div>
+  </div>
+
+  <!-- REPORT DOWNLOAD MODAL -->
+  <div id="reportDownloadModal" class="report-modal" hidden>
+    <div class="report-modal-backdrop" data-close-report-modal></div>
+    <section class="report-modal-card" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+      <header class="report-modal-header">
+        <div><span class="report-eyebrow">DOWNLOAD REPORT</span><h2 id="reportModalTitle">Report</h2><p id="reportModalSubtitle">Select scope and format.</p></div>
+        <button id="closeReportDownloadModal" class="report-modal-close" type="button">×</button>
+      </header>
+      <div class="report-modal-body">
+        <div class="report-scope-grid">
+          <button class="report-scope-option active" data-report-scope="OVERALL"><strong>🌐 Overall</strong><span>All ECE Sections A–F</span></button>
+          <button class="report-scope-option" data-report-scope="SECTION"><strong>🏫 Section</strong><span id="reportModalSectionLabel">Use selected section</span></button>
+        </div>
+        <div id="reportModalSectionPickerWrap" class="report-modal-section-picker" hidden>
+          <label for="reportModalSectionPicker">Select Section</label>
+          <select id="reportModalSectionPicker" class="form-control">
+            <option value="ECE A">Section A</option><option value="ECE B">Section B</option><option value="ECE C">Section C</option><option value="ECE D">Section D</option><option value="ECE E">Section E</option><option value="ECE F">Section F</option>
+          </select>
+        </div>
+        <div class="report-format-title">Download format</div>
+        <div id="reportFormatOptions" class="report-format-grid"></div>
+        <div id="reportModalProgress" class="report-modal-progress" hidden>Preparing your report…</div>
+      </div>
+    </section>
   </div>
 
   <!-- ============================================================
@@ -703,7 +726,7 @@
   <script src="js/assessment/supabase-config.js?v=7.0"></script>
   <script src="js/tasks/mock-data.js?v=7.0"></script>
   <script src="js/tasks/supabase-config.js?v=7.0"></script>
-  <script src="home-dashboard.js?v=7.0"></script>
-  <script src="js/examlytics-controller.js?v=7.0"></script>
+  <script src="home-dashboard.js?v=8.4"></script>
+  <script src="js/examlytics-controller.js?v=8.4"></script>
 </body>
 </html>

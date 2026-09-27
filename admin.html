@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="style.css?v=7.0">
   <link rel="stylesheet" href="css/assessment.css?v=7.0">
   <link rel="stylesheet" href="css/tasks.css?v=7.0">
-  <link rel="stylesheet" href="css/admin.css?v=7.0">
+  <link rel="stylesheet" href="css/admin.css?v=8.3">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -139,9 +139,40 @@
       gap: 6px;
     }
   </style>
+    <link rel="stylesheet" href="css/ui-refresh.css?v=8.0">
 </head>
 <body style="background: #f8fafc; color: #0f172a; font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh;">
 
+  <!-- Faculty/Admin Login Gate -->
+  <section id="adminLoginGate" class="admin-login-gate" aria-label="Faculty and Admin Login">
+    <div class="admin-login-shell">
+      <div class="admin-login-brand">
+        <div class="admin-login-logo">CM</div>
+        <div>
+          <div class="admin-login-product">CodeMetrix</div>
+          <div class="admin-login-subtitle">Faculty &amp; Admin Command Center</div>
+        </div>
+      </div>
+
+      <div class="admin-login-card">
+        <div class="admin-login-icon">🔐</div>
+        <div class="admin-login-eyebrow">RESTRICTED ACCESS</div>
+        <h1>Faculty / Admin Login</h1>
+        <p>Sign in to access coding analytics, test publishing, task publishing, and student reports.</p>
+        <form id="adminPortalLoginForm" autocomplete="on">
+          <label for="adminPortalUsername">Username</label>
+          <input id="adminPortalUsername" type="text" autocomplete="username" placeholder="Enter admin username" required>
+          <label for="adminPortalPassword">Password</label>
+          <input id="adminPortalPassword" type="password" autocomplete="current-password" placeholder="Enter password" required>
+          <div id="adminPortalLoginMessage" class="admin-login-message" role="alert" hidden></div>
+          <button id="adminPortalLoginButton" type="submit" class="admin-login-submit">Sign in to Command Center</button>
+        </form>
+        <div class="admin-login-note">Authorized faculty/admin accounts only</div>
+      </div>
+    </div>
+  </section>
+
+  <div id="adminPortalApp" hidden>
   <!-- Master Top Navigation -->
   <header class="unified-admin-header">
     <a href="index.html" class="unified-admin-brand">
@@ -174,27 +205,80 @@
     <!-- Navigation Tabs (4 Core Modules) -->
     <nav class="unified-nav-tabs" role="tablist">
       <button class="unified-tab-btn active" data-tab="tab-coding" role="tab">
-        <span>💻 Coding Analytics &amp; Reports</span>
+        <span>💻 Faculty Coding Analytics &amp; Reports</span>
       </button>
       <button class="unified-tab-btn" data-tab="tab-assessment" role="tab">
-        <span>📝 Technical Assessments (MCQ/FIB)</span>
+        <span>📝 Test Publishing &amp; Assessment</span>
       </button>
       <button class="unified-tab-btn" data-tab="tab-tasks" role="tab">
-        <span>📋 Task &amp; Proof Verification</span>
+        <span>📋 Task Publishing &amp; Verification</span>
       </button>
       <button class="unified-tab-btn" data-tab="tab-students" role="tab">
         <span>👥 Student Master Directory (372)</span>
       </button>
     </nav>
 
+    <!-- Command Center module overview -->
+    <section class="admin-module-overview" aria-label="Admin command center modules">
+      <button type="button" class="admin-module-card active" data-module-target="tab-coding">
+        <span class="admin-module-icon">💻</span>
+        <span><strong>LeetCode Analysis</strong><small>Faculty coding activity &amp; tracker intelligence</small></span>
+      </button>
+      <button type="button" class="admin-module-card" data-module-target="tab-coding">
+        <span class="admin-module-icon">🐙</span>
+        <span><strong>GitHub Analysis</strong><small>Repositories, activity &amp; public profile metrics</small></span>
+      </button>
+      <button type="button" class="admin-module-card" data-module-target="tab-assessment">
+        <span class="admin-module-icon">📝</span>
+        <span><strong>Test Publishing</strong><small>Question bank, settings, publish &amp; results</small></span>
+      </button>
+      <button type="button" class="admin-module-card" data-module-target="tab-tasks">
+        <span class="admin-module-icon">📋</span>
+        <span><strong>Task Publishing</strong><small>Create, publish and verify submissions</small></span>
+      </button>
+      <button type="button" class="admin-module-card" data-module-target="tab-coding" data-scroll-target="adminReportsSection">
+        <span class="admin-module-icon">📊</span>
+        <span><strong>Reports</strong><small>Excel, PDF, CSV &amp; date-range exports</small></span>
+      </button>
+    </section>
+
     <!-- ============================================================
          TAB 1: CODING ANALYTICS & REPORTS
          ============================================================ -->
     <section id="tab-coding" class="admin-tab-pane active" role="tabpanel">
-      <div class="admin-panel-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+      <!-- Faculty LeetCode + GitHub Analytics -->
+      <div class="faculty-command-card">
+        <div class="faculty-command-head">
+          <div>
+            <span class="module-kicker">Faculty intelligence</span>
+            <h2>Faculty LeetCode &amp; GitHub Analysis</h2>
+            <p>Monitor faculty coding activity in one place. LeetCode metrics come from the faculty tracker; GitHub metrics are loaded from the public GitHub profile when a username is configured.</p>
+          </div>
+          <button type="button" id="btnRefreshFacultyAnalytics" class="btn-portal-secondary">↻ Refresh Analysis</button>
+        </div>
+        <div class="faculty-kpi-grid">
+          <div class="faculty-kpi"><span>👨‍🏫</span><div><small>Faculty Profiles</small><strong id="facultyAnalyticsCount">0</strong></div></div>
+          <div class="faculty-kpi"><span>💻</span><div><small>LeetCode Solved</small><strong id="facultyAnalyticsLeetSolved">0</strong></div></div>
+          <div class="faculty-kpi"><span>🐙</span><div><small>GitHub Public Repos</small><strong id="facultyAnalyticsGitRepos">0</strong></div></div>
+          <div class="faculty-kpi"><span>⚡</span><div><small>Active Profiles</small><strong id="facultyAnalyticsActive">0</strong></div></div>
+        </div>
+        <div class="faculty-analysis-table-wrap">
+          <table class="faculty-analysis-table">
+            <thead><tr>
+              <th>Faculty</th><th>LeetCode</th><th>7D</th><th>30D</th><th>GitHub</th><th>Repos</th><th>Followers</th><th>Status</th>
+            </tr></thead>
+            <tbody id="facultyAnalyticsTableBody">
+              <tr><td colspan="8" class="faculty-empty">Loading faculty analytics…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="adminReportsSection" class="admin-panel-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 24px; scroll-margin-top: 24px;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
           <div>
-            <h2 style="font-size: 1.3rem; margin: 0 0 4px 0; color: #0f172a;">Coding Tracker Intelligence &amp; Exports</h2>
+            <span class="module-kicker">Reports &amp; exports</span>
+            <h2 style="font-size: 1.3rem; margin: 0 0 4px 0; color: #0f172a;">Coding Tracker Intelligence &amp; Reports</h2>
             <p style="color: #64748b; font-size: 0.88rem; margin: 0;">Generate instant Excel spreadsheets, faculty LeetCode reports, and custom date range summaries.</p>
           </div>
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -286,7 +370,7 @@
             <h2 style="font-size: 1.3rem; margin: 0 0 4px 0; color: #0f172a;">Technical Examination Command Center</h2>
             <p style="color: #64748b; font-size: 0.88rem; margin: 0;">Configure tests, upload question banks, publish to candidates, and monitor section completion.</p>
           </div>
-          <a href="assessment.html" class="btn-portal-primary" style="text-decoration: none;">Launch Student Test Portal →</a>
+          <a href="assessment.html" class="btn-portal-primary" style="text-decoration: none;">Launch Open Student Test Portal →</a>
         </div>
 
         <!-- Publish Toggle & Test Settings Box -->
@@ -393,6 +477,41 @@
             <button id="btnAdminExportTaskZip" class="btn-portal-secondary">📦 Download Proofs ZIP</button>
             <button id="btnAdminExportTaskPdf" class="btn-portal-primary" style="background: #0f172a; border-color: #0f172a;">📄 Compiled PDF Report</button>
           </div>
+        </div>
+
+        <!-- Publish New Task -->
+        <div class="task-publish-panel">
+          <div class="task-publish-head">
+            <div>
+              <span class="module-kicker">Student task control</span>
+              <h3>Publish Task Submission</h3>
+              <p>Create the task students will see on the Task Desk. Only one task is active at a time.</p>
+            </div>
+            <div id="adminTaskPublishState" class="publish-state-pill">● Loading active task</div>
+          </div>
+          <div class="task-publish-form">
+            <div class="field-span-2">
+              <label for="adminTaskTitleInput">Task Title</label>
+              <input id="adminTaskTitleInput" type="text" placeholder="e.g. Digital Electronics Course Proof Submission">
+            </div>
+            <div class="field-span-2">
+              <label for="adminTaskDescriptionInput">Instructions / Description</label>
+              <textarea id="adminTaskDescriptionInput" rows="3" placeholder="Tell students exactly what they need to submit…"></textarea>
+            </div>
+            <div>
+              <label for="adminTaskDeadlineInput">Deadline</label>
+              <input id="adminTaskDeadlineInput" type="datetime-local">
+            </div>
+            <div>
+              <label for="adminTaskIdInput">Task ID</label>
+              <input id="adminTaskIdInput" type="text" placeholder="Auto-generated" readonly>
+            </div>
+            <div class="task-publish-actions">
+              <button type="button" id="btnAdminSaveTaskDraft" class="btn-portal-secondary">Save Draft</button>
+              <button type="button" id="btnAdminPublishTask" class="btn-portal-primary">Publish Task to Students →</button>
+            </div>
+          </div>
+          <div id="adminTaskPublishMessage" class="task-publish-message" hidden></div>
         </div>
 
         <!-- KPI Grid for Tasks -->
@@ -514,6 +633,8 @@
 
   </main>
 
+  </div>
+
   <!-- Proof Lightbox Modal -->
   <div id="adminProofModal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
     <div style="background: #ffffff; border-radius: 16px; max-width: 900px; width: 100%; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
@@ -534,6 +655,6 @@
   <script src="js/assessment/supabase-config.js?v=7.0"></script>
   <script src="js/tasks/mock-data.js?v=7.0"></script>
   <script src="js/tasks/supabase-config.js?v=7.0"></script>
-  <script src="js/unified-admin.js?v=7.0"></script>
+  <script src="js/unified-admin.js?v=8.3"></script>
 </body>
 </html>

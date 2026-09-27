@@ -301,8 +301,8 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
     updateStatusBadge();
     setupNavigation();
     setupStudentAuth();
-    setupAdminAuth();
-    setupAdminDashboard();
+    if (adminLoginForm) setupAdminAuth();
+    if (adminDashboardView) setupAdminDashboard();
     setupQuestionManager();
     setupExamWorkspace();
     setupResultReview();
@@ -312,15 +312,10 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
     renderAllTestsTable();
     populateTestArchiveSelector();
 
-    // Check if admin is currently active
-    if (state.isAdminLoggedIn) {
-      showView(adminDashboardView);
-      btnNavAdmin.classList.add('active');
-      btnNavStudent.classList.remove('active');
-      refreshAdminData();
-    } else {
-      showView(studentLoginView);
-    }
+    // Student-only assessment entry. Faculty administration is handled in admin.html.
+    state.isAdminLoggedIn = false;
+    sessionStorage.removeItem('admin_logged_in');
+    showView(studentLoginView);
   }
 
   function updateStatusBadge() {
@@ -380,48 +375,23 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
   }
 
   function setupNavigation() {
-    btnNavStudent.addEventListener('click', () => {
-      if (examView && !examView.classList.contains('hidden')) {
-        if (!confirm('You are currently taking the exam. Are you sure you want to leave? Your progress will be lost.')) {
-          return;
+    if (btnNavStudent) {
+      btnNavStudent.addEventListener('click', () => {
+        if (examView && !examView.classList.contains('hidden')) {
+          if (!confirm('You are currently taking the exam. Are you sure you want to leave? Your progress will be lost.')) return;
+          clearInterval(state.examTimerInterval);
         }
-        clearInterval(state.examTimerInterval);
-      }
-      btnNavStudent.classList.add('active');
-      btnNavAdmin.classList.remove('active');
-      showView(studentLoginView);
-    });
-
-    btnNavAdmin.addEventListener('click', () => {
-      if (examView && !examView.classList.contains('hidden')) {
-        if (!confirm('You are currently taking the exam. Are you sure you want to leave?')) {
-          return;
-        }
-        clearInterval(state.examTimerInterval);
-      }
-      btnNavAdmin.classList.add('active');
-      btnNavStudent.classList.remove('active');
-      if (state.isAdminLoggedIn) {
-        showView(adminDashboardView);
-        refreshAdminData();
-      } else {
-        showView(adminLoginView);
-      }
-    });
+        showView(studentLoginView);
+      });
+    }
 
     if (btnBackToHome) {
-      btnBackToHome.addEventListener('click', () => {
-        showView(studentLoginView);
-        btnNavStudent.classList.add('active');
-        btnNavAdmin.classList.remove('active');
-      });
+      btnBackToHome.addEventListener('click', () => showView(studentLoginView));
     }
 
     if (btnResultReturn) {
       btnResultReturn.addEventListener('click', () => {
         showView(studentLoginView);
-        btnNavStudent.classList.add('active');
-        btnNavAdmin.classList.remove('active');
         if (regNoInput) regNoInput.value = '';
         if (studentNameInput) studentNameInput.value = '';
         if (sectionInput) sectionInput.value = '';
@@ -563,6 +533,14 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
           return;
         }
 
+        // Start the test immediately after student verification. If the browser blocks fullscreen, the existing launch fallback is used.
+        try {
+          await startAssessment();
+          return;
+        } catch (startError) {
+          console.warn('[Assessment Start] Direct launch fallback:', startError);
+        }
+
         // Show Pre-Exam Fullscreen Confirmation Modal for direct user gesture launch!
         if (launchStudentName) launchStudentName.textContent = state.student.name;
         if (launchStudentRegno) launchStudentRegno.textContent = state.student.reg_no;
@@ -653,8 +631,8 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
           state.isAdminLoggedIn = true;
           sessionStorage.setItem('admin_logged_in', 'true');
           showView(adminDashboardView);
-          btnNavAdmin.classList.add('active');
-          btnNavStudent.classList.remove('active');
+          btnNavAdmin?.classList.add('active');
+          btnNavStudent?.classList.remove('active');
           refreshAdminData();
         } else {
           showCustomAlert(adminLoginAlert, 'Invalid Username or Password. Please try again.');
@@ -675,8 +653,8 @@ FIB,Operating Systems,A binary semaphore initialized to 1 is commonly known as a
         state.isAdminLoggedIn = false;
         sessionStorage.removeItem('admin_logged_in');
         showView(studentLoginView);
-        btnNavStudent.classList.add('active');
-        btnNavAdmin.classList.remove('active');
+        btnNavStudent?.classList.add('active');
+        btnNavAdmin?.classList.remove('active');
       });
     }
   }

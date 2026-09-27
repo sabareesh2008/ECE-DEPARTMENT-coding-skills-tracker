@@ -104,26 +104,80 @@ const DataService = {
 
   // 1. Get the currently active assigned task
   async getActiveTask() {
+    try {
+      const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/tasks?is_active=eq.true&order=created_at.desc&limit=1`, { headers: getHeaders() });
+      if (res.ok) {
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows.length) return rows[0];
+      }
+    } catch (err) {
+      console.warn('getActiveTask cloud fetch error:', err);
+    }
     return DEFAULT_TASK;
   },
 
   // 2. Get all tasks
   async getAllTasks() {
+    try {
+      const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/tasks?select=*&order=created_at.desc`, { headers: getHeaders() });
+      if (res.ok) return await res.json();
+    } catch (err) {
+      console.warn('getAllTasks cloud fetch error:', err);
+    }
     return [DEFAULT_TASK];
   },
 
-  // 3. Create a new task
+  // 3. Create a new task and publish/draft it to the shared portal database
   async createTask(taskData) {
-    return {
-      id: 'task-' + Date.now(),
-      ...taskData,
-      created_at: new Date().toISOString()
-    };
+    const payload = { id: taskData.id || ('task-' + Date.now()), ...taskData };
+    if (payload.is_active) {
+      await fetch(`${SUPABASE_CONFIG.url}/rest/v1/tasks?is_active=eq.true`, {
+        method: 'PATCH',
+        headers: getHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+        body: JSON.stringify({ is_active: false, updated_at: new Date().toISOString() })
+      });
+    }
+    const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/tasks`, {
+      method: 'POST',
+      headers: getHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`Task database error (${res.status}). Please run TASK_PUBLISHING_SETUP.sql in the portal Supabase project.`);
+    const rows = await res.json();
+    return rows?.[0] || payload;
   },
 
   // 4. Set a task as active
   async setActiveTask(taskId) {
-    return DEFAULT_TASK;
+    await fetch(`${SUPABASE_CONFIG.url}/rest/v1/tasks?is_active=eq.true`, {
+      method: 'PATCH', headers: getHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+      body: JSON.stringify({ is_active: false, updated_at: new Date().toISOString() })
+    });
+    const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/tasks?id=eq.${encodeURIComponent(taskId)}`, {
+      method: 'PATCH', headers: getHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
+      body: JSON.stringify({ is_active: true, updated_at: new Date().toISOString() })
+    });
+    if (!res.ok) throw new Error(`Task activation failed (${res.status}).`);
+    const rows = await res.json();
+    return rows?.[0] || null;
+  },
+
+  async updateTask(taskId, taskData) {
+    const payload = { ...taskData, updated_at: new Date().toISOString() };
+    delete payload.id;
+    if (payload.is_active) {
+      await fetch(`${SUPABASE_CONFIG.url}/rest/v1/tasks?is_active=eq.true&id=neq.${encodeURIComponent(taskId)}`, {
+        method: 'PATCH', headers: getHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+        body: JSON.stringify({ is_active: false, updated_at: new Date().toISOString() })
+      });
+    }
+    const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/tasks?id=eq.${encodeURIComponent(taskId)}`, {
+      method: 'PATCH', headers: getHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`Task update failed (${res.status}). Please run TASK_PUBLISHING_SETUP.sql in the portal Supabase project.`);
+    const rows = await res.json();
+    return rows?.[0] || { id: taskId, ...payload };
   },
 
   // 5. Lookup student by Register Number (The Auto-fill engine)

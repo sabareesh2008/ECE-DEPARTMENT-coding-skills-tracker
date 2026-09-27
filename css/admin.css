@@ -433,3 +433,59 @@
   background-color: #7f1d1d;
   border-left: 4px solid #f87171;
 }
+
+/* ============================================================
+   v8.3 ADMIN COMMAND CENTER MODULE STRIP
+   ============================================================ */
+.admin-module-overview {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0 2px;
+}
+.admin-module-card {
+  appearance: none;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 14px;
+  padding: 13px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
+}
+.admin-module-card:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .07);
+  transform: translateY(-1px);
+}
+.admin-module-card.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 7px 18px rgba(37, 99, 235, .10);
+}
+.admin-module-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #f1f5f9;
+  font-size: 18px;
+}
+.admin-module-card.active .admin-module-icon { background: #dbeafe; }
+.admin-module-card strong { display:block; font-size:.86rem; line-height:1.25; }
+.admin-module-card small { display:block; margin-top:3px; color:#64748b; font-size:.70rem; line-height:1.35; }
+@media (max-width: 1050px) {
+  .admin-module-overview { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .admin-module-overview { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 460px) {
+  .admin-module-overview { grid-template-columns: 1fr; }
+}
