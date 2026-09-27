@@ -1104,6 +1104,157 @@ a.action-button.secondary:hover {
   transform: translateY(-1px) !important;
 }
 
+/* ============================================================
+   CLASS ADVISOR COMMAND COCKPIT & SECTION TABS
+   ============================================================ */
+.advisor-main-tab-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.advisor-main-tab-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.advisor-main-tab-btn.active {
+  background: #2563eb;
+  border-color: #1d4ed8;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.advisor-tab-pane {
+  display: none;
+}
+
+.advisor-tab-pane.active {
+  display: block;
+  animation: fadeInPane 0.2s ease-in-out;
+}
+
+@keyframes fadeInPane {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.button-toggle-group {
+  display: inline-flex;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.toggle-sub-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toggle-sub-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.08);
+}
+
+.proof-view-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #2563eb;
+  font-weight: 700;
+  text-decoration: underline;
+  font-size: 0.86rem;
+}
+
+.proof-view-link:hover {
+  color: #1d4ed8;
+}
+
+.badge-marks {
+  display: inline-block;
+  background: #eff6ff;
+  color: #1e40af;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.badge-section {
+  display: inline-block;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+}
+
+.empty-state-box {
+  background: #f8fafc;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 36px 24px;
+  text-align: center;
+  color: #64748b;
+  margin: 12px 0;
+}
+
+.empty-state-box p {
+  margin: 4px 0 0 0;
+  font-size: 0.88rem;
+}
+
+.white-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  font-size: 0.9rem;
+}
+
+.white-data-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1.5px solid #e2e8f0;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.white-data-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.white-data-table tr:hover td {
+  background: #f8fafc;
+}
+
+
 
 
 

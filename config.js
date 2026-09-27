@@ -12,6 +12,9 @@ window.APP_CONFIG = {
   PORTAL_SUPABASE_URL: "https://jehhjilmqoljxmsvnwgd.supabase.co",
   PORTAL_SUPABASE_ANON_KEY: "sb_publishable_4x2bY6PkwBmfdIW47ILf3w_L-Q0JoJQ",
 
+  // Common Class Advisor Passcode for all Section Advisors
+  ADVISOR_PASSWORD: "admin123",
+
   // Storage Bucket for Task Proof Screenshots
   STORAGE_BUCKET: "proof-screenshots",
 
@@ -19,7 +22,7 @@ window.APP_CONFIG = {
   CODE_RUNNER_URL: "https://ece-department-coding-skills-tracker.onrender.com",
 
   // Application Version for Cache Busting
-  VERSION: "7.0"
+  VERSION: "8.5"
 };
 
 // Backwards-compatible SUPABASE_CONFIG for Assessment & Task modules
@@ -72,6 +75,14 @@ window.StudentService = {
     return [];
   },
 
+  // Get students filtered by section (e.g. 'A', 'B', etc., or null for ALL)
+  getStudentsBySection(section) {
+    const roster = this.getRoster();
+    if (!section || section === 'ALL' || section === 'OVERALL') return roster;
+    const cleanSec = section.replace(/^ECE\s*/i, '').trim().toUpperCase();
+    return roster.filter(s => s.section === cleanSec);
+  },
+
   // Find student by register number or name in local roster
   findByQuery(query) {
     if (!query) return null;
@@ -117,6 +128,108 @@ window.StudentService = {
     } catch (e) {
       console.warn('[StudentService] Task fetch error:', e.message);
       return null;
+    }
+  },
+
+  // Fetch all assessment submissions from Supabase
+  async fetchAllAssessmentSubmissions() {
+    try {
+      const res = await fetch(`${window.APP_CONFIG.PORTAL_SUPABASE_URL}/rest/v1/submissions?select=*&order=submitted_at.desc`, {
+        headers: {
+          'apikey': window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY}`
+        }
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.warn('[StudentService] All assessment submissions fetch error:', e.message);
+      return [];
+    }
+  },
+
+  // Fetch all task submissions from Supabase
+  async fetchAllTaskSubmissions() {
+    try {
+      const res = await fetch(`${window.APP_CONFIG.PORTAL_SUPABASE_URL}/rest/v1/task_submissions?select=*&order=submitted_at.desc`, {
+        headers: {
+          'apikey': window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY}`
+        }
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.warn('[StudentService] All task submissions fetch error:', e.message);
+      return [];
+    }
+  },
+
+  // Fetch all tasks from Supabase
+  async fetchTasks() {
+    try {
+      const res = await fetch(`${window.APP_CONFIG.PORTAL_SUPABASE_URL}/rest/v1/tasks?select=*&order=created_at.desc`, {
+        headers: {
+          'apikey': window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY}`
+        }
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.warn('[StudentService] Tasks fetch error:', e.message);
+      return [];
+    }
+  },
+
+  // Create a new task assigned to specific section or ALL
+  async createSectionTask(taskData) {
+    try {
+      const payload = {
+        id: 'task-' + Date.now(),
+        title: taskData.title,
+        description: taskData.description || '',
+        deadline: taskData.deadline || null,
+        target_section: taskData.target_section || 'ALL',
+        created_by: taskData.created_by || 'Class Advisor',
+        is_active: true,
+        created_at: new Date().toISOString()
+      };
+
+      const res = await fetch(`${window.APP_CONFIG.PORTAL_SUPABASE_URL}/rest/v1/tasks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY}`,
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        // Fallback: save to localStorage if table doesn't support target_section
+        const localTasks = JSON.parse(localStorage.getItem('codemetrix_custom_tasks') || '[]');
+        localTasks.unshift(payload);
+        localStorage.setItem('codemetrix_custom_tasks', JSON.stringify(localTasks));
+        return payload;
+      }
+      const data = await res.json();
+      return Array.isArray(data) && data.length > 0 ? data[0] : payload;
+    } catch (e) {
+      console.warn('[StudentService] Create task error:', e.message);
+      const payload = {
+        id: 'task-' + Date.now(),
+        ...taskData,
+        is_active: true,
+        created_at: new Date().toISOString()
+      };
+      const localTasks = JSON.parse(localStorage.getItem('codemetrix_custom_tasks') || '[]');
+      localTasks.unshift(payload);
+      localStorage.setItem('codemetrix_custom_tasks', JSON.stringify(localTasks));
+      return payload;
     }
   }
 };

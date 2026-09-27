@@ -183,17 +183,24 @@ CREATE TABLE IF NOT EXISTS public.tasks (
     title TEXT NOT NULL,
     description TEXT,
     deadline TIMESTAMPTZ,
+    target_section TEXT DEFAULT 'ALL',
+    created_by TEXT DEFAULT 'Class Advisor',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS target_section TEXT DEFAULT 'ALL';
+ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS created_by TEXT DEFAULT 'Class Advisor';
+
 -- Insert default active task if not exists
-INSERT INTO public.tasks (id, title, description, deadline, is_active)
+INSERT INTO public.tasks (id, title, description, deadline, target_section, created_by, is_active)
 VALUES (
     'task-live-01',
     'Course Registration & Proof Screenshot Submission',
     'Please upload a clear screenshot of your course enrollment / assessment completion proof showing your Name and Register Number.',
     NOW() + INTERVAL '14 days',
+    'ALL',
+    'Department Head',
     TRUE
 )
 ON CONFLICT (id) DO NOTHING;

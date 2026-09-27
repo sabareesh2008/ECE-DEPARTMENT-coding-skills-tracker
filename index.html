@@ -484,38 +484,322 @@
         </section>
 
         <!-- ============================================================
-             VIEW 8: FACULTY & ADMIN COMMAND CENTER
+             VIEW 8: FACULTY & CLASS ADVISOR COMMAND COCKPIT
              ============================================================ -->
         <section id="view-admin" class="feature-view-pane">
-          <div class="white-panel-card">
-            <div class="panel-header-row">
+          
+          <!-- STATE 1: CLASS ADVISOR LOGIN FORM (Shown when not authenticated) -->
+          <div id="advisorLoginView" class="white-panel-card" style="max-width:620px;margin:30px auto;box-shadow:0 20px 45px rgba(15,23,42,0.08);border-radius:20px;padding:36px 32px;">
+            <div style="text-align:center;margin-bottom:26px;">
+              <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:16px;background:#eff6ff;color:#2563eb;font-size:1.8rem;margin-bottom:12px;">👨‍🏫</div>
+              <h3 style="font-size:1.45rem;font-weight:800;color:#0f172a;margin:0 0 6px 0;">Class Advisor &amp; Faculty Login</h3>
+              <p style="color:#64748b;font-size:0.9rem;margin:0;">Select your assigned section to monitor live test completions, track task proofs, broadcast WhatsApp reminders, and assign section tasks.</p>
+            </div>
+
+            <form id="advisorLoginForm" style="display:flex;flex-direction:column;gap:16px;">
               <div>
-                <h3>Faculty Command &amp; Examination Setup</h3>
-                <p>Manage test question banks, publish assessments, and generate WhatsApp class reminders.</p>
-              </div>
-              <a href="admin.html" class="btn-clean-primary">Open Dedicated Admin Center ↗</a>
-            </div>
-
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:24px;">
-              <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:12px;padding:18px;">
-                <h4 style="margin:0 0 6px 0;font-size:1rem;">⚡ WhatsApp Reminder</h4>
-                <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 12px 0;">Copy pending roll numbers formatted for instant broadcast in class groups.</p>
-                <button id="btnQuickWhatsAppCopy" class="btn-clean-primary" style="background:#059669;border-color:#047857;font-size:0.82rem;">📋 Copy Pending Roll Numbers</button>
+                <label for="advisorNameInput" style="display:block;font-size:0.85rem;font-weight:700;color:#334155;margin-bottom:6px;">Faculty / Advisor Name</label>
+                <input type="text" id="advisorNameInput" class="form-control" placeholder="e.g. Dr. Ramesh Kumar / Prof. Priya" required style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid #cbd5e1;font-size:0.92rem;outline:none;">
               </div>
 
-              <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:12px;padding:18px;">
-                <h4 style="margin:0 0 6px 0;font-size:1rem;">📂 Question Bank CSV Template</h4>
-                <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 12px 0;">Download standard format supporting both MCQ and Fill in Blanks.</p>
-                <a href="sample_question_template.csv" download="sample_question_template.csv" class="btn-clean-secondary" style="font-size:0.82rem;">📥 Download Template</a>
+              <div>
+                <label for="advisorSectionSelect" style="display:block;font-size:0.85rem;font-weight:700;color:#334155;margin-bottom:6px;">Assigned Section</label>
+                <select id="advisorSectionSelect" class="form-control" style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid #cbd5e1;font-size:0.92rem;outline:none;background:#ffffff;">
+                  <option value="ECE A">Section A (ECE A)</option>
+                  <option value="ECE B">Section B (ECE B)</option>
+                  <option value="ECE C">Section C (ECE C)</option>
+                  <option value="ECE D">Section D (ECE D)</option>
+                  <option value="ECE E">Section E (ECE E)</option>
+                  <option value="ECE F">Section F (ECE F)</option>
+                  <option value="ALL">All Sections (HOD / Dept Head)</option>
+                </select>
               </div>
 
-              <div style="background:var(--bg-subtle);border:1px solid var(--border-main);border-radius:12px;padding:18px;">
-                <h4 style="margin:0 0 6px 0;font-size:1rem;">📦 Compiled PDF Exporter</h4>
-                <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 12px 0;">Compile all student proof receipts into an institutional PDF.</p>
-                <a href="tasks-admin.html" class="btn-clean-primary" style="background:#0f172a;border-color:#0f172a;font-size:0.82rem;">Export Proofs PDF →</a>
+              <div>
+                <label for="advisorPasswordInput" style="display:block;font-size:0.85rem;font-weight:700;color:#334155;margin-bottom:6px;">Advisor Passcode</label>
+                <input type="password" id="advisorPasswordInput" class="form-control" placeholder="Enter advisor passcode" required style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid #cbd5e1;font-size:0.92rem;outline:none;">
+                <span style="font-size:0.75rem;color:#64748b;margin-top:4px;display:block;">Default department advisor passcode: <code>admin123</code></span>
               </div>
-            </div>
+
+              <div id="advisorLoginMsg" class="form-message" style="margin:4px 0;font-size:0.88rem;"></div>
+
+              <button type="submit" id="btnSubmitAdvisorLogin" class="btn-clean-primary" style="width:100%;padding:13px;border-radius:10px;font-size:0.95rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;background:#2563eb;border-color:#1d4ed8;margin-top:8px;">
+                🔑 Unlock Section Cockpit
+              </button>
+            </form>
           </div>
+
+          <!-- STATE 2: SECTION ADVISOR COMMAND COCKPIT (Shown when authenticated) -->
+          <div id="advisorCockpitView" hidden>
+            
+            <!-- Advisor Header & Quick Controls -->
+            <div class="white-panel-card" style="margin-bottom:20px;">
+              <div class="panel-header-row" style="margin-bottom:16px;">
+                <div>
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+                    <span class="report-eyebrow" style="background:#eff6ff;color:#1d4ed8;">CLASS ADVISOR COMMAND</span>
+                    <span id="advisorSectionBadge" class="trend-badge" style="background:#dbeafe;color:#1d4ed8;font-size:0.82rem;font-weight:800;">ECE A</span>
+                  </div>
+                  <h3 id="advisorCockpitTitle" style="font-size:1.4rem;margin:0 0 4px 0;color:#0f172a;">Class Advisor Cockpit</h3>
+                  <p id="advisorCockpitSubtitle" style="color:#64748b;font-size:0.88rem;margin:0;">Active Advisor: Prof. Advisor · Section Monitoring &amp; Direct Task Assignment</p>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <label for="advisorSectionSwitcher" style="font-size:0.82rem;font-weight:700;color:#475569;">Switch Scope:</label>
+                    <select id="advisorSectionSwitcher" class="form-control" style="padding:6px 12px;font-size:0.85rem;border-radius:8px;border:1px solid #cbd5e1;background:#fff;">
+                      <option value="A">Section A</option>
+                      <option value="B">Section B</option>
+                      <option value="C">Section C</option>
+                      <option value="D">Section D</option>
+                      <option value="E">Section E</option>
+                      <option value="F">Section F</option>
+                      <option value="ALL">All Sections (HOD)</option>
+                    </select>
+                  </div>
+                  <button id="advisorLogoutBtn" class="btn-clean-secondary" type="button" style="font-size:0.84rem;padding:7px 14px;color:#dc2626;border-color:#fecaca;background:#fff;">
+                    🚪 Logout
+                  </button>
+                </div>
+              </div>
+
+              <!-- Section Live KPI Grid -->
+              <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:16px;">
+                <div class="kpi-card" style="min-height:100px;padding:16px 18px;">
+                  <div class="kpi-card-top">
+                    <div class="kpi-icon-square">👥</div>
+                    <span class="trend-badge neutral-badge">Enrolled</span>
+                  </div>
+                  <div>
+                    <div class="kpi-value" id="kpiAdvisorTotalStudents" style="font-size:1.6rem;">0</div>
+                    <div class="kpi-label">Section Strength</div>
+                  </div>
+                </div>
+
+                <div class="kpi-card" style="min-height:100px;padding:16px 18px;">
+                  <div class="kpi-card-top">
+                    <div class="kpi-icon-square" style="color:#059669;background:#ecfdf5;">📝</div>
+                    <span class="trend-badge" style="background:#ecfdf5;color:#059669;">Test Passed</span>
+                  </div>
+                  <div>
+                    <div class="kpi-value" id="kpiAdvisorTestCompleted" style="font-size:1.6rem;color:#059669;">0</div>
+                    <div class="kpi-label">Test Completed</div>
+                  </div>
+                </div>
+
+                <div class="kpi-card" style="min-height:100px;padding:16px 18px;">
+                  <div class="kpi-card-top">
+                    <div class="kpi-icon-square" style="color:#dc2626;background:#fef2f2;">⏳</div>
+                    <span class="trend-badge" style="background:#fef2f2;color:#dc2626;">Action Needed</span>
+                  </div>
+                  <div>
+                    <div class="kpi-value" id="kpiAdvisorTestPending" style="font-size:1.6rem;color:#dc2626;">0</div>
+                    <div class="kpi-label">Test Pending</div>
+                  </div>
+                </div>
+
+                <div class="kpi-card" style="min-height:100px;padding:16px 18px;">
+                  <div class="kpi-card-top">
+                    <div class="kpi-icon-square" style="color:#2563eb;background:#eff6ff;">📋</div>
+                    <span class="trend-badge" style="background:#eff6ff;color:#2563eb;">Uploaded</span>
+                  </div>
+                  <div>
+                    <div class="kpi-value" id="kpiAdvisorTaskCompleted" style="font-size:1.6rem;color:#2563eb;">0</div>
+                    <div class="kpi-label">Proof Submitted</div>
+                  </div>
+                </div>
+
+                <div class="kpi-card" style="min-height:100px;padding:16px 18px;">
+                  <div class="kpi-card-top">
+                    <div class="kpi-icon-square" style="color:#d97706;background:#fffbeb;">⏳</div>
+                    <span class="trend-badge" style="background:#fffbeb;color:#d97706;">Pending</span>
+                  </div>
+                  <div>
+                    <div class="kpi-value" id="kpiAdvisorTaskPending" style="font-size:1.6rem;color:#d97706;">0</div>
+                    <div class="kpi-label">Task Pending</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Advisor Workspace Navigation Tabs -->
+            <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;border-bottom:1px solid #e2e8f0;padding-bottom:12px;">
+              <button class="advisor-main-tab-btn active" data-tab="tab-advisor-tests">
+                📝 Technical Assessment Tracking
+              </button>
+              <button class="advisor-main-tab-btn" data-tab="tab-advisor-tasks">
+                📋 Task &amp; Proof Monitoring
+              </button>
+              <button class="advisor-main-tab-btn" data-tab="tab-advisor-create-task">
+                ➕ Section Task Assignment Desk
+              </button>
+              <button class="advisor-main-tab-btn" data-tab="tab-advisor-resources">
+                📂 Question Banks &amp; Tools
+              </button>
+            </div>
+
+            <div id="advisorDataLoading" style="padding:30px;text-align:center;color:#64748b;" hidden>
+              ⏳ Fetching live section analytics from Supabase...
+            </div>
+
+            <!-- TAB 1: TECHNICAL ASSESSMENT TRACKING -->
+            <div id="tab-advisor-tests" class="advisor-tab-pane active">
+              <div class="white-panel-card">
+                <div class="panel-header-row">
+                  <div>
+                    <h3 style="font-size:1.2rem;color:#0f172a;margin:0 0 4px 0;">Technical Assessment Status</h3>
+                    <p style="color:#64748b;font-size:0.85rem;margin:0;">Inspect individual marks, percentages, and identify students who have not taken the test.</p>
+                  </div>
+
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <!-- Filter Sub-toggle -->
+                    <div class="button-toggle-group">
+                      <button id="toggleTestCompletedBtn" class="toggle-sub-btn active" type="button">
+                        <span id="testCompletedBadgeCount">✅ Completed</span>
+                      </button>
+                      <button id="toggleTestPendingBtn" class="toggle-sub-btn" type="button">
+                        <span id="testPendingBadgeCount">⏳ Pending</span>
+                      </button>
+                    </div>
+
+                    <button id="btnCopyTestWhatsApp" class="btn-clean-primary" style="background:#059669;border-color:#047857;font-size:0.84rem;">
+                      📋 Copy WhatsApp Notice
+                    </button>
+                    <button id="btnExportSectionTestExcel" class="btn-clean-secondary" style="font-size:0.84rem;">
+                      📥 Export Excel
+                    </button>
+                  </div>
+                </div>
+
+                <div id="advisorTestTableWrap" style="margin-top:16px;">
+                  <!-- Injected via JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 2: TASK & PROOF MONITORING -->
+            <div id="tab-advisor-tasks" class="advisor-tab-pane">
+              <div class="white-panel-card">
+                <div class="panel-header-row">
+                  <div>
+                    <h3 style="font-size:1.2rem;color:#0f172a;margin:0 0 4px 0;">Task Submission &amp; Screenshot Proofs</h3>
+                    <p style="color:#64748b;font-size:0.85rem;margin:0;">Verify student enrollment proofs, screenshot attachments, and contact pending roll numbers.</p>
+                  </div>
+
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <!-- Filter Sub-toggle -->
+                    <div class="button-toggle-group">
+                      <button id="toggleTaskCompletedBtn" class="toggle-sub-btn active" type="button">
+                        <span id="taskCompletedBadgeCount">✅ Submitted</span>
+                      </button>
+                      <button id="toggleTaskPendingBtn" class="toggle-sub-btn" type="button">
+                        <span id="taskPendingBadgeCount">⏳ Pending</span>
+                      </button>
+                    </div>
+
+                    <button id="btnCopyTaskWhatsApp" class="btn-clean-primary" style="background:#059669;border-color:#047857;font-size:0.84rem;">
+                      📋 Copy WhatsApp Notice
+                    </button>
+                    <button id="btnExportSectionTaskExcel" class="btn-clean-secondary" style="font-size:0.84rem;">
+                      📥 Export Excel
+                    </button>
+                  </div>
+                </div>
+
+                <div id="advisorTaskTableWrap" style="margin-top:16px;">
+                  <!-- Injected via JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 3: SECTION TASK ASSIGNMENT DESK -->
+            <div id="tab-advisor-create-task" class="advisor-tab-pane">
+              <div class="white-panel-card">
+                <div class="panel-header-row">
+                  <div>
+                    <h3 style="font-size:1.2rem;color:#0f172a;margin:0 0 4px 0;">Assign New Section Task</h3>
+                    <p style="color:#64748b;font-size:0.85rem;margin:0;">Create assignments or proof verification tasks targeted exclusively for your class section.</p>
+                  </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-top:16px;">
+                  <!-- Task Creation Form -->
+                  <form id="advisorCreateTaskForm" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:22px;">
+                    <div style="margin-bottom:14px;">
+                      <label for="taskTitleInput" style="display:block;font-size:0.85rem;font-weight:700;color:#334155;margin-bottom:6px;">Task Title</label>
+                      <input type="text" id="taskTitleInput" class="form-control" placeholder="e.g. Mini-Project Phase 1 Screenshot Proof" required style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #cbd5e1;">
+                    </div>
+
+                    <div style="margin-bottom:14px;">
+                      <label for="taskTargetSectionSelect" style="display:block;font-size:0.85rem;font-weight:700;color:#334155;margin-bottom:6px;">Target Section Scope</label>
+                      <select id="taskTargetSectionSelect" class="form-control" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;">
+                        <option value="A">Section A Only</option>
+                        <option value="B">Section B Only</option>
+                        <option value="C">Section C Only</option>
+                        <option value="D">Section D Only</option>
+                        <option value="E">Section E Only</option>
+                        <option value="F">Section F Only</option>
+                        <option value="ALL">All Sections (Entire Department)</option>
+                      </select>
+                    </div>
+
+                    <div style="margin-bottom:14px;">
+                      <label for="taskDeadlineInput" style="display:block;font-size:0.85rem;font-weight:700;color:#334155;margin-bottom:6px;">Submission Deadline</label>
+                      <input type="datetime-local" id="taskDeadlineInput" class="form-control" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;">
+                    </div>
+
+                    <div style="margin-bottom:14px;">
+                      <label for="taskDescInput" style="display:block;font-size:0.85rem;font-weight:700;color:#334155;margin-bottom:6px;">Task Instructions</label>
+                      <textarea id="taskDescInput" rows="3" class="form-control" placeholder="Explain what screenshot / document students need to submit..." style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #cbd5e1;"></textarea>
+                    </div>
+
+                    <div id="taskCreateMsg" style="margin-bottom:10px;font-size:0.85rem;font-weight:600;"></div>
+
+                    <button type="submit" class="btn-clean-primary" style="width:100%;padding:11px;font-weight:700;background:#2563eb;border-color:#1d4ed8;">
+                      🚀 Publish Task for Section
+                    </button>
+                  </form>
+
+                  <!-- Active Section Tasks List -->
+                  <div>
+                    <h4 style="margin:0 0 12px 0;font-size:1rem;color:#0f172a;">Active Tasks in this Section</h4>
+                    <div id="advisorSectionTasksList">
+                      <!-- Injected via JS -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 4: QUESTION BANKS & TOOLS -->
+            <div id="tab-advisor-resources" class="advisor-tab-pane">
+              <div class="white-panel-card">
+                <div class="panel-header-row">
+                  <div>
+                    <h3 style="font-size:1.2rem;color:#0f172a;margin:0 0 4px 0;">Question Bank &amp; Admin Tooling</h3>
+                    <p style="color:#64748b;font-size:0.85rem;margin:0;">Download assessment templates, compile proof receipts, or open the full admin center.</p>
+                  </div>
+                  <a href="admin.html" class="btn-clean-primary">Open Dedicated Admin Center ↗</a>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px;">
+                  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
+                    <h4 style="margin:0 0 6px 0;font-size:1rem;color:#0f172a;">📂 Question Bank CSV Template</h4>
+                    <p style="color:#64748b;font-size:0.82rem;margin:0 0 12px 0;">Standard 50-question template format supporting both MCQ and Fill in Blanks.</p>
+                    <a href="sample_question_template.csv" download="sample_question_template.csv" class="btn-clean-secondary" style="font-size:0.82rem;">📥 Download Template</a>
+                  </div>
+
+                  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
+                    <h4 style="margin:0 0 6px 0;font-size:1rem;color:#0f172a;">📦 Compiled PDF Exporter</h4>
+                    <p style="color:#64748b;font-size:0.82rem;margin:0 0 12px 0;">Compile all section student proof receipts into an official institutional PDF.</p>
+                    <a href="tasks-admin.html" class="btn-clean-primary" style="background:#0f172a;border-color:#0f172a;font-size:0.82rem;">Export Proofs PDF →</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
         </section>
 
         <!-- ============================================================
@@ -681,13 +965,14 @@
   <div id="homeActionMessage" class="home-action-message" role="status" aria-live="polite"></div>
 
   <!-- Application Scripts -->
-  <script src="config.js?v=7.0"></script>
-  <script src="js/assessment/students.js?v=7.0"></script>
-  <script src="js/assessment/questions.js?v=7.0"></script>
-  <script src="js/assessment/supabase-config.js?v=7.0"></script>
-  <script src="js/tasks/mock-data.js?v=7.0"></script>
-  <script src="js/tasks/supabase-config.js?v=7.0"></script>
-  <script src="home-dashboard.js?v=8.4"></script>
-  <script src="js/examlytics-controller.js?v=8.4"></script>
+  <script src="config.js?v=8.5"></script>
+  <script src="js/assessment/students.js?v=8.5"></script>
+  <script src="js/assessment/questions.js?v=8.5"></script>
+  <script src="js/assessment/supabase-config.js?v=8.5"></script>
+  <script src="js/tasks/mock-data.js?v=8.5"></script>
+  <script src="js/tasks/supabase-config.js?v=8.5"></script>
+  <script src="home-dashboard.js?v=8.5"></script>
+  <script src="js/advisor-controller.js?v=8.5"></script>
+  <script src="js/examlytics-controller.js?v=8.5"></script>
 </body>
 </html>
