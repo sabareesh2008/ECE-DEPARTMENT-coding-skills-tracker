@@ -72,8 +72,8 @@
         return;
       }
 
-      if (pass !== expectedPass && pass !== 'admin123' && pass !== 'eceadmin') {
-        if (msgEl) { msgEl.textContent = 'Invalid advisor passcode. (Default passcode: admin123)'; msgEl.className = 'form-message error'; }
+      if (pass !== expectedPass) {
+        if (msgEl) { msgEl.textContent = 'Invalid advisor passcode. Contact faculty administration.'; msgEl.className = 'form-message error'; }
         return;
       }
 

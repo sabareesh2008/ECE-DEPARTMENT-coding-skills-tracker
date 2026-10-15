@@ -7,13 +7,13 @@
   'use strict';
 
   const viewTitles = {
-    'view-dashboard': { title: 'Dashboard', sub: 'Good morning, ECE Scholars · 372 Students active across Sections A–F' },
+    'view-dashboard': { title: 'Dashboard', sub: 'Good morning, ECE Scholars · 377 Students active across Sections A–F' },
     'view-exams': { title: 'Available Exams', sub: 'Timed MCQ & Fill-in-the-blanks technical examinations with live proctoring' },
     'view-leetcode': { title: 'LeetCode Tracker', sub: 'Live synchronized problem solving, streaks, and anti-cheat forensics' },
     'view-github': { title: 'GitHub Tracker', sub: 'Contributions, repositories, commits, and detected live deployments' },
     'view-tasks': { title: 'Task Submissions Desk', sub: 'Student course registration and certification proof verification' },
     'view-leaderboard': { title: 'Department Leaderboard', sub: 'Top 50 rankings across LeetCode & GitHub engineering profiles' },
-    'view-roster': { title: 'Student Master Directory', sub: 'Official 372-student roster across Sections A through F' },
+    'view-roster': { title: 'Student Master Directory', sub: 'Official 377-student roster across Sections A through F' },
     'view-admin': { title: 'Faculty & Admin Command', sub: 'Assessment configuration, question bank management, and announcements' },
     'view-reports': { title: 'Reports & Exports', sub: 'Custom date range analytics, Excel spreadsheets, and PDF documents' }
   };
@@ -328,7 +328,7 @@
       }));
       const ws = XLSX.utils.json_to_sheet(rows);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Roster 372');
+      XLSX.utils.book_append_sheet(wb, ws, 'Roster 377');
       XLSX.writeFile(wb, `ECE_Student_Master_Roster_${new Date().toISOString().slice(0, 10)}.xlsx`);
     });
   }

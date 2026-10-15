@@ -1,0 +1,6 @@
+Updated existing Campus360 project files:
+- signup.html: single registration form; no Fetch or username Check button.
+- signup.js: automatically loads details as registration number is typed, keeps fields editable, checks username automatically, displays password strength and confirmation, submits using existing Supabase Auth configuration.
+- CAMPUS360_PROFILE_AND_AUTH_SETUP.sql: lookup joins github_username_import using trimmed registration numbers.
+
+Apply the updated CAMPUS360_PROFILE_AND_AUTH_SETUP.sql in the same Supabase project after backing up. Test with one unclaimed student. Ensure the existing auth.users trigger is installed and campus360-profile-photos storage bucket/policy exists if using profile photos. Student edits are stored in their own profile by the existing auth trigger; public signup must not overwrite the shared master roster.

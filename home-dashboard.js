@@ -212,6 +212,13 @@
     throw new Error('Supabase is not configured on this page.');
   }
 
+  function portalSupabaseClient(){
+    if(window.supabase && typeof window.supabase.createClient==='function' && window.APP_CONFIG?.PORTAL_SUPABASE_URL && window.APP_CONFIG?.PORTAL_SUPABASE_ANON_KEY){
+      return window.supabase.createClient(window.APP_CONFIG.PORTAL_SUPABASE_URL, window.APP_CONFIG.PORTAL_SUPABASE_ANON_KEY);
+    }
+    throw new Error('Portal Supabase (assessment/tasks DB) is not configured.');
+  }
+
   async function downloadAllFacultyLeetCodeReport(){
     if(typeof XLSX==='undefined') throw new Error('Excel library is not available. Check your internet connection and reload the page.');
     const client=supabaseClient();
@@ -1626,7 +1633,7 @@
       closeHomeDateReport();
     }
   });
-  els.back?.addEventListener('click',()=>{if(history.length>1)history.back();else location.href='leetcode.html';});
+  els.back?.addEventListener('click',()=>{if(history.length>1)history.back();else location.href='codemetrix-dashboard.html';});
 
   // Date Report Events
   els.dateReportButton?.addEventListener('click', openHomeDateReport);

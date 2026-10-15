@@ -249,7 +249,7 @@ const DataService = {
     return null;
   },
 
-  // 6. Get all students from Supabase (372 real students)
+  // 6. Get all students from Supabase (377 real students)
   async getAllStudents() {
     try {
       const res = await fetch(

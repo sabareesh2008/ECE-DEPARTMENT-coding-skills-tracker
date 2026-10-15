@@ -164,12 +164,12 @@
       if (lcRes && lcRes.ok) {
         state.leetcodeData = parseCsv(await lcRes.text());
         const lcCountEl = document.getElementById('statLeetCount');
-        if (lcCountEl) lcCountEl.textContent = state.leetcodeData.length || '372';
+        if (lcCountEl) lcCountEl.textContent = state.leetcodeData.length || '377';
       }
       if (ghRes && ghRes.ok) {
         state.githubData = parseCsv(await ghRes.text());
         const ghCountEl = document.getElementById('statGitCount');
-        if (ghCountEl) ghCountEl.textContent = state.githubData.length || '372';
+        if (ghCountEl) ghCountEl.textContent = state.githubData.length || '377';
       }
       const [lcErrRes, ghErrRes] = await Promise.all([
         fetch('LeetCodeErrors.csv?t=' + Date.now()).catch(() => null),
@@ -804,7 +804,7 @@
       console.warn('[Tasks Tab] Supabase fetch:', e.message);
     }
 
-    const total = state.students.length || 372;
+    const total = state.students.length || 377;
     const submitted = state.tasks.submissions.length;
     const pending = Math.max(0, total - submitted);
     const pct = Math.round((submitted / total) * 100);
@@ -901,7 +901,7 @@
   }
 
   // ============================================================
-  // 5. TAB 4: STUDENT MASTER DIRECTORY (372 STUDENTS)
+  // 5. TAB 4: STUDENT MASTER DIRECTORY (377 STUDENTS)
   // ============================================================
   function initManualQuestionWriter() {
     const typeEl = document.getElementById('manualQuestionType');
@@ -953,8 +953,8 @@
       }));
       const ws = XLSX.utils.json_to_sheet(rows);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Roster 372');
-      XLSX.writeFile(wb, `ECE_Student_Roster_372_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      XLSX.utils.book_append_sheet(wb, ws, 'Roster 377');
+      XLSX.writeFile(wb, `ECE_Student_Roster_377_${new Date().toISOString().slice(0, 10)}.xlsx`);
     });
   }
 

@@ -1,0 +1,20 @@
+CAMPUS360 — STUDENT PROFILE (PHASE 1)
+
+Files changed:
+- student-dashboard.html: profile overview/edit form, profile photo upload, achievements/certificate gallery.
+- student-dashboard.js: reads/writes the current authenticated student's own profile and media.
+- CAMPUS360_STUDENT_PROFILE_MEDIA_SETUP.sql: additive Supabase schema/RPC/RLS/storage setup.
+
+Before testing:
+1. Back up your Supabase project.
+2. Open Supabase SQL Editor for the SAME project configured in config.js.
+3. Run CAMPUS360_STUDENT_PROFILE_MEDIA_SETUP.sql.
+4. Ensure each preloaded registration number has a matching campus360_student_profiles row with auth_user_id mapped to that student's authenticated account.
+5. Open student-dashboard.html through your normal site host (not a file:// URL).
+
+Important current limitation:
+The current registration-number-only login is deliberately UI-only and does not establish a Supabase authenticated session. Therefore this dashboard cannot securely load or save student data until the later authentication step is implemented. Do not remove the auth/session guard or make the storage bucket public.
+
+Profile fields: registration number and college email are preloaded/read-only; name, phone, personal email, department, year, section, GitHub, LeetCode and LinkedIn are editable in the student profile. Profile picture and achievement/certificate images are private uploads.
+
+The profile update writes to campus360_student_profiles. It does not modify the official roster table. If you want edits to official department/year/section to become official roster data, that should be a faculty/admin-approved workflow, not a student self-edit.

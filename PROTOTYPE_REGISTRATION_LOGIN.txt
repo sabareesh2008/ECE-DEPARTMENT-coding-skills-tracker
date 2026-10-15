@@ -1,0 +1,4 @@
+Registration-number prototype navigation
+- Entering a registration number now opens student-dashboard.html for that number.
+- This is a UI preview only. It does not authenticate the person or retrieve private student roster details.
+- Editing, uploads, and database access remain disabled until secure authentication and row-level access are configured.
