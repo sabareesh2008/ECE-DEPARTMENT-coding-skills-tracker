@@ -1,4 +1,4 @@
-let supabaseClient = null;
+﻿let supabaseClient = null;
 let currentUser = null;
 let currentRole = null;
 
@@ -23,8 +23,6 @@ let aiChatHistory = [];
 let aiChatBusy = false;
 
 let selectedSection = null;
-let selectedYear = null;
-let yearCache = { 1: null, 2: null, 3: null };
 let pendingDeleteId = null;
 
 const cfg = window.APP_CONFIG || {};
@@ -32,13 +30,6 @@ const cfg = window.APP_CONFIG || {};
 const sectionHome = document.getElementById("sectionHome");
 const leaderboardView = document.getElementById("leaderboardView");
 const backToSectionsButton = document.getElementById("backToSectionsButton");
-
-const yearSelectionPanel = document.getElementById("yearSelectionPanel");
-const yearSectionPanel = document.getElementById("yearSectionPanel");
-const yearSectionGrid = document.getElementById("yearSectionGrid");
-const backToYearsButton = document.getElementById("backToYearsButton");
-const selectedYearKicker = document.getElementById("selectedYearKicker");
-const selectedYearTitle = document.getElementById("selectedYearTitle");
 
 const currentViewLabel = document.getElementById("currentViewLabel");
 const currentViewTitle = document.getElementById("currentViewTitle");
@@ -68,22 +59,9 @@ const toggleAdminPassword = document.getElementById("toggleAdminPassword");
 const addProfileButton = document.getElementById("addProfileButton");
 const syncNowButton = document.getElementById("syncNowButton");
 const manageStudentsButton = document.getElementById("manageStudentsButton");
-const openDateReportButton = document.getElementById("openDateReportButton");
-const dateReportModal = document.getElementById("dateReportModal");
-const closeDateReportButton = document.getElementById("closeDateReport");
-const cancelDateReportButton = document.getElementById("cancelDateReport");
-const dateReportFrom = document.getElementById("dateReportFrom");
-const dateReportTo = document.getElementById("dateReportTo");
-const dateReportScope = document.getElementById("dateReportScope");
-const dateReportMessage = document.getElementById("dateReportMessage");
-const downloadDateReportCsvButton = document.getElementById("downloadDateReportCsv");
-const downloadDateReportExcelButton = document.getElementById("downloadDateReportExcel");
-const downloadDateReportPdfButton = document.getElementById("downloadDateReportPdf");
-const dateReportPrintContent = document.getElementById("dateReportPrintContent");
 
 const homeAddProfileButton = document.getElementById("homeAddProfileButton");
 const homeSyncNowButton = document.getElementById("homeSyncNowButton");
-const homeOpenDateReportButton = document.getElementById("homeOpenDateReportButton");
 const homeManageStudentsButton = document.getElementById("homeManageStudentsButton");
 const homeFacultyAnalyticsButton = document.getElementById("homeFacultyAnalyticsButton");
 const facultyAnalyticsButton = document.getElementById("facultyAnalyticsButton");
@@ -130,15 +108,6 @@ const SECTION_NAMES = [
   "ECE E",
   "ECE F"
 ];
-
-const YEAR_SECTIONS = {
-  1: ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"],
-  2: ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"],
-  3: ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"],
-  4: ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"]
-};
-
-const YEAR_LABELS = { 1: "YEAR I", 2: "YEAR II", 3: "YEAR III", 4: "YEAR IV" };
 
 const exportColumns = [
   "Overall Rank",
@@ -261,29 +230,14 @@ function parseCSV(text) {
     (header) => header.replace(/^\uFEFF/, "").trim()
   );
 
-  return rows
-    .slice(1)
-    .map((cells) =>
-      Object.fromEntries(
-        headers.map((header, index) => [
-          header,
-          (cells[index] ?? "").trim()
-        ])
-      )
+  return rows.slice(1).map((cells) =>
+    Object.fromEntries(
+      headers.map((header, index) => [
+        header,
+        (cells[index] ?? "").trim()
+      ])
     )
-    .filter((row) => {
-      const reg = String(row["Register Number"] || row.register_number || "").trim();
-      const name = String(row["Student Name"] || row.student_name || "").trim();
-      return (
-        reg !== "" &&
-        reg !== "—" &&
-        reg !== "-" &&
-        !reg.startsWith("<") &&
-        !reg.startsWith("=") &&
-        !reg.startsWith(">") &&
-        name !== ""
-      );
-    });
+  );
 }
 
 
@@ -586,20 +540,12 @@ function updateLastUpdated() {
 
 
 function getCurrentViewStudents() {
-  const yearStudents = selectedYear
-    ? allStudents.filter((student) => {
-        const value = String(student.Year ?? student.year ?? "").trim().toLowerCase();
-        return !value
-          || value === String(selectedYear)
-          || value === String(YEAR_LABELS[selectedYear]).toLowerCase()
-          || value === `year ${selectedYear}`;
-      })
-    : allStudents;
+  if (selectedSection === "OVERALL") {
+    return [...allStudents];
+  }
 
-  if (selectedSection === "OVERALL") return [...yearStudents];
-
-  return yearStudents.filter(
-    (student) => normalizeSection(student.Section) === normalizeSection(selectedSection)
+  return allStudents.filter(
+    (student) => student.Section === selectedSection
   );
 }
 
@@ -630,9 +576,9 @@ function renderStudents(students) {
 
   const overall = selectedSection === "OVERALL";
 
-  // 13 columns in Overall view (Section visible)
-  // 12 columns in an individual section (Section hidden)
-  const columnCount = overall ? 13 : 12;
+  // 12 columns in Overall view (Section visible)
+  // 11 columns in an individual section (Section hidden)
+  const columnCount = overall ? 12 : 11;
 
   document.querySelectorAll(".overall-only").forEach((element) => {
     element.hidden = !overall;
@@ -748,11 +694,11 @@ function openSection(section) {
 
   if (section === "OVERALL") {
     currentViewLabel.textContent = "DEPARTMENT";
-    currentViewTitle.textContent = `${selectedYear ? YEAR_LABELS[selectedYear] + " · " : ""}Overall LeetCode Leaderboard`;
-    printTitle.textContent = `Overall LeetCode Leaderboard`;
+    currentViewTitle.textContent = "Overall ECE Leaderboard";
+    printTitle.textContent = "Overall ECE LeetCode Leaderboard";
     rankLegendText.textContent = "Overall Rank";
   } else {
-    currentViewLabel.textContent = `${selectedYear ? YEAR_LABELS[selectedYear] + " · " : ""}SECTION`;
+    currentViewLabel.textContent = "SECTION";
     currentViewTitle.textContent = `${section} Leaderboard`;
     printTitle.textContent = `${section} LeetCode Leaderboard`;
     rankLegendText.textContent = "Section Rank";
@@ -767,67 +713,32 @@ function showSectionHome() {
   leaderboardView.hidden = true;
   sectionHome.hidden = false;
   searchInput.value = "";
-
-  if (selectedYear) {
-    showYearSections();
-  } else {
-    showYearSelection();
-  }
 }
 
 
-async function fetchYearCsv(year) {
-  const candidates = year === 2
-    ? ["LiveData.csv"]
-    : [
-        `${"LiveData_Year" + year + ".csv"}`,
-        `${"LiveData_year" + year + ".csv"}`
-      ];
+async function loadData() {
+  const response = await fetch(
+    `LiveData.csv?time=${Date.now()}`,
+    { cache: "no-store" }
+  );
 
-  let lastError = null;
-  for (const url of candidates) {
-    try {
-      const response = await fetch(`${url}?time=${Date.now()}`, { cache: "no-store" });
-      if (!response.ok) {
-        lastError = new Error(`${url} HTTP ${response.status}`);
-        continue;
-      }
-      const rows = parseCSV(await response.text());
-      if (rows.some(row => Object.prototype.hasOwnProperty.call(row, "Year"))) {
-        const filtered = rows.filter(row => {
-          const value = String(row.Year ?? row.year ?? "").trim().toLowerCase();
-          return value === String(year)
-            || value === String(YEAR_LABELS[year]).toLowerCase()
-            || value === `year ${year}`;
-        });
-        if (filtered.length || year === 2) return filtered;
-      } else {
-        return rows;
-      }
-    } catch (error) {
-      lastError = error;
-    }
+  if (!response.ok) {
+    throw new Error(`LiveData.csv HTTP ${response.status}`);
   }
 
-  if (year !== 2) return [];
-  throw lastError || new Error("Unable to load LeetCode data.");
-}
+  allStudents = parseCSV(await response.text());
 
-async function loadData(year = selectedYear || 2) {
-  const rows = await fetchYearCsv(year);
-  yearCache[year] = rows;
+  // Allow History.csv / DailyActivity.csv to refresh after tracker updates.
+  profileDataLoaded = false;
 
-  if (selectedYear === year || year === 2) {
-    allStudents = rows;
-    window.__CODEMETRIX_LC_STUDENTS = allStudents;
-    profileDataLoaded = false;
-    updateLastUpdated();
-    updateSectionCounts();
-    if (selectedSection) applySearch();
+  updateSectionCounts();
+  updateLastUpdated();
+
+  if (selectedSection) {
+    applySearch();
   }
-
-  return rows;
 }
+
 
 async function fetchAdminRole(user) {
   const { data, error } = await supabaseClient
@@ -936,158 +847,42 @@ async function loadRegisteredStudents() {
     throw new Error("Administrator access required.");
   }
 
-  // Ensure dashboard CSV is loaded if empty
-  if ((!allStudents || !allStudents.length) && typeof loadData === "function") {
-    try {
-      await loadData(2);
-    } catch (e) {
-      console.warn("Could not load local LiveData in loadRegisteredStudents:", e);
-    }
-  }
+  const { data, error } = await supabaseClient
+    .from("students")
+    .select(
+      "id,register_number,student_name,leetcode_username,section,created_at"
+    )
+    .order("section", { ascending: true })
+    .order("register_number", { ascending: true });
 
-  let dbStudents = [];
-  try {
-    let { data, error } = await supabaseClient
-      .from("students")
-      .select(
-        "id,register_number,student_name,leetcode_username,github_username,section,created_at,year"
-      )
-      .order("section", { ascending: true })
-      .order("register_number", { ascending: true });
+  if (error) throw error;
 
-    if (error && String(error.message || "").toLowerCase().includes("year")) {
-      const retry = await supabaseClient
-        .from("students")
-        .select(
-          "id,register_number,student_name,leetcode_username,github_username,section,created_at"
-        )
-        .order("section", { ascending: true })
-        .order("register_number", { ascending: true });
-
-      if (!retry.error) {
-        data = retry.data;
-        error = null;
-      }
-    }
-
-    if (!error && Array.isArray(data)) {
-      dbStudents = data;
-    }
-  } catch (err) {
-    console.warn("Notice: Could not query Supabase students table directly, relying on dashboard dataset:", err);
-  }
-
-  const mergedMap = new Map();
-
-  // 1. Populate from DB students
-  dbStudents.forEach((s) => {
-    const reg = String(s.register_number || "").trim().toUpperCase();
-    if (reg) {
-      mergedMap.set(reg, {
-        id: s.id,
-        register_number: String(s.register_number || "").trim(),
-        student_name: String(s.student_name || "").trim(),
-        leetcode_username: String(s.leetcode_username || "").trim(),
-        github_username: String(s.github_username || "").trim(),
-        section: String(s.section || "ECE A").trim(),
-        year: s.year || 2,
-        created_at: s.created_at || ""
-      });
-    }
-  });
-
-  // 2. Gather all dataset sources (allStudents + all yearCache entries)
-  const allSources = [];
-  if (Array.isArray(allStudents) && allStudents.length) {
-    allSources.push(...allStudents);
-  }
-  if (typeof yearCache === "object" && yearCache !== null) {
-    Object.values(yearCache).forEach((list) => {
-      if (Array.isArray(list)) allSources.push(...list);
-    });
-  }
-
-  // 3. Seamlessly merge all sources
-  allSources.forEach((s) => {
-    const reg = String(s["Register Number"] || s.register_number || "").trim().toUpperCase();
-    if (!reg) return;
-
-    const existing = mergedMap.get(reg);
-    const name = String(s["Student Name"] || s.student_name || "").trim();
-    const lcUser = String(s["LeetCode Username"] || s.leetcode_username || "").trim();
-    const ghUser = String(s["GitHub Username"] || s.github_username || "").trim();
-    const sec = String(s.Section || s.section || "ECE A").trim();
-    const yr = s.Year || s.year || 2;
-
-    if (existing) {
-      if (lcUser && !existing.leetcode_username) existing.leetcode_username = lcUser;
-      if (ghUser && !existing.github_username) existing.github_username = ghUser;
-      if (name && !existing.student_name) existing.student_name = name;
-      if (sec && (!existing.section || existing.section === "ECE A")) existing.section = sec;
-      if (yr && !existing.year) existing.year = yr;
-    } else {
-      mergedMap.set(reg, {
-        id: s.id || reg,
-        register_number: String(s["Register Number"] || s.register_number || "").trim(),
-        student_name: name,
-        leetcode_username: lcUser,
-        github_username: ghUser,
-        section: sec,
-        year: yr,
-        created_at: s["Created At"] || s.created_at || ""
-      });
-    }
-  });
-
-  directoryStudents = Array.from(mergedMap.values()).sort((a, b) => {
-    const secComp = String(a.section).localeCompare(String(b.section));
-    if (secComp !== 0) return secComp;
-    return String(a.register_number).localeCompare(String(b.register_number));
-  });
-
+  directoryStudents = data || [];
   return directoryStudents;
 }
 
 
 function getFilteredManagedStudents() {
-  const yearFilter = document.getElementById("manageYearFilter")?.value || "ALL";
-  const section = manageSectionFilter ? manageSectionFilter.value : "ALL";
-  const query = (manageSearch ? manageSearch.value : "").trim().toLowerCase();
+  const section = manageSectionFilter.value;
+  const query = manageSearch.value.trim().toLowerCase();
 
   return directoryStudents.filter((student) => {
-    const studentYear = student.year || student.Year || 2;
-    const yearMatches =
-      yearFilter === "ALL"
-      || String(studentYear) === String(yearFilter)
-      || String(studentYear).toLowerCase() === `year ${yearFilter}`.toLowerCase()
-      || (String(yearFilter) === "2" && (!student.year || String(student.year) === "2"));
-
-    const studentSec = String(student.section || student.Section || "").trim();
-    const cleanSection = String(section || "").trim();
     const sectionMatches =
-      cleanSection === "ALL"
-      || studentSec.toUpperCase() === cleanSection.toUpperCase()
-      || studentSec.replace(/\s+/g, "").toUpperCase() === cleanSection.replace(/\s+/g, "").toUpperCase();
+      section === "ALL" || student.section === section;
 
     const textMatches =
       !query
       || [
         student.register_number,
-        student["Register Number"],
         student.student_name,
-        student["Student Name"],
         student.leetcode_username,
-        student["LeetCode Username"],
-        student.github_username,
-        student["GitHub Username"],
-        studentSec
+        student.section
       ]
-        .filter(Boolean)
         .join(" ")
         .toLowerCase()
         .includes(query);
 
-    return yearMatches && sectionMatches && textMatches;
+    return sectionMatches && textMatches;
   });
 }
 
@@ -1101,7 +896,7 @@ function renderManageStudents() {
   if (!students.length) {
     manageStudentsBody.innerHTML = `
       <tr>
-        <td colspan="6" class="loading-row">No students found.</td>
+        <td colspan="5" class="loading-row">No students found.</td>
       </tr>
     `;
     return;
@@ -1109,8 +904,6 @@ function renderManageStudents() {
 
   manageStudentsBody.innerHTML = students.map((student) => `
     <tr>
-      <td><span class="section-pill">Year ${escapeHTML(student.year || 2)}</span></td>
-
       <td><span class="section-pill">${escapeHTML(student.section)}</span></td>
 
       <td>${escapeHTML(student.register_number)}</td>
@@ -1120,11 +913,11 @@ function renderManageStudents() {
       <td>
         <a
           class="profile-link"
-          href="https://leetcode.com/u/${encodeURIComponent(student.leetcode_username || '')}/"
+          href="https://leetcode.com/u/${encodeURIComponent(student.leetcode_username)}/"
           target="_blank"
           rel="noopener noreferrer"
         >
-          ${escapeHTML(student.leetcode_username || '—')}
+          ${escapeHTML(student.leetcode_username)}
         </a>
       </td>
 
@@ -1132,7 +925,7 @@ function renderManageStudents() {
         <button
           class="row-action edit-action"
           type="button"
-          data-manage-edit="${escapeHTML(student.id || student.register_number)}"
+          data-manage-edit="${escapeHTML(student.id)}"
         >
           Edit
         </button>
@@ -1140,7 +933,7 @@ function renderManageStudents() {
         <button
           class="row-action delete-action"
           type="button"
-          data-manage-delete="${escapeHTML(student.id || student.register_number)}"
+          data-manage-delete="${escapeHTML(student.id)}"
         >
           Delete
         </button>
@@ -1154,29 +947,22 @@ async function openManageStudents() {
   if (!isAdmin()) return;
 
   manageStudentsModal.hidden = false;
-  document.body.classList.add("modal-open");
 
-  if (manageSectionFilter) {
+  await loadRegisteredStudents();
+
+  if (selectedSection && selectedSection !== "OVERALL") {
+    manageSectionFilter.value = selectedSection;
+  } else {
     manageSectionFilter.value = "ALL";
   }
 
-  const yearFilterEl = document.getElementById("manageYearFilter");
-  if (yearFilterEl) {
-    yearFilterEl.value = "ALL";
-  }
-
-  if (manageSearch) {
-    manageSearch.value = "";
-  }
-
-  await loadRegisteredStudents().catch((err) => console.warn(err));
+  manageSearch.value = "";
   renderManageStudents();
 }
 
 
 function closeManageStudentsModal() {
   manageStudentsModal.hidden = true;
-  document.body.classList.remove("modal-open");
 }
 
 
@@ -1184,8 +970,6 @@ function resetProfileForm() {
   profileForm.reset();
   editingStudentId.value = "";
   formMessage.textContent = "";
-  const yearInput = document.getElementById("studentYear");
-  if (yearInput) yearInput.value = selectedYear ? String(selectedYear) : "2";
   generatedLink.textContent = "https://leetcode.com/u/username/";
 }
 
@@ -1210,26 +994,21 @@ function openAddModal() {
 
 function openEditModal(studentId) {
   const student = directoryStudents.find(
-    (item) => String(item.id) === String(studentId) || String(item.register_number) === String(studentId)
+    (item) => String(item.id) === String(studentId)
   );
 
   if (!student) return;
 
   resetProfileForm();
 
-  editingStudentId.value = student.id || student.register_number;
+  editingStudentId.value = student.id;
   registerNumberInput.value = student.register_number;
   studentNameInput.value = student.student_name;
-  usernameInput.value = student.leetcode_username || "";
+  usernameInput.value = student.leetcode_username;
   studentSectionInput.value = student.section;
 
-  const yearInput = document.getElementById("studentYear");
-  if (yearInput) {
-    yearInput.value = String(student.year || 2);
-  }
-
   generatedLink.textContent =
-    `https://leetcode.com/u/${student.leetcode_username || ''}/`;
+    `https://leetcode.com/u/${student.leetcode_username}/`;
 
   document.getElementById("profileModalTitle").textContent =
     "Edit LeetCode Profile";
@@ -1248,23 +1027,6 @@ function closeProfile() {
 }
 
 
-function showToastNotification(text, isError = false) {
-  if (messageElement) {
-    messageElement.textContent = text;
-    messageElement.className = `message ${isError ? "error" : "success"}`;
-  }
-  const homeMsg = document.getElementById("homeActionMessage");
-  if (homeMsg) {
-    homeMsg.textContent = text;
-    homeMsg.className = `home-action-message ${isError ? "error" : ""}`;
-    clearTimeout(showToastNotification._timer);
-    showToastNotification._timer = setTimeout(() => {
-      homeMsg.textContent = "";
-    }, 6000);
-  }
-}
-
-
 async function saveProfile(event) {
   event.preventDefault();
 
@@ -1272,133 +1034,45 @@ async function saveProfile(event) {
 
   const id = editingStudentId.value.trim();
 
-  const regNumber = registerNumberInput.value.trim();
-  const studentName = studentNameInput.value.trim();
-  const leetcodeUser = usernameInput.value.trim().replace(/\s+/g, "");
-  const yearInput = document.getElementById("studentYear");
-  const yearVal = yearInput ? (Number(yearInput.value) || 2) : 2;
-
-  if (!regNumber || !studentName || !leetcodeUser) {
-    formMessage.textContent = "Please fill in all fields (spaces are not allowed in usernames).";
-    formMessage.className = "form-message error";
-    return;
-  }
-
   const payload = {
-    register_number: regNumber,
-    student_name: studentName,
-    leetcode_username: leetcodeUser,
-    section: studentSectionInput.value,
-    year: yearVal
+    register_number: registerNumberInput.value.trim(),
+    student_name: studentNameInput.value.trim(),
+    leetcode_username: usernameInput.value.trim(),
+    section: studentSectionInput.value
   };
 
   saveProfileButton.disabled = true;
-  saveProfileButton.textContent = "Saving...";
 
   try {
     let result;
 
-    let existingId = id;
-    if (!existingId || existingId === regNumber) {
-      const { data: found } = await supabaseClient
-        .from("students")
-        .select("id")
-        .eq("register_number", regNumber)
-        .maybeSingle();
-      if (found?.id) existingId = found.id;
-    }
-
-    if (existingId && existingId !== regNumber) {
+    if (id) {
       result = await supabaseClient
         .from("students")
         .update(payload)
-        .eq("id", existingId)
+        .eq("id", id)
         .select()
         .single();
     } else {
       result = await supabaseClient
         .from("students")
-        .upsert(payload, { onConflict: "register_number" })
+        .insert(payload)
         .select()
         .single();
-    }
-
-    if (result.error && String(result.error.message || "").toLowerCase().includes("year")) {
-      const fallbackPayload = { ...payload };
-      delete fallbackPayload.year;
-      if (existingId && existingId !== regNumber) {
-        result = await supabaseClient
-          .from("students")
-          .update(fallbackPayload)
-          .eq("id", existingId)
-          .select()
-          .single();
-      } else {
-        result = await supabaseClient
-          .from("students")
-          .upsert(fallbackPayload, { onConflict: "register_number" })
-          .select()
-          .single();
-      }
     }
 
     if (result.error) throw result.error;
 
-    // Also update in-memory allStudents immediately
-    const regUpper = regNumber.toUpperCase();
-    const memStudent = allStudents.find((s) => String(s["Register Number"] || s.register_number || "").trim().toUpperCase() === regUpper);
-    if (memStudent) {
-      memStudent["Student Name"] = studentName;
-      memStudent.student_name = studentName;
-      memStudent["LeetCode Username"] = leetcodeUser;
-      memStudent.leetcode_username = leetcodeUser;
-      memStudent.Section = studentSectionInput.value;
-      memStudent.section = studentSectionInput.value;
-      memStudent.Year = yearVal;
-      memStudent.year = yearVal;
-    } else {
-      allStudents.push({
-        id: result.data?.id || regNumber,
-        "Register Number": regNumber,
-        register_number: regNumber,
-        "Student Name": studentName,
-        student_name: studentName,
-        "LeetCode Username": leetcodeUser,
-        leetcode_username: leetcodeUser,
-        Section: studentSectionInput.value,
-        section: studentSectionInput.value,
-        Year: yearVal,
-        year: yearVal
-      });
-    }
-
     formMessage.textContent =
-      id
-        ? "Profile updated successfully."
-        : "Profile added successfully.";
+      id ? "Profile updated successfully." : "Profile added successfully.";
 
     formMessage.className = "form-message success";
 
-    await loadRegisteredStudents().catch(() => {});
-    if (typeof renderManageStudents === "function") {
-      renderManageStudents();
-    }
+    await loadData();
 
-    showToastNotification(
-      id
-        ? `Student ${studentName} updated successfully.`
-        : `Student ${studentName} added successfully. Starting background sync...`,
-      false
-    );
-
-    // Trigger sync non-blockingly in background
-    triggerLeetCodeSync().catch((err) => {
-      console.warn("Background sync dispatch notice:", err);
-    });
-
-    setTimeout(closeProfile, 800);
+    setTimeout(closeProfile, 700);
   } catch (error) {
-    formMessage.textContent = error.message || "Failed to save profile.";
+    formMessage.textContent = error.message;
     formMessage.className = "form-message error";
   } finally {
     saveProfileButton.disabled = false;
@@ -1409,98 +1083,55 @@ async function saveProfile(event) {
 
 function openDeleteModal(studentId) {
   const student = directoryStudents.find(
-    (item) => String(item.id) === String(studentId) || String(item.register_number) === String(studentId)
+    (item) => String(item.id) === String(studentId)
   );
 
   if (!student) return;
 
-  pendingDeleteId = student.id || student.register_number;
+  pendingDeleteId = student.id;
 
   deleteDescription.textContent =
     `Delete ${student.student_name} (${student.section})?`;
 
   deleteModal.hidden = false;
-  document.body.classList.add("modal-open");
 }
 
 
 function closeDelete() {
-  pendingDeleteId = null;
   deleteModal.hidden = true;
-  document.body.classList.remove("modal-open");
+  pendingDeleteId = null;
 }
-const closeDeleteModal = closeDelete;
 
 
 async function confirmDelete() {
-  if (!isAdmin() || !pendingDeleteId) return;
+  if (!isAdmin() || pendingDeleteId === null) return;
 
   confirmDeleteButton.disabled = true;
 
   try {
-    let { error } = await supabaseClient
+    const { error } = await supabaseClient
       .from("students")
       .delete()
       .eq("id", pendingDeleteId);
 
-    if (error) {
-      const fallback = await supabaseClient
-        .from("students")
-        .delete()
-        .eq("register_number", pendingDeleteId);
-      if (fallback.error) throw error;
-    }
+    if (error) throw error;
 
-    // Remove from in-memory allStudents
-    const delTarget = String(pendingDeleteId).toUpperCase();
-    allStudents = allStudents.filter(
-      (s) => String(s.id).toUpperCase() !== delTarget && String(s["Register Number"] || s.register_number || "").trim().toUpperCase() !== delTarget
-    );
+    closeDelete();
 
-    closeDeleteModal();
-    await loadRegisteredStudents().catch(() => {});
+    await loadRegisteredStudents();
     renderManageStudents();
-
-    if (messageElement) {
-      messageElement.textContent = "Profile deleted successfully.";
-    }
-
-    await triggerLeetCodeSync();
+    await loadData();
   } catch (error) {
-    alert(`Delete failed: ${error.message}`);
+    deleteMessage.textContent = error.message;
+    deleteMessage.className = "form-message error";
   } finally {
     confirmDeleteButton.disabled = false;
   }
 }
 
 
-async function extractErrorMessage(error) {
-  if (!error) return "Unknown error";
-  if (error.context && typeof error.context.json === "function") {
-    try {
-      const body = await error.context.json();
-      if (body) {
-        if (body.error && body.details) return `${body.error}: ${body.details}`;
-        if (body.error && body.response) return `${body.error}: ${body.response}`;
-        if (body.error) return body.error;
-        if (body.message) return body.message;
-      }
-    } catch (_) {
-      try {
-        const text = await error.context.text();
-        if (text) return text;
-      } catch (_) {}
-    }
-  }
-  return error.message || String(error);
-}
-
-
 async function triggerLeetCodeSync() {
-  if (!isAdmin()) {
-    showToastNotification("Please sign in as Admin to run Sync Now.", true);
-    return;
-  }
+  if (!isAdmin()) return;
 
   const buttons = [syncNowButton, homeSyncNowButton].filter(Boolean);
 
@@ -1520,15 +1151,17 @@ async function triggerLeetCodeSync() {
 
     if (error) throw error;
 
-    showToastNotification(
-      data?.message || "LeetCode sync started. GitHub Actions is checking all profiles.",
-      false
-    );
+    if (messageElement) {
+      messageElement.textContent =
+        "LeetCode sync started. GitHub Actions is checking all profiles.";
+    }
 
     console.log(data);
   } catch (error) {
-    const msg = await extractErrorMessage(error);
-    showToastNotification(`Unable to start sync: ${msg}`, true);
+    if (messageElement) {
+      messageElement.textContent =
+        `Unable to start sync: ${error.message}`;
+    }
   } finally {
     setTimeout(() => {
       buttons.forEach((button) => {
@@ -1583,493 +1216,6 @@ function downloadCSV() {
 
 function downloadPDF() {
   window.print();
-}
-
-// ============================================================
-// ADMIN DATE-RANGE REPORT
-// ============================================================
-
-function reportLocalISODate() {
-  const now = new Date();
-  const offset = now.getTimezoneOffset();
-  return new Date(now.getTime() - offset * 60000)
-    .toISOString()
-    .slice(0, 10);
-}
-
-function reportDateOffsetISO(days) {
-  const base = new Date(`${reportLocalISODate()}T00:00:00`);
-  base.setDate(base.getDate() + days);
-  return base.toISOString().slice(0, 10);
-}
-
-function reportScopeLabel() {
-  if (selectedSection && selectedSection !== "OVERALL") {
-    return selectedSection;
-  }
-  return "ECE Overall";
-}
-
-function openDateReportModal() {
-  if (!isAdmin()) {
-    return;
-  }
-
-  const today = reportLocalISODate();
-  if (!dateReportFrom.value) {
-    dateReportFrom.value = reportDateOffsetISO(-7);
-  }
-  if (!dateReportTo.value) {
-    dateReportTo.value = today;
-  }
-
-  dateReportFrom.max = today;
-  dateReportTo.max = today;
-  dateReportScope.textContent = reportScopeLabel();
-  dateReportMessage.textContent = "";
-  dateReportMessage.className = "form-message";
-
-  dateReportModal.hidden = false;
-  document.body.classList.add("modal-open");
-}
-
-function closeDateReportModal() {
-  if (!dateReportModal) return;
-  dateReportModal.hidden = true;
-  document.body.classList.remove("modal-open");
-}
-
-function validateDateReportRange() {
-  if (!dateReportFrom.value || !dateReportTo.value) {
-    throw new Error("Please select both From and To dates.");
-  }
-
-  if (dateReportFrom.value > dateReportTo.value) {
-    throw new Error("From date cannot be after To date.");
-  }
-
-  if (dateReportTo.value > reportLocalISODate()) {
-    throw new Error("To date cannot be in the future.");
-  }
-}
-
-async function prepareDateReport() {
-  if (!isAdmin()) {
-    throw new Error("Administrator access required.");
-  }
-
-  validateDateReportRange();
-  await loadProfileData();
-
-  const from = dateReportFrom.value;
-  const to = dateReportTo.value;
-  const scope = reportScopeLabel();
-
-  const sourceStudents = selectedSection && selectedSection !== "OVERALL"
-    ? allStudents.filter((student) => String(student.Section || "").trim() === selectedSection)
-    : allStudents.slice();
-
-  const students = sourceStudents
-    .map((student) => {
-      const register = String(student["Register Number"] || "").trim();
-
-      const activity = dailyActivityRows
-        .filter((row) =>
-          String(row["Register Number"] || "").trim() === register
-          && String(row["Date"] || "").slice(0, 10) >= from
-          && String(row["Date"] || "").slice(0, 10) <= to
-        )
-        .reduce((acc, row) => {
-          const date = String(row["Date"] || "").slice(0, 10);
-          const solved = Math.max(0, profileNumber(row["Solved That Day"]));
-          if (!acc.byDate.has(date)) {
-            acc.byDate.set(date, solved);
-          } else {
-            acc.byDate.set(date, acc.byDate.get(date) + solved);
-          }
-          return acc;
-        }, { byDate: new Map() });
-
-      let periodSolved = [...activity.byDate.values()]
-        .reduce((sum, value) => sum + value, 0);
-
-      const history = historyRows
-        .filter((row) =>
-          String(row["Register Number"] || "").trim() === register
-          && String(row["Date"] || "").slice(0, 10) <= to
-        )
-        .sort((a, b) =>
-          String(a["Date"] || "").localeCompare(String(b["Date"] || ""))
-        );
-
-      const snapshot = history.length
-        ? history[history.length - 1]
-        : student;
-
-      // Fallback: if periodSolved is 0, check if we can compute from History.csv snapshots
-      if (periodSolved === 0 && history.length > 0) {
-        const toSnapshot = history.find(h => String(h["Date"] || "").slice(0, 10) === to) || snapshot;
-        const prevSnapshots = historyRows
-          .filter(h => String(h["Register Number"] || "").trim() === register && String(h["Date"] || "").slice(0, 10) < from)
-          .sort((a, b) => String(a["Date"] || "").localeCompare(String(b["Date"] || "")));
-        const fromPrevSnapshot = prevSnapshots.length ? prevSnapshots[prevSnapshots.length - 1] : null;
-        if (fromPrevSnapshot && toSnapshot) {
-          const diff = profileNumber(toSnapshot["Problems Solved"]) - profileNumber(fromPrevSnapshot["Problems Solved"]);
-          if (diff > 0) {
-            periodSolved = diff;
-          }
-        } else if (from === to && toSnapshot) {
-          periodSolved = profileNumber(toSnapshot["Solved Today"]);
-        }
-      }
-
-      const activeDays = [...activity.byDate.values()]
-        .filter((value) => value > 0).length || (periodSolved > 0 ? 1 : 0);
-
-      return {
-        "Register Number": register,
-        "Student Name": student["Student Name"] || snapshot["Student Name"] || "",
-        "Section": student["Section"] || snapshot["Section"] || "",
-        "LeetCode Username": student["LeetCode Username"] || snapshot["LeetCode Username"] || "",
-        "Problems Solved in Period": periodSolved,
-        "Active Days": activeDays,
-        "Problems Solved (Cumulative)": profileNumber(snapshot["Problems Solved"]),
-        "Medium (Cumulative)": profileNumber(snapshot["Medium"]),
-        "Hard (Cumulative)": profileNumber(snapshot["Hard"]),
-        "Total Submissions (Cumulative)": profileNumber(snapshot["Total Submissions"]),
-        "Solved on Last Snapshot": profileNumber(snapshot["Solved Today"]),
-        "Last Problem": snapshot["Last Problem"] || "",
-        "Last Solved": snapshot["Last Solved"] || "",
-        "Status": snapshot["Status"] || student["Status"] || ""
-      };
-    })
-    .sort((a, b) =>
-      String(a["Section"]).localeCompare(String(b["Section"]))
-      || String(a["Register Number"]).localeCompare(String(b["Register Number"]))
-    );
-
-  const dailyRows = [];
-  students.forEach((student) => {
-    dailyActivityRows
-      .filter((row) =>
-        String(row["Register Number"] || "").trim() === student["Register Number"]
-        && String(row["Date"] || "").slice(0, 10) >= from
-        && String(row["Date"] || "").slice(0, 10) <= to
-      )
-      .forEach((row) => {
-        dailyRows.push({
-          "Date": String(row["Date"] || "").slice(0, 10),
-          "Register Number": student["Register Number"],
-          "Student Name": student["Student Name"],
-          "Section": student["Section"],
-          "Solved That Day": profileNumber(row["Solved That Day"]),
-          "Source": row["Source"] || "DAILY_ACTIVITY"
-        });
-      });
-  });
-
-  return { from, to, scope, students, dailyRows };
-}
-
-function reportDownload(filename, content, type) {
-  const blob = new Blob([content], { type });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-function downloadDateReportCsv() {
-  prepareDateReport()
-    .then((report) => {
-      const columns = [
-        "Register Number",
-        "Student Name",
-        "Section",
-        "LeetCode Username",
-        "Problems Solved in Period",
-        "Active Days",
-        "Problems Solved (Cumulative)",
-        "Medium (Cumulative)",
-        "Hard (Cumulative)",
-        "Total Submissions (Cumulative)",
-        "Solved on Last Snapshot",
-        "Last Problem",
-        "Last Solved",
-        "Status"
-      ];
-
-      const rows = [
-        ["Report Scope", report.scope],
-        ["From", report.from],
-        ["To", report.to],
-        [],
-        columns,
-        ...report.students.map((student) =>
-          columns.map((column) => student[column] ?? "")
-        )
-      ];
-
-      const csv = "\uFEFF" + rows
-        .map((row) => row.map(csvEscape).join(","))
-        .join("\r\n");
-
-      reportDownload(
-        `ECE_LeetCode_Report_${report.from}_to_${report.to}.csv`,
-        csv,
-        "text/csv;charset=utf-8"
-      );
-
-      closeDateReportModal();
-    })
-    .catch((error) => {
-      dateReportMessage.textContent = error.message || "Unable to generate report.";
-      dateReportMessage.className = "form-message error";
-    });
-}
-
-function downloadDateReportExcel() {
-  prepareDateReport()
-    .then(async (report) => {
-      if (!window.XLSX) {
-        throw new Error("Excel export library is unavailable. Please refresh the page.");
-      }
-
-      // Fetch integrity audit telemetry for this period
-      let periodSubmissions = [];
-      try {
-        const client = getSupabaseClient();
-        if (client) {
-          let q = client.from('student_leetcode_submissions')
-            .select('register_number, student_name, section, problem_title, plagiarism_verdict, is_pasted, keystrokes_count, paste_count, submitted_at');
-          if (report.from) q = q.gte('submitted_at', `${report.from}T00:00:00.000Z`);
-          if (report.to) q = q.lte('submitted_at', `${report.to}T23:59:59.999Z`);
-          if (report.section && report.section !== 'OVERALL' && report.section !== 'ALL') q = q.eq('section', report.section);
-          const { data } = await q;
-          if (data) periodSubmissions = data;
-        }
-      } catch {}
-
-      const subMap = new Map();
-      periodSubmissions.forEach(sub => {
-        const reg = String(sub.register_number || '').trim().replace(/\.0$/, '');
-        if (!reg) return;
-        const st = subMap.get(reg) || { clean: 0, flagged: 0, total: 0 };
-        st.total++;
-        if (sub.plagiarism_verdict === 'FLAGGED' || sub.plagiarism_verdict === 'SUSPICIOUS' || sub.is_pasted) {
-          st.flagged++;
-        } else {
-          st.clean++;
-        }
-        subMap.set(reg, st);
-      });
-
-      const auditRows = report.students.map(student => {
-        const reg = String(student["Register Number"] || '').trim().replace(/\.0$/, '');
-        const subInfo = subMap.get(reg) || { clean: 0, flagged: 0, total: 0 };
-        const solvedInPeriod = student["Problems Solved in Period"] || subInfo.total;
-        const cleanCount = subInfo.clean;
-        const flaggedCount = subInfo.flagged;
-        const pasteRatio = (cleanCount + flaggedCount) > 0 ? Math.round((flaggedCount / (cleanCount + flaggedCount)) * 100) : (flaggedCount > 0 ? 100 : 0);
-
-        let actionStatus = '⚪ No Synced Activity';
-        if (solvedInPeriod > 0 || subInfo.total > 0) {
-          if (flaggedCount > 0 && flaggedCount >= (cleanCount + flaggedCount)) {
-            actionStatus = '🚨 [TAKE ACTION - 100% COPY-PASTED]';
-          } else if (flaggedCount > 0) {
-            actionStatus = '⚠️ [SUSPICIOUS - High Plagiarism]';
-          } else {
-            actionStatus = '🟢 [CLEAN - Verified Code]';
-          }
-        }
-
-        return [
-          reg,
-          student["Student Name"],
-          student["Section"],
-          student["LeetCode Username"],
-          solvedInPeriod,
-          cleanCount,
-          flaggedCount,
-          `${pasteRatio}%`,
-          actionStatus
-        ];
-      }).sort((a, b) => (b[6] - a[6]) || (b[4] - a[4]));
-
-      const workbook = XLSX.utils.book_new();
-
-      const summary = [
-        ["ECE LeetCode Date Report"],
-        ["Report Scope", report.scope],
-        ["From", report.from],
-        ["To", report.to],
-        [],
-        [
-          "Register Number",
-          "Student Name",
-          "Section",
-          "LeetCode Username",
-          "Problems Solved in Period",
-          "Active Days",
-          "Problems Solved (Cumulative)",
-          "Medium (Cumulative)",
-          "Hard (Cumulative)",
-          "Total Submissions (Cumulative)",
-          "Solved on Last Snapshot",
-          "Last Problem",
-          "Last Solved",
-          "Status"
-        ],
-        ...report.students.map((student) => [
-          student["Register Number"],
-          student["Student Name"],
-          student["Section"],
-          student["LeetCode Username"],
-          student["Problems Solved in Period"],
-          student["Active Days"],
-          student["Problems Solved (Cumulative)"],
-          student["Medium (Cumulative)"],
-          student["Hard (Cumulative)"],
-          student["Total Submissions (Cumulative)"],
-          student["Solved on Last Snapshot"],
-          student["Last Problem"],
-          student["Last Solved"],
-          student["Status"]
-        ])
-      ];
-
-      const audit = [
-        ["ECE LeetCode Copy-Paste & Integrity Audit"],
-        ["Report Scope", report.scope],
-        ["From", report.from],
-        ["To", report.to],
-        [],
-        [
-          "Register Number",
-          "Student Name",
-          "Section",
-          "LeetCode Username",
-          "Problems Solved in Period",
-          "Clean Solves (🟢)",
-          "Flagged Solves (🔴)",
-          "Copy-Paste %",
-          "Action Required"
-        ],
-        ...auditRows
-      ];
-
-      const daily = [
-        ["Date", "Register Number", "Student Name", "Section", "Solved That Day", "Source"],
-        ...report.dailyRows.map((row) => [
-          row["Date"],
-          row["Register Number"],
-          row["Student Name"],
-          row["Section"],
-          row["Solved That Day"],
-          row["Source"]
-        ])
-      ];
-
-      const summarySheet = XLSX.utils.aoa_to_sheet(summary);
-      const auditSheet = XLSX.utils.aoa_to_sheet(audit);
-      const dailySheet = XLSX.utils.aoa_to_sheet(daily);
-
-      summarySheet["!cols"] = [
-        { wch: 18 }, { wch: 28 }, { wch: 12 }, { wch: 22 },
-        { wch: 24 }, { wch: 12 }, { wch: 25 }, { wch: 20 },
-        { wch: 18 }, { wch: 28 }, { wch: 22 }, { wch: 45 },
-        { wch: 24 }, { wch: 14 }
-      ];
-      auditSheet["!cols"] = [
-        { wch: 18 }, { wch: 28 }, { wch: 12 }, { wch: 22 },
-        { wch: 24 }, { wch: 18 }, { wch: 18 }, { wch: 15 },
-        { wch: 36 }
-      ];
-      dailySheet["!cols"] = [
-        { wch: 14 }, { wch: 18 }, { wch: 28 }, { wch: 12 },
-        { wch: 18 }, { wch: 18 }
-      ];
-
-      XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
-      XLSX.utils.book_append_sheet(workbook, auditSheet, "Copy-Paste & Integrity Audit");
-      XLSX.utils.book_append_sheet(workbook, dailySheet, "Daily Activity");
-
-      XLSX.writeFile(
-        workbook,
-        `ECE_LeetCode_Report_${report.from}_to_${report.to}.xlsx`
-      );
-
-      closeDateReportModal();
-    })
-    .catch((error) => {
-      dateReportMessage.textContent = error.message || "Unable to generate Excel report.";
-      dateReportMessage.className = "form-message error";
-    });
-}
-
-function renderDateReportForPrint(report) {
-  if (!dateReportPrintContent) return;
-
-  const rows = report.students.map((student) => `
-    <tr>
-      <td>${escapeHTML(student["Register Number"])}</td>
-      <td>${escapeHTML(student["Student Name"])}</td>
-      <td>${escapeHTML(student["Section"])}</td>
-      <td>${student["Problems Solved in Period"]}</td>
-      <td>${student["Active Days"]}</td>
-      <td>${student["Medium (Cumulative)"]}</td>
-      <td>${student["Hard (Cumulative)"]}</td>
-      <td>${escapeHTML(student["Status"])}</td>
-    </tr>
-  `).join("");
-
-  dateReportPrintContent.innerHTML = `
-    <div class="date-report-print-heading">
-      <div class="eyebrow">ECE CODEMETRIX</div>
-      <h2>LeetCode Date Report</h2>
-      <p><strong>${escapeHTML(report.scope)}</strong> · ${escapeHTML(report.from)} to ${escapeHTML(report.to)}</p>
-    </div>
-    <div class="date-report-print-summary">
-      <div><span>Students</span><strong>${report.students.length}</strong></div>
-      <div><span>Problems Solved</span><strong>${report.students.reduce((sum, s) => sum + s["Problems Solved in Period"], 0)}</strong></div>
-      <div><span>Active Student-Days</span><strong>${report.students.reduce((sum, s) => sum + s["Active Days"], 0)}</strong></div>
-    </div>
-    <div class="date-report-print-table-wrap">
-      <table class="date-report-print-table">
-        <thead>
-          <tr>
-            <th>Register</th><th>Student</th><th>Section</th>
-            <th>Period Solved</th><th>Active Days</th>
-            <th>Medium</th><th>Hard</th><th>Status</th>
-          </tr>
-        </thead>
-        <tbody>${rows || '<tr><td colspan="8">No students found.</td></tr>'}</tbody>
-      </table>
-    </div>
-  `;
-
-  dateReportPrintContent.hidden = false;
-  document.body.classList.add("printing-date-report");
-  window.print();
-
-  setTimeout(() => {
-    document.body.classList.remove("printing-date-report");
-    dateReportPrintContent.hidden = true;
-    dateReportPrintContent.innerHTML = "";
-  }, 500);
-}
-
-function downloadDateReportPdf() {
-  prepareDateReport()
-    .then(renderDateReportForPrint)
-    .catch((error) => {
-      dateReportMessage.textContent = error.message || "Unable to generate PDF report.";
-      dateReportMessage.className = "form-message error";
-    });
 }
 
 
@@ -4057,10 +3203,6 @@ async function openStudentProfile(registerNumber) {
     rollingDisplay(student, "Last 14 Days", "14D Source");
   document.getElementById("profile7Days").textContent =
     rollingDisplay(student, "Last 7 Days", "7D Source");
-  const el7DSub = document.getElementById("profile7DaySubmissions");
-  if (el7DSub) {
-    el7DSub.textContent = toNumber(student["Last 7 Days Submissions"] ?? student["Commits 7 Days"]);
-  }
   document.getElementById("profileToday").textContent =
     student["Solved Today"] || "0";
 
@@ -4128,28 +3270,6 @@ async function openStudentProfile(registerNumber) {
     student["LeetCode Link"]
     || `https://leetcode.com/u/${encodeURIComponent(student["LeetCode Username"] || "")}/`;
 
-  const viewProblemsBtn = document.getElementById("profileViewProblemsButton");
-  if (viewProblemsBtn) {
-    viewProblemsBtn.onclick = () => {
-      openStudentSolvedProblems(
-        student["Register Number"],
-        student["Student Name"] || "Student",
-        student.Section || "ECE",
-        student["LeetCode Username"] || ""
-      );
-    };
-  }
-
-  const integrityBadge = document.getElementById("profileIntegrityBadge");
-  if (integrityBadge) {
-    integrityBadge.className = "integrity-badge unverified";
-    integrityBadge.textContent = "Checking...";
-    checkStudentIntegrity(student["Register Number"]).then(status => {
-      integrityBadge.className = `integrity-badge ${status.cls}`;
-      integrityBadge.innerHTML = status.html;
-    }).catch(() => {});
-  }
-
   renderDifficultyChart(student);
 
   document.getElementById("profileProgressChart").innerHTML =
@@ -4173,1107 +3293,6 @@ async function openStudentProfile(registerNumber) {
   }
 }
 
-let currentScriptSolvedSubmissions = [];
-
-function getSupabaseClient() {
-  if (supabaseClient) return supabaseClient;
-  if (window.supabase && typeof window.supabase.createClient === "function" && cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY) {
-    supabaseClient = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
-    return supabaseClient;
-  }
-  return null;
-}
-
-function getEffectiveVerdict(sub) {
-  if (!sub) return 'CLEAN';
-
-  const keys = Number(sub.keystrokes_count || 0);
-  const pastes = Number(sub.paste_count || 0);
-  const ratio = Number(sub.keystroke_ratio || 0);
-  const isPasted = Boolean(sub.is_pasted);
-  const riskScore = Number(sub.plagiarism_risk_score || 0);
-  const hasAi = Boolean(sub.has_prompt_comments || (sub.ai_comment_flags && sub.ai_comment_flags.length > 0));
-  const codeLen = (sub.source_code || '').trim().length;
-
-  // AI prompt comments/header injection is always flagged
-  if (hasAi) return 'FLAGGED';
-
-  // ZERO-PASTE EXEMPTION FOR SHORT & ONE-LINE SOLUTIONS:
-  // If student typed directly with 0 pastes and no AI comments, it is completely authentic
-  if (!isPasted && pastes === 0) {
-    if (codeLen <= 220 && keys >= 8) return 'CLEAN';
-    if (keys >= 30) return 'CLEAN';
-  }
-
-  // Direct paste or high plagiarism risk flags
-  if (isPasted && keys < 40) return 'FLAGGED';
-  if (pastes > 0 && (keys < 30 || ratio <= 0.20)) return 'FLAGGED';
-  if (pastes > 0 && ratio <= 0.35) return 'SUSPICIOUS';
-  if (riskScore >= 70) return 'FLAGGED';
-  if (riskScore >= 45) return 'SUSPICIOUS';
-
-  return sub.plagiarism_verdict || 'CLEAN';
-}
-
-async function checkStudentIntegrity(reg) {
-  try {
-    const client = getSupabaseClient();
-    if (!client) return { cls: 'unverified', html: '⚪ Not Synced' };
-    const { data } = await client.from('student_leetcode_submissions').select('*').eq('register_number', reg);
-    if (!data || !data.length) {
-      return { cls: 'unverified', html: '⚪ No Synced Code' };
-    }
-    const hasFlagged = data.some(d => {
-      const v = getEffectiveVerdict(d);
-      return v === 'FLAGGED' || v === 'SUSPICIOUS';
-    });
-    if (hasFlagged) {
-      return { cls: 'flagged', html: '🔴 Flagged' };
-    }
-    return { cls: 'clean', html: `🟢 Clean (${data.length} verified)` };
-  } catch {
-    return { cls: 'unverified', html: '⚪ Not Synced' };
-  }
-}
-
-async function openStudentSolvedProblems(reg, name, section, lcUser) {
-  if (!reg) return;
-  currentScriptSolvedStudent = { reg, name, section, lcUser };
-  const modal = document.getElementById("solvedProblemsModal");
-  const title = document.getElementById("solvedProblemsTitle");
-  const subtitle = document.getElementById("solvedProblemsSubtitle");
-  const summaryTotal = document.getElementById("summaryTotalSynced");
-  const summaryClean = document.getElementById("summaryCleanCount");
-  const summaryFlagged = document.getElementById("summaryFlaggedCount");
-  const summaryExt = document.getElementById("summaryExtStatus");
-  const tbody = document.getElementById("solvedProblemsTableBody");
-
-  if (title) title.textContent = `${name} · Solved Problems`;
-  if (subtitle) subtitle.textContent = `Register: ${reg} · ${section} · @${lcUser || 'leetcode'}`;
-  if (summaryTotal) summaryTotal.textContent = '...';
-  if (summaryClean) summaryClean.textContent = '...';
-  if (summaryFlagged) summaryFlagged.textContent = '...';
-  if (summaryExt) summaryExt.innerHTML = '<span style="color:var(--muted)">Checking...</span>';
-  if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted);">Loading synced submissions from Supabase...</td></tr>`;
-
-  if (modal) {
-    modal.hidden = false;
-    document.body.classList.add("modal-open");
-  }
-
-  try {
-    const client = getSupabaseClient();
-    if (!client) throw new Error("Supabase is not configured.");
-    const [subRes, extRes] = await Promise.all([
-      client.from('student_leetcode_submissions').select('*').eq('register_number', reg).order('submitted_at', { ascending: false }),
-      client.from('extension_installed_students').select('*').eq('register_number', reg).maybeSingle()
-    ]);
-
-    const rawSubs = subRes.data || [];
-    const seenSlugs = new Set();
-    const subs = [];
-    for (const s of rawSubs) {
-      const key = (s.problem_slug || s.problem_title || '').trim().toLowerCase();
-      if (key && !seenSlugs.has(key)) {
-        seenSlugs.add(key);
-        subs.push(s);
-      } else if (!key) {
-        subs.push(s);
-      }
-    }
-    currentScriptSolvedSubmissions = subs;
-
-    if (extRes.data) {
-      const ext = extRes.data;
-      if (ext.auto_sync_enabled === false) {
-        if (summaryExt) summaryExt.innerHTML = `<span style="color:#f87171;font-weight:600;">🔴 Extension Turned Off (Disabled in Popup)</span>`;
-      } else {
-        if (summaryExt) summaryExt.innerHTML = `<span style="color:#34d399">🟢 Extension Active & Verified</span>`;
-      }
-    } else {
-      if (summaryExt) summaryExt.innerHTML = `<span style="color:#94a3b8">⚪ Not Installed</span>`;
-    }
-
-    const cleanCount = subs.filter(s => {
-      const v = getEffectiveVerdict(s);
-      return v === 'CLEAN' || v === 'LOW_RISK';
-    }).length;
-    const flaggedCount = subs.filter(s => {
-      const v = getEffectiveVerdict(s);
-      return v === 'FLAGGED' || v === 'SUSPICIOUS';
-    }).length;
-
-    if (summaryTotal) summaryTotal.textContent = String(subs.length);
-    if (summaryClean) summaryClean.textContent = String(cleanCount);
-    if (summaryFlagged) summaryFlagged.textContent = String(flaggedCount);
-
-    // 50-Problem Milestone Archive Banner Logic
-    const archiveBanner = document.getElementById("solvedArchiveBanner");
-    const milestoneTitle = document.getElementById("milestoneArchiveTitle");
-    const milestoneDesc = document.getElementById("milestoneArchiveDesc");
-    const milestoneBadge = document.getElementById("milestoneBadge");
-
-    if (archiveBanner) {
-      if (subs.length >= 45) {
-        archiveBanner.hidden = false;
-        if (subs.length >= 50) {
-          if (milestoneTitle) milestoneTitle.textContent = `🚨 50 Problems Capacity Reached (${subs.length}/50)`;
-          if (milestoneBadge) {
-            milestoneBadge.textContent = '50 Reached (Full)';
-            milestoneBadge.className = 'diff-badge Hard';
-          }
-          if (milestoneDesc) milestoneDesc.textContent = 'You have reached the 50-problem storage limit. Download your complete 50-solution archive package and reset database storage for the next 50 problems.';
-        } else {
-          if (milestoneTitle) milestoneTitle.textContent = `📦 Approaching 50 Problems Limit (${subs.length}/50 Solved)`;
-          if (milestoneBadge) {
-            milestoneBadge.textContent = `${subs.length}/50 Solved`;
-            milestoneBadge.className = 'diff-badge Medium';
-          }
-          if (milestoneDesc) milestoneDesc.textContent = 'You can archive and download all solutions anytime or clear database space for new problem solutions.';
-        }
-      } else {
-        archiveBanner.hidden = true;
-      }
-    }
-
-    if (!subs.length) {
-      if (tbody) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="8" style="text-align:center;padding:36px;color:var(--muted);">
-              <div style="font-size:1.1rem;margin-bottom:6px;color:var(--text);">No synced solutions yet</div>
-              <div>Make sure the student has installed the <strong>CodeMetrix Chrome Extension</strong> and solved problems on LeetCode.</div>
-            </td>
-          </tr>`;
-      }
-      return;
-    }
-
-    if (tbody) {
-      tbody.innerHTML = subs.map((sub, idx) => {
-        const timeSec = Number(sub.time_spent_seconds || 0);
-        const mins = Math.floor(timeSec / 60);
-        const secs = timeSec % 60;
-        const timeStr = timeSec > 0 ? `${mins}m ${secs}s` : (sub.is_pasted ? '⚡ 0s (Paste)' : '—');
-        const keys = Number(sub.keystrokes_count || 0);
-        const pastes = Number(sub.paste_count || 0);
-        const ratio = Math.round(Number(sub.keystroke_ratio || 0) * 100);
-        const typingStr = `⌨️ ${keys} · 📋 ${pastes} (${ratio}% typed)`;
-        const dateStr = sub.submitted_at ? new Date(sub.submitted_at).toLocaleString() : '—';
-        const verdict = getEffectiveVerdict(sub);
-        const verdictClass = verdict === 'FLAGGED' ? 'flagged' : (verdict === 'SUSPICIOUS' ? 'suspicious' : 'clean');
-        const verdictLabel = verdict === 'FLAGGED' ? '🔴 Flagged' : (verdict === 'SUSPICIOUS' ? '⚠️ Suspicious' : '🟢 Clean');
-
-        return `
-          <tr>
-            <td><strong>#${idx + 1}</strong></td>
-            <td>
-              <button type="button" class="problem-link-btn" data-script-sub-index="${idx}">
-                ⚡ ${escapeHTML(sub.problem_title)} ↗
-              </button>
-            </td>
-            <td><span class="diff-badge ${escapeHTML(sub.problem_difficulty || 'Medium')}">${escapeHTML(sub.problem_difficulty || 'Medium')}</span></td>
-            <td><span style="font-weight:600;font-size:0.8rem;text-transform:uppercase;color:#93c5fd;">${escapeHTML(sub.language)}</span></td>
-            <td><small style="color:var(--muted);">${escapeHTML(dateStr)}</small></td>
-            <td><strong>${escapeHTML(timeStr)}</strong></td>
-            <td><small>${escapeHTML(typingStr)}</small></td>
-            <td><span class="integrity-badge ${verdictClass}">${escapeHTML(verdictLabel)}</span></td>
-          </tr>
-        `;
-      }).join('');
-
-      tbody.querySelectorAll('[data-script-sub-index]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const sub = currentScriptSolvedSubmissions[Number(btn.dataset.scriptSubIndex)];
-          if (sub) openSolutionCodeViewer(sub, name, reg);
-        });
-      });
-    }
-  } catch (err) {
-    if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:#fca5a5;">Failed to load solutions: ${escapeHTML(err.message)}</td></tr>`;
-    }
-  }
-}
-
-function closeSolvedProblemsModal() {
-  const modal = document.getElementById("solvedProblemsModal");
-  if (modal) modal.hidden = true;
-  const solModal = document.getElementById("solutionCodeModal");
-  if (!solModal || solModal.hidden) {
-    const studentProfile = document.getElementById("studentProfileModal");
-    if (!studentProfile || studentProfile.hidden) {
-      document.body.classList.remove("modal-open");
-    }
-  }
-}
-
-let currentScriptActiveSolution = null;
-
-function getScriptLanguageExtension(lang) {
-  const l = (lang || '').toLowerCase().trim();
-  if (l.includes('python') || l === 'py') return 'py';
-  if (l.includes('c++') || l.includes('cpp')) return 'cpp';
-  if (l === 'c') return 'c';
-  if (l.includes('java') && !l.includes('script')) return 'java';
-  if (l.includes('javascript') || l === 'js') return 'js';
-  if (l.includes('typescript') || l === 'ts') return 'ts';
-  if (l.includes('c#') || l.includes('csharp') || l === 'cs') return 'cs';
-  if (l.includes('golang') || l === 'go') return 'go';
-  if (l.includes('rust') || l === 'rs') return 'rs';
-  if (l.includes('kotlin') || l === 'kt') return 'kt';
-  if (l.includes('swift')) return 'swift';
-  if (l.includes('ruby') || l === 'rb') return 'rb';
-  if (l.includes('php')) return 'php';
-  if (l.includes('sql')) return 'sql';
-  if (l.includes('scala')) return 'scala';
-  return 'txt';
-}
-
-function openSolutionCodeViewer(submission, studentName, reg) {
-  if (!submission) return;
-  currentScriptActiveSolution = { submission, studentName, reg };
-  const modal = document.getElementById("solutionCodeModal");
-  const title = document.getElementById("solutionProblemName");
-  const diffBadge = document.getElementById("solutionDifficultyBadge");
-  const meta = document.getElementById("solutionMetadata");
-  const actTime = document.getElementById("telemetryActiveTime");
-  const keysEl = document.getElementById("telemetryKeystrokes");
-  const pasteEl = document.getElementById("telemetryPastes");
-  const tabEl = document.getElementById("telemetryTabSwitches");
-  const riskEl = document.getElementById("telemetryRiskScore");
-  const verdEl = document.getElementById("telemetryVerdict");
-  const alertBanner = document.getElementById("solutionAlertBanner");
-  const alertText = document.getElementById("solutionAlertText");
-  const langTag = document.getElementById("solutionCodeLang");
-  const codeContent = document.getElementById("solutionCodeContent");
-
-  if (title) title.textContent = submission.problem_title || 'Solution';
-  if (diffBadge) {
-    const diff = submission.problem_difficulty || 'Medium';
-    diffBadge.textContent = diff;
-    diffBadge.className = `diff-badge ${diff}`;
-  }
-  if (meta) {
-    const dStr = submission.submitted_at ? new Date(submission.submitted_at).toLocaleString() : '—';
-    meta.textContent = `${studentName} (${reg}) · Solved on ${dStr} · Runtime: ${submission.runtime_ms || 0}ms`;
-  }
-
-  const timeSec = Number(submission.time_spent_seconds || 0);
-  const mins = Math.floor(timeSec / 60);
-  const secs = timeSec % 60;
-  if (actTime) actTime.textContent = timeSec > 0 ? `${mins}m ${secs}s` : '0s (Instant Paste)';
-  if (keysEl) keysEl.textContent = `${submission.keystrokes_count || 0} keys`;
-  const ratio = Math.round(Number(submission.keystroke_ratio || 0) * 100);
-  if (pasteEl) pasteEl.textContent = `${submission.paste_count || 0} (Typed: ${ratio}%)`;
-  if (tabEl) tabEl.textContent = `${submission.tab_switch_count || 0}`;
-  if (riskEl) riskEl.textContent = `${submission.plagiarism_risk_score || 0} / 100`;
-
-  const verdict = getEffectiveVerdict(submission);
-  if (verdEl) {
-    const verdictClass = verdict === 'FLAGGED' ? 'flagged' : (verdict === 'SUSPICIOUS' ? 'suspicious' : 'clean');
-    const verdictLabel = verdict === 'FLAGGED' ? '🔴 Flagged' : (verdict === 'SUSPICIOUS' ? '⚠️ Suspicious' : '🟢 Clean');
-    verdEl.innerHTML = `<span class="integrity-badge ${verdictClass}">${verdictLabel}</span>`;
-  }
-
-  if (submission.has_prompt_comments || (submission.ai_comment_flags && submission.ai_comment_flags.length > 0) || verdict === 'FLAGGED') {
-    if (alertBanner) {
-      alertBanner.hidden = false;
-      const alerts = [];
-      if (submission.has_prompt_comments || submission.ai_comment_flags?.length) {
-        alerts.push(`AI Comment Patterns: ${(submission.ai_comment_flags || []).join(', ')}`);
-      }
-      if (submission.is_pasted) alerts.push('Full code paste detected with minimal keystrokes');
-      if (alertText) alertText.textContent = alerts.join(' | ') || 'Flagged for plagiarism inspection.';
-    }
-  } else {
-    if (alertBanner) alertBanner.hidden = true;
-  }
-
-  if (langTag) langTag.textContent = (submission.language || 'CODE').toUpperCase();
-  if (codeContent) codeContent.textContent = submission.source_code || '// No source code recorded';
-
-  if (modal) {
-    modal.hidden = false;
-    document.body.classList.add("modal-open");
-  }
-}
-
-function closeSolutionCodeModal() {
-  const modal = document.getElementById("solutionCodeModal");
-  if (modal) modal.hidden = true;
-}
-
-function downloadScriptSingleSolutionCode() {
-  if (!currentScriptActiveSolution || !currentScriptActiveSolution.submission) {
-    alert("No active solution code selected to download.");
-    return;
-  }
-  const sub = currentScriptActiveSolution.submission;
-  const reg = currentScriptActiveSolution.reg || 'student';
-  const name = currentScriptActiveSolution.studentName || '';
-  const ext = getScriptLanguageExtension(sub.language);
-  const safeTitle = (sub.problem_title || 'solution').replace(/[^a-zA-Z0-9_-]/g, '_');
-  const filename = `${reg}_${safeTitle}.${ext}`;
-  const commentPrefix = (ext === 'py' || ext === 'rb') ? '#' : '//';
-  const header = `${commentPrefix} ========================================================\n` +
-    `${commentPrefix} Problem: ${sub.problem_title || 'Solution'} [${sub.problem_difficulty || 'Medium'}]\n` +
-    `${commentPrefix} Student: ${name} (${reg})\n` +
-    `${commentPrefix} Language: ${(sub.language || 'code').toUpperCase()}\n` +
-    `${commentPrefix} Solved At: ${sub.submitted_at ? new Date(sub.submitted_at).toLocaleString() : '—'}\n` +
-    `${commentPrefix} Integrity Verdict: ${sub.plagiarism_verdict || 'CLEAN'}\n` +
-    `${commentPrefix} ========================================================\n\n`;
-
-  const blob = new Blob([header + (sub.source_code || '// No source code recorded')], { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-// Attach Solved Problems & Solution Code listeners
-document.getElementById("closeSolvedProblems")?.addEventListener("click", closeSolvedProblemsModal);
-document.getElementById("solvedProblemsModal")?.addEventListener("click", (e) => {
-  if (e.target.matches("[data-close-solved-problems]")) closeSolvedProblemsModal();
-});
-document.getElementById("closeSolutionCode")?.addEventListener("click", closeSolutionCodeModal);
-document.getElementById("solutionCodeModal")?.addEventListener("click", (e) => {
-  if (e.target.matches("[data-close-solution-code]")) closeSolutionCodeModal();
-});
-
-document.getElementById("downloadSingleSolutionCodeBtn")?.addEventListener("click", downloadScriptSingleSolutionCode);
-
-document.getElementById("copySolutionCodeBtn")?.addEventListener("click", async () => {
-  const btn = document.getElementById("copySolutionCodeBtn");
-  const code = document.getElementById("solutionCodeContent")?.textContent || "";
-  if (!code) return;
-  try {
-    await navigator.clipboard.writeText(code);
-    const orig = btn.textContent;
-    btn.textContent = "✅ Copied!";
-    setTimeout(() => { if (btn) btn.textContent = orig; }, 2000);
-  } catch (e) {
-    console.error("Failed to copy code", e);
-  }
-});
-
-let currentScriptSolvedStudent = null;
-
-function downloadScriptSolvedHistoryExcel() {
-  if (!currentScriptSolvedStudent || !currentScriptSolvedSubmissions.length) {
-    alert("No synced submissions found to download.");
-    return;
-  }
-  if (!window.XLSX) {
-    alert("Excel library is unavailable. Please refresh the page.");
-    return;
-  }
-  const rows = currentScriptSolvedSubmissions.map((s, idx) => {
-    const timeSec = Number(s.time_spent_seconds || 0);
-    const mins = Math.floor(timeSec / 60);
-    const secs = timeSec % 60;
-    const ratio = Math.round(Number(s.keystroke_ratio || 0) * 100);
-    return {
-      "#": idx + 1,
-      "Problem Title": s.problem_title || "Untitled",
-      "Difficulty": s.problem_difficulty || "Medium",
-      "Language": (s.language || "code").toUpperCase(),
-      "Solved At": s.submitted_at ? new Date(s.submitted_at).toLocaleString() : "—",
-      "Active Time": timeSec > 0 ? `${mins}m ${secs}s` : (s.is_pasted ? "⚡ 0s (Paste)" : "—"),
-      "Keystrokes": Number(s.keystrokes_count || 0),
-      "Pastes": Number(s.paste_count || 0),
-      "Typing Ratio": `${ratio}% typed`,
-      "Integrity Verdict": s.plagiarism_verdict || "CLEAN",
-      "Risk Score (/100)": Number(s.plagiarism_risk_score || 0),
-      "AI / Paste Notes": (s.ai_comment_flags || []).join("; ") || (s.is_pasted ? "Full code paste" : "Clean verified"),
-      "Submitted Source Code": s.source_code || "// No source code recorded"
-    };
-  });
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [
-    { wch: 6 },
-    { wch: 32 },
-    { wch: 12 },
-    { wch: 12 },
-    { wch: 22 },
-    { wch: 15 },
-    { wch: 12 },
-    { wch: 10 },
-    { wch: 15 },
-    { wch: 18 },
-    { wch: 18 },
-    { wch: 25 },
-    { wch: 80 }
-  ];
-  XLSX.utils.book_append_sheet(wb, ws, "Solved Problems & Code");
-  XLSX.writeFile(wb, `${currentScriptSolvedStudent.reg}_LeetCode_Solutions_and_Code_${new Date().toISOString().slice(0, 10)}.xlsx`);
-}
-
-function downloadScriptSolvedHistoryPdf() {
-  if (!currentScriptSolvedStudent || !currentScriptSolvedSubmissions.length) {
-    alert("No synced submissions found to download.");
-    return;
-  }
-  const w = window.open("", "_blank");
-  if (!w) {
-    alert("Please allow pop-ups to generate the PDF portfolio.");
-    return;
-  }
-  const rows = currentScriptSolvedSubmissions.map((s, idx) => {
-    const timeSec = Number(s.time_spent_seconds || 0);
-    const mins = Math.floor(timeSec / 60);
-    const secs = timeSec % 60;
-    const timeStr = timeSec > 0 ? `${mins}m ${secs}s` : (s.is_pasted ? "⚡ 0s (Paste)" : "—");
-    const ratio = Math.round(Number(s.keystroke_ratio || 0) * 100);
-    const verdict = s.plagiarism_verdict || "CLEAN";
-    const color = verdict === "FLAGGED" ? "#dc2626" : (verdict === "SUSPICIOUS" ? "#d97706" : "#16a34a");
-    return `<tr>
-      <td>${idx + 1}</td>
-      <td><strong>${escapeHTML(s.problem_title)}</strong></td>
-      <td>${escapeHTML(s.problem_difficulty || 'Medium')}</td>
-      <td>${escapeHTML((s.language || 'code').toUpperCase())}</td>
-      <td>${escapeHTML(s.submitted_at ? new Date(s.submitted_at).toLocaleDateString() : '—')}</td>
-      <td>${escapeHTML(timeStr)}</td>
-      <td>${s.keystrokes_count || 0} keys / ${s.paste_count || 0} pastes (${ratio}%)</td>
-      <td style="color:${color};font-weight:bold;">${escapeHTML(verdict)}</td>
-    </tr>`;
-  }).join("");
-
-  const codeSections = currentScriptSolvedSubmissions.map((s, idx) => {
-    const verdict = s.plagiarism_verdict || 'CLEAN';
-    const color = verdict === 'FLAGGED' ? '#dc2626' : (verdict === 'SUSPICIOUS' ? '#d97706' : '#16a34a');
-    const timeSec = Number(s.time_spent_seconds || 0);
-    const mins = Math.floor(timeSec / 60);
-    const secs = timeSec % 60;
-    const timeStr = timeSec > 0 ? `${mins}m ${secs}s` : (s.is_pasted ? '⚡ 0s (Paste)' : '—');
-    return `
-      <div class="code-card">
-        <div class="code-card-header">
-          <div>
-            <strong style="font-size:14px;color:#0f172a;">#${idx + 1}. ${escapeHTML(s.problem_title)}</strong>
-            <span class="diff-tag ${escapeHTML(s.problem_difficulty || 'Medium')}">${escapeHTML(s.problem_difficulty || 'Medium')}</span>
-          </div>
-          <div style="font-size:11px;color:#475569;">
-            <span>Language: <strong>${escapeHTML((s.language || 'code').toUpperCase())}</strong></span> ·
-            <span>Solved: <strong>${escapeHTML(s.submitted_at ? new Date(s.submitted_at).toLocaleString() : '—')}</strong></span> ·
-            <span>Time: <strong>${escapeHTML(timeStr)}</strong></span> ·
-            <span>Integrity: <strong style="color:${color}">${escapeHTML(verdict)}</strong></span>
-          </div>
-        </div>
-        <pre class="code-body"><code>${escapeHTML(s.source_code || '// No source code recorded')}</code></pre>
-      </div>
-    `;
-  }).join('');
-
-  w.document.write(`<!doctype html><html><head><title>${escapeHTML(currentScriptSolvedStudent.name)} - LeetCode Solutions & Code</title>
-  <style>
-    body{font-family:Arial,sans-serif;padding:32px;color:#111;line-height:1.4}
-    .header{border-bottom:2px solid #3b82f6;padding-bottom:16px;margin-bottom:20px}
-    h1{margin:0 0 6px 0;font-size:22px;color:#1e3a8a}
-    h2{margin:32px 0 12px 0;font-size:16px;color:#1e293b;border-bottom:1px solid #cbd5e1;padding-bottom:6px}
-    p{margin:0;color:#555;font-size:13px}
-    table{width:100%;border-collapse:collapse;margin-top:16px;font-size:11px}
-    th,td{border:1px solid #ccc;padding:8px;text-align:left}
-    th{background:#f1f5f9}
-    .code-card{margin-top:16px;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;page-break-inside:avoid}
-    .code-card-header{background:#f8fafc;padding:10px 14px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-    .code-body{background:#0f172a;color:#f8fafc;padding:14px;margin:0;font-family:Consolas, 'Courier New', monospace;font-size:11px;line-height:1.45;white-space:pre-wrap;word-break:break-word;overflow-x:auto}
-    .diff-tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold;margin-left:6px}
-    .diff-tag.Easy{background:#dcfce7;color:#15803d}
-    .diff-tag.Medium{background:#fef3c7;color:#b45309}
-    .diff-tag.Hard{background:#fee2e2;color:#b91c1c}
-    @media print{button{display:none}}
-  </style></head>
-  <body>
-    <div class="header">
-      <h1>ECE CodeMetrix · Student Problem Portfolio &amp; Source Code</h1>
-      <p><strong>${escapeHTML(currentScriptSolvedStudent.name)}</strong> (${escapeHTML(currentScriptSolvedStudent.reg)}) · Section: <strong>${escapeHTML(currentScriptSolvedStudent.section)}</strong> · @${escapeHTML(currentScriptSolvedStudent.lcUser || 'leetcode')}</p>
-      <p>Total Synced Verified Solutions: <strong>${currentScriptSolvedSubmissions.length}</strong> | Generated: <strong>${new Date().toLocaleString()}</strong></p>
-    </div>
-    <h2>Overview Summary</h2>
-    <table>
-      <thead>
-        <tr><th>#</th><th>Problem Title</th><th>Difficulty</th><th>Language</th><th>Date</th><th>Active Time</th><th>Keystroke Ratio</th><th>Integrity</th></tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <h2>Submitted Solution Codes</h2>
-    <div>${codeSections}</div>
-    <div style="margin-top:24px;">
-      <button onclick="window.print()" style="padding:10px 20px;font-weight:bold;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;">🖨️ Print / Save as PDF</button>
-    </div>
-  </body></html>`);
-  w.document.close();
-}
-
-async function downloadScriptSolvedHistoryZip() {
-  if (!currentScriptSolvedStudent || !currentScriptSolvedSubmissions.length) {
-    alert("No synced submissions found to download.");
-    return;
-  }
-  const reg = currentScriptSolvedStudent.reg;
-  const name = currentScriptSolvedStudent.name;
-
-  if (typeof JSZip !== 'undefined') {
-    const zip = new JSZip();
-    const folder = zip.folder(`${reg}_LeetCode_Solutions`);
-    
-    currentScriptSolvedSubmissions.forEach((s, idx) => {
-      const ext = getScriptLanguageExtension(s.language);
-      const safeTitle = (s.problem_title || `problem_${idx + 1}`).replace(/[^a-zA-Z0-9_-]/g, '_');
-      const filename = `${String(idx + 1).padStart(2, '0')}_${safeTitle}.${ext}`;
-      
-      const commentPrefix = (ext === 'py' || ext === 'rb') ? '#' : '//';
-      const fileHeader = `${commentPrefix} ========================================================\n` +
-        `${commentPrefix} Student: ${name} (${reg})\n` +
-        `${commentPrefix} Problem: ${s.problem_title || 'Untitled'} [${s.problem_difficulty || 'Medium'}]\n` +
-        `${commentPrefix} Language: ${(s.language || 'code').toUpperCase()}\n` +
-        `${commentPrefix} Solved At: ${s.submitted_at ? new Date(s.submitted_at).toLocaleString() : '—'}\n` +
-        `${commentPrefix} Keystrokes: ${s.keystrokes_count || 0} | Pastes: ${s.paste_count || 0} (${Math.round((s.keystroke_ratio || 0) * 100)}% typed)\n` +
-        `${commentPrefix} Integrity Verdict: ${s.plagiarism_verdict || 'CLEAN'}\n` +
-        `${commentPrefix} ========================================================\n\n`;
-
-      folder.file(filename, fileHeader + (s.source_code || '// No source code recorded'));
-    });
-
-    const content = await zip.generateAsync({ type: 'blob' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(content);
-    a.download = `${reg}_All_LeetCode_Solutions_${new Date().toISOString().slice(0, 10)}.zip`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  } else {
-    let bundle = `========================================================\n` +
-      `ECE CodeMetrix · LeetCode Solutions Archive\n` +
-      `Student: ${name} (${reg})\n` +
-      `Total Solutions: ${currentScriptSolvedSubmissions.length}\n` +
-      `Generated: ${new Date().toLocaleString()}\n` +
-      `========================================================\n\n`;
-
-    currentScriptSolvedSubmissions.forEach((s, idx) => {
-      bundle += `\n/* -----------------------------------------------------\n` +
-        ` * #${idx + 1}. ${s.problem_title || 'Untitled'} [${s.problem_difficulty || 'Medium'}]\n` +
-        ` * Language: ${(s.language || 'code').toUpperCase()}\n` +
-        ` * Solved At: ${s.submitted_at ? new Date(s.submitted_at).toLocaleString() : '—'}\n` +
-        ` * Integrity: ${s.plagiarism_verdict || 'CLEAN'}\n` +
-        ` * ----------------------------------------------------- */\n\n` +
-        `${s.source_code || '// No source code recorded'}\n\n`;
-    });
-
-    const blob = new Blob([bundle], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${reg}_All_LeetCode_Solutions_${new Date().toISOString().slice(0, 10)}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-}
-
-async function archiveAndPurgeScriptStudentSolved() {
-  if (!currentScriptSolvedStudent || !currentScriptSolvedSubmissions.length) {
-    alert("No synced submissions found to archive.");
-    return;
-  }
-  const reg = currentScriptSolvedStudent.reg;
-  const name = currentScriptSolvedStudent.name;
-  const total = currentScriptSolvedSubmissions.length;
-
-  // 1. Download full zip & excel
-  await downloadScriptSolvedHistoryZip();
-  setTimeout(() => {
-    try { downloadScriptSolvedHistoryExcel(); } catch(e) {}
-  }, 1000);
-
-  const proceed = confirm(`📥 Download initiated for all ${total} solutions!\n\nDo you want to clear these ${total} submissions from the database now to reset storage to 0 for the next batch?`);
-  if (!proceed) return;
-
-  try {
-    const client = getSupabaseClient();
-    if (!client) throw new Error("Supabase is not configured.");
-    const { error } = await client.from('student_leetcode_submissions').delete().eq('register_number', reg);
-    if (error) throw error;
-
-    currentScriptSolvedSubmissions = [];
-    const summaryTotal = document.getElementById("summaryTotalSynced");
-    const summaryClean = document.getElementById("summaryCleanCount");
-    const summaryFlagged = document.getElementById("summaryFlaggedCount");
-    const archiveBanner = document.getElementById("solvedArchiveBanner");
-    const tbody = document.getElementById("solvedProblemsTableBody");
-
-    if (summaryTotal) summaryTotal.textContent = '0';
-    if (summaryClean) summaryClean.textContent = '0';
-    if (summaryFlagged) summaryFlagged.textContent = '0';
-    if (archiveBanner) archiveBanner.hidden = true;
-
-    if (tbody) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="8" style="text-align:center;padding:36px;color:#34d399;">
-            <div style="font-size:1.15rem;font-weight:bold;margin-bottom:6px;">✅ Batch Archive Completed!</div>
-            <div style="color:var(--muted);">All ${total} solutions have been downloaded to your computer. Database storage is now reset to 0 for your next 50 problems.</div>
-          </td>
-        </tr>`;
-    }
-    alert(`✅ Successfully archived and cleared ${total} submissions for ${name} (${reg}).`);
-  } catch (err) {
-    alert(`Failed to reset database: ${err.message}`);
-  }
-}
-
-async function purgeScriptStudentSolvedOnly() {
-  if (!currentScriptSolvedStudent || !currentScriptSolvedSubmissions.length) {
-    alert("No synced submissions found to clear.");
-    return;
-  }
-  const reg = currentScriptSolvedStudent.reg;
-  const total = currentScriptSolvedSubmissions.length;
-
-  const proceed = confirm(`⚠️ Are you sure you want to permanently delete all ${total} stored submissions for ${currentScriptSolvedStudent.name} (${reg}) from the database?\n\n(Make sure you have downloaded the solutions if you need them for records).`);
-  if (!proceed) return;
-
-  try {
-    const client = getSupabaseClient();
-    if (!client) throw new Error("Supabase is not configured.");
-    const { error } = await client.from('student_leetcode_submissions').delete().eq('register_number', reg);
-    if (error) throw error;
-
-    currentScriptSolvedSubmissions = [];
-    const summaryTotal = document.getElementById("summaryTotalSynced");
-    const summaryClean = document.getElementById("summaryCleanCount");
-    const summaryFlagged = document.getElementById("summaryFlaggedCount");
-    const archiveBanner = document.getElementById("solvedArchiveBanner");
-    const tbody = document.getElementById("solvedProblemsTableBody");
-
-    if (summaryTotal) summaryTotal.textContent = '0';
-    if (summaryClean) summaryClean.textContent = '0';
-    if (summaryFlagged) summaryFlagged.textContent = '0';
-    if (archiveBanner) archiveBanner.hidden = true;
-
-    if (tbody) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="8" style="text-align:center;padding:36px;color:var(--muted);">
-            <div style="font-size:1.1rem;margin-bottom:6px;color:var(--text);">Database Reset Complete (0 Submissions)</div>
-            <div>Fresh space ready for new LeetCode submissions.</div>
-          </td>
-        </tr>`;
-    }
-    alert(`Cleared submissions for ${currentScriptSolvedStudent.name}.`);
-  } catch (err) {
-    alert(`Failed to clear database: ${err.message}`);
-  }
-}
-
-// ============================================================
-// SECTION ADVISOR REPORT DISPATCH SYSTEM (SCRIPT.JS)
-// ============================================================
-const SCRIPT_DEFAULT_SECTION_ADVISORS = {
-  "ECE A": { email: "advisor.ecea@bitsathy.ac.in", name: "Dr. Advisor ECE A" },
-  "ECE B": { email: "advisor.eceb@bitsathy.ac.in", name: "Dr. Advisor ECE B" },
-  "ECE C": { email: "advisor.ecec@bitsathy.ac.in", name: "Dr. Advisor ECE C" },
-  "ECE D": { email: "advisor.eced@bitsathy.ac.in", name: "Dr. Advisor ECE D" },
-  "ECE E": { email: "advisor.ecee@bitsathy.ac.in", name: "Dr. Advisor ECE E" },
-  "ECE F": { email: "advisor.ecef@bitsathy.ac.in", name: "Dr. Advisor ECE F" },
-  "ALL": { email: "hod.ece@bitsathy.ac.in", name: "ECE Department Head" }
-};
-
-async function getScriptSectionAdvisor(sec) {
-  try {
-    const client = getSupabaseClient();
-    if (client) {
-      const { data } = await client.from('section_advisors').select('*').eq('section', sec).maybeSingle();
-      if (data && data.advisor_email) {
-        return { email: data.advisor_email, name: data.advisor_name || `Advisor ${sec}` };
-      }
-    }
-  } catch {}
-  return SCRIPT_DEFAULT_SECTION_ADVISORS[sec] || { email: "advisor@bitsathy.ac.in", name: "Class Advisor" };
-}
-
-let currentScriptAdvisorData = null;
-
-async function openScriptAdvisorDispatch() {
-  const modal = document.getElementById("advisorDispatchModal");
-  if (!modal) return;
-  const fromEl = document.getElementById("advisorReportFrom");
-  const toEl = document.getElementById("advisorReportTo");
-  const today = new Date().toISOString().slice(0, 10);
-  const d7 = new Date(); d7.setDate(d7.getDate() - 7);
-  const from7 = d7.toISOString().slice(0, 10);
-
-  if (fromEl && !fromEl.value) fromEl.value = from7;
-  if (toEl && !toEl.value) toEl.value = today;
-  if (fromEl) fromEl.max = today;
-  if (toEl) toEl.max = today;
-
-  modal.hidden = false;
-  document.body.classList.add("modal-open");
-  await onScriptAdvisorSectionOrDateChange();
-}
-
-function closeScriptAdvisorDispatch() {
-  const modal = document.getElementById("advisorDispatchModal");
-  if (modal) modal.hidden = true;
-  const profileModal = document.getElementById("studentProfileModal");
-  if (!profileModal || profileModal.hidden) {
-    document.body.classList.remove("modal-open");
-  }
-}
-
-async function onScriptAdvisorSectionOrDateChange() {
-  const secEl = document.getElementById("advisorSectionSelect");
-  const emailEl = document.getElementById("advisorEmailInput");
-  const nameEl = document.getElementById("advisorNameInput");
-  const sec = secEl?.value || "ECE A";
-  const advisor = await getScriptSectionAdvisor(sec);
-  if (emailEl) emailEl.value = advisor.email;
-  if (nameEl) nameEl.value = advisor.name;
-  await updateScriptAdvisorPreview();
-}
-
-async function compileScriptAdvisorReport(sec, from, to) {
-  const matches = r => sec === 'ALL' || String(r.Section || '').trim().toUpperCase() === sec.toUpperCase();
-  const students = (allStudents || []).filter(matches);
-  const regSet = new Set(students.map(s => String(s["Register Number"] || '').trim().replace(/\.0$/, '')).filter(Boolean));
-
-  let dailyRows = [];
-  const dailyMap = new Map();
-  try {
-    const dailyRes = await fetch(`DailyActivity.csv?t=${Date.now()}`);
-    if (dailyRes.ok) {
-      const dailyText = await dailyRes.text();
-      const allDaily = parseCSV(dailyText);
-      allDaily.filter(r => r.Date >= from && r.Date <= to).forEach(r => {
-        const reg = String(r["Register Number"] || '').trim().replace(/\.0$/, '');
-        if (!reg || !regSet.has(reg)) return;
-        const x = dailyMap.get(reg) || { solved: 0, days: new Set() };
-        const solved = Number(r["Solved That Day"] || 0);
-        x.solved += solved;
-        if (solved > 0) x.days.add(r.Date);
-        dailyMap.set(reg, x);
-        dailyRows.push({
-          "Date": r.Date,
-          "Register Number": reg,
-          "Student Name": r["Student Name"] || "",
-          "Section": r.Section || "",
-          "Solved That Day": solved
-        });
-      });
-    }
-  } catch {}
-
-  let periodSubmissions = [];
-  try {
-    const client = getSupabaseClient();
-    if (client) {
-      let q = client.from('student_leetcode_submissions')
-        .select('register_number, student_name, section, problem_title, plagiarism_verdict, is_pasted, keystrokes_count, paste_count, submitted_at');
-      if (from) q = q.gte('submitted_at', `${from}T00:00:00.000Z`);
-      if (to) q = q.lte('submitted_at', `${to}T23:59:59.999Z`);
-      if (sec !== 'ALL') q = q.eq('section', sec);
-      const { data } = await q;
-      if (data) periodSubmissions = data;
-    }
-  } catch {}
-
-  const subMap = new Map();
-  periodSubmissions.forEach(sub => {
-    const reg = String(sub.register_number || '').trim().replace(/\.0$/, '');
-    if (!reg) return;
-    const st = subMap.get(reg) || { clean: 0, flagged: 0, total: 0, list: [] };
-    st.total++;
-    st.list.push(sub);
-    if (sub.plagiarism_verdict === 'FLAGGED' || sub.plagiarism_verdict === 'SUSPICIOUS' || sub.is_pasted) {
-      st.flagged++;
-    } else {
-      st.clean++;
-    }
-    subMap.set(reg, st);
-  });
-
-  const summaryRows = [];
-  const auditRows = [];
-  const actionRequiredStudents = [];
-  const cleanTopCoders = [];
-
-  students.forEach(s => {
-    const reg = String(s["Register Number"] || '').trim().replace(/\.0$/, '');
-    const name = s["Student Name"] || "";
-    const section = s.Section || sec;
-    const lcUser = s["LeetCode Username"] || "";
-    const d = dailyMap.get(reg) || { solved: 0, days: new Set() };
-    const subInfo = subMap.get(reg) || { clean: 0, flagged: 0, total: 0, list: [] };
-    const solvedInPeriod = d.solved > 0 ? d.solved : subInfo.total;
-
-    const cleanCount = subInfo.clean;
-    const flaggedCount = subInfo.flagged;
-    const pasteRatio = (cleanCount + flaggedCount) > 0 ? Math.round((flaggedCount / (cleanCount + flaggedCount)) * 100) : (flaggedCount > 0 ? 100 : 0);
-
-    let actionStatus = '⚪ No Synced Activity';
-    if (solvedInPeriod > 0 || subInfo.total > 0) {
-      if (flaggedCount > 0 && flaggedCount >= (cleanCount + flaggedCount)) {
-        actionStatus = '🚨 [TAKE ACTION - 100% COPY-PASTED]';
-        actionRequiredStudents.push({
-          reg, name, section, lcUser, solved: solvedInPeriod || subInfo.total, flagged: flaggedCount, clean: cleanCount, pasteRatio
-        });
-      } else if (flaggedCount > 0) {
-        actionStatus = '⚠️ [SUSPICIOUS - High Plagiarism]';
-        actionRequiredStudents.push({
-          reg, name, section, lcUser, solved: solvedInPeriod || subInfo.total, flagged: flaggedCount, clean: cleanCount, pasteRatio
-        });
-      } else {
-        actionStatus = '🟢 [CLEAN - Verified Code]';
-        if (solvedInPeriod > 0) {
-          cleanTopCoders.push({ reg, name, section, lcUser, solved: solvedInPeriod });
-        }
-      }
-    }
-
-    summaryRows.push({
-      'Register Number': reg,
-      'Student Name': name,
-      'Section': section,
-      'LeetCode Username': lcUser,
-      'Problems Solved in Period': solvedInPeriod,
-      'Active Days': d.days.size || (solvedInPeriod > 0 ? 1 : 0),
-      'Problems Solved (Total)': Number(s['Problems Solved'] || 0),
-      'Easy / Medium / Hard': `${Number(s.Easy || 0)} / ${Number(s.Medium || 0)} / ${Number(s.Hard || 0)}`,
-      'Total Submissions': Number(s['Total Submissions'] || 0),
-      'Status': s.Status || 'Active'
-    });
-
-    auditRows.push({
-      'Register Number': reg,
-      'Student Name': name,
-      'Section': section,
-      'LeetCode Username': lcUser,
-      'Problems Solved in Period': solvedInPeriod,
-      'Clean Solves (🟢)': cleanCount,
-      'Flagged Solves (🔴)': flaggedCount,
-      'Copy-Paste %': `${pasteRatio}%`,
-      'Action Required': actionStatus
-    });
-  });
-
-  summaryRows.sort((a, b) => b['Problems Solved in Period'] - a['Problems Solved in Period'] || a['Register Number'].localeCompare(b['Register Number'], undefined, { numeric: true }));
-  auditRows.sort((a, b) => (b['Flagged Solves (🔴)'] - a['Flagged Solves (🔴)']) || (b['Problems Solved in Period'] - a['Problems Solved in Period']));
-  cleanTopCoders.sort((a, b) => b.solved - a.solved);
-
-  return {
-    section: sec,
-    from,
-    to,
-    students,
-    summaryRows,
-    auditRows,
-    dailyRows,
-    actionRequiredStudents,
-    cleanTopCoders
-  };
-}
-
-async function updateScriptAdvisorPreview() {
-  const secEl = document.getElementById("advisorSectionSelect");
-  const emailEl = document.getElementById("advisorEmailInput");
-  const nameEl = document.getElementById("advisorNameInput");
-  const fromEl = document.getElementById("advisorReportFrom");
-  const toEl = document.getElementById("advisorReportTo");
-  const previewEl = document.getElementById("advisorReportPreview");
-  const badgeEl = document.getElementById("advisorIntegritySummaryBadge");
-
-  const sec = secEl?.value || "ECE A";
-  const advisorEmail = emailEl?.value || SCRIPT_DEFAULT_SECTION_ADVISORS[sec]?.email;
-  const advisorName = nameEl?.value || SCRIPT_DEFAULT_SECTION_ADVISORS[sec]?.name;
-  const from = fromEl?.value || new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
-  const to = toEl?.value || new Date().toISOString().slice(0, 10);
-
-  if (previewEl) previewEl.value = "Compiling section analytics & anti-cheat audit...";
-
-  try {
-    const data = await compileScriptAdvisorReport(sec, from, to);
-    currentScriptAdvisorData = { ...data, advisorEmail, advisorName };
-
-    const totalStudents = data.students.length;
-    const activeStudents = data.summaryRows.filter(r => r['Problems Solved in Period'] > 0).length;
-    const totalSolved = data.summaryRows.reduce((acc, r) => acc + r['Problems Solved in Period'], 0);
-    const totalClean = data.auditRows.reduce((acc, r) => acc + r['Clean Solves (🟢)'], 0);
-    const totalFlagged = data.auditRows.reduce((acc, r) => acc + r['Flagged Solves (🔴)'], 0);
-
-    let actionListText = '';
-    if (data.actionRequiredStudents.length > 0) {
-      actionListText = data.actionRequiredStudents.map((st, idx) => {
-        const pasteNote = st.pasteRatio >= 100 ? '100% Pasted' : `${st.pasteRatio}% Pasted`;
-        return `${idx + 1}. ${st.reg} - ${st.name} (${st.section}): ${st.solved} Solved | ${st.flagged} FLAGGED (${pasteNote}) -> [TAKE ACTION]`;
-      }).join('\n');
-    } else {
-      actionListText = '✅ None! All active student submissions passed the anti-cheat telemetry checks cleanly.';
-    }
-
-    let topCleanText = '';
-    if (data.cleanTopCoders.length > 0) {
-      topCleanText = data.cleanTopCoders.slice(0, 5).map((st, idx) => {
-        return `${idx + 1}. ${st.reg} - ${st.name} (${st.section}): ${st.solved} Solved (🟢 Verified Clean)`;
-      }).join('\n');
-    } else {
-      topCleanText = '—';
-    }
-
-    const emailSubject = `[ECE CodeMetrix] LeetCode Weekly Progress & Integrity Audit - Section ${sec} (${from} to ${to})`;
-    const emailBody = `Dear ${advisorName},
-
-Here is the official LeetCode coding progress and anti-plagiarism integrity audit for Section ${sec} (${from} to ${to}):
-
-📊 SECTION OVERVIEW:
-- Total Students: ${totalStudents}
-- Active Students in Period: ${activeStudents}
-- Total Solved Problems: ${totalSolved}
-- 🟢 Clean Verified Solutions: ${totalClean}
-- 🔴 Flagged / Suspected Plagiarism: ${totalFlagged}
-
-🚨 ACTION REQUIRED / HIGH PLAGIARISM FLAGGED STUDENTS:
-${actionListText}
-
-🏆 TOP VERIFIED CLEAN CODERS:
-${topCleanText}
-
-📎 ATTACHED / EXPORTED AUDIT SHEET:
-A detailed multi-tab Excel workbook containing:
-1. Summary (Individual student counts & ranks)
-2. Copy-Paste & Integrity Audit (Per-student clean vs flagged counts, typing ratios, and action flags)
-3. Daily Activity log
-has been generated. Please review flagged candidates and take necessary counselling or disciplinary action.
-
-Best regards,
-ECE CodeMetrix Automated Department Tracker
-Bannari Amman Institute of Technology`;
-
-    currentScriptAdvisorData.emailSubject = emailSubject;
-    currentScriptAdvisorData.emailBody = emailBody;
-
-    if (previewEl) previewEl.value = emailBody;
-
-    if (badgeEl) {
-      if (data.actionRequiredStudents.length > 0) {
-        badgeEl.className = 'integrity-badge flagged';
-        badgeEl.textContent = `🔴 ${data.actionRequiredStudents.length} Students Flagged [TAKE ACTION]`;
-      } else {
-        badgeEl.className = 'integrity-badge clean';
-        badgeEl.textContent = `🟢 All Clean (${activeStudents} Active)`;
-      }
-    }
-  } catch (err) {
-    if (previewEl) previewEl.value = `Failed to generate report preview: ${err.message}`;
-  }
-}
-
-function sendScriptAdvisorMailClient() {
-  const msgEl = document.getElementById("advisorDispatchMessage");
-  if (!currentScriptAdvisorData) {
-    if (msgEl) {
-      msgEl.textContent = "Please wait for report data to compile.";
-      msgEl.className = "form-message error";
-    }
-    return;
-  }
-  const emailEl = document.getElementById("advisorEmailInput");
-  const toEmail = emailEl?.value || currentScriptAdvisorData.advisorEmail || "";
-  const subject = encodeURIComponent(currentScriptAdvisorData.emailSubject);
-  const body = encodeURIComponent(currentScriptAdvisorData.emailBody);
-  const mailtoUrl = `mailto:${toEmail}?subject=${subject}&body=${body}`;
-  window.location.href = mailtoUrl;
-
-  if (msgEl) {
-    msgEl.textContent = `Default email client launched for ${toEmail}. Don't forget to attach the downloaded Excel audit report!`;
-    msgEl.className = "form-message success";
-  }
-}
-
-function downloadScriptAdvisorExcel() {
-  const msgEl = document.getElementById("advisorDispatchMessage");
-  if (!currentScriptAdvisorData) {
-    alert("Report data is still compiling.");
-    return;
-  }
-  if (!window.XLSX) {
-    alert("Excel library is unavailable. Please reload the page.");
-    return;
-  }
-
-  const wb = XLSX.utils.book_new();
-  const wsSummary = XLSX.utils.json_to_sheet(currentScriptAdvisorData.summaryRows);
-  const wsAudit = XLSX.utils.json_to_sheet(currentScriptAdvisorData.auditRows);
-  const wsDaily = XLSX.utils.json_to_sheet(currentScriptAdvisorData.dailyRows || []);
-
-  XLSX.utils.book_append_sheet(wb, wsSummary, "Section Summary");
-  XLSX.utils.book_append_sheet(wb, wsAudit, "Copy-Paste & Integrity Audit");
-  XLSX.utils.book_append_sheet(wb, wsDaily, "Daily Activity");
-
-  const safeSec = currentScriptAdvisorData.section.replace(/\s+/g, "_");
-  XLSX.writeFile(wb, `ECE_Advisor_Report_${safeSec}_${currentScriptAdvisorData.from}_to_${currentScriptAdvisorData.to}.xlsx`);
-
-  if (msgEl) {
-    msgEl.textContent = `Excel audit report downloaded successfully with 'Copy-Paste & Integrity Audit' sheet.`;
-    msgEl.className = "form-message success";
-  }
-}
-
-async function copyScriptAdvisorText() {
-  const previewEl = document.getElementById("advisorReportPreview");
-  const btn = document.getElementById("copyAdvisorTextBtn");
-  const msgEl = document.getElementById("advisorDispatchMessage");
-  const text = previewEl?.value || currentScriptAdvisorData?.emailBody || "";
-  if (!text) return;
-  try {
-    await navigator.clipboard.writeText(text);
-    if (btn) {
-      const orig = btn.textContent;
-      btn.textContent = "✅ Copied!";
-      setTimeout(() => { if (btn) btn.textContent = orig; }, 2000);
-    }
-    if (msgEl) {
-      msgEl.textContent = "Report text copied to clipboard.";
-      msgEl.className = "form-message success";
-    }
-  } catch {
-    if (msgEl) {
-      msgEl.textContent = "Failed to copy text to clipboard.";
-      msgEl.className = "form-message error";
-    }
-  }
-}
-
-// Attach Solved History & Advisor Dispatch listeners
-document.getElementById("downloadSolvedHistoryExcelBtn")?.addEventListener("click", downloadScriptSolvedHistoryExcel);
-document.getElementById("downloadSolvedHistoryPdfBtn")?.addEventListener("click", downloadScriptSolvedHistoryPdf);
-document.getElementById("downloadSolvedHistoryZipBtn")?.addEventListener("click", downloadScriptSolvedHistoryZip);
-
-document.getElementById("archiveAndPurgeSolvedBtn")?.addEventListener("click", archiveAndPurgeScriptStudentSolved);
-document.getElementById("purgeOnlySolvedBtn")?.addEventListener("click", purgeScriptStudentSolvedOnly);
-
-document.getElementById("advisorDispatchButton")?.addEventListener("click", openScriptAdvisorDispatch);
-document.getElementById("homeAdvisorDispatchButton")?.addEventListener("click", openScriptAdvisorDispatch);
-document.getElementById("closeAdvisorDispatch")?.addEventListener("click", closeScriptAdvisorDispatch);
-document.getElementById("cancelAdvisorDispatchBtn")?.addEventListener("click", closeScriptAdvisorDispatch);
-document.getElementById("advisorDispatchModal")?.addEventListener("click", (e) => {
-  if (e.target.matches("[data-close-advisor-dispatch]")) closeScriptAdvisorDispatch();
-});
-document.getElementById("advisorSectionSelect")?.addEventListener("change", onScriptAdvisorSectionOrDateChange);
-document.getElementById("advisorReportFrom")?.addEventListener("change", updateScriptAdvisorPreview);
-document.getElementById("advisorReportTo")?.addEventListener("change", updateScriptAdvisorPreview);
-document.getElementById("sendAdvisorMailClientBtn")?.addEventListener("click", sendScriptAdvisorMailClient);
-document.getElementById("downloadAdvisorExcelBtn")?.addEventListener("click", downloadScriptAdvisorExcel);
-document.getElementById("copyAdvisorTextBtn")?.addEventListener("click", copyScriptAdvisorText);
-
 function closeStudentProfile() {
   studentProfileModal.hidden = true;
 
@@ -5282,10 +3301,7 @@ function closeStudentProfile() {
     adminLoginModal,
     profileModal,
     manageStudentsModal,
-    deleteModal,
-    document.getElementById("solvedProblemsModal"),
-    document.getElementById("solutionCodeModal"),
-    document.getElementById("advisorDispatchModal")
+    deleteModal
   ].some((modal) => modal && !modal.hidden);
 
   if (!anotherModalOpen) {
@@ -5295,6 +3311,7 @@ function closeStudentProfile() {
 
 tableBody.addEventListener("click", (event) => {
   const profileButton = event.target.closest("[data-profile-register]");
+
   if (!profileButton) return;
 
   openStudentProfile(profileButton.dataset.profileRegister);
@@ -6139,129 +4156,22 @@ async function askAiPerformanceAnalyst(message) {
   }
 }
 
-function currentYearRows() {
-  return yearCache[selectedYear] || [];
-}
-
-function yearSectionMetric(section) {
-  const rows = currentYearRows().filter(
-    student => normalizeSection(student.Section) === normalizeSection(section)
-  );
-  const students = rows.length;
-  const today = rows.filter(student => Number(student["Solved Today"] ?? student["Contributions Today"] ?? 0) > 0).length;
-  const streak = rows.filter(student => Number(student["Current Streak"] ?? 0) > 0).length;
-  return { students, today, streak };
-}
-
-function renderYearSections() {
-  if (!yearSectionGrid || !selectedYear) return;
-  const sections = YEAR_SECTIONS[selectedYear] || ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"];
-  const allRows = currentYearRows();
-
-  yearSectionGrid.innerHTML = sections.map(section => {
-    if (section === "OVERALL") {
-      const totalCount = allRows.length;
-      const todayCount = allRows.filter(s => Number(s["Solved Today"] ?? 0) > 0).length;
-      const streakCount = allRows.filter(s => Number(s["Current Streak"] ?? 0) > 0).length;
-      return `
-        <button class="section-card year-section-card overall-card" data-year-section="OVERALL" type="button">
-          <span class="section-card-title">OVERALL</span>
-          <strong id="countOverall">${totalCount}</strong>
-          <span>Department Total</span>
-          <div class="section-challenge-mini">
-            <span>🎯 Today <strong>${todayCount}/${totalCount}</strong></span>
-            <span>🔥 On Streak <strong>${streakCount}</strong></span>
-          </div>
-        </button>
-      `;
-    }
-
-    const stats = yearSectionMetric(section);
-    return `
-      <button class="section-card year-section-card" data-year-section="${escapeHTML(section)}" type="button">
-        <span class="section-card-title">${escapeHTML(section)}</span>
-        <strong>${stats.students}</strong>
-        <span>${stats.students === 1 ? "Student" : "Students"}</span>
-        <div class="section-challenge-mini">
-          <span>🎯 Today <strong>${stats.today}/${stats.students || 0}</strong></span>
-          <span>🔥 On Streak <strong>${stats.streak}</strong></span>
-        </div>
-      </button>
-    `;
-  }).join("");
-
-  document.querySelectorAll(".year-tab-btn").forEach((btn) => {
-    btn.classList.toggle("active", String(btn.dataset.year) === String(selectedYear));
-  });
-}
-
-function showYearSelection() {
-  if (yearSectionPanel) yearSectionPanel.hidden = false;
-  renderYearSections();
-}
-
-function showYearSections() {
-  if (!selectedYear) selectedYear = 2;
-  if (yearSectionPanel) yearSectionPanel.hidden = false;
-  if (selectedYearKicker) selectedYearKicker.textContent = YEAR_LABELS[selectedYear] || `YEAR ${selectedYear}`;
-  if (selectedYearTitle) selectedYearTitle.textContent = `${YEAR_LABELS[selectedYear] || 'Year ' + selectedYear} Sections`;
-  renderYearSections();
-}
-
-async function selectYear(year) {
-  selectedYear = Number(year) || 2;
-  selectedSection = null;
-  leaderboardView.hidden = true;
-  sectionHome.hidden = false;
-  searchInput.value = "";
-
-  document.querySelectorAll(".year-tab-btn").forEach((btn) => {
-    btn.classList.toggle("active", String(btn.dataset.year) === String(selectedYear));
-  });
-
-  try {
-    if (!yearCache[selectedYear]) await loadData(selectedYear);
-    else allStudents = yearCache[selectedYear];
-  } catch (error) {
-    yearCache[selectedYear] = [];
-    allStudents = [];
-    if (messageElement) messageElement.textContent = `${YEAR_LABELS[selectedYear] || 'Year ' + selectedYear} data is not available yet.`;
-  }
-
-  updateLastUpdated();
-  renderYearSections();
-}
-
 async function initialize() {
   createClient();
-  await selectYear(2);
+  await loadData();
   await restoreAdminSession();
-  await loadDailyChallengeData().catch(() => {});
-  await loadCodingAnalyticsData().catch(() => {});
-  await loadFacultyData().catch(() => {});
+  await loadDailyChallengeData();
+  await loadCodingAnalyticsData();
+  await loadFacultyData();
   updateAdminUI();
 }
 
 
-document.querySelectorAll("[data-year]").forEach((button) => {
+document.querySelectorAll("[data-section]").forEach((button) => {
   button.addEventListener("click", () => {
-    selectYear(button.dataset.year);
+    openSection(button.dataset.section);
   });
 });
-
-yearSectionGrid?.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-year-section]");
-  if (!button) return;
-  openSection(button.dataset.yearSection);
-});
-
-backToYearsButton?.addEventListener("click", () => {
-  selectedSection = null;
-  searchInput.value = "";
-  showYearSections();
-});
-
-document.getElementById("manageYearFilter")?.addEventListener("change", renderManageStudents);
 
 backToSectionsButton.addEventListener("click", showSectionHome);
 
@@ -6274,33 +4184,6 @@ document
 document
   .getElementById("downloadPdfButton")
   .addEventListener("click", downloadPDF);
-
-openDateReportButton?.addEventListener("click", openDateReportModal);
-homeOpenDateReportButton?.addEventListener("click", openDateReportModal);
-closeDateReportButton?.addEventListener("click", closeDateReportModal);
-cancelDateReportButton?.addEventListener("click", closeDateReportModal);
-
-dateReportModal
-  ?.querySelectorAll("[data-close-date-report]")
-  .forEach((element) =>
-    element.addEventListener("click", closeDateReportModal)
-  );
-
-downloadDateReportCsvButton?.addEventListener("click", downloadDateReportCsv);
-downloadDateReportExcelButton?.addEventListener("click", downloadDateReportExcel);
-downloadDateReportPdfButton?.addEventListener("click", downloadDateReportPdf);
-
-dateReportFrom?.addEventListener("change", () => {
-  if (dateReportTo && dateReportFrom.value && !dateReportTo.value) {
-    dateReportTo.value = dateReportFrom.value;
-  }
-});
-
-dateReportTo?.addEventListener("change", () => {
-  if (dateReportFrom && dateReportTo.value && !dateReportFrom.value) {
-    dateReportFrom.value = dateReportTo.value;
-  }
-});
 
 adminLoginButton.addEventListener("click", openAdminLogin);
 adminLoginForm.addEventListener("submit", handleAdminLogin);
@@ -6386,18 +4269,6 @@ confirmDeleteButton.addEventListener("click", confirmDelete);
 
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
-
-  const solModal = document.getElementById("solutionCodeModal");
-  if (solModal && !solModal.hidden) {
-    solModal.hidden = true;
-    return;
-  }
-
-  const solvedModal = document.getElementById("solvedProblemsModal");
-  if (solvedModal && !solvedModal.hidden) {
-    solvedModal.hidden = true;
-    return;
-  }
 
   adminLoginModal.hidden = true;
   profileModal.hidden = true;
@@ -8824,24 +6695,6 @@ document.getElementById("facultyTableBody")
   ?.addEventListener("click", handleFacultyTableClick);
 
 refreshCodingAdminLocks();
-
-// Unified Command Center shortcuts: keep the actual existing student/faculty
-// workflows in the main hub while allowing admin.html to be the single entry point.
-(function initUnifiedOpenShortcut() {
-  const open = new URLSearchParams(window.location.search).get("open");
-  if (!open) return;
-  window.setTimeout(() => {
-    const actions = {
-      "add-student": () => document.getElementById("homeAddProfileButton")?.click(),
-      "manage-students": () => document.getElementById("homeManageStudentsButton")?.click(),
-      "faculty": () => openFacultyDirectory(),
-      "sync": () => document.getElementById("homeSyncNowButton")?.click(),
-      "coding-test": () => document.getElementById("manageCodingTestsButton")?.click(),
-      "profile-request": () => document.getElementById("homeAddProfileButton")?.click()
-    };
-    actions[open]?.();
-  }, 500);
-})();
 
 
 // ============================================================

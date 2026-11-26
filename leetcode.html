@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -8,23 +8,17 @@
     content="ECE LeetCode department leaderboard with section-wise and overall views."
   >
   <title>ECE LeetCode Leaderboard</title>
-  <link rel="stylesheet" href="style.css?v=7.0">
-  <link rel="stylesheet" href="css/examlytics-theme.css?v=7.0">
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="css/ui-refresh.css?v=8.0">
-<style>
-.legacy-home-grid,#adminLoginButton,.admin-session-card,#adminSessionCard,.home-admin-actions,.coding-test-home-card,.legacy-extra-card{display:none!important}.tracker-command-bar{display:flex;justify-content:space-between;gap:16px;align-items:stretch;margin:18px 0}.tracker-total-card{background:#fff;border:1px solid #dbe3ef;border-radius:16px;padding:15px 18px;min-width:190px;display:flex;flex-direction:column}.tracker-total-card span{font-size:.76rem;color:#64748b;font-weight:700}.tracker-total-card strong{font-size:1.6rem;color:#0f172a}.tracker-total-card small{color:#94a3b8}.tracker-command-menu{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.tracker-command-menu a{padding:10px 13px;border:1px solid #dbe3ef;border-radius:10px;background:#fff;color:#334155;text-decoration:none;font-size:.82rem;font-weight:700}.tracker-reports-panel{margin-top:24px;background:#fff;border:1px solid #dbe3ef;border-radius:18px;padding:22px}.tracker-reports-head h2{margin:4px 0;color:#0f172a}.tracker-reports-head p{margin:0;color:#64748b}.tracker-report-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}.tracker-report-card{border:1px solid #dbe3ef;background:#f8fafc;border-radius:14px;padding:16px;text-align:left;cursor:pointer}.tracker-report-card:hover{border-color:#93c5fd;background:#eff6ff}.tracker-report-card strong{display:block;color:#0f172a;margin-bottom:5px}.tracker-report-card span{display:block;color:#64748b;font-size:.78rem;line-height:1.4}.tracker-report-message{margin-top:12px;color:#2563eb;font-size:.82rem}.tracker-date-modal[hidden]{display:none}.tracker-date-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}.tracker-date-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55)}.tracker-date-card{position:relative;background:#fff;border-radius:18px;width:min(560px,100%);padding:22px;box-shadow:0 25px 70px rgba(15,23,42,.25)}.tracker-date-head{display:flex;justify-content:space-between;gap:15px}.tracker-date-head h2{margin:3px 0}.tracker-date-head p{margin:0;color:#64748b}.tracker-close{border:0;background:#f1f5f9;border-radius:8px;width:34px;height:34px;font-size:20px;cursor:pointer}.tracker-date-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}.tracker-date-fields label{font-size:.8rem;font-weight:750;color:#334155}.tracker-date-fields input{display:block;width:100%;margin-top:6px;padding:10px;border:1px solid #cbd5e1;border-radius:9px}.tracker-date-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}@media(max-width:760px){.tracker-command-bar{flex-direction:column}.tracker-report-grid{grid-template-columns:1fr}.tracker-date-fields{grid-template-columns:1fr}}
-</style>
+  <link rel="stylesheet" href="style.css">
 </head>
 
-<body class="light-theme">
+<body>
   <div class="background-orb orb-one"></div>
   <div class="background-orb orb-two"></div>
 
-  <div class="page-quick-actions" aria-label="Page navigation">
-    <button class="quick-circle-button" type="button" title="Back" aria-label="Back" onclick="if(history.length>1)history.back();else location.href='index.html'">←</button>
-    <a class="quick-circle-button" href="github.html" title="Open GitHub" aria-label="Open GitHub">🐙</a>
-  </div>
+  <nav style="max-width: 1400px; margin: 18px auto 0; padding: 0 20px; display: flex; gap: 12px; align-items: center; position: relative; z-index: 10;">
+    <a href="index.html" class="action-button secondary" style="text-decoration: none; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;">🏠 Hub</a>
+    <a href="github.html" class="action-button secondary" style="text-decoration: none; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;">🐙 GitHub Tracker →</a>
+  </nav>
 
   <header class="hero">
     <div class="hero-copy">
@@ -96,28 +90,8 @@
 
 
 
-
-      <!-- Academic Year Selector Menu Bar -->
-      <div class="year-nav-bar" id="yearTabBar" role="tablist" aria-label="Academic Year Selection">
-        <button class="year-tab-btn" data-year="1" role="tab" type="button">Year I</button>
-        <button class="year-tab-btn active" data-year="2" role="tab" type="button">Year II</button>
-        <button class="year-tab-btn" data-year="3" role="tab" type="button">Year III</button>
-        <button class="year-tab-btn" data-year="4" role="tab" type="button">Year IV</button>
-      </div>
-
-      <div class="tracker-command-bar">
-  <div class="tracker-total-card"><span>Total Students</span><strong id="trackerTotalStudents">0</strong><small>Current year dataset</small></div>
-  <div class="tracker-command-menu" aria-label="LeetCode workspace menu">
-    <a href="index.html">🏠 Hub</a><a href="#yearTabBar">📚 Sections</a><a href="#leetcodeReports">📊 Reports</a><a href="#leaderboardView" id="trackerBackToLeaderboard">🏆 Rankings</a>
-  </div>
-</div>
-
-<div id="yearSectionPanel" class="year-section-panel">
-        <div id="yearSectionGrid" class="section-grid year-section-grid"></div>
-      </div>
-
-      <div class="section-grid legacy-home-grid" id="leetcodeSectionCards">
-        <button class="section-card legacy-section-choice" data-section="ECE A" type="button">
+      <div class="section-grid">
+        <button class="section-card" data-section="ECE A" type="button">
           <span class="section-card-title">ECE A</span>
           <strong id="countECEA">0</strong>
           <span>Students</span>
@@ -128,7 +102,7 @@
           </div>
         </button>
 
-        <button class="section-card legacy-section-choice" data-section="ECE B" type="button">
+        <button class="section-card" data-section="ECE B" type="button">
           <span class="section-card-title">ECE B</span>
           <strong id="countECEB">0</strong>
           <span>Students</span>
@@ -139,7 +113,7 @@
           </div>
         </button>
 
-        <button class="section-card legacy-section-choice" data-section="ECE C" type="button">
+        <button class="section-card" data-section="ECE C" type="button">
           <span class="section-card-title">ECE C</span>
           <strong id="countECEC">0</strong>
           <span>Students</span>
@@ -150,7 +124,7 @@
           </div>
         </button>
 
-        <button class="section-card legacy-section-choice" data-section="ECE D" type="button">
+        <button class="section-card" data-section="ECE D" type="button">
           <span class="section-card-title">ECE D</span>
           <strong id="countECED">0</strong>
           <span>Students</span>
@@ -161,7 +135,7 @@
           </div>
         </button>
 
-        <button class="section-card legacy-section-choice" data-section="ECE E" type="button">
+        <button class="section-card" data-section="ECE E" type="button">
           <span class="section-card-title">ECE E</span>
           <strong id="countECEE">0</strong>
           <span>Students</span>
@@ -172,7 +146,7 @@
           </div>
         </button>
 
-        <button class="section-card legacy-section-choice" data-section="ECE F" type="button">
+        <button class="section-card" data-section="ECE F" type="button">
           <span class="section-card-title">ECE F</span>
           <strong id="countECEF">0</strong>
           <span>Students</span>
@@ -191,7 +165,7 @@
             <span>💻 Latest Test Passed <strong id="codingPassedOverall">0/0</strong></span>
           </div>
         </button>
-        <button class="section-card faculty-card legacy-extra-card" id="facultySectionCard" type="button">
+        <button class="section-card faculty-card" id="facultySectionCard" type="button">
           <span class="section-card-title">👨‍🏫 Faculty</span>
           <strong id="countFaculty">0</strong>
           <span>Faculty Members</span>
@@ -203,7 +177,7 @@
 
         <button
           id="championsCardButton"
-          class="section-card champions-home-card legacy-extra-card"
+          class="section-card champions-home-card"
           type="button"
         >
           <span class="section-card-title">🏆 Champions</span>
@@ -213,7 +187,7 @@
 
         <button
           id="dailyChallengeCardButton"
-          class="section-card daily-challenge-home-card legacy-extra-card"
+          class="section-card daily-challenge-home-card"
           type="button"
         >
           <span class="section-card-title">🎯 Daily Challenge</span>
@@ -223,7 +197,7 @@
       </div>
 
       
-      <section class="coding-test-home-card legacy-extra-card">
+      <section class="coding-test-home-card">
         <div>
           <span class="section-card-title">💻 Daily Coding Test</span>
           <p id="codingTestHomeStatus">Timed Java assessment with compiler, test cases and automatic scoring.</p>
@@ -232,7 +206,6 @@
           Open Coding Test
         </button>
       </section>
-      <div id="homeActionMessage" class="home-action-message" role="status" aria-live="polite"></div>
 
       <div class="home-admin-actions admin-only" hidden>
         <button id="homeAddProfileButton" class="action-button primary" type="button">
@@ -271,20 +244,7 @@
     <!-- =====================================================
          LEADERBOARD VIEW
          ===================================================== -->
-    <section id="leetcodeReports" class="tracker-reports-panel">
-  <div class="tracker-reports-head"><div><span class="eyebrow">LEETCODE REPORT CENTER</span><h2>Reports &amp; Exports</h2><p>All LeetCode reporting tools live here. Choose Overall or a section above before generating a current-view report.</p></div></div>
-  <div class="tracker-report-grid">
-    <button type="button" class="tracker-report-card" id="lcReportTop50"><strong>🏆 Top 50</strong><span>Download the top 50 LeetCode performers as Excel.</span></button>
-    <button type="button" class="tracker-report-card" id="lcReportCurrentCsv"><strong>📄 Current View CSV</strong><span>Export the selected overall/section leaderboard.</span></button>
-    <button type="button" class="tracker-report-card" id="lcReportCurrentPdf"><strong>🖨️ Current View PDF</strong><span>Print the selected leaderboard as a PDF.</span></button>
-    <button type="button" class="tracker-report-card" id="lcReportFacultyExcel"><strong>👨‍🏫 Faculty Excel</strong><span>Export faculty LeetCode analytics.</span></button>
-    <button type="button" class="tracker-report-card" id="lcReportFacultyPdf"><strong>👨‍🏫 Faculty PDF</strong><span>Print faculty LeetCode analytics.</span></button>
-    <button type="button" class="tracker-report-card" id="openDateReportButton"><strong>📅 Date Range Report</strong><span>Generate LeetCode activity for a selected date range.</span></button>
-  </div>
-  <div id="lcReportMessage" class="tracker-report-message" role="status"></div>
-</section>
-
-<section id="leaderboardView" hidden>
+    <section id="leaderboardView" hidden>
       <section class="leaderboard-topbar">
         <button id="backToSectionsButton" class="action-button secondary" type="button">
           ← Sections
@@ -312,75 +272,17 @@
           </div>
         </div>
 
-        <div class="actions">
+        <div class="actions compact-actions">
           <button
-            id="downloadCsvButton"
-            class="action-button secondary"
+            id="openAdminActionsMenu"
+            class="action-button primary admin-menu-trigger"
             type="button"
+            aria-haspopup="dialog"
+            aria-controls="adminActionsModal"
           >
-            Download CSV
-          </button>
-
-          <button
-            id="downloadPdfButton"
-            class="action-button secondary"
-            type="button"
-          >
-            Download PDF
-          </button>
-
-          <button
-            id="addProfileButton"
-            class="action-button primary admin-only"
-            type="button"
-            hidden
-          >
-            + Add Profile
-          </button>
-
-          <button
-            id="syncNowButton"
-            class="action-button secondary admin-only"
-            type="button"
-            hidden
-          >
-            ↻ Sync Now
-          </button>
-
-          <button
-            id="manageStudentsButton"
-            class="action-button secondary admin-only"
-            type="button"
-            hidden
-          >
-            Manage Students
-          </button>
-
-          <button
-            id="facultyAnalyticsButton"
-            class="action-button secondary admin-only"
-            type="button"
-            hidden
-          >
-            Faculty Analytics
-          </button>
-
-          <button
-            id="aiAnalystButton"
-            class="action-button ai-analyst-button admin-only"
-            type="button"
-            hidden
-          >
-            🤖 AI Analyst
-          </button>
-
-          <button
-            id="adminLogoutButton"
-            class="action-button secondary admin-only"
-            type="button"
-            hidden
-          >
-            Logout
+            <span class="admin-menu-trigger-icon" aria-hidden="true">⚙</span>
+            <span>Actions</span>
+            <span class="admin-menu-trigger-arrow" aria-hidden="true">▾</span>
           </button>
         </div>
       </section>
@@ -418,12 +320,12 @@
                 <th>Total</th>
                 <th>E / M / H</th>
                 <th>Status</th>
-              </tr>
+</tr>
             </thead>
 
             <tbody id="studentTableBody">
               <tr>
-                <td colspan="11" class="loading-row">
+                <td colspan="12" class="loading-row">
                   Loading leaderboard...
                 </td>
               </tr>
@@ -436,6 +338,151 @@
     </section>
   </main>
 
+
+  <!-- =======================================================
+       ACTIONS MENU
+       ======================================================= -->
+  <div id="adminActionsModal" class="profile-modal admin-actions-modal" hidden>
+    <div class="profile-modal-backdrop" data-close-admin-actions></div>
+
+    <section
+      class="profile-modal-card admin-actions-card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="adminActionsTitle"
+    >
+      <div class="profile-modal-head admin-actions-head">
+        <div>
+          <div class="eyebrow">QUICK CONTROLS</div>
+          <h2 id="adminActionsTitle">Actions</h2>
+          <p class="admin-actions-subtitle">
+            Export reports, manage students and open analytics.
+          </p>
+        </div>
+
+        <button
+          id="closeAdminActionsMenu"
+          class="modal-close"
+          type="button"
+          aria-label="Close actions menu"
+        >×</button>
+      </div>
+
+      <div class="admin-actions-section">
+        <div class="admin-actions-section-title">EXPORT</div>
+
+        <div class="admin-actions-grid">
+          <button
+            id="downloadCsvButton"
+            class="admin-action-tile export-tile"
+            type="button"
+          >
+            <span class="admin-action-icon">CSV</span>
+            <span class="admin-action-copy">
+              <strong>Download CSV</strong>
+              <small>Export current leaderboard</small>
+            </span>
+          </button>
+
+          <button
+            id="downloadPdfButton"
+            class="admin-action-tile export-tile"
+            type="button"
+          >
+            <span class="admin-action-icon">PDF</span>
+            <span class="admin-action-copy">
+              <strong>Download PDF</strong>
+              <small>Generate printable report</small>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div class="admin-actions-section admin-only" hidden>
+        <div class="admin-actions-section-title">ADMINISTRATION</div>
+
+        <div class="admin-actions-grid">
+          <button
+            id="addProfileButton"
+            class="admin-action-tile admin-only"
+            type="button"
+            hidden
+          >
+            <span class="admin-action-icon">＋</span>
+            <span class="admin-action-copy">
+              <strong>Add Profile</strong>
+              <small>Add a new student</small>
+            </span>
+          </button>
+
+          <button
+            id="syncNowButton"
+            class="admin-action-tile admin-only"
+            type="button"
+            hidden
+          >
+            <span class="admin-action-icon">↻</span>
+            <span class="admin-action-copy">
+              <strong>Sync Now</strong>
+              <small>Refresh LeetCode data</small>
+            </span>
+          </button>
+
+          <button
+            id="manageStudentsButton"
+            class="admin-action-tile admin-only"
+            type="button"
+            hidden
+          >
+            <span class="admin-action-icon">👥</span>
+            <span class="admin-action-copy">
+              <strong>Manage Students</strong>
+              <small>Edit or remove profiles</small>
+            </span>
+          </button>
+
+          <button
+            id="facultyAnalyticsButton"
+            class="admin-action-tile admin-only"
+            type="button"
+            hidden
+          >
+            <span class="admin-action-icon">▦</span>
+            <span class="admin-action-copy">
+              <strong>Faculty Analytics</strong>
+              <small>Open faculty performance</small>
+            </span>
+          </button>
+
+          <button
+            id="aiAnalystButton"
+            class="admin-action-tile ai-tile admin-only"
+            type="button"
+            hidden
+          >
+            <span class="admin-action-icon">AI</span>
+            <span class="admin-action-copy">
+              <strong>AI Analyst</strong>
+              <small>Analyze coding performance</small>
+            </span>
+          </button>
+
+          <button
+            id="adminLogoutButton"
+            class="admin-action-tile logout-tile admin-only"
+            type="button"
+            hidden
+          >
+            <span class="admin-action-icon">↪</span>
+            <span class="admin-action-copy">
+              <strong>Logout</strong>
+              <small>End administrator session</small>
+            </span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
 
   <!-- =======================================================
        ADMIN LOGIN
@@ -511,30 +558,6 @@
         <label class="form-label" for="studentName">Student Name</label>
         <input id="studentName" class="form-input" required>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div>
-            <label class="form-label" for="studentYear">Academic Year</label>
-            <select id="studentYear" class="form-input" required>
-              <option value="1">Year I</option>
-              <option value="2" selected>Year II</option>
-              <option value="3">Year III</option>
-              <option value="4">Year IV</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label" for="studentSection">Section</label>
-            <select id="studentSection" class="form-input" required>
-              <option value="">Select Section</option>
-              <option value="ECE A">ECE A</option>
-              <option value="ECE B">ECE B</option>
-              <option value="ECE C">ECE C</option>
-              <option value="ECE D">ECE D</option>
-              <option value="ECE E">ECE E</option>
-              <option value="ECE F">ECE F</option>
-            </select>
-          </div>
-        </div>
-
         <label class="form-label" for="leetcodeUsername">LeetCode Username</label>
         <input
           id="leetcodeUsername"
@@ -542,6 +565,17 @@
           required
           pattern="[A-Za-z0-9_-]+"
         >
+
+        <label class="form-label" for="studentSection">Section</label>
+        <select id="studentSection" class="form-input" required>
+          <option value="">Select Section</option>
+          <option value="ECE A">ECE A</option>
+          <option value="ECE B">ECE B</option>
+          <option value="ECE C">ECE C</option>
+          <option value="ECE D">ECE D</option>
+          <option value="ECE E">ECE E</option>
+          <option value="ECE F">ECE F</option>
+        </select>
 
         <div class="generated-link" id="generatedLink">
           https://leetcode.com/u/username/
@@ -579,14 +613,6 @@
       </div>
 
       <div class="manage-toolbar section-manage-toolbar">
-        <select id="manageYearFilter" class="form-input">
-          <option value="ALL">All Years</option>
-          <option value="1">Year I</option>
-          <option value="2">Year II</option>
-          <option value="3">Year III</option>
-          <option value="4">Year IV</option>
-        </select>
-
         <select id="manageSectionFilter" class="form-input">
           <option value="ALL">All Sections</option>
           <option value="ECE A">ECE A</option>
@@ -611,13 +637,20 @@
         <table class="manage-table">
           <thead>
             <tr>
-              <th>Year</th>
-              <th>Section</th>
-              <th>Register Number</th>
-              <th>Student Name</th>
-              <th>LeetCode Username</th>
-              <th>Actions</th>
-            </tr>
+                <th>Rank</th>
+                <th>Section Rank</th>
+                <th>Register Number</th>
+                <th>Student</th>
+                <th>LeetCode</th>
+                <th>30 Days</th>
+                <th>7 Days</th>
+                <th>Today</th>
+                <th>Total</th>
+                <th>Easy</th>
+                <th>Medium</th>
+                <th>Hard</th>
+                <th>Status</th>
+</tr>
           </thead>
 
           <tbody id="manageStudentsBody"></tbody>
@@ -1110,11 +1143,81 @@
 
 
 
-      
+      <article class="analytics-card analytics-section-table-card coding-test-analytics-card">
+        <div class="analytics-card-heading">
+          <div>
+            <span class="analytics-kicker">CODING TEST</span>
+            <h3>💻 Latest Test · Section Performance</h3>
+            <p id="analyticsCodingLatestTestName" class="analytics-card-note">No coding test data yet.</p>
+          </div>
+        </div>
 
-      
+        <div class="analytics-table-wrap">
+          <table class="analytics-table">
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Students</th>
+                <th>Attended</th>
+                <th>Passed</th>
+                <th>Pass %</th>
+                <th>Avg Score</th>
+                <th>Violations</th>
+              </tr>
+            </thead>
+            <tbody id="analyticsCodingSectionSummary"></tbody>
+          </table>
+        </div>
+      </article>
 
-      
+      <article class="analytics-card analytics-section-table-card">
+        <div class="analytics-card-heading">
+          <div>
+            <span class="analytics-kicker">DAILY CHALLENGE</span>
+            <h3>🎯 Section Challenge Performance</h3>
+          </div>
+        </div>
+
+        <div class="analytics-table-wrap">
+          <table class="analytics-table">
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Today Completed</th>
+                <th>Today %</th>
+                <th>Students on Streak</th>
+                <th>Avg Total Completed</th>
+              </tr>
+            </thead>
+            <tbody id="analyticsChallengeSectionSummary"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="analytics-card analytics-section-table-card">
+        <div class="analytics-card-heading">
+          <div>
+            <span class="analytics-kicker">SECTION SUMMARY</span>
+            <h3>ECE A–F Overview</h3>
+          </div>
+        </div>
+
+        <div class="analytics-table-wrap">
+          <table class="analytics-table">
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Students</th>
+                <th>Active Today</th>
+                <th>Active 7 Days</th>
+                <th>30-Day Solves</th>
+                <th>Avg / Student</th>
+              </tr>
+            </thead>
+            <tbody id="analyticsSectionSummary"></tbody>
+          </table>
+        </div>
+      </article>
     </section>
   </div>
 
@@ -1139,25 +1242,15 @@
           ← Back to Leaderboard
         </button>
 
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <button
-            id="profileViewProblemsButton"
-            class="view-problems-action-btn"
-            type="button"
-          >
-            ⚡ View Solved Problems &amp; Code
-          </button>
-
-          <a
-            id="profileLeetCodeLink"
-            class="action-button primary"
-            href="#"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            View LeetCode ↗
-          </a>
-        </div>
+        <a
+          id="profileLeetCodeLink"
+          class="action-button primary"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          View LeetCode ↗
+        </a>
       </div>
 
       <div class="student-profile-hero">
@@ -1167,7 +1260,6 @@
           <div class="profile-section-line">
             <span id="profileSection" class="section-pill">ECE</span>
             <span id="profileStatus" class="profile-status-dot">Success</span>
-            <span id="profileIntegrityBadge" class="integrity-badge clean">🟢 Verified</span>
           </div>
 
           <h2 id="studentProfileName">Student</h2>
@@ -1940,190 +2032,10 @@ public class Main {
     </section>
   </div>
 
-  <!-- =======================================================
-       STUDENT SOLVED PROBLEMS & ACTIVITY MODAL
-       ======================================================= -->
-  <div id="solvedProblemsModal" class="profile-modal" hidden>
-    <div class="profile-modal-backdrop" data-close-solved-problems></div>
-    <section class="solved-problems-modal-card" role="dialog" aria-modal="true" aria-labelledby="solvedProblemsTitle">
-      <div class="solved-problems-head">
-        <div>
-          <div class="eyebrow">LEETCODE FORENSICS &amp; ACTIVITY</div>
-          <h2 id="solvedProblemsTitle">Solved Problems Activity</h2>
-          <p id="solvedProblemsSubtitle" style="color:var(--muted);font-size:13px;margin-top:4px;">Viewing synced solutions and anti-cheat forensics</p>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <button id="downloadSolvedHistoryExcelBtn" class="action-button primary" type="button" style="padding:8px 14px;font-size:12px;">📥 Download History &amp; Code (Excel)</button>
-          <button id="downloadSolvedHistoryPdfBtn" class="action-button secondary" type="button" style="padding:8px 14px;font-size:12px;">📄 Download Portfolio (PDF)</button>
-          <button id="downloadSolvedHistoryZipBtn" class="action-button secondary" type="button" style="padding:8px 14px;font-size:12px;background:#1e293b;border:1px solid #475569;color:#e2e8f0;">📦 Download All Codes (.zip)</button>
-          <button id="closeSolvedProblems" class="modal-close" type="button" aria-label="Close">×</button>
-        </div>
-      </div>
-
-      <div class="solved-problems-summary">
-        <div class="summary-pill-card active">
-          <span>Total Synced</span>
-          <strong id="summaryTotalSynced">0</strong>
-        </div>
-        <div class="summary-pill-card clean">
-          <span>Clean Submissions</span>
-          <strong id="summaryCleanCount">0</strong>
-        </div>
-        <div class="summary-pill-card flagged">
-          <span>Flagged Alerts</span>
-          <strong id="summaryFlaggedCount">0</strong>
-        </div>
-        <div class="summary-pill-card">
-          <span>Extension Status</span>
-          <strong id="summaryExtStatus" style="font-size:1rem;">Checking...</strong>
-        </div>
-      </div>
-
-      <!-- 50 Problems Milestone & Archive Banner -->
-      <div id="solvedArchiveBanner" class="milestone-archive-card" hidden>
-        <div class="milestone-archive-info">
-          <span style="font-size:1.4rem;">📦</span>
-          <div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <strong id="milestoneArchiveTitle" style="color:#f8fafc;font-size:0.95rem;">50 Problems Capacity Reached (50/50)</strong>
-              <span class="diff-badge Easy" id="milestoneBadge">50 Solved</span>
-            </div>
-            <p id="milestoneArchiveDesc" style="color:#94a3b8;font-size:0.8rem;margin:3px 0 0 0;">
-              Download and archive your complete 50-problem solutions portfolio before database auto-reset.
-            </p>
-          </div>
-        </div>
-        <div class="milestone-archive-actions">
-          <button id="archiveAndPurgeSolvedBtn" type="button" class="action-button primary" style="padding:7px 14px;font-size:12px;background:#10b981;border-color:#059669;font-weight:700;">
-            📦 Download Archive &amp; Clear Database (Reset to 0)
-          </button>
-          <button id="purgeOnlySolvedBtn" type="button" class="action-button secondary" style="padding:7px 12px;font-size:12px;color:#fca5a5;border-color:#ef4444;background:rgba(239,68,68,0.1);">
-            🗑️ Clear Database Only
-          </button>
-        </div>
-      </div>
-
-      <div class="solved-problems-table-wrap">
-        <table class="solved-problems-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Problem Name</th>
-              <th>Difficulty</th>
-              <th>Language</th>
-              <th>Solved Timing</th>
-              <th>Active Time</th>
-              <th>Keystrokes / Pastes</th>
-              <th>Integrity Status</th>
-            </tr>
-          </thead>
-          <tbody id="solvedProblemsTableBody">
-            <tr>
-              <td colspan="8" style="text-align:center;padding:24px;color:var(--muted);">
-                Loading submissions...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </div>
-
-
-
-  <!-- =======================================================
-       SOLUTION CODE VIEWER MODAL
-       ======================================================= -->
-  <div id="solutionCodeModal" class="profile-modal" hidden>
-    <div class="profile-modal-backdrop" data-close-solution-code></div>
-    <section class="solution-code-modal-card" role="dialog" aria-modal="true" aria-labelledby="solutionCodeTitle">
-      <div class="solution-code-head">
-        <div>
-          <div class="eyebrow">SOURCE CODE &amp; TELEMETRY</div>
-          <h2 id="solutionCodeTitle">
-            <span id="solutionProblemName">Problem Solution</span>
-            <span id="solutionDifficultyBadge" class="diff-badge Medium">Medium</span>
-          </h2>
-          <p id="solutionMetadata" style="color:var(--muted);font-size:13px;margin-top:4px;">Submitted by student</p>
-        </div>
-        <button id="closeSolutionCode" class="modal-close" type="button" aria-label="Close">×</button>
-      </div>
-
-      <div class="solution-telemetry-grid">
-        <div class="telemetry-item">
-          <span>Active Time</span>
-          <strong id="telemetryActiveTime">—</strong>
-        </div>
-        <div class="telemetry-item">
-          <span>Keystrokes</span>
-          <strong id="telemetryKeystrokes">—</strong>
-        </div>
-        <div class="telemetry-item">
-          <span>Pastes / Ratio</span>
-          <strong id="telemetryPastes">—</strong>
-        </div>
-        <div class="telemetry-item">
-          <span>Tab Switches</span>
-          <strong id="telemetryTabSwitches">—</strong>
-        </div>
-        <div class="telemetry-item">
-          <span>Plagiarism Risk</span>
-          <strong id="telemetryRiskScore">—</strong>
-        </div>
-        <div class="telemetry-item">
-          <span>Verdict</span>
-          <strong id="telemetryVerdict">—</strong>
-        </div>
-      </div>
-
-      <div id="solutionAlertBanner" class="solution-alert-box" hidden>
-        <span>⚠️</span>
-        <span id="solutionAlertText">AI / Paste anomalies detected in this submission.</span>
-      </div>
-
-      <div class="code-viewer-container">
-        <div class="code-viewer-topbar">
-          <span id="solutionCodeLang" class="code-lang-tag">PYTHON3</span>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <button id="downloadSingleSolutionCodeBtn" class="copy-code-btn" type="button" style="background:#2563eb;color:#fff;border-color:#3b82f6;">💾 Download Code</button>
-            <button id="copySolutionCodeBtn" class="copy-code-btn" type="button">📋 Copy Code</button>
-          </div>
-        </div>
-        <pre class="code-content-pre"><code id="solutionCodeContent">// Code will appear here</code></pre>
-      </div>
-    </section>
-  </div>
-
-  <div id="dateReportModal" class="tracker-date-modal" hidden>
-  <div class="tracker-date-backdrop" data-close-date-report></div>
-  <section class="tracker-date-card" role="dialog" aria-modal="true" aria-labelledby="dateReportTitle">
-    <div class="tracker-date-head"><div><span class="eyebrow">LEETCODE REPORT</span><h2 id="dateReportTitle">Date Range Activity</h2><p id="dateReportScope">ECE Overall</p></div><button type="button" id="closeDateReport" class="tracker-close" data-close-date-report>×</button></div>
-    <div class="tracker-date-fields"><label>From<input id="dateReportFrom" type="date"></label><label>To<input id="dateReportTo" type="date"></label></div>
-    <p id="dateReportMessage" class="form-message"></p>
-    <div class="tracker-date-actions"><button type="button" id="cancelDateReport" class="action-button secondary" data-close-date-report>Cancel</button><button type="button" id="downloadDateReportCsv" class="action-button secondary">CSV</button><button type="button" id="downloadDateReportExcel" class="action-button secondary">Excel</button><button type="button" id="downloadDateReportPdf" class="action-button primary">PDF</button></div>
-    <div id="dateReportPrintContent" hidden></div>
-  </section>
-</div>
-
-<!-- Scripts MUST stay at the end so Coding Test buttons/forms exist before JS binds events -->
-  <script src="config.js?v=7.0"></script>
+  <!-- Scripts MUST stay at the end so Coding Test buttons/forms exist before JS binds events -->
+  <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="script.js?v=7.0"></script>
-<script>
-(function(){
-  function setMsg(t){var e=document.getElementById('lcReportMessage');if(e)e.textContent=t||'';}
-  function top50(){try{if(typeof XLSX==='undefined')throw new Error('Excel library is unavailable.');var rows=[...(window.__CODEMETRIX_LC_STUDENTS||[])];rows.sort(function(a,b){return (Number(b['Problems Solved'])||0)-(Number(a['Problems Solved'])||0)||(Number(b['Last 7 Days'])||0)-(Number(a['Last 7 Days'])||0);});rows=rows.slice(0,50).map(function(s,i){return {Rank:i+1,'Register Number':s['Register Number']||'', 'Student Name':s['Student Name']||'',Section:s.Section||'', 'LeetCode Username':s['LeetCode Username']||'', 'Problems Solved':Number(s['Problems Solved'])||0,'Solved Today':Number(s['Solved Today'])||0,'Last 7 Days':Number(s['Last 7 Days'])||0,'Last 30 Days':Number(s['Last 30 Days'])||0,Easy:Number(s.Easy)||0,Medium:Number(s.Medium)||0,Hard:Number(s.Hard)||0,Status:s.Status||''};});var ws=XLSX.utils.json_to_sheet(rows);var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Top 50 LeetCode');XLSX.writeFile(wb,'CodeMetrix_LeetCode_Top_50.xlsx');setMsg('Top 50 LeetCode Excel downloaded.');}catch(e){setMsg(e.message);}}
-  document.getElementById('lcReportTop50')?.addEventListener('click',top50);
-  document.getElementById('lcReportCurrentCsv')?.addEventListener('click',function(){document.getElementById('downloadCsvButton')?.click();setMsg('Current LeetCode view exported as CSV.');});
-  document.getElementById('lcReportCurrentPdf')?.addEventListener('click',function(){document.getElementById('downloadPdfButton')?.click();setMsg('Print dialog opened for the current LeetCode view.');});
-  document.getElementById('lcReportFacultyExcel')?.addEventListener('click',function(){if(typeof downloadFacultyExcelReport==='function')downloadFacultyExcelReport();else setMsg('Faculty report is unavailable.');});
-  document.getElementById('lcReportFacultyPdf')?.addEventListener('click',function(){if(typeof downloadFacultyPdfReport==='function')downloadFacultyPdfReport();else setMsg('Faculty report is unavailable.');});
-  document.getElementById('trackerTotalStudents').textContent='—';
-  setTimeout(function(){var el=document.getElementById('trackerTotalStudents');if(el&&Array.isArray(window.__CODEMETRIX_LC_STUDENTS))el.textContent=window.__CODEMETRIX_LC_STUDENTS.length;},1200);
-})();
-</script>
-
+  <script src="script.js"></script>
 
 </body>
 </html>

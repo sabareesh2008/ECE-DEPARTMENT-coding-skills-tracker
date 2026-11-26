@@ -1,4 +1,4 @@
-let supabaseClient = null;
+﻿let supabaseClient = null;
 let currentUser = null;
 let currentRole = null;
 
@@ -23,8 +23,6 @@ let aiChatHistory = [];
 let aiChatBusy = false;
 
 let selectedSection = null;
-let selectedYear = null;
-let yearCache = { 1: null, 2: null, 3: null };
 let pendingDeleteId = null;
 
 const cfg = window.APP_CONFIG || {};
@@ -32,13 +30,6 @@ const cfg = window.APP_CONFIG || {};
 const sectionHome = document.getElementById("sectionHome");
 const leaderboardView = document.getElementById("leaderboardView");
 const backToSectionsButton = document.getElementById("backToSectionsButton");
-
-const yearSelectionPanel = document.getElementById("yearSelectionPanel");
-const yearSectionPanel = document.getElementById("yearSectionPanel");
-const yearSectionGrid = document.getElementById("yearSectionGrid");
-const backToYearsButton = document.getElementById("backToYearsButton");
-const selectedYearKicker = document.getElementById("selectedYearKicker");
-const selectedYearTitle = document.getElementById("selectedYearTitle");
 
 const currentViewLabel = document.getElementById("currentViewLabel");
 const currentViewTitle = document.getElementById("currentViewTitle");
@@ -117,15 +108,6 @@ const SECTION_NAMES = [
   "ECE E",
   "ECE F"
 ];
-
-const YEAR_SECTIONS = {
-  1: ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"],
-  2: ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"],
-  3: ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"],
-  4: ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"]
-};
-
-const YEAR_LABELS = { 1: "YEAR I", 2: "YEAR II", 3: "YEAR III", 4: "YEAR IV" };
 
 const exportColumns = [
   "Overall Rank",
@@ -255,29 +237,14 @@ function parseCSV(text) {
     (header) => header.replace(/^\uFEFF/, "").trim()
   );
 
-  return rows
-    .slice(1)
-    .map((cells) =>
-      Object.fromEntries(
-        headers.map((header, index) => [
-          header,
-          (cells[index] ?? "").trim()
-        ])
-      )
+  return rows.slice(1).map((cells) =>
+    Object.fromEntries(
+      headers.map((header, index) => [
+        header,
+        (cells[index] ?? "").trim()
+      ])
     )
-    .filter((row) => {
-      const reg = String(row["Register Number"] || row.register_number || "").trim();
-      const name = String(row["Student Name"] || row.student_name || "").trim();
-      return (
-        reg !== "" &&
-        reg !== "—" &&
-        reg !== "-" &&
-        !reg.startsWith("<") &&
-        !reg.startsWith("=") &&
-        !reg.startsWith(">") &&
-        name !== ""
-      );
-    });
+  );
 }
 
 
@@ -337,52 +304,33 @@ function calculateSectionChampionship() {
         === section.toUpperCase()
     );
 
-    const commits30 = students.reduce(
-      (sum, student) => sum + toNumber(student["Commits 30 Days"] || student["Total Submissions"]),
+    const last30 = students.reduce(
+      (sum, student) =>
+        sum + toNumber(student["Last 30 Days"]),
       0
     );
 
-    const contrib30 = students.reduce(
-      (sum, student) => sum + toNumber(student["Contributions 30 Days"] || student["Last 30 Days"]),
-      0
-    );
-
-    const repos = students.reduce(
-      (sum, student) => sum + toNumber(student["Repositories Total"] || student["Problems Solved"]),
-      0
-    );
-
-    const commits7 = students.reduce(
-      (sum, student) => sum + toNumber(student["Commits 7 Days"] || student["Last 7 Days Submissions"]),
-      0
-    );
-
-    const contrib7 = students.reduce(
-      (sum, student) => sum + toNumber(student["Contributions 7 Days"] || student["Last 7 Days"]),
+    const last7 = students.reduce(
+      (sum, student) =>
+        sum + toNumber(student["Last 7 Days"]),
       0
     );
 
     const activeStudents = students.filter(
       (student) =>
-        (toNumber(student["Commits 30 Days"] || student["Total Submissions"]) > 0
-          || toNumber(student["Contributions 30 Days"] || student["Last 30 Days"]) > 0)
+        toNumber(student["Last 30 Days"]) > 0
     ).length;
 
     const average =
       students.length > 0
-        ? contrib30 / students.length
+        ? last30 / students.length
         : 0;
 
     return {
       section,
       studentCount: students.length,
-      commits30,
-      contrib30,
-      repos,
-      commits7,
-      contrib7,
-      last30: contrib30,
-      last7: contrib7,
+      last30,
+      last7,
       activeStudents,
       average
     };
@@ -390,12 +338,10 @@ function calculateSectionChampionship() {
 
   return results.sort((a, b) => {
     return (
-      b.commits30 - a.commits30
-      || b.contrib30 - a.contrib30
-      || b.repos - a.repos
-      || b.commits7 - a.commits7
-      || b.contrib7 - a.contrib7
+      b.last30 - a.last30
+      || b.last7 - a.last7
       || b.activeStudents - a.activeStudents
+      || b.average - a.average
       || a.section.localeCompare(b.section)
     );
   });
@@ -496,62 +442,41 @@ function updateCurrentChampionBadge() {
         normalizeSection(student.Section) === normalizeSection(section)
     );
 
-    const commits30 = students.reduce(
-      (sum, student) => sum + toNumber(student["Commits 30 Days"] || student["Total Submissions"]),
+    const last30 = students.reduce(
+      (sum, student) =>
+        sum + toNumber(student["Last 30 Days"]),
       0
     );
 
-    const contrib30 = students.reduce(
-      (sum, student) => sum + toNumber(student["Contributions 30 Days"] || student["Last 30 Days"]),
-      0
-    );
-
-    const repos = students.reduce(
-      (sum, student) => sum + toNumber(student["Repositories Total"] || student["Problems Solved"]),
-      0
-    );
-
-    const commits7 = students.reduce(
-      (sum, student) => sum + toNumber(student["Commits 7 Days"] || student["Last 7 Days Submissions"]),
-      0
-    );
-
-    const contrib7 = students.reduce(
-      (sum, student) => sum + toNumber(student["Contributions 7 Days"] || student["Last 7 Days"]),
+    const last7 = students.reduce(
+      (sum, student) =>
+        sum + toNumber(student["Last 7 Days"]),
       0
     );
 
     const active = students.filter(
       (student) =>
-        (toNumber(student["Commits 30 Days"] || student["Total Submissions"]) > 0
-          || toNumber(student["Contributions 30 Days"] || student["Last 30 Days"]) > 0)
+        toNumber(student["Last 30 Days"]) > 0
     ).length;
 
     const average =
       students.length > 0
-        ? contrib30 / students.length
+        ? last30 / students.length
         : 0;
 
     return {
       section,
       students: students.length,
-      commits30,
-      contrib30,
-      repos,
-      commits7,
-      contrib7,
-      last30: contrib30,
-      last7: contrib7,
+      last30,
+      last7,
       active,
       average
     };
   }).sort((a, b) =>
-    b.commits30 - a.commits30
-    || b.contrib30 - a.contrib30
-    || b.repos - a.repos
-    || b.commits7 - a.commits7
-    || b.contrib7 - a.contrib7
+    b.last30 - a.last30
+    || b.last7 - a.last7
     || b.active - a.active
+    || b.average - a.average
     || a.section.localeCompare(b.section)
   );
 
@@ -622,20 +547,12 @@ function updateLastUpdated() {
 
 
 function getCurrentViewStudents() {
-  const yearStudents = selectedYear
-    ? allStudents.filter((student) => {
-        const value = String(student.Year ?? student.year ?? "").trim().toLowerCase();
-        return !value
-          || value === String(selectedYear)
-          || value === String(YEAR_LABELS[selectedYear]).toLowerCase()
-          || value === `year ${selectedYear}`;
-      })
-    : allStudents;
+  if (selectedSection === "OVERALL") {
+    return [...allStudents];
+  }
 
-  if (selectedSection === "OVERALL") return [...yearStudents];
-
-  return yearStudents.filter(
-    (student) => normalizeSection(student.Section) === normalizeSection(selectedSection)
+  return allStudents.filter(
+    (student) => student.Section === selectedSection
   );
 }
 
@@ -784,13 +701,13 @@ function openSection(section) {
 
   if (section === "OVERALL") {
     currentViewLabel.textContent = "DEPARTMENT";
-    currentViewTitle.textContent = `${selectedYear ? YEAR_LABELS[selectedYear] + " · " : ""}Overall GitHub Leaderboard`;
-    printTitle.textContent = `Overall GitHub Leaderboard`;
+    currentViewTitle.textContent = "Overall ECE Leaderboard";
+    printTitle.textContent = "Overall ECE LeetCode Leaderboard";
     rankLegendText.textContent = "Overall Rank";
   } else {
-    currentViewLabel.textContent = `${selectedYear ? YEAR_LABELS[selectedYear] + " · " : ""}SECTION`;
+    currentViewLabel.textContent = "SECTION";
     currentViewTitle.textContent = `${section} Leaderboard`;
-    printTitle.textContent = `${section} GitHub Leaderboard`;
+    printTitle.textContent = `${section} LeetCode Leaderboard`;
     rankLegendText.textContent = "Section Rank";
   }
 
@@ -803,67 +720,33 @@ function showSectionHome() {
   leaderboardView.hidden = true;
   sectionHome.hidden = false;
   searchInput.value = "";
+}
 
-  if (selectedYear) {
-    showYearSections();
-  } else {
-    showYearSelection();
+
+async function loadData() {
+  const response = await fetch(
+    `GitHubLiveData.csv?time=${Date.now()}`,
+    { cache: "no-store" }
+  );
+
+  if (!response.ok) {
+    throw new Error(`GitHubLiveData.csv HTTP ${response.status}`);
+  }
+
+  allStudents = parseCSV(await response.text());
+
+  profileDataLoaded = false;
+
+  updateSectionCounts();
+  updateLastUpdated();
+
+  if (selectedSection) {
+    applySearch();
   }
 }
 
 
-async function fetchYearCsv(year) {
-  const candidates = year === 2
-    ? ["GitHubLiveData.csv"]
-    : [
-        `${"GitHubLiveData_Year" + year + ".csv"}`,
-        `${"GitHubLiveData_year" + year + ".csv"}`
-      ];
 
-  let lastError = null;
-  for (const url of candidates) {
-    try {
-      const response = await fetch(`${url}?time=${Date.now()}`, { cache: "no-store" });
-      if (!response.ok) {
-        lastError = new Error(`${url} HTTP ${response.status}`);
-        continue;
-      }
-      const rows = parseCSV(await response.text());
-      if (rows.some(row => Object.prototype.hasOwnProperty.call(row, "Year"))) {
-        const filtered = rows.filter(row => {
-          const value = String(row.Year ?? row.year ?? "").trim().toLowerCase();
-          return value === String(year)
-            || value === String(YEAR_LABELS[year]).toLowerCase()
-            || value === `year ${year}`;
-        });
-        if (filtered.length || year === 2) return filtered;
-      } else {
-        return rows;
-      }
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  if (year !== 2) return [];
-  throw lastError || new Error("Unable to load GitHub data.");
-}
-
-async function loadData(year = selectedYear || 2) {
-  const rows = await fetchYearCsv(year);
-  yearCache[year] = rows;
-
-  if (selectedYear === year || year === 2) {
-    allStudents = rows;
-    window.__CODEMETRIX_GH_STUDENTS = allStudents;
-    profileDataLoaded = false;
-    updateLastUpdated();
-    updateSectionCounts();
-    if (selectedSection) applySearch();
-  }
-
-  return rows;
-}
 
 async function fetchAdminRole(user) {
   const { data, error } = await supabaseClient
@@ -972,160 +855,48 @@ async function loadRegisteredStudents() {
     throw new Error("Administrator access required.");
   }
 
-  // Ensure dashboard CSV is loaded if empty
-  if ((!allStudents || !allStudents.length) && typeof loadData === "function") {
-    try {
-      await loadData(2);
-    } catch (e) {
-      console.warn("Could not load local LiveData in loadRegisteredStudents:", e);
-    }
-  }
+  const { data, error } = await supabaseClient
+    .from("students")
+    .select(
+      "id,register_number,student_name,leetcode_username,github_username,section,created_at"
+    )
+    .order("section", { ascending: true })
+    .order("register_number", { ascending: true });
 
-  let dbStudents = [];
-  try {
-    let { data, error } = await supabaseClient
-      .from("students")
-      .select(
-        "id,register_number,student_name,leetcode_username,github_username,section,created_at,year"
-      )
-      .order("section", { ascending: true })
-      .order("register_number", { ascending: true });
+  if (error) throw error;
 
-    if (error && String(error.message || "").toLowerCase().includes("year")) {
-      const retry = await supabaseClient
-        .from("students")
-        .select(
-          "id,register_number,student_name,leetcode_username,github_username,section,created_at"
-        )
-        .order("section", { ascending: true })
-        .order("register_number", { ascending: true });
-
-      if (!retry.error) {
-        data = retry.data;
-        error = null;
-      }
-    }
-
-    if (!error && Array.isArray(data)) {
-      dbStudents = data;
-    }
-  } catch (err) {
-    console.warn("Notice: Could not query Supabase students table directly, relying on dashboard dataset:", err);
-  }
-
-  const mergedMap = new Map();
-
-  // 1. Populate from DB students
-  dbStudents.forEach((s) => {
-    const reg = String(s.register_number || "").trim().toUpperCase();
-    if (reg) {
-      mergedMap.set(reg, {
-        id: s.id,
-        register_number: String(s.register_number || "").trim(),
-        student_name: String(s.student_name || "").trim(),
-        leetcode_username: String(s.leetcode_username || "").trim(),
-        github_username: String(s.github_username || "").trim(),
-        section: String(s.section || "ECE A").trim(),
-        year: s.year || 2,
-        created_at: s.created_at || ""
-      });
-    }
-  });
-
-  // 2. Gather all dataset sources (allStudents + all yearCache entries)
-  const allSources = [];
-  if (Array.isArray(allStudents) && allStudents.length) {
-    allSources.push(...allStudents);
-  }
-  if (typeof yearCache === "object" && yearCache !== null) {
-    Object.values(yearCache).forEach((list) => {
-      if (Array.isArray(list)) allSources.push(...list);
-    });
-  }
-
-  // 3. Seamlessly merge all sources
-  allSources.forEach((s) => {
-    const reg = String(s["Register Number"] || s.register_number || "").trim().toUpperCase();
-    if (!reg) return;
-
-    const existing = mergedMap.get(reg);
-    const name = String(s["Student Name"] || s.student_name || "").trim();
-    const lcUser = String(s["LeetCode Username"] || s.leetcode_username || "").trim();
-    const ghUser = String(s["GitHub Username"] || s.github_username || "").trim();
-    const sec = String(s.Section || s.section || "ECE A").trim();
-    const yr = s.Year || s.year || 2;
-
-    if (existing) {
-      if (ghUser && !existing.github_username) existing.github_username = ghUser;
-      if (lcUser && !existing.leetcode_username) existing.leetcode_username = lcUser;
-      if (name && !existing.student_name) existing.student_name = name;
-      if (sec && (!existing.section || existing.section === "ECE A")) existing.section = sec;
-      if (yr && !existing.year) existing.year = yr;
-    } else {
-      mergedMap.set(reg, {
-        id: s.id || reg,
-        register_number: String(s["Register Number"] || s.register_number || "").trim(),
-        student_name: name,
-        leetcode_username: lcUser,
-        github_username: ghUser,
-        section: sec,
-        year: yr,
-        created_at: s["Created At"] || s.created_at || ""
-      });
-    }
-  });
-
-  directoryStudents = Array.from(mergedMap.values()).sort((a, b) => {
-    const secComp = String(a.section).localeCompare(String(b.section));
-    if (secComp !== 0) return secComp;
-    return String(a.register_number).localeCompare(String(b.register_number));
-  });
-
+  directoryStudents = data || [];
   return directoryStudents;
 }
 
 
+
+
 function getFilteredManagedStudents() {
-  const yearFilter = document.getElementById("manageYearFilter")?.value || "ALL";
-  const section = manageSectionFilter ? manageSectionFilter.value : "ALL";
-  const query = (manageSearch ? manageSearch.value : "").trim().toLowerCase();
+  const section = manageSectionFilter.value;
+  const query = manageSearch.value.trim().toLowerCase();
 
   return directoryStudents.filter((student) => {
-    const studentYear = student.year || student.Year || 2;
-    const yearMatches =
-      yearFilter === "ALL"
-      || String(studentYear) === String(yearFilter)
-      || String(studentYear).toLowerCase() === `year ${yearFilter}`.toLowerCase()
-      || (String(yearFilter) === "2" && (!student.year || String(student.year) === "2"));
-
-    const studentSec = String(student.section || student.Section || "").trim();
-    const cleanSection = String(section || "").trim();
     const sectionMatches =
-      cleanSection === "ALL"
-      || studentSec.toUpperCase() === cleanSection.toUpperCase()
-      || studentSec.replace(/\s+/g, "").toUpperCase() === cleanSection.replace(/\s+/g, "").toUpperCase();
+      section === "ALL" || student.section === section;
 
     const textMatches =
       !query
       || [
         student.register_number,
-        student["Register Number"],
         student.student_name,
-        student["Student Name"],
         student.github_username,
-        student["GitHub Username"],
-        student.leetcode_username,
-        student["LeetCode Username"],
-        studentSec
+        student.section
       ]
-        .filter(Boolean)
         .join(" ")
         .toLowerCase()
         .includes(query);
 
-    return yearMatches && sectionMatches && textMatches;
+    return sectionMatches && textMatches;
   });
 }
+
+
 
 
 function renderManageStudents() {
@@ -1137,7 +908,7 @@ function renderManageStudents() {
   if (!students.length) {
     manageStudentsBody.innerHTML = `
       <tr>
-        <td colspan="6" class="loading-row">No students found.</td>
+        <td colspan="5" class="loading-row">No students found.</td>
       </tr>
     `;
     return;
@@ -1161,7 +932,6 @@ function renderManageStudents() {
 
     return `
       <tr>
-        <td><span class="section-pill">Year ${escapeHTML(student.year || 2)}</span></td>
         <td><span class="section-pill">${escapeHTML(student.section)}</span></td>
         <td>${escapeHTML(student.register_number)}</td>
         <td>${escapeHTML(student.student_name)}</td>
@@ -1170,7 +940,7 @@ function renderManageStudents() {
           <button
             class="row-action edit-action"
             type="button"
-            data-manage-edit="${escapeHTML(student.id || student.register_number)}"
+            data-manage-edit="${escapeHTML(student.id)}"
           >
             Edit
           </button>
@@ -1178,7 +948,7 @@ function renderManageStudents() {
           <button
             class="row-action delete-action"
             type="button"
-            data-manage-delete="${escapeHTML(student.id || student.register_number)}"
+            data-manage-delete="${escapeHTML(student.id)}"
           >
             Delete
           </button>
@@ -1189,33 +959,28 @@ function renderManageStudents() {
 }
 
 
+
+
 async function openManageStudents() {
   if (!isAdmin()) return;
 
   manageStudentsModal.hidden = false;
-  document.body.classList.add("modal-open");
 
-  if (manageSectionFilter) {
+  await loadRegisteredStudents();
+
+  if (selectedSection && selectedSection !== "OVERALL") {
+    manageSectionFilter.value = selectedSection;
+  } else {
     manageSectionFilter.value = "ALL";
   }
 
-  const yearFilterEl = document.getElementById("manageYearFilter");
-  if (yearFilterEl) {
-    yearFilterEl.value = "ALL";
-  }
-
-  if (manageSearch) {
-    manageSearch.value = "";
-  }
-
-  await loadRegisteredStudents().catch((err) => console.warn(err));
+  manageSearch.value = "";
   renderManageStudents();
 }
 
 
 function closeManageStudentsModal() {
   manageStudentsModal.hidden = true;
-  document.body.classList.remove("modal-open");
 }
 
 
@@ -1223,10 +988,10 @@ function resetProfileForm() {
   profileForm.reset();
   editingStudentId.value = "";
   formMessage.textContent = "";
-  const yearInput = document.getElementById("studentYear");
-  if (yearInput) yearInput.value = selectedYear ? String(selectedYear) : "2";
   generatedLink.textContent = "https://github.com/username";
 }
+
+
 
 
 function openAddModal() {
@@ -1247,25 +1012,22 @@ function openAddModal() {
 }
 
 
+
+
 function openEditModal(studentId) {
   const student = directoryStudents.find(
-    (item) => String(item.id) === String(studentId) || String(item.register_number) === String(studentId)
+    (item) => String(item.id) === String(studentId)
   );
 
   if (!student) return;
 
   resetProfileForm();
 
-  editingStudentId.value = student.id || student.register_number;
+  editingStudentId.value = student.id;
   registerNumberInput.value = student.register_number;
   studentNameInput.value = student.student_name;
   usernameInput.value = student.github_username || "";
   studentSectionInput.value = student.section;
-
-  const yearInput = document.getElementById("studentYear");
-  if (yearInput) {
-    yearInput.value = String(student.year || 2);
-  }
 
   generatedLink.textContent =
     `https://github.com/${student.github_username || "username"}`;
@@ -1281,26 +1043,11 @@ function openEditModal(studentId) {
 }
 
 
+
+
 function closeProfile() {
   profileModal.hidden = true;
   document.body.classList.remove("modal-open");
-}
-
-
-function showToastNotification(text, isError = false) {
-  if (messageElement) {
-    messageElement.textContent = text;
-    messageElement.className = `message ${isError ? "error" : "success"}`;
-  }
-  const homeMsg = document.getElementById("homeActionMessage");
-  if (homeMsg) {
-    homeMsg.textContent = text;
-    homeMsg.className = `home-action-message ${isError ? "error" : ""}`;
-    clearTimeout(showToastNotification._timer);
-    showToastNotification._timer = setTimeout(() => {
-      homeMsg.textContent = "";
-    }, 6000);
-  }
 }
 
 
@@ -1310,32 +1057,23 @@ async function saveProfile(event) {
   if (!isAdmin()) return;
 
   const id = editingStudentId.value.trim();
-  const registerNumber = registerNumberInput.value.trim();
-  const githubUsername = usernameInput.value.trim().replace(/\s+/g, "");
-  const yearInput = document.getElementById("studentYear");
-  const yearVal = yearInput ? (Number(yearInput.value) || 2) : 2;
 
-  if (!registerNumber || !studentNameInput.value.trim() || !githubUsername) {
-    formMessage.textContent = "Please fill in all fields (spaces are not allowed in usernames).";
-    formMessage.className = "form-message error";
-    return;
-  }
+  const registerNumber = registerNumberInput.value.trim();
+  const githubUsername = usernameInput.value.trim();
 
   const payload = {
     register_number: registerNumber,
     student_name: studentNameInput.value.trim(),
     github_username: githubUsername,
-    section: studentSectionInput.value,
-    year: yearVal
+    section: studentSectionInput.value
   };
 
   saveProfileButton.disabled = true;
-  saveProfileButton.textContent = "Saving...";
 
   try {
     let targetId = id;
 
-    if (!targetId || targetId === registerNumber) {
+    if (!targetId) {
       const { data: existing, error: lookupError } = await supabaseClient
         .from("students")
         .select("id,register_number")
@@ -1344,100 +1082,35 @@ async function saveProfile(event) {
 
       if (lookupError) throw lookupError;
 
-      if (existing) {
-        targetId = String(existing.id);
+      if (!existing) {
+        throw new Error(
+          "Register number not found. Add the student in the LeetCode tracker first, then attach the GitHub profile here."
+        );
       }
+
+      targetId = String(existing.id);
     }
 
-    let result;
-    if (targetId && targetId !== registerNumber) {
-      result = await supabaseClient
-        .from("students")
-        .update(payload)
-        .eq("id", targetId)
-        .select()
-        .single();
-    } else {
-      result = await supabaseClient
-        .from("students")
-        .upsert(payload, { onConflict: "register_number" })
-        .select()
-        .single();
-    }
+    const { data, error } = await supabaseClient
+      .from("students")
+      .update(payload)
+      .eq("id", targetId)
+      .select()
+      .single();
 
-    if (result.error && String(result.error.message || "").toLowerCase().includes("year")) {
-      const fallbackPayload = { ...payload };
-      delete fallbackPayload.year;
-      if (targetId && targetId !== registerNumber) {
-        result = await supabaseClient
-          .from("students")
-          .update(fallbackPayload)
-          .eq("id", targetId)
-          .select()
-          .single();
-      } else {
-        result = await supabaseClient
-          .from("students")
-          .upsert(fallbackPayload, { onConflict: "register_number" })
-          .select()
-          .single();
-      }
-    }
-
-    if (result.error) throw result.error;
-
-    // Also update in-memory allStudents immediately
-    const regUpper = registerNumber.toUpperCase();
-    const memStudent = allStudents.find((s) => String(s["Register Number"] || s.register_number || "").trim().toUpperCase() === regUpper);
-    if (memStudent) {
-      memStudent["Student Name"] = studentNameInput.value.trim();
-      memStudent.student_name = studentNameInput.value.trim();
-      memStudent["GitHub Username"] = githubUsername;
-      memStudent.github_username = githubUsername;
-      memStudent.Section = studentSectionInput.value;
-      memStudent.section = studentSectionInput.value;
-      memStudent.Year = yearVal;
-      memStudent.year = yearVal;
-    } else {
-      allStudents.push({
-        id: result.data?.id || registerNumber,
-        "Register Number": registerNumber,
-        register_number: registerNumber,
-        "Student Name": studentNameInput.value.trim(),
-        student_name: studentNameInput.value.trim(),
-        "GitHub Username": githubUsername,
-        github_username: githubUsername,
-        Section: studentSectionInput.value,
-        section: studentSectionInput.value,
-        Year: yearVal,
-        year: yearVal
-      });
-    }
+    if (error) throw error;
 
     formMessage.textContent =
       id ? "GitHub profile updated successfully." : "GitHub profile added successfully.";
 
     formMessage.className = "form-message success";
 
-    await loadRegisteredStudents().catch(() => {});
-    if (typeof renderManageStudents === "function") {
-      renderManageStudents();
-    }
+    await loadRegisteredStudents();
+    renderManageStudents();
 
-    showToastNotification(
-      id
-        ? "GitHub profile updated successfully."
-        : "GitHub profile added successfully. Starting background sync...",
-      false
-    );
-
-    triggerLeetCodeSync().catch((err) => {
-      console.warn("Background sync dispatch notice:", err);
-    });
-
-    setTimeout(closeProfile, 800);
+    setTimeout(closeProfile, 700);
   } catch (error) {
-    formMessage.textContent = error.message || "Failed to save profile.";
+    formMessage.textContent = error.message;
     formMessage.className = "form-message error";
   } finally {
     saveProfileButton.disabled = false;
@@ -1446,27 +1119,29 @@ async function saveProfile(event) {
 }
 
 
+
+
 function openDeleteModal(studentId) {
   const student = directoryStudents.find(
-    (item) => String(item.id) === String(studentId) || String(item.register_number) === String(studentId)
+    (item) => String(item.id) === String(studentId)
   );
 
   if (!student) return;
 
-  pendingDeleteId = student.id || student.register_number;
+  pendingDeleteId = student.id;
 
   deleteDescription.textContent =
     `Remove GitHub profile from ${student.student_name} (${student.section})? The student record and LeetCode profile will not be deleted.`;
 
   deleteModal.hidden = false;
-  document.body.classList.add("modal-open");
 }
+
+
 
 
 function closeDelete() {
   deleteModal.hidden = true;
   pendingDeleteId = null;
-  document.body.classList.remove("modal-open");
 }
 
 
@@ -1476,32 +1151,16 @@ async function confirmDelete() {
   confirmDeleteButton.disabled = true;
 
   try {
-    let { error } = await supabaseClient
+    const { error } = await supabaseClient
       .from("students")
       .update({ github_username: null })
       .eq("id", pendingDeleteId);
 
-    if (error) {
-      const fallback = await supabaseClient
-        .from("students")
-        .update({ github_username: null })
-        .eq("register_number", pendingDeleteId);
-      if (fallback.error) throw error;
-    }
-
-    // Update in-memory allStudents
-    const delTarget = String(pendingDeleteId).toUpperCase();
-    const memStudent = allStudents.find(
-      (s) => String(s.id).toUpperCase() === delTarget || String(s["Register Number"] || s.register_number || "").trim().toUpperCase() === delTarget
-    );
-    if (memStudent) {
-      memStudent["GitHub Username"] = "";
-      memStudent.github_username = "";
-    }
+    if (error) throw error;
 
     closeDelete();
 
-    await loadRegisteredStudents().catch(() => {});
+    await loadRegisteredStudents();
     renderManageStudents();
     await loadData();
   } catch (error) {
@@ -1515,33 +1174,8 @@ async function confirmDelete() {
 
 
 
-async function extractErrorMessage(error) {
-  if (!error) return "Unknown error";
-  if (error.context && typeof error.context.json === "function") {
-    try {
-      const body = await error.context.json();
-      if (body) {
-        if (body.error && body.details) return `${body.error}: ${body.details}`;
-        if (body.error && body.response) return `${body.error}: ${body.response}`;
-        if (body.error) return body.error;
-        if (body.message) return body.message;
-      }
-    } catch (_) {
-      try {
-        const text = await error.context.text();
-        if (text) return text;
-      } catch (_) {}
-    }
-  }
-  return error.message || String(error);
-}
-
-
 async function triggerLeetCodeSync() {
-  if (!isAdmin()) {
-    showToastNotification("Please sign in as Admin to run Sync Now.", true);
-    return;
-  }
+  if (!isAdmin()) return;
 
   const buttons = [syncNowButton, homeSyncNowButton].filter(Boolean);
 
@@ -1564,15 +1198,17 @@ async function triggerLeetCodeSync() {
 
     if (error) throw error;
 
-    showToastNotification(
-      data?.message || "GitHub sync started. GitHub Actions is checking all profiles.",
-      false
-    );
+    if (messageElement) {
+      messageElement.textContent =
+        "GitHub sync started. GitHub Actions is checking all profiles.";
+    }
 
     console.log(data);
   } catch (error) {
-    const msg = await extractErrorMessage(error);
-    showToastNotification(`Unable to start sync: ${msg}`, true);
+    if (messageElement) {
+      messageElement.textContent =
+        `Unable to start sync: ${error.message}`;
+    }
   } finally {
     setTimeout(() => {
       buttons.forEach((button) => {
@@ -2063,24 +1699,10 @@ document.getElementById("challengeSectionFilter")
 // ============================================================
 
 function compareChampionStudents(a, b) {
-  const commitsA = toNumber(a["Commits 30 Days"] || a["Total Submissions"]);
-  const commitsB = toNumber(b["Commits 30 Days"] || b["Total Submissions"]);
-  const contribA = toNumber(a["Contributions 30 Days"] || a["Last 30 Days"]);
-  const contribB = toNumber(b["Contributions 30 Days"] || b["Last 30 Days"]);
-  const reposA = toNumber(a["Repositories Total"] || a["Problems Solved"]);
-  const reposB = toNumber(b["Repositories Total"] || b["Problems Solved"]);
-
-  const commits7A = toNumber(a["Commits 7 Days"] || a["Last 7 Days Submissions"]);
-  const commits7B = toNumber(b["Commits 7 Days"] || b["Last 7 Days Submissions"]);
-  const contrib7A = toNumber(a["Contributions 7 Days"] || a["Last 7 Days"]);
-  const contrib7B = toNumber(b["Contributions 7 Days"] || b["Last 7 Days"]);
-
   return (
-    commitsB - commitsA
-    || contribB - contribA
-    || reposB - reposA
-    || commits7B - commits7A
-    || contrib7B - contrib7A
+    toNumber(b["Last 30 Days"]) - toNumber(a["Last 30 Days"])
+    || toNumber(b["Last 7 Days"]) - toNumber(a["Last 7 Days"])
+    || toNumber(b["Problems Solved"]) - toNumber(a["Problems Solved"])
     || String(a["Student Name"] || "").localeCompare(
       String(b["Student Name"] || "")
     )
@@ -2094,60 +1716,36 @@ function calculateChampionsSectionRanking() {
         normalizeSection(student.Section) === normalizeSection(section)
     );
 
-    const commits30 = students.reduce(
-      (sum, student) => sum + toNumber(student["Commits 30 Days"] || student["Total Submissions"]),
+    const last30 = students.reduce(
+      (sum, student) => sum + toNumber(student["Last 30 Days"]),
       0
     );
 
-    const contrib30 = students.reduce(
-      (sum, student) => sum + toNumber(student["Contributions 30 Days"] || student["Last 30 Days"]),
-      0
-    );
-
-    const repos = students.reduce(
-      (sum, student) => sum + toNumber(student["Repositories Total"] || student["Problems Solved"]),
-      0
-    );
-
-    const commits7 = students.reduce(
-      (sum, student) => sum + toNumber(student["Commits 7 Days"] || student["Last 7 Days Submissions"]),
-      0
-    );
-
-    const contrib7 = students.reduce(
-      (sum, student) => sum + toNumber(student["Contributions 7 Days"] || student["Last 7 Days"]),
+    const last7 = students.reduce(
+      (sum, student) => sum + toNumber(student["Last 7 Days"]),
       0
     );
 
     const active = students.filter(
-      (student) =>
-        (toNumber(student["Commits 30 Days"] || student["Total Submissions"]) > 0
-          || toNumber(student["Contributions 30 Days"] || student["Last 30 Days"]) > 0)
+      (student) => toNumber(student["Last 30 Days"]) > 0
     ).length;
 
     const average =
-      students.length > 0 ? contrib30 / students.length : 0;
+      students.length > 0 ? last30 / students.length : 0;
 
     return {
       section,
       students: students.length,
-      commits30,
-      contrib30,
-      repos,
-      commits7,
-      contrib7,
-      last30: contrib30,
-      last7: contrib7,
+      last30,
+      last7,
       active,
       average
     };
   }).sort((a, b) =>
-    b.commits30 - a.commits30
-    || b.contrib30 - a.contrib30
-    || b.repos - a.repos
-    || b.commits7 - a.commits7
-    || b.contrib7 - a.contrib7
+    b.last30 - a.last30
+    || b.last7 - a.last7
     || b.active - a.active
+    || b.average - a.average
     || a.section.localeCompare(b.section)
   );
 }
@@ -2183,18 +1781,18 @@ function renderChampionsSectionRanking() {
 
       <div class="champions-rank-stats">
         <span>
-          <small>30D Commits</small>
-          <strong>${item.commits30}</strong>
+          <small>30 Days</small>
+          <strong>${item.last30}</strong>
         </span>
 
         <span>
-          <small>30D Contrib</small>
-          <strong>${item.contrib30}</strong>
+          <small>7 Days</small>
+          <strong>${item.last7}</strong>
         </span>
 
         <span>
-          <small>Repos</small>
-          <strong>${item.repos}</strong>
+          <small>Active</small>
+          <strong>${item.active}</strong>
         </span>
 
         <span>
@@ -2258,18 +1856,18 @@ function renderSectionChampions() {
 
         <div class="section-champion-metrics">
           <span>
-            <small>30D Commits</small>
-            <strong>${toNumber(champion["Commits 30 Days"] || champion["Total Submissions"])}</strong>
+            <small>30 Days</small>
+            <strong>${toNumber(champion["Last 30 Days"])}</strong>
           </span>
 
           <span>
-            <small>30D Contrib</small>
-            <strong>${toNumber(champion["Contributions 30 Days"] || champion["Last 30 Days"])}</strong>
+            <small>7 Days</small>
+            <strong>${toNumber(champion["Last 7 Days"])}</strong>
           </span>
 
           <span>
-            <small>Repos</small>
-            <strong>${toNumber(champion["Repositories Total"] || champion["Problems Solved"])}</strong>
+            <small>Total</small>
+            <strong>${toNumber(champion["Problems Solved"])}</strong>
           </span>
         </div>
 
@@ -2321,18 +1919,18 @@ function renderOverallTopFive() {
 
         <div class="overall-top-metrics">
           <span>
-            <small>30D Commits</small>
-            <strong>${toNumber(student["Commits 30 Days"] || student["Total Submissions"])}</strong>
+            <small>30 Days</small>
+            <strong>${toNumber(student["Last 30 Days"])}</strong>
           </span>
 
           <span>
-            <small>30D Contrib</small>
-            <strong>${toNumber(student["Contributions 30 Days"] || student["Last 30 Days"])}</strong>
+            <small>7 Days</small>
+            <strong>${toNumber(student["Last 7 Days"])}</strong>
           </span>
 
           <span>
-            <small>Repos</small>
-            <strong>${toNumber(student["Repositories Total"] || student["Problems Solved"])}</strong>
+            <small>Total</small>
+            <strong>${toNumber(student["Problems Solved"])}</strong>
           </span>
         </div>
       </button>
@@ -4544,129 +4142,22 @@ async function askAiPerformanceAnalyst(message) {
   }
 }
 
-function currentYearRows() {
-  return yearCache[selectedYear] || [];
-}
-
-function yearSectionMetric(section) {
-  const rows = currentYearRows().filter(
-    student => normalizeSection(student.Section) === normalizeSection(section)
-  );
-  const students = rows.length;
-  const today = rows.filter(student => Number(student["Solved Today"] ?? student["Contributions Today"] ?? 0) > 0).length;
-  const streak = rows.filter(student => Number(student["Current Streak"] ?? 0) > 0).length;
-  return { students, today, streak };
-}
-
-function renderYearSections() {
-  if (!yearSectionGrid || !selectedYear) return;
-  const sections = YEAR_SECTIONS[selectedYear] || ["ECE A", "ECE B", "ECE C", "ECE D", "ECE E", "ECE F", "OVERALL"];
-  const allRows = currentYearRows();
-
-  yearSectionGrid.innerHTML = sections.map(section => {
-    if (section === "OVERALL") {
-      const totalCount = allRows.length;
-      const todayCount = allRows.filter(s => Number(s["Contributions Today"] ?? 0) > 0).length;
-      const streakCount = allRows.filter(s => Number(s["Current Streak"] ?? 0) > 0).length;
-      return `
-        <button class="section-card year-section-card overall-card" data-year-section="OVERALL" type="button">
-          <span class="section-card-title">OVERALL</span>
-          <strong id="countOverall">${totalCount}</strong>
-          <span>Department Total</span>
-          <div class="section-challenge-mini">
-            <span>🎯 Today <strong>${todayCount}/${totalCount}</strong></span>
-            <span>🔥 On Streak <strong>${streakCount}</strong></span>
-          </div>
-        </button>
-      `;
-    }
-
-    const stats = yearSectionMetric(section);
-    return `
-      <button class="section-card year-section-card" data-year-section="${escapeHTML(section)}" type="button">
-        <span class="section-card-title">${escapeHTML(section)}</span>
-        <strong>${stats.students}</strong>
-        <span>${stats.students === 1 ? "Student" : "Students"}</span>
-        <div class="section-challenge-mini">
-          <span>🎯 Today <strong>${stats.today}/${stats.students || 0}</strong></span>
-          <span>🔥 On Streak <strong>${stats.streak}</strong></span>
-        </div>
-      </button>
-    `;
-  }).join("");
-
-  document.querySelectorAll(".year-tab-btn").forEach((btn) => {
-    btn.classList.toggle("active", String(btn.dataset.year) === String(selectedYear));
-  });
-}
-
-function showYearSelection() {
-  if (yearSectionPanel) yearSectionPanel.hidden = false;
-  renderYearSections();
-}
-
-function showYearSections() {
-  if (!selectedYear) selectedYear = 2;
-  if (yearSectionPanel) yearSectionPanel.hidden = false;
-  if (selectedYearKicker) selectedYearKicker.textContent = YEAR_LABELS[selectedYear] || `YEAR ${selectedYear}`;
-  if (selectedYearTitle) selectedYearTitle.textContent = `${YEAR_LABELS[selectedYear] || 'Year ' + selectedYear} Sections`;
-  renderYearSections();
-}
-
-async function selectYear(year) {
-  selectedYear = Number(year) || 2;
-  selectedSection = null;
-  leaderboardView.hidden = true;
-  sectionHome.hidden = false;
-  searchInput.value = "";
-
-  document.querySelectorAll(".year-tab-btn").forEach((btn) => {
-    btn.classList.toggle("active", String(btn.dataset.year) === String(selectedYear));
-  });
-
-  try {
-    if (!yearCache[selectedYear]) await loadData(selectedYear);
-    else allStudents = yearCache[selectedYear];
-  } catch (error) {
-    yearCache[selectedYear] = [];
-    allStudents = [];
-    if (messageElement) messageElement.textContent = `${YEAR_LABELS[selectedYear] || 'Year ' + selectedYear} data is not available yet.`;
-  }
-
-  updateLastUpdated();
-  renderYearSections();
-}
-
 async function initialize() {
   createClient();
-  await selectYear(2);
+  await loadData();
   await restoreAdminSession();
-  await loadDailyChallengeData().catch(() => {});
-  await loadCodingAnalyticsData().catch(() => {});
-  await loadFacultyData().catch(() => {});
+  await loadDailyChallengeData();
+  await loadCodingAnalyticsData();
+  await loadFacultyData();
   updateAdminUI();
 }
 
 
-document.querySelectorAll("[data-year]").forEach((button) => {
+document.querySelectorAll("[data-section]").forEach((button) => {
   button.addEventListener("click", () => {
-    selectYear(button.dataset.year);
+    openSection(button.dataset.section);
   });
 });
-
-yearSectionGrid?.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-year-section]");
-  if (!button) return;
-  openSection(button.dataset.yearSection);
-});
-
-backToYearsButton?.addEventListener("click", () => {
-  selectedSection = null;
-  searchInput.value = "";
-  showYearSections();
-});
-
-document.getElementById("manageYearFilter")?.addEventListener("change", renderManageStudents);
 
 backToSectionsButton.addEventListener("click", showSectionHome);
 

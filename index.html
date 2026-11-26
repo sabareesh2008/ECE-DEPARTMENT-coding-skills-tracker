@@ -1,7 +1,75 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Campus360 and CodeMetrix integrated student, faculty and college platform"><title>Campus360 × CodeMetrix</title><link rel="stylesheet" href="campus360.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script></head>
-<body><header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">C<span>×</span>M</span><span><b>Campus360</b><small>powered by CodeMetrix</small></span></a><nav><a href="#features">Features</a><a href="#roles">Portals</a><a href="README_CAMPUS360.md">Setup guide</a></nav></header>
-<main><section class="hero"><div class="hero-copy"><p class="eyebrow">ONE COLLEGE · ONE CONNECTED PLATFORM</p><h1>Every student task.<br><span>Every technical skill.</span><br>One dashboard.</h1><p class="lead">Academic workflows from Campus360. Coding assessments, GitHub and LeetCode analytics from CodeMetrix. Connected through the existing project stack.</p><div class="hero-actions"><a class="btn primary" href="#roles">Choose your portal <span>↗</span></a><a class="btn secondary" href="codemetrix-dashboard.html">Open existing CodeMetrix dashboard</a></div><div class="trust-row"><span>✓ Existing Supabase settings retained</span><span>✓ Existing coding tools retained</span><span>✓ Role-specific access</span></div></div><div class="hero-visual"><div class="orb orb-one"></div><div class="orb orb-two"></div><div class="mock-window"><div class="mock-head"><span></span><span></span><span></span><b>Campus360 Overview</b></div><div class="mock-content"><div class="mock-greeting">Good morning, learner 👋<small>Your college progress at a glance</small></div><div class="metric-row"><div><small>Tasks complete</small><b>08 <i>/ 10</i></b><span class="meter"><i style="width:80%"></i></span></div><div><small>Technical score</small><b>86<span class="muted">/100</span></b><span class="meter purple"><i style="width:86%"></i></span></div></div><div class="mock-task"><span class="task-dot"></span><div><b>Technical Assessment</b><small>Published · Available today</small></div><span class="tag">Ready</span></div><div class="mock-task"><span class="task-dot green"></span><div><b>Proof submission</b><small>Faculty review pending</small></div><span class="tag amber">Review</span></div><div class="chart"><span style="height:34%"></span><span style="height:51%"></span><span style="height:44%"></span><span style="height:72%"></span><span style="height:62%"></span><span style="height:88%"></span><span style="height:78%"></span><small>Weekly progress</small></div></div></div></div></section>
-<section class="roles section" id="roles"><div class="section-heading"><p class="eyebrow">SELECT YOUR WORKSPACE</p><h2>One platform. Three secure portals.</h2><p>Sign in using your registered college account. Your account's assigned role determines which dashboard opens.</p></div><div class="role-grid"><article class="role-card student"><div class="role-icon">♧</div><p class="role-label">LEARN · SUBMIT · IMPROVE</p><h3>Student portal</h3><p>Tasks, proof uploads, exams, technical tests, coding practice, leaderboards and personal progress reports.</p><ul><li>Individual academic dashboard</li><li>CodeMetrix technical analytics</li><li>Test history and results</li></ul><a class="btn role-btn" href="login.html?role=student">Student login <span>→</span></a></article><article class="role-card faculty"><div class="role-icon">▤</div><p class="role-label">ASSIGN · ASSESS · GUIDE</p><h3>Faculty portal</h3><p>Class rosters, task publishing, proof reviews, exam creation, coding tests and performance analytics.</p><ul><li>Publish and schedule assessments</li><li>Review submissions and marks</li><li>Class/section reports</li></ul><a class="btn role-btn" href="login.html?role=faculty">Faculty login <span>→</span></a></article><article class="role-card admin"><div class="role-icon">⬡</div><p class="role-label">CONFIGURE · MONITOR · PROTECT</p><h3>Admin portal</h3><p>College-wide users, academic structure, role assignments, settings, audit visibility and institution reports.</p><ul><li>Role and account management</li><li>Department-level overview</li><li>Security and audit workflows</li></ul><a class="btn role-btn" href="login.html?role=admin">Admin login <span>→</span></a></article></div></section>
-<section class="section" id="features"><div class="section-heading"><p class="eyebrow">CONNECTED FEATURES</p><h2>Academic management meets technical growth.</h2></div><div class="feature-grid"><article><span>01</span><h3>Tasks & proof collection</h3><p>Assign work, upload evidence, review submissions, request corrections and generate reports.</p></article><article><span>02</span><h3>Exams & technical tests</h3><p>Question banks, timed assessments, coding challenges, automatic/manual evaluation and result release.</p></article><article><span>03</span><h3>CodeMetrix analytics</h3><p>GitHub and LeetCode activity, coding streaks, difficulty-wise progress and leaderboards.</p></article><article><span>04</span><h3>Student records</h3><p>Roster import, registration-number mapping, class/section organization and individual dashboards.</p></article><article><span>05</span><h3>Reports & notifications</h3><p>Class-wise and individual reports, reminders, assessment events and export workflows.</p></article><article><span>06</span><h3>Responsible access</h3><p>Role-aware portal routing, protected database policies and private proof storage.</p></article></div></section>
-<section class="callout"><div><p class="eyebrow">BUILT ON YOUR EXISTING CODEMETRIX</p><h2>No forced stack migration.</h2><p>Existing HTML/CSS/JavaScript, Supabase projects, Python trackers, GitHub Actions and coding tools are retained. Campus360 adds an integrated entry point and role-specific workspace.</p></div><a class="btn primary" href="codemetrix-dashboard.html">Explore CodeMetrix →</a></section></main><footer><a class="brand" href="index.html"><span class="brand-mark">C<span>×</span>M</span><span><b>Campus360</b><small>powered by CodeMetrix</small></span></a><p>Academic workflow + technical skill intelligence</p><span>© <span id="year"></span> Campus360 · CodeMetrix</span></footer><script>document.getElementById('year').textContent=new Date().getFullYear();</script></body></html>
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="description"
+    content="CodeMetrix public coding tracker with LeetCode and GitHub leaderboards."
+  >
+  <title>CodeMetrix · Coding Progress</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="tracker-entry-page">
+  <div class="background-orb orb-one"></div>
+  <div class="background-orb orb-two"></div>
+
+  <header class="hero tracker-entry-hero">
+    <div class="hero-copy">
+      <div class="eyebrow">ECE CODING PROGRESS</div>
+      <h1>
+        ECE
+        <span>CodeMetrix</span>
+      </h1>
+      <p>
+        Choose the public tracker you want to open.
+      </p>
+    </div>
+
+    <div class="hero-side">
+      <div class="status-card tracker-entry-status">
+        <div class="live-dot"></div>
+        <div>
+          <span>Public Access</span>
+          <strong>No login required</strong>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="section-home tracker-entry-home">
+      <div class="section-home-head">
+        <div>
+          <div class="eyebrow">SELECT TRACKER</div>
+          <h2>ECE Department Coding Trackers</h2>
+          <p>
+            Open LeetCode or GitHub. Both trackers use the same CodeMetrix visual system.
+          </p>
+        </div>
+      </div>
+
+      <div class="tracker-entry-grid">
+        <a class="section-card tracker-entry-card" href="leetcode.html">
+          <span class="section-card-title">LeetCode</span>
+          <strong>LeetCode Tracker</strong>
+          <span>Problems · Activity · Section Leaderboards</span>
+          <div class="tracker-entry-open">Open LeetCode Tracker →</div>
+        </a>
+
+        <a class="section-card tracker-entry-card" href="github.html">
+          <span class="section-card-title">GitHub</span>
+          <strong>GitHub Tracker</strong>
+          <span>Contributions · Commits · Repositories · Deployments</span>
+          <div class="tracker-entry-open">Open GitHub Tracker →</div>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    ECE CodeMetrix · Public Coding Progress Platform
+  </footer>
+</body>
+</html>
